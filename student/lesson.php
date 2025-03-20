@@ -38,7 +38,7 @@
                                 <div class="flex-grow-1">
                                     <span class="ps-2">Created by <a class="link" href="author-profile.php">Christina Kray</a></span>
                                 </div>
-                            </div>
+                            </div> 
                             <!-- End Instructor Media -->
 
                             <!-- Rating with better alignment and accessibility -->
