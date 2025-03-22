@@ -70,7 +70,7 @@ $total_duration = 0; // in minutes
 while ($section = $sections_result->fetch_assoc()) {
     $sections[] = $section;
     $total_lectures += $section['topic_count'];
-    
+
     // For estimation, assume each video is ~10 mins and each text/link/doc is ~5 mins
     $total_duration += ($section['video_count'] * 10) + (($section['text_count'] + $section['link_count'] + $section['document_count']) * 5);
 }
@@ -169,10 +169,11 @@ $socials_result = $stmt->get_result();
 $socials = $socials_result->fetch_assoc() ?? [];
 
 // Format duration string
-function formatDuration($minutes) {
+function formatDuration($minutes)
+{
     $hours = floor($minutes / 60);
     $mins = $minutes % 60;
-    
+
     if ($hours > 0) {
         return sprintf("%d:%02d hours", $hours, $mins);
     } else {
@@ -188,13 +189,13 @@ $is_enrolled = false;
 if (isset($_SESSION['user_id'])) {
     // Check if the user is enrolled in this course
     $user_id = $_SESSION['user_id'];
-    
+
     $sql = "SELECT * FROM enrollments WHERE user_id = ? AND course_id = ? AND status = 'Active'";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ii", $user_id, $course_id);
     $stmt->execute();
     $enrollment_result = $stmt->get_result();
-    
+
     $is_enrolled = ($enrollment_result->num_rows > 0);
 }
 
@@ -209,38 +210,40 @@ $stmt->close();
 // $conn->close();
 
 // Function to generate star rating HTML
-function generateStarRating($rating) {
+function generateStarRating($rating)
+{
     $rating = floatval($rating);
     $fullStars = floor($rating);
     $halfStar = ($rating - $fullStars) >= 0.5;
     $emptyStars = 5 - $fullStars - ($halfStar ? 1 : 0);
-    
+
     $html = '';
-    
+
     // Full stars
     for ($i = 0; $i < $fullStars; $i++) {
         $html .= '<img src="../assets/svg/illustrations/star.svg" alt="Review rating" width="16">';
     }
-    
+
     // Half star
     if ($halfStar) {
         $html .= '<img src="../assets/svg/illustrations/star-half.svg" alt="Review rating" width="16">';
     }
-    
+
     // Empty stars
     for ($i = 0; $i < $emptyStars; $i++) {
         $html .= '<img src="../assets/svg/illustrations/star-muted.svg" alt="Review rating" width="16">';
     }
-    
+
     return $html;
 }
 
 // Function for relative time
-function timeAgo($datetime) {
+function timeAgo($datetime)
+{
     $time = strtotime($datetime);
     $now = time();
     $diff = $now - $time;
-    
+
     if ($diff < 60) {
         return "just now";
     } elseif ($diff < 3600) {
@@ -265,23 +268,22 @@ function timeAgo($datetime) {
 
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
-    <!-- Breadcrumb -->
-    <div class="bg-light">
-        <div class="container py-3">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb breadcrumb-no-gutter mb-0">
-                    <li class="breadcrumb-item"><a class="breadcrumb-link" href="../index.php">Home</a></li>
-                    <li class="breadcrumb-item"><a class="breadcrumb-link" href="courses.php">Courses</a></li>
-                    <!-- <li class="breadcrumb-item"><a class="breadcrumb-link" href="courses.php?category=<?php echo htmlspecialchars($course['category_slug']); ?>"><?php echo htmlspecialchars($course['category_name']); ?></a></li> -->
-                    <li class="breadcrumb-item active" aria-current="page"><?php echo htmlspecialchars($course['title']); ?></li>
-                </ol>
-            </nav>
-        </div>
-    </div>
-    <!-- End Breadcrumb -->
-    
+
     <div class="position-relative">
         <!-- Hero -->
+        <!-- Breadcrumb -->
+        <div class="bg-light">
+            <div class="container py-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-no-gutter mb-0">
+                        <li class="breadcrumb-item"><a class="breadcrumb-link" href="../index.php">Home</a></li>
+                        <li class="breadcrumb-item"><a class="breadcrumb-link" href="courses.php">Courses</a></li>
+                        <li class="breadcrumb-item active" aria-current="page"><?php echo htmlspecialchars($course['title']); ?></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        <!-- End Breadcrumb -->
         <div class="gradient-y-overlay-lg-white bg-img-start content-space-2" style="background-image: url(../assets/img/1920x800/img6.jpg);">
             <div class="container">
                 <div class="row">
@@ -291,7 +293,7 @@ function timeAgo($datetime) {
                         <?php elseif ($course['price'] < 20): ?>
                             <small class="badge bg-info rounded-pill">Low Price</small>
                         <?php endif; ?>
-                        
+
                         <h1><?php echo htmlspecialchars($course['title']); ?></h1>
                         <p class="mt-2 lead"><?php echo htmlspecialchars($course['short_description']); ?></p>
 
@@ -304,7 +306,7 @@ function timeAgo($datetime) {
                                     </span>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <span class="ps-2">Created by 
+                                    <span class="ps-2">Created by
                                         <a class="link" href="instructor-profile.php?username=<?php echo htmlspecialchars($course['username']); ?>">
                                             <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?>
                                         </a>
@@ -401,7 +403,7 @@ function timeAgo($datetime) {
                                                 </a>
                                             <?php endif; ?>
                                         </div>
-                                        
+
                                         <?php if ($course['price'] > 0): ?>
                                             <div class="text-center mb-4">
                                                 <p class="card-text small">30-day money-back guarantee</p>
@@ -441,35 +443,35 @@ function timeAgo($datetime) {
                 <!-- Display any messages -->
                 <?php if (isset($_SESSION['success_message'])): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <?php 
-                        echo $_SESSION['success_message']; 
+                        <?php
+                        echo $_SESSION['success_message'];
                         unset($_SESSION['success_message']);
                         ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php endif; ?>
-                
+
                 <?php if (isset($_SESSION['error_message'])): ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <?php 
-                        echo $_SESSION['error_message']; 
+                        <?php
+                        echo $_SESSION['error_message'];
                         unset($_SESSION['error_message']);
                         ?>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php endif; ?>
-                
+
                 <!-- Learning Outcomes Section -->
                 <h3 class="mb-4">What you'll learn:</h3>
 
                 <div class="row">
                     <?php if (count($outcomes) > 0): ?>
-                        <?php 
+                        <?php
                         $halfCount = ceil(count($outcomes) / 2);
                         $firstHalf = array_slice($outcomes, 0, $halfCount);
                         $secondHalf = array_slice($outcomes, $halfCount);
                         ?>
-                        
+
                         <div class="col-lg-6">
                             <!-- List Checked -->
                             <ul class="list-checked list-checked-primary">
@@ -500,20 +502,20 @@ function timeAgo($datetime) {
                     <?php endif; ?>
                 </div>
                 <!-- End Row -->
-                
+
                 <!-- Prerequisites Section -->
                 <?php if (count($requirements) > 0): ?>
-                <div class="mt-5">
-                    <h3 class="mb-4">Prerequisites:</h3>
-                    <ul class="list-unstyled list-py-1">
-                        <?php foreach ($requirements as $requirement): ?>
-                            <li>
-                                <i class="bi-check-circle-fill text-success me-2"></i>
-                                <?php echo htmlspecialchars($requirement['requirement_text']); ?>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
+                    <div class="mt-5">
+                        <h3 class="mb-4">Prerequisites:</h3>
+                        <ul class="list-unstyled list-py-1">
+                            <?php foreach ($requirements as $requirement): ?>
+                                <li>
+                                    <i class="bi-check-circle-fill text-success me-2"></i>
+                                    <?php echo htmlspecialchars($requirement['requirement_text']); ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
                 <?php endif; ?>
 
                 <!-- Course Content Accordion -->
@@ -564,7 +566,7 @@ function timeAgo($datetime) {
                                                         <!-- End Col -->
 
                                                         <div class="col-lg-6">
-                                                            <?php 
+                                                            <?php
                                                             $section_duration = ($section['video_count'] * 10) + (($section['text_count'] + $section['link_count'] + $section['document_count']) * 5);
                                                             ?>
                                                             <span class="small text-muted fw-normal"><?php echo formatDuration($section_duration); ?></span>
@@ -586,66 +588,122 @@ function timeAgo($datetime) {
                                             <?php
                                             // Get topics for this section
                                             require_once '../backend/config.php';
-                                            $sql = "SELECT st.*, tc.content_type, tc.title as content_title, tc.video_url, tc.content_text, tc.external_url
-                                                    FROM section_topics st
-                                                    LEFT JOIN topic_content tc ON st.topic_id = tc.topic_id
-                                                    WHERE st.section_id = ?
-                                                    ORDER BY st.position";
+                                            $sql = "SELECT st.*, tc.content_type, tc.title as content_title, tc.video_url, tc.content_text, tc.external_url, st.is_previewable
+                    FROM section_topics st
+                    LEFT JOIN topic_content tc ON st.topic_id = tc.topic_id
+                    WHERE st.section_id = ?
+                    ORDER BY st.position";
+
                                             $stmt = $conn->prepare($sql);
                                             $stmt->bind_param("i", $section['section_id']);
                                             $stmt->execute();
                                             $topics_result = $stmt->get_result();
-                                            
+
                                             while ($topic = $topics_result->fetch_assoc()):
+                                                $is_locked = !$is_enrolled && !$is_instructor && $topic['is_previewable'] != 1;
                                             ?>
                                                 <!-- Item -->
-                                                <div class="list-group-item">
-                                                    <div class="row">
-                                                        <div class="col-8">
-                                                            <div class="d-flex">
-                                                                <div class="flex-shrink-0">
-                                                                    <?php if ($topic['content_type'] === 'video'): ?>
-                                                                        <i class="bi-play-circle-fill small"></i>
-                                                                    <?php elseif ($topic['content_type'] === 'text'): ?>
-                                                                        <i class="bi-file-text small"></i>
-                                                                    <?php elseif ($topic['content_type'] === 'link'): ?>
-                                                                        <i class="bi-link-45deg small"></i>
-                                                                    <?php elseif ($topic['content_type'] === 'document'): ?>
-                                                                        <i class="bi-file-earmark-text small"></i>
-                                                                    <?php endif; ?>
-                                                                </div>
-                                                                <div class="flex-grow-1 ms-2">
-                                                                    <span class="small"><?php echo htmlspecialchars($topic['content_title'] ?? $topic['title']); ?></span>
+                                                <?php if ($is_locked): ?>
+                                                    <!-- Locked content - grayed out -->
+                                                    <div class="list-group-item text-muted">
+                                                        <div class="row">
+                                                            <div class="col-8">
+                                                                <div class="d-flex">
+                                                                    <div class="flex-shrink-0">
+                                                                        <?php if ($topic['content_type'] === 'video'): ?>
+                                                                            <i class="bi-play-circle-fill small"></i>
+                                                                        <?php elseif ($topic['content_type'] === 'text'): ?>
+                                                                            <i class="bi-file-text small"></i>
+                                                                        <?php elseif ($topic['content_type'] === 'link'): ?>
+                                                                            <i class="bi-link-45deg small"></i>
+                                                                        <?php elseif ($topic['content_type'] === 'document'): ?>
+                                                                            <i class="bi-file-earmark-text small"></i>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                    <div class="flex-grow-1 ms-2">
+                                                                        <span class="small"><?php echo htmlspecialchars($topic['content_title'] ?? $topic['title']); ?></span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <!-- End Col -->
+                                                            <!-- End Col -->
 
-                                                        <div class="col-4 text-end">
-                                                            <div class="row">
-                                                                <div class="col-lg-6">
-                                                                    <?php if ($is_enrolled || $is_instructor): ?>
-                                                                        <a class="small" href="lesson.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $topic['topic_id']; ?>">View</a>
-                                                                    <?php else: ?>
-                                                                        <a class="small" href="#previewModal" data-bs-toggle="modal">Preview</a>
-                                                                    <?php endif; ?>
-                                                                </div>
-                                                                <!-- End Col -->
+                                                            <div class="col-4 text-end">
+                                                                <div class="row">
+                                                                    <div class="col-lg-6">
+                                                                        <!-- Empty cell for locked content -->
+                                                                    </div>
+                                                                    <!-- End Col -->
 
-                                                                <div class="col-lg-6">
-                                                                    <?php if ($topic['content_type'] === 'video'): ?>
-                                                                        <span class="text-primary small">~10 mins</span>
-                                                                    <?php elseif ($topic['content_type'] === 'text' || $topic['content_type'] === 'link' || $topic['content_type'] === 'document'): ?>
-                                                                        <span class="text-primary small">~5 mins</span>
-                                                                    <?php endif; ?>
+                                                                    <div class="col-lg-6">
+                                                                        <?php if ($topic['content_type'] === 'video'): ?>
+                                                                            <span class="small"><?php echo ($topic['duration'] ?? '~10 mins'); ?></span>
+                                                                        <?php elseif ($topic['content_type'] === 'text' || $topic['content_type'] === 'link' || $topic['content_type'] === 'document'): ?>
+                                                                            <span class="small"><?php echo ($topic['duration'] ?? '~5 mins'); ?></span>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                    <!-- End Col -->
                                                                 </div>
-                                                                <!-- End Col -->
+                                                                <!-- End Row -->
                                                             </div>
-                                                            <!-- End Row -->
+                                                            <!-- End Col -->
                                                         </div>
-                                                        <!-- End Col -->
                                                     </div>
-                                                </div>
+                                                <?php else: ?>
+                                                    <!-- Available or previewable content -->
+                                                    <div class="list-group-item">
+                                                        <div class="row">
+                                                            <div class="col-8">
+                                                                <?php if ($is_enrolled || $is_instructor): ?>
+                                                                    <!-- For enrolled users, make the title a link -->
+                                                                    <a class="d-flex" href="lesson.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $topic['topic_id']; ?>">
+                                                                    <?php else: ?>
+                                                                        <!-- For non-enrolled users viewing previewable content -->
+                                                                        <a class="d-flex" href="#">
+                                                                        <?php endif; ?>
+                                                                        <div class="flex-shrink-0">
+                                                                            <?php if ($topic['content_type'] === 'video'): ?>
+                                                                                <i class="bi-play-circle-fill small"></i>
+                                                                            <?php elseif ($topic['content_type'] === 'text'): ?>
+                                                                                <i class="bi-file-text small"></i>
+                                                                            <?php elseif ($topic['content_type'] === 'link'): ?>
+                                                                                <i class="bi-link-45deg small"></i>
+                                                                            <?php elseif ($topic['content_type'] === 'document'): ?>
+                                                                                <i class="bi-file-earmark-text small"></i>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                        <div class="flex-grow-1 ms-2">
+                                                                            <span class="small"><?php echo htmlspecialchars($topic['content_title'] ?? $topic['title']); ?></span>
+                                                                        </div>
+                                                                        </a>
+                                                            </div>
+                                                            <!-- End Col -->
+
+                                                            <div class="col-4 text-end">
+                                                                <div class="row">
+                                                                    <div class="col-lg-6">
+                                                                        <?php if ($is_enrolled || $is_instructor): ?>
+                                                                            <a class="small" href="lesson.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $topic['topic_id']; ?>">View</a>
+                                                                        <?php elseif ($topic['is_previewable'] == 1): ?>
+                                                                            <a class="small preview-link" href="#previewModal" data-bs-toggle="modal" data-topic-id="<?php echo $topic['topic_id']; ?>">Preview</a>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                    <!-- End Col -->
+
+                                                                    <div class="col-lg-6">
+                                                                        <?php if ($topic['content_type'] === 'video'): ?>
+                                                                            <span class="text-primary small"><?php echo ($topic['duration'] ?? '~10 mins'); ?></span>
+                                                                        <?php elseif ($topic['content_type'] === 'text' || $topic['content_type'] === 'link' || $topic['content_type'] === 'document'): ?>
+                                                                            <span class="text-primary small"><?php echo ($topic['duration'] ?? '~5 mins'); ?></span>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                    <!-- End Col -->
+                                                                </div>
+                                                                <!-- End Row -->
+                                                            </div>
+                                                            <!-- End Col -->
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
                                                 <!-- End Item -->
                                             <?php endwhile; ?>
                                         </div>
@@ -683,7 +741,7 @@ function timeAgo($datetime) {
                         $paragraphs = explode("\n", $description);
                         $visible_paragraphs = array_slice($paragraphs, 0, 2);
                         $hidden_paragraphs = array_slice($paragraphs, 2);
-                        
+
                         foreach ($visible_paragraphs as $paragraph) {
                             if (trim($paragraph) !== '') {
                                 echo "<p>" . nl2br(htmlspecialchars($paragraph)) . "</p>";
@@ -701,7 +759,7 @@ function timeAgo($datetime) {
                                     }
                                 }
                                 ?>
-                                
+
                                 <?php if (count($requirements) > 0): ?>
                                     <h4>Requirements</h4>
                                     <ul class="text-body pl-6">
@@ -760,7 +818,7 @@ function timeAgo($datetime) {
                         </div>
 
                         <p><?php echo nl2br(htmlspecialchars($course['bio'] ?? 'No bio information available.')); ?></p>
-                        
+
                         <?php if (!empty($socials)): ?>
                             <div class="d-flex mt-4">
                                 <?php if (!empty($socials['facebook'])): ?>
@@ -768,25 +826,25 @@ function timeAgo($datetime) {
                                         <i class="bi-facebook"></i>
                                     </a>
                                 <?php endif; ?>
-                                
+
                                 <?php if (!empty($socials['twitter'])): ?>
                                     <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['twitter']); ?>" target="_blank">
                                         <i class="bi-twitter"></i>
                                     </a>
                                 <?php endif; ?>
-                                
+
                                 <?php if (!empty($socials['instagram'])): ?>
                                     <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['instagram']); ?>" target="_blank">
                                         <i class="bi-instagram"></i>
                                     </a>
                                 <?php endif; ?>
-                                
+
                                 <?php if (!empty($socials['linkedin'])): ?>
                                     <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['linkedin']); ?>" target="_blank">
                                         <i class="bi-linkedin"></i>
                                     </a>
                                 <?php endif; ?>
-                                
+
                                 <?php if (!empty($socials['github'])): ?>
                                     <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['github']); ?>" target="_blank">
                                         <i class="bi-github"></i>
@@ -827,7 +885,7 @@ function timeAgo($datetime) {
                     <div class="col-lg-8">
                         <!-- Ratings -->
                         <div class="d-grid gap-2">
-                            <?php 
+                            <?php
                             $total_reviews = $review_count;
                             if ($total_reviews > 0):
                                 $star_percentages = [
@@ -837,49 +895,59 @@ function timeAgo($datetime) {
                                     2 => isset($rating_dist['two_star']) ? ($rating_dist['two_star'] / $total_reviews * 100) : 0,
                                     1 => isset($rating_dist['one_star']) ? ($rating_dist['one_star'] / $total_reviews * 100) : 0
                                 ];
-                                
+
                                 // Display rating bars
                                 for ($stars = 5; $stars >= 1; $stars--):
                                     $star_count = 0;
-                                    switch($stars) {
-                                        case 5: $star_count = $rating_dist['five_star'] ?? 0; break;
-                                        case 4: $star_count = $rating_dist['four_star'] ?? 0; break;
-                                        case 3: $star_count = $rating_dist['three_star'] ?? 0; break;
-                                        case 2: $star_count = $rating_dist['two_star'] ?? 0; break;
-                                        case 1: $star_count = $rating_dist['one_star'] ?? 0; break;
+                                    switch ($stars) {
+                                        case 5:
+                                            $star_count = $rating_dist['five_star'] ?? 0;
+                                            break;
+                                        case 4:
+                                            $star_count = $rating_dist['four_star'] ?? 0;
+                                            break;
+                                        case 3:
+                                            $star_count = $rating_dist['three_star'] ?? 0;
+                                            break;
+                                        case 2:
+                                            $star_count = $rating_dist['two_star'] ?? 0;
+                                            break;
+                                        case 1:
+                                            $star_count = $rating_dist['one_star'] ?? 0;
+                                            break;
                                     }
                             ?>
-                                <div class="row align-items-center">
-                                    <div class="col-7">
-                                        <div class="progress">
-                                            <div class="progress-bar" role="progressbar" style="width: <?php echo round($star_percentages[$stars]); ?>%;" aria-valuenow="<?php echo round($star_percentages[$stars]); ?>" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
-                                    <!-- End Col -->
-
-                                    <div class="col-2 text-end">
-                                        <div class="d-flex">
-                                            <div class="d-flex gap-1 me-2">
-                                                <?php
-                                                for ($i = 1; $i <= 5; $i++) {
-                                                    if ($i <= $stars) {
-                                                        echo '<img src="../assets/svg/illustrations/star.svg" alt="Review rating" width="16">';
-                                                    } else {
-                                                        echo '<img src="../assets/svg/illustrations/star-muted.svg" alt="Review rating" width="16">';
-                                                    }
-                                                }
-                                                ?>
+                                    <div class="row align-items-center">
+                                        <div class="col-7">
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar" style="width: <?php echo round($star_percentages[$stars]); ?>%;" aria-valuenow="<?php echo round($star_percentages[$stars]); ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                             </div>
-                                            <span><?php echo $star_count; ?></span>
                                         </div>
+                                        <!-- End Col -->
+
+                                        <div class="col-2 text-end">
+                                            <div class="d-flex">
+                                                <div class="d-flex gap-1 me-2">
+                                                    <?php
+                                                    for ($i = 1; $i <= 5; $i++) {
+                                                        if ($i <= $stars) {
+                                                            echo '<img src="../assets/svg/illustrations/star.svg" alt="Review rating" width="16">';
+                                                        } else {
+                                                            echo '<img src="../assets/svg/illustrations/star-muted.svg" alt="Review rating" width="16">';
+                                                        }
+                                                    }
+                                                    ?>
+                                                </div>
+                                                <span><?php echo $star_count; ?></span>
+                                            </div>
+                                        </div>
+                                        <!-- End Col -->
                                     </div>
-                                    <!-- End Col -->
-                                </div>
-                                <!-- End Row -->
-                            <?php 
+                                    <!-- End Row -->
+                                <?php
                                 endfor;
                             else:
-                            ?>
+                                ?>
                                 <div class="text-center text-muted">
                                     <p>No ratings yet. Be the first to rate this course!</p>
                                 </div>
@@ -990,19 +1058,25 @@ function timeAgo($datetime) {
                 <h5 class="modal-title" id="previewModalLabel">Course Preview</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center py-5">
-                <img src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="<?php echo htmlspecialchars($course['title']); ?>" class="img-fluid mb-4" style="max-height: 300px;">
-                <h4 class="mb-3"><?php echo htmlspecialchars($course['title']); ?></h4>
-                <p class="mb-4"><?php echo htmlspecialchars($course['short_description']); ?></p>
-                
+            <div class="modal-body" id="previewModalContent">
+                <!-- Loading state -->
+                <div class="text-center py-5" id="previewLoading">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mb-0">Loading preview content...</p>
+                </div>
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
                 <?php if ($course['price'] > 0): ?>
-                    <div class="d-grid gap-2 col-6 mx-auto">
-                        <p class="h3 mb-3">$<?php echo number_format($course['price'], 2); ?></p>
+                    <div class="d-flex align-items-center justify-content-between w-100">
+                        <p class="h5 mb-0">$<?php echo number_format($course['price'], 2); ?></p>
                         <a href="checkout.php?course_id=<?php echo $course_id; ?>" class="btn btn-primary btn-lg">Buy Now</a>
                     </div>
                 <?php else: ?>
-                    <div class="d-grid gap-2 col-6 mx-auto">
-                        <p class="h3 mb-3 text-success">Free</p>
+                    <div class="d-flex align-items-center justify-content-between w-100">
+                        <p class="h5 mb-0 text-success">Free</p>
                         <a href="enroll.php?course_id=<?php echo $course_id; ?>" class="btn btn-success btn-lg">Enroll Now</a>
                     </div>
                 <?php endif; ?>
@@ -1011,4 +1085,55 @@ function timeAgo($datetime) {
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if jQuery is loaded
+    if (typeof jQuery === 'undefined') {
+        console.error('jQuery is required for the preview functionality');
+        return;
+    }
+
+    // Initialize preview links
+    $('.preview-link').on('click', function(e) {
+        e.preventDefault();
+        
+        var topicId = $(this).data('topic-id');
+        var previewModal = $('#previewModal');
+        var previewContent = $('#previewModalContent');
+        var loadingEl = $('#previewLoading');
+        
+        // Show loading state
+        previewContent.html(loadingEl.clone().show());
+        
+        // Load preview content
+        $.ajax({
+            url: '../ajax/get-preview-content.php',
+            type: 'GET',
+            data: {
+                course_id: <?php echo $course_id; ?>,
+                topic_id: topicId
+            },
+            success: function(response) {
+                // Small timeout for better UX
+                setTimeout(function() {
+                    if (response.trim() === '') {
+                        previewContent.html('<div class="alert alert-info">No preview content available for this lesson.</div>');
+                    } else {
+                        previewContent.html(response);
+                    }
+                }, 400);
+            },
+            error: function(xhr, status, error) {
+                previewContent.html(
+                    '<div class="alert alert-danger">' +
+                    '<h5 class="alert-heading">Error loading preview</h5>' +
+                    '<p>We couldn\'t load the preview content. Please try again later.</p>' +
+                    '<p class="mb-0"><small>Technical details: ' + status + ' - ' + error + '</small></p>' +
+                    '</div>'
+                );
+            }
+        });
+    });
+});
+</script>
 <?php include '../includes/student-footer.php'; ?>

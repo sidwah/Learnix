@@ -44,7 +44,7 @@ if ($result->num_rows > 0) {
 
 // Close statement
 $stmt->close();
-$conn->close();
+// $conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="">
@@ -186,65 +186,120 @@ $conn->close();
 
 
                         <!-- My Courses -->
-                        <li class="hs-has-mega-menu nav-item" data-hs-mega-menu-item-options='{
-                  "desktop": {
-                    "maxWidth": "20rem"
+                        <?php
+// Fetch enrolled courses for the current user
+$user_id = $_SESSION['user_id'];
+
+// Query to fetch the top 3 most recently enrolled courses
+$enrolled_courses_query = "
+    SELECT c.course_id, c.title, c.thumbnail, i.first_name, i.last_name, 
+           e.completion_percentage, e.enrolled_at, e.last_accessed
+    FROM enrollments e
+    JOIN courses c ON e.course_id = c.course_id
+    JOIN instructors ins ON c.instructor_id = ins.instructor_id
+    JOIN users i ON ins.user_id = i.user_id
+    WHERE e.user_id = ?
+    ORDER BY e.enrolled_at DESC
+    LIMIT 3
+";
+
+$stmt = $conn->prepare($enrolled_courses_query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$enrolled_courses_result = $stmt->get_result();
+
+// Count total enrolled courses (for showing the "See all" text)
+$total_courses_query = "SELECT COUNT(*) as total FROM enrollments WHERE user_id = ?";
+$total_stmt = $conn->prepare($total_courses_query);
+$total_stmt->bind_param("i", $user_id);
+$total_stmt->execute();
+$total_result = $total_stmt->get_result();
+$total_row = $total_result->fetch_assoc();
+$total_courses = $total_row['total'];
+
+// Store courses in an array
+$enrolled_courses = [];
+while ($course = $enrolled_courses_result->fetch_assoc()) {
+    $enrolled_courses[] = $course;
+}
+?>
+
+<!-- My Courses Dropdown HTML -->
+<li class="hs-has-mega-menu nav-item" data-hs-mega-menu-item-options='{
+      "desktop": {
+        "maxWidth": "22rem"
+      }
+    }'>
+  <a id="myCoursesMegaMenu" class="hs-mega-menu-invoker nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">My Courses</a>
+
+  <!-- Mega Menu -->
+  <div class="hs-mega-menu hs-position-right dropdown-menu" aria-labelledby="myCoursesMegaMenu" style="min-width: 32rem;">
+    
+    <?php if (count($enrolled_courses) > 0): ?>
+      <!-- Enrolled Courses -->
+      <?php foreach ($enrolled_courses as $key => $course): ?>
+        <!-- Course -->
+        <a class="navbar-dropdown-menu-media-link" href="course-details.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
+          <div class="d-flex">
+            <div class="flex-shrink-0">
+              <img class="avatar" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="Course Thumbnail">
+            </div>
+
+            <div class="flex-grow-1 ms-3">
+              <div class="mb-3">
+                <span class="navbar-dropdown-menu-media-title"><?php echo htmlspecialchars($course['title']); ?></span>
+                <p class="navbar-dropdown-menu-media-desc">By <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?></p>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="card-subtitle text-body">
+                  <?php 
+                  if ($course['completion_percentage'] >= 100) {
+                      echo 'Completed';
+                  } else {
+                      echo 'In Progress';
                   }
-                }'>
-                            <a id="myCoursesMegaMenu" class="hs-mega-menu-invoker nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">My Courses</a>
+                  ?>
+                </span>
+                <small class="text-dark fw-semi-bold"><?php echo htmlspecialchars(number_format($course['completion_percentage'], 0)); ?>%</small>
+              </div>
+              <div class="progress">
+                <div class="progress-bar <?php echo $course['completion_percentage'] >= 100 ? 'bg-success' : ''; ?>" 
+                     role="progressbar" 
+                     style="width: <?php echo htmlspecialchars($course['completion_percentage']); ?>%;" 
+                     aria-valuenow="<?php echo htmlspecialchars($course['completion_percentage']); ?>" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100"></div>
+              </div>
+            </div>
+          </div>
+        </a>
+        <!-- End Course -->
+        
+        <?php if ($key < count($enrolled_courses) - 1): ?>
+          <div class="dropdown-divider my-3"></div>
+        <?php endif; ?>
+      <?php endforeach; ?>
+    
+      <?php if ($total_courses > 3): ?>
+        <!-- See All Courses Link -->
+        <div class="dropdown-divider my-3"></div>
+        <a class="dropdown-item text-center" href="my-courses.php">
+          <span>See All Courses (<?php echo htmlspecialchars($total_courses); ?>)</span>
+          <i class="bi-chevron-right small ms-1"></i>
+        </a>
+      <?php endif; ?>
 
-                            <!-- Mega Menu -->
-                            <div class="hs-mega-menu hs-position-right dropdown-menu" aria-labelledby="myCoursesMegaMenu" style="min-width: 32rem;">
-                                <!-- Course -->
-                                <a class="navbar-dropdown-menu-media-link" href="#">
-                                    <div class="d-flex">
-                                        <div class="flex-shrink-0">
-                                            <img class="avatar" src="../assets/svg/components/card-16.svg" alt="Image Description">
-                                        </div>
-
-                                        <div class="flex-grow-1 ms-3">
-                                            <div class="mb-3">
-                                                <span class="navbar-dropdown-menu-media-title">Java programming masterclass for software developers</span>
-                                                <p class="navbar-dropdown-menu-media-desc">By Emily Milda</p>
-                                            </div>
-                                            <div class="d-flex justify-content-between">
-                                                <span class="card-subtitle text-body">Completed</span>
-                                                <small class="text-dark fw-semi-bold">25%</small>
-                                            </div>
-                                            <div class="progress">
-                                                <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </a>
-                                <!-- End Course -->
-
-                                <!-- Course -->
-                                <a class="navbar-dropdown-menu-media-link" href="#">
-                                    <div class="d-flex">
-                                        <div class="flex-shrink-0">
-                                            <img class="avatar" src="../assets/svg/components/card-5.svg" alt="Image Description">
-                                        </div>
-
-                                        <div class="flex-grow-1 ms-3">
-                                            <div class="mb-3">
-                                                <span class="navbar-dropdown-menu-media-title">The Ultimate MySQL Bootcamp: Go from SQL Beginner</span>
-                                                <p class="navbar-dropdown-menu-media-desc">By Nataly Gaga and 2 others</p>
-                                            </div>
-                                            <div class="d-flex justify-content-between">
-                                                <span class="card-subtitle text-body">Completed</span>
-                                                <small class="text-dark fw-semi-bold">100%</small>
-                                            </div>
-                                            <div class="progress">
-                                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </a>
-                                <!-- End Course -->
-                            </div>
-                            <!-- End Mega Menu -->
-                        </li>
+    <?php else: ?>
+      <!-- No courses message -->
+      <div class="text-center p-4">
+        <p class="mb-0">You haven't enrolled in any courses yet.</p>
+        <a href="courses.php" class="btn btn-sm btn-primary mt-3">Browse Courses</a>
+      </div>
+    <?php endif; ?>
+    
+  </div>
+  <!-- End Mega Menu -->
+</li>
                         <!-- End My Courses -->
                     </ul>
                 </div>
