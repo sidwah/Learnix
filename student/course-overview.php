@@ -377,7 +377,7 @@ function timeAgo($datetime) {
                                     <?php if ($is_enrolled): ?>
                                         <!-- Already enrolled -->
                                         <div class="d-grid mb-2">
-                                            <a class="btn btn-success btn-transition" href="learn.php?course_id=<?php echo $course_id; ?>">
+                                            <a class="btn btn-success btn-transition" href="lesson.php?course_id=<?php echo $course_id; ?>">
                                                 <i class="bi-play-circle me-1"></i> Continue Learning
                                             </a>
                                         </div>
@@ -625,7 +625,7 @@ function timeAgo($datetime) {
                                                             <div class="row">
                                                                 <div class="col-lg-6">
                                                                     <?php if ($is_enrolled || $is_instructor): ?>
-                                                                        <a class="small" href="learn.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $topic['topic_id']; ?>">View</a>
+                                                                        <a class="small" href="lesson.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $topic['topic_id']; ?>">View</a>
                                                                     <?php else: ?>
                                                                         <a class="small" href="#previewModal" data-bs-toggle="modal">Preview</a>
                                                                     <?php endif; ?>
