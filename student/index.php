@@ -8,7 +8,17 @@
         <div class="col-lg-8">
           <!-- Heading -->
           <div class="w-lg-75 text-center text-lg-start mb-5 mb-lg-7">
-            <h1 class="display-4">Discover your next<br><span class="text-primary text-highlight-warning">learning</span> adventure</h1>
+            <h1 class="display-4">Elevate your skills through world-class
+              <span class="text-primary text-highlight-warning">
+                <span class="js-typedjs" data-hs-typed-options='{
+        "strings": ["education", "training", "mentorship", "development"],
+        "typeSpeed": 90,
+        "loop": true,
+        "backSpeed": 30,
+        "backDelay": 2500
+      }'></span>
+              </span>
+            </h1>
           </div>
           <!-- End Heading -->
           <form>
