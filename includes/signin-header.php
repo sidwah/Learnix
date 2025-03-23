@@ -9,17 +9,11 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
     // Redirect unauthorized users to a custom unauthorized access page or login page
     header('Location: ../pages/');
-
-
     exit;
 }
 
-
-?>
-<?php
-
 // Database connection
-require '../backend/config.php'; // Ensure this file contains the connection to your database
+// Already included from config.php above
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -45,6 +39,40 @@ if ($result->num_rows > 0) {
 // Close statement
 $stmt->close();
 // $conn->close();
+
+// Fetch enrolled courses for the current user
+// Query to fetch the top 3 most recently enrolled courses
+$enrolled_courses_query = "
+    SELECT c.course_id, c.title, c.thumbnail, i.first_name, i.last_name, 
+           e.completion_percentage, e.enrolled_at, e.last_accessed
+    FROM enrollments e
+    JOIN courses c ON e.course_id = c.course_id
+    JOIN instructors ins ON c.instructor_id = ins.instructor_id
+    JOIN users i ON ins.user_id = i.user_id
+    WHERE e.user_id = ?
+    ORDER BY e.enrolled_at DESC
+    LIMIT 3
+";
+
+$stmt = $conn->prepare($enrolled_courses_query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$enrolled_courses_result = $stmt->get_result();
+
+// Count total enrolled courses (for showing the "See all" text)
+$total_courses_query = "SELECT COUNT(*) as total FROM enrollments WHERE user_id = ?";
+$total_stmt = $conn->prepare($total_courses_query);
+$total_stmt->bind_param("i", $user_id);
+$total_stmt->execute();
+$total_result = $total_stmt->get_result();
+$total_row = $total_result->fetch_assoc();
+$total_courses = $total_row['total'];
+
+// Store courses in an array
+$enrolled_courses = [];
+while ($course = $enrolled_courses_result->fetch_assoc()) {
+    $enrolled_courses[] = $course;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="">
@@ -52,16 +80,13 @@ $stmt->close();
 <head>
     <!-- Required Meta Tags Always Come First -->
     <meta charset="utf-8" />
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
     <!-- Title -->
     <title>Learnix | Learn Better, Grow Better</title>
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="../favicon.ico" />
-
 
     <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap" rel="stylesheet">
@@ -72,12 +97,11 @@ $stmt->close();
 
     <!-- CSS Learnix Template -->
     <link rel="stylesheet" href="../assets/css/theme.minc619.css?v=1.0">
-
 </head>
 
 <body>
     <!-- ========== HEADER ========== -->
-    <header id="header" class="navbar navbar-expand-lg navbar-end navbar-absolute-top navbar-light navbar-show-hide" data-hs-header-options='{
+    <header id="header" class="navbar navbar-expand-lg navbar-end navbar-light navbar-show-hide" data-hs-header-options='{
             "fixMoment": 1000,
             "fixEffect": "slide"
           }'>
@@ -85,18 +109,38 @@ $stmt->close();
         <div class="container">
             <nav class="js-mega-menu navbar-nav-wrap">
                 <!-- Default Logo -->
-                <a class="navbar-brand" href="index.php
-" aria-label="Learnix">
+                <a class="navbar-brand" href="index.php" aria-label="Learnix">
                     <img class="navbar-brand-logo" src="../assets/svg/logos/logo.svg" alt="Logo">
                 </a>
                 <!-- End Default Logo -->
 
                 <!-- Secondary Content -->
                 <div class="navbar-nav-wrap-secondary-content">
+                    <!-- Search - Visible only on mobile -->
+                    <div class="dropdown dropdown-course-search d-lg-none d-inline-block">
+                        <a class="btn btn-ghost-secondary btn-sm btn-icon" href="#" id="navbarCourseSearchDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi-search"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-card" aria-labelledby="navbarCourseSearchDropdown">
+                            <!-- Card -->
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <form class="input-group input-group-merge">
+                                        <input type="text" class="form-control" placeholder="What do you want to learn?" aria-label="What do you want to learn?">
+                                        <div class="input-group-append input-group-text">
+                                            <i class="bi-search"></i>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <!-- End Card -->
+                        </div>
+                    </div>
+                    <!-- End Search -->
 
                     <!-- Account -->
                     <div class="dropdown">
-                        <a href="#" id="navbarShoppingCartDropdown active" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-dropdown-animation>
+                        <a href="#" id="navbarShoppingCartDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-dropdown-animation>
                             <img class="avatar avatar-xs avatar-circle" src="../uploads/profile/<?php echo $row['profile_pic']; ?>" alt="Profile">
                         </a>
 
@@ -174,132 +218,114 @@ $stmt->close();
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link " href="index.php
-">Home</a>
+                            <a class="nav-link" href="index.php">Home</a>
                         </li>
 
                         <!-- Courses -->
                         <li class="hs-has-sub-menu nav-item">
-                            <a class="nav-link" href="courses.php"><i class="bi-journals me-2"></i> Courses</a>
+                            <a id="coursesMegaMenu" class="hs-mega-menu-invoker nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi-journals me-2"></i> Courses</a>
+                            
+                            <!-- Mega Menu -->
+                            <div class="hs-sub-menu dropdown-menu" aria-labelledby="coursesMegaMenu" style="min-width: 17rem;">
+                                <!-- Categories listed here - can be added from database -->
+                                <a class="dropdown-item" href="courses.php"><i class="bi-grid dropdown-item-icon"></i> All Categories</a>
+                                <a class="dropdown-item" href="courses.php?category=technology"><i class="bi-code-slash dropdown-item-icon"></i> Technology</a>
+                                <a class="dropdown-item" href="courses.php?category=business"><i class="bi-briefcase dropdown-item-icon"></i> Business</a>
+                                <a class="dropdown-item" href="courses.php?category=design"><i class="bi-bezier2 dropdown-item-icon"></i> Design</a>
+                                <a class="dropdown-item" href="courses.php?category=marketing"><i class="bi-graph-up dropdown-item-icon"></i> Marketing</a>
+                                <a class="dropdown-item" href="courses.php?category=music"><i class="bi-music-note-list dropdown-item-icon"></i> Music</a>
+                            </div>
+                            <!-- End Mega Menu -->
                         </li>
                         <!-- End Courses -->
 
+                        <!-- Search Form - visible only on desktop -->
+                        <li class="nav-item flex-grow-1 d-none d-lg-inline-block">
+                            <form class="input-group input-group-merge">
+                                <div class="input-group-prepend input-group-text">
+                                    <i class="bi-search"></i>
+                                </div>
+                                <input type="text" class="form-control" placeholder="What do you want to learn?" aria-label="What do you want to learn?">
+                            </form>
+                        </li>
+                        <!-- End Search Form -->
 
                         <!-- My Courses -->
-                        <?php
-// Fetch enrolled courses for the current user
-$user_id = $_SESSION['user_id'];
+                        <li class="hs-has-mega-menu nav-item" data-hs-mega-menu-item-options='{
+                            "desktop": {
+                                "maxWidth": "22rem"
+                            }
+                        }'>
+                            <a id="myCoursesMegaMenu" class="hs-mega-menu-invoker nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">My Courses</a>
 
-// Query to fetch the top 3 most recently enrolled courses
-$enrolled_courses_query = "
-    SELECT c.course_id, c.title, c.thumbnail, i.first_name, i.last_name, 
-           e.completion_percentage, e.enrolled_at, e.last_accessed
-    FROM enrollments e
-    JOIN courses c ON e.course_id = c.course_id
-    JOIN instructors ins ON c.instructor_id = ins.instructor_id
-    JOIN users i ON ins.user_id = i.user_id
-    WHERE e.user_id = ?
-    ORDER BY e.enrolled_at DESC
-    LIMIT 3
-";
+                            <!-- Mega Menu -->
+                            <div class="hs-mega-menu hs-position-right dropdown-menu" aria-labelledby="myCoursesMegaMenu" style="min-width: 22rem;">
+                                
+                                <?php if (count($enrolled_courses) > 0): ?>
+                                    <!-- Enrolled Courses -->
+                                    <?php foreach ($enrolled_courses as $key => $course): ?>
+                                        <!-- Course -->
+                                        <a class="navbar-dropdown-menu-media-link" href="course-details.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0">
+                                                    <img class="avatar" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="Course Thumbnail">
+                                                </div>
 
-$stmt = $conn->prepare($enrolled_courses_query);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$enrolled_courses_result = $stmt->get_result();
+                                                <div class="flex-grow-1 ms-3">
+                                                    <div class="mb-3">
+                                                        <span class="navbar-dropdown-menu-media-title"><?php echo htmlspecialchars($course['title']); ?></span>
+                                                        <p class="navbar-dropdown-menu-media-desc">By <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?></p>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between">
+                                                        <span class="card-subtitle text-body">
+                                                            <?php 
+                                                            if ($course['completion_percentage'] >= 100) {
+                                                                echo 'Completed';
+                                                            } else {
+                                                                echo 'In Progress';
+                                                            }
+                                                            ?>
+                                                        </span>
+                                                        <small class="text-dark fw-semi-bold"><?php echo htmlspecialchars(number_format($course['completion_percentage'], 0)); ?>%</small>
+                                                    </div>
+                                                    <div class="progress">
+                                                        <div class="progress-bar <?php echo $course['completion_percentage'] >= 100 ? 'bg-success' : ''; ?>" 
+                                                            role="progressbar" 
+                                                            style="width: <?php echo htmlspecialchars($course['completion_percentage']); ?>%;" 
+                                                            aria-valuenow="<?php echo htmlspecialchars($course['completion_percentage']); ?>" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="100"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <!-- End Course -->
+                                        
+                                        <?php if ($key < count($enrolled_courses) - 1): ?>
+                                            <div class="dropdown-divider my-3"></div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                
+                                    <?php if ($total_courses > 3): ?>
+                                        <!-- See All Courses Link -->
+                                        <div class="dropdown-divider my-3"></div>
+                                        <a class="dropdown-item text-center" href="my-courses.php">
+                                            <span>See All Courses (<?php echo htmlspecialchars($total_courses); ?>)</span>
+                                            <i class="bi-chevron-right small ms-1"></i>
+                                        </a>
+                                    <?php endif; ?>
 
-// Count total enrolled courses (for showing the "See all" text)
-$total_courses_query = "SELECT COUNT(*) as total FROM enrollments WHERE user_id = ?";
-$total_stmt = $conn->prepare($total_courses_query);
-$total_stmt->bind_param("i", $user_id);
-$total_stmt->execute();
-$total_result = $total_stmt->get_result();
-$total_row = $total_result->fetch_assoc();
-$total_courses = $total_row['total'];
-
-// Store courses in an array
-$enrolled_courses = [];
-while ($course = $enrolled_courses_result->fetch_assoc()) {
-    $enrolled_courses[] = $course;
-}
-?>
-
-<!-- My Courses Dropdown HTML -->
-<li class="hs-has-mega-menu nav-item" data-hs-mega-menu-item-options='{
-      "desktop": {
-        "maxWidth": "22rem"
-      }
-    }'>
-  <a id="myCoursesMegaMenu" class="hs-mega-menu-invoker nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">My Courses</a>
-
-  <!-- Mega Menu -->
-  <div class="hs-mega-menu hs-position-right dropdown-menu" aria-labelledby="myCoursesMegaMenu" style="min-width: 32rem;">
-    
-    <?php if (count($enrolled_courses) > 0): ?>
-      <!-- Enrolled Courses -->
-      <?php foreach ($enrolled_courses as $key => $course): ?>
-        <!-- Course -->
-        <a class="navbar-dropdown-menu-media-link" href="course-details.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
-          <div class="d-flex">
-            <div class="flex-shrink-0">
-              <img class="avatar" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="Course Thumbnail">
-            </div>
-
-            <div class="flex-grow-1 ms-3">
-              <div class="mb-3">
-                <span class="navbar-dropdown-menu-media-title"><?php echo htmlspecialchars($course['title']); ?></span>
-                <p class="navbar-dropdown-menu-media-desc">By <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?></p>
-              </div>
-              <div class="d-flex justify-content-between">
-                <span class="card-subtitle text-body">
-                  <?php 
-                  if ($course['completion_percentage'] >= 100) {
-                      echo 'Completed';
-                  } else {
-                      echo 'In Progress';
-                  }
-                  ?>
-                </span>
-                <small class="text-dark fw-semi-bold"><?php echo htmlspecialchars(number_format($course['completion_percentage'], 0)); ?>%</small>
-              </div>
-              <div class="progress">
-                <div class="progress-bar <?php echo $course['completion_percentage'] >= 100 ? 'bg-success' : ''; ?>" 
-                     role="progressbar" 
-                     style="width: <?php echo htmlspecialchars($course['completion_percentage']); ?>%;" 
-                     aria-valuenow="<?php echo htmlspecialchars($course['completion_percentage']); ?>" 
-                     aria-valuemin="0" 
-                     aria-valuemax="100"></div>
-              </div>
-            </div>
-          </div>
-        </a>
-        <!-- End Course -->
-        
-        <?php if ($key < count($enrolled_courses) - 1): ?>
-          <div class="dropdown-divider my-3"></div>
-        <?php endif; ?>
-      <?php endforeach; ?>
-    
-      <?php if ($total_courses > 3): ?>
-        <!-- See All Courses Link -->
-        <div class="dropdown-divider my-3"></div>
-        <a class="dropdown-item text-center" href="my-courses.php">
-          <span>See All Courses (<?php echo htmlspecialchars($total_courses); ?>)</span>
-          <i class="bi-chevron-right small ms-1"></i>
-        </a>
-      <?php endif; ?>
-
-    <?php else: ?>
-      <!-- No courses message -->
-      <div class="text-center p-4">
-        <p class="mb-0">You haven't enrolled in any courses yet.</p>
-        <a href="courses.php" class="btn btn-sm btn-primary mt-3">Browse Courses</a>
-      </div>
-    <?php endif; ?>
-    
-  </div>
-  <!-- End Mega Menu -->
-</li>
+                                <?php else: ?>
+                                    <!-- No courses message -->
+                                    <div class="text-center p-4">
+                                        <p class="mb-0">You haven't enrolled in any courses yet.</p>
+                                        <a href="courses.php" class="btn btn-sm btn-primary mt-3">Browse Courses</a>
+                                    </div>
+                                <?php endif; ?>
+                                
+                            </div>
+                            <!-- End Mega Menu -->
+                        </li>
                         <!-- End My Courses -->
                     </ul>
                 </div>
@@ -307,5 +333,4 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
             </nav>
         </div>
     </header>
-
     <!-- ========== END HEADER ========== -->

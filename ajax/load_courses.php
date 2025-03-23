@@ -1,4 +1,5 @@
 <?php
+// load_courses.php
 // Include database connection
 require_once('../backend/config.php');
 
@@ -12,24 +13,27 @@ $level_filter = isset($_POST['level']) ? $_POST['level'] : 'all';
 $page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
 $search = isset($_POST['search']) ? $_POST['search'] : '';
 $subcategories = isset($_POST['subcategories']) ? json_decode($_POST['subcategories'], true) : [];
+$certificate = isset($_POST['certificate']) ? json_decode($_POST['certificate'], true) : [];
 
-// Items per page and offset - changed to 6
-$items_per_page = 6;
+// Custom price range filter
+$price_min = isset($_POST['price_min']) ? (float)$_POST['price_min'] : 0;
+$price_max = isset($_POST['price_max']) ? (float)$_POST['price_max'] : 1000;
+
+// Items per page
+$items_per_page = 9; // Always show 9 items in grid view (3x3)
 $offset = ($page - 1) * $items_per_page;
-
-// Rest of the file remains the same...
 
 // Build the query
 $query = "SELECT c.*, i.user_id, u.first_name, u.last_name, u.profile_pic, 
-          COUNT(DISTINCT cs.section_id) as total_sections,
+          (SELECT COUNT(*) FROM course_sections WHERE course_id = c.course_id) as section_count,
+          (SELECT COUNT(*) FROM section_quizzes sq JOIN course_sections cs ON sq.section_id = cs.section_id WHERE cs.course_id = c.course_id) as quiz_count,
           AVG(cr.rating) as avg_rating,
-          COUNT(DISTINCT cr.rating_id) as total_ratings,
+          COUNT(DISTINCT cr.rating_id) as rating_count,
           cat.name as category_name,
           sub.name as subcategory_name
           FROM courses c
           LEFT JOIN instructors i ON c.instructor_id = i.instructor_id
           LEFT JOIN users u ON i.user_id = u.user_id
-          LEFT JOIN course_sections cs ON c.course_id = cs.course_id
           LEFT JOIN course_ratings cr ON c.course_id = cr.course_id
           LEFT JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
           LEFT JOIN categories cat ON sub.category_id = cat.category_id
@@ -42,8 +46,19 @@ if ($price_filter == 'free') {
     $query .= " AND c.price > 0";
 }
 
+// Add price range filter
+if ($price_min > 0 || $price_max < 1000) {
+    $query .= " AND c.price BETWEEN $price_min AND $price_max";
+}
+
 if ($level_filter != 'all') {
     $query .= " AND c.course_level = '$level_filter'";
+}
+
+// Add certificate filter
+if (!empty($certificate)) {
+    $certificate_values = implode(',', array_map('intval', $certificate));
+    $query .= " AND c.certificate_enabled IN ($certificate_values)";
 }
 
 // Add search filter
@@ -65,17 +80,17 @@ $query .= " GROUP BY c.course_id";
 // Add sorting
 switch ($sort) {
     case 'highest_rated':
-        $query .= " ORDER BY avg_rating DESC";
+        $query .= " ORDER BY avg_rating DESC, c.created_at DESC";
         break;
     case 'lowest_price':
-        $query .= " ORDER BY c.price ASC";
+        $query .= " ORDER BY c.price ASC, c.created_at DESC";
         break;
     case 'highest_price':
-        $query .= " ORDER BY c.price DESC";
+        $query .= " ORDER BY c.price DESC, c.created_at DESC";
         break;
     case 'newest':
     default:
-        $query .= " ORDER BY c.updated_at DESC";
+        $query .= " ORDER BY c.created_at DESC";
         break;
 }
 
@@ -96,177 +111,151 @@ $html = '';
 
 if ($result && $result->num_rows > 0) {
     while ($course = $result->fetch_assoc()) {
-        $html .= '<a class="card card-flush" href="course-overview.php?id=' . $course['course_id'] . '">
-                <div class="row align-items-md-center">
-                    <div class="col-sm-5 mb-3 mb-sm-0">
-                        <!-- Card Pinned -->
-                        <div class="card-pinned">';
+        // Determine badge based on how recent the course is
+        $badgeHtml = '';
+        $created_date = new DateTime($course['created_at']);
+        $now = new DateTime();
+        $days_diff = $now->diff($created_date)->days;
         
-        // Course thumbnail
-        $thumbnailPath = "../uploads/thumbnails/" . $course['thumbnail'];
-        if (file_exists($thumbnailPath) && !empty($course['thumbnail'])) {
-            $html .= '<img class="card-img" src="' . $thumbnailPath . '" alt="' . htmlspecialchars($course['title']) . '" style="height: 200px; object-fit: cover;">';
+        if ($days_diff <= 7) {
+            $badgeHtml = '<span class="badge bg-success">New</span>';
+        } else if ($days_diff <= 30) {
+            $badgeHtml = '<span class="badge bg-primary">New</span>';
+        }
+        
+        // Format price
+        $price = (float)$course['price'];
+        if ($price > 0) {
+            $priceHtml = '<h3 class="card-title text-primary">$' . number_format($price, 2) . '</h3>';
         } else {
-            $html .= '<img class="card-img" src="../assets/svg/components/card-12.svg" alt="Image Description" style="height: 200px; object-fit: cover;">';
+            $priceHtml = '<h3 class="card-title text-success">Free</h3>';
         }
         
-        // Bestseller badge
-        if ($course['avg_rating'] > 4.5) {
-            $html .= '<div class="card-pinned-top-start">
-                        <small class="badge bg-success">Bestseller</small>
-                      </div>';
+        // Format the HTML in the same style as the real estate listings
+        $html .= '
+        <div class="col mb-3">
+            <!-- Card -->
+            <div class="card card-flush shadow-none h-100" style="height: 350px;">
+                <a class="card-pinned" href="course-overview.php?id=' . $course['course_id'] . '">
+                    <img class="card-img" src="../uploads/thumbnails/' . htmlspecialchars($course['thumbnail']) . '" alt="' . htmlspecialchars($course['title']) . '" style="height: 200px; object-fit: cover;">
+        ';
+        
+        // Add badge if needed
+        if (!empty($badgeHtml)) {
+            $html .= '
+                    <div class="card-pinned-top-start">
+                        ' . $badgeHtml . '
+                    </div>
+            ';
         }
         
-        // Rating stars
-        $html .= '<div class="card-pinned-bottom-start">
-                    <div class="d-flex align-items-center flex-wrap">
-                        <div class="d-flex gap-1">';
-        
-        $rating = round($course['avg_rating'] ?? 0, 1);
-        $fullStars = floor($rating);
-        $halfStar = $rating - $fullStars >= 0.5;
-        
-        for ($i = 1; $i <= 5; $i++) {
-            if ($i <= $fullStars) {
-                $html .= '<i class="bi-star-fill text-warning"></i>';
-            } elseif ($i == $fullStars + 1 && $halfStar) {
-                $html .= '<i class="bi-star-half text-warning"></i>';
-            } else {
-                $html .= '<i class="bi-star text-warning"></i>';
-            }
-        }
-        
-        $html .= '</div>
-                <div class="ms-1">
-                    <span class="fw-semi-bold text-white small me-1">' . number_format($rating, 1) . '</span>
-                    <span class="text-white-70 small">(' . ($course['total_ratings'] > 0 ? number_format($course['total_ratings']) . '+ reviews' : 'No reviews yet') . ')</span>
-                </div>
-            </div>
-        </div>';
-        
-        $html .= '</div>
-                </div>
-                <!-- End Col -->
+        $html .= '
+                    
+                </a>
 
-                <div class="col-sm-7">
-                    <div class="row mb-3">
+                <!-- Body -->
+                <a class="card-body" href="course-overview.php?id=' . $course['course_id'] . '" style="height: 150px; overflow: hidden;">
+                    <span class="card-subtitle text-body">' . htmlspecialchars($course['category_name'] ?? 'Category') . '</span>
+
+                    <div class="row align-items-center mb-2">
                         <div class="col">
-                            <small class="card-subtitle text-body">' . htmlspecialchars($course['category_name'] ?? 'Uncategorized') . ' › ' . htmlspecialchars($course['subcategory_name'] ?? '') . '</small>
-                            <h3 class="card-title text-inherit">' . htmlspecialchars($course['title']) . '</h3>
+                            <h4 class="card-title text-inherit" style="font-size: 1rem; height: 44px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">' . htmlspecialchars($course['title']) . '</h4>
                         </div>
                         <!-- End Col -->
 
                         <div class="col-auto">
-                            <div class="text-end">';
-        
-        if ($course['price'] > 0) {
-            $html .= '<h5 class="card-title text-primary">$' . number_format($course['price'], 2) . '</h5>';
-        } else {
-            $html .= '<h5 class="card-title text-success">Free</h5>';
-        }
-        
-        $html .= '</div>
-                </div>
-                <!-- End Col -->
+                            ' . $priceHtml . '
+                        </div>
+                        <!-- End Col -->
+                    </div>
+                    <!-- End Row -->
+
+                    <ul class="list-inline list-separator text-body small fs-xs mt-auto" style="font-size: 0.75rem; position: absolute; bottom: 15px; left: 20px; right: 20px;">
+                        <li class="list-inline-item">
+                            <i class="bi-collection text-muted me-1"></i>
+                            ' . intval($course['section_count']) . ' sections
+                        </li>
+                        <li class="list-inline-item">
+                            <i class="bi-question-circle text-muted me-1"></i>
+                            ' . intval($course['quiz_count']) . ' quizzes
+                        </li>
+                        <li class="list-inline-item">
+                            <i class="bi-' . ($course['certificate_enabled'] ? 'patch-check-fill text-primary' : 'patch-check text-muted') . ' me-1"></i> 
+                            ' . ($course['certificate_enabled'] ? 'Certificate' : 'No Certificate') . '
+                        </li>
+                    </ul>
+                </a>
+                <!-- End Body -->
             </div>
-            <!-- End Row -->
-
-            <div class="row align-items-center mb-2">
-                <div class="col">
-                    <div class="avatar-group avatar-group-xs">
-                        <span class="avatar avatar-xs avatar-circle">';
-        
-        // Instructor profile picture
-        $profilePicPath = "../uploads/instructor-profile/" . $course['profile_pic'];
-        if (file_exists($profilePicPath) && $course['profile_pic'] != 'default.png') {
-            $html .= '<img class="avatar-img" src="' . $profilePicPath . '" alt="Instructor">';
-        } else {
-            $html .= '<img class="avatar-img" src="../assets/img/160x160/img1.jpg" alt="Default Avatar">';
-        }$html .= '</span>
-        <span class="ms-1 small">' . htmlspecialchars($course['first_name'] . ' ' . $course['last_name']) . '</span>
-    </div>
-</div>
-<!-- End Col -->
-
-<div class="col-auto">
-    <ul class="list-inline list-separator text-body small">
-        <li class="list-inline-item">
-            <i class="bi-book me-1"></i> ' . $course['total_sections'] . ' sections
-        </li>
-        <li class="list-inline-item">
-            <i class="bi-bar-chart-steps me-1"></i> ' . $course['course_level'] . '
-        </li>
-    </ul>
-</div>
-<!-- End Col -->
-</div>
-<!-- End Row -->
-
-<p class="card-text text-body">';
-
-// Display short description with character limit
-$short_desc = $course['short_description'] ?? '';
-$html .= htmlspecialchars(strlen($short_desc) > 120 ? substr($short_desc, 0, 120) . '...' : $short_desc);
-
-$html .= '</p>
-</div>
-<!-- End Col -->
-</div>
-<!-- End Row -->
-</a>';
-}
+            <!-- End Card -->
+        </div>
+        ';
+    }
 } else {
-$html = '<div class="text-center p-5">
-<i class="bi-search display-4 text-muted mb-3"></i>
-<h3>No courses found</h3>
-<p>Try adjusting your filters or search for something else.</p>
-</div>';
+    $html = '
+    <div class="col-12 text-center">
+        <div class="p-5">
+            <i class="bi-search display-4 text-muted mb-3"></i>
+            <h3>No courses found</h3>
+            <p>Try adjusting your search or filter criteria</p>
+        </div>
+    </div>
+    ';
 }
 
 // Build pagination
 $pagination = '';
 if ($total_pages > 1) {
-$pagination = '<small class="d-none d-sm-inline-block text-body">Page ' . $page . ' out of ' . $total_pages . '</small>
-  <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">';
-
-// First page button
-$pagination .= '<li class="page-item ' . ($page <= 1 ? 'disabled' : '') . '">
-        <a class="page-link" href="#" data-page="1" aria-label="First">
-            <span aria-hidden="true">
-                <i class="bi-chevron-double-left small"></i>
-            </span>
-        </a>
-    </li>';
-
-// Page numbers
-$range = 2;
-$start_page = max(1, $page - $range);
-$end_page = min($total_pages, $page + $range);
-
-for ($i = $start_page; $i <= $end_page; $i++) {
-$pagination .= '<li class="page-item ' . (($i == $page) ? 'active' : '') . '">
-          <a class="page-link" href="#" data-page="' . $i . '">' . $i . '</a>
-        </li>';
+    $pagination = '
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+    ';
+    
+    // Previous button
+    $pagination .= '
+            <li class="page-item ' . ($page <= 1 ? 'disabled' : '') . '">
+                <a class="page-link" href="#" aria-label="Previous" ' . ($page > 1 ? 'data-page="' . ($page - 1) . '"' : '') . '>
+                    <span aria-hidden="true">
+                        <i class="bi-chevron-double-left small"></i>
+                    </span>
+                </a>
+            </li>
+    ';
+    
+    // Page numbers
+    $start_page = max(1, $page - 2);
+    $end_page = min($total_pages, $page + 2);
+    
+    for ($i = $start_page; $i <= $end_page; $i++) {
+        $pagination .= '
+            <li class="page-item ' . ($i == $page ? 'active' : '') . '">
+                <a class="page-link" href="#" data-page="' . $i . '">' . $i . '</a>
+            </li>
+        ';
+    }
+    
+    // Next button
+    $pagination .= '
+            <li class="page-item ' . ($page >= $total_pages ? 'disabled' : '') . '">
+                <a class="page-link" href="#" aria-label="Next" ' . ($page < $total_pages ? 'data-page="' . ($page + 1) . '"' : '') . '>
+                    <span aria-hidden="true">
+                        <i class="bi-chevron-double-right small"></i>
+                    </span>
+                </a>
+            </li>
+    ';
+    
+    $pagination .= '
+        </ul>
+    </nav>
+    ';
 }
 
-// Last page button
-$pagination .= '<li class="page-item ' . ($page >= $total_pages ? 'disabled' : '') . '">
-        <a class="page-link" href="#" data-page="' . $total_pages . '" aria-label="Last">
-            <span aria-hidden="true">
-                <i class="bi-chevron-double-right small"></i>
-            </span>
-        </a>
-    </li>';
-
-$pagination .= '</ul></nav>';
-}
-
-// Return JSON response
+// Return the response
 echo json_encode([
-'success' => true,
-'courses' => $html,
-'pagination' => $pagination,
-'total_courses' => $total_courses,
-'total_pages' => $total_pages
+    'success' => true,
+    'courses' => $html,
+    'pagination' => $pagination,
+    'total_courses' => $total_courses,
+    'total_pages' => $total_pages
 ]);

@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Include header
-include '../includes/student-header.php';
+include '../includes/account-header.php';
 
 // Check if course_id is provided in the URL
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {

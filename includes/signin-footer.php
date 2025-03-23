@@ -1,5 +1,5 @@
   <!-- ========== FOOTER ========== -->
-  <footer class="bg-light">
+  <footer class="bg-dark">
     <div class="container pb-1 pb-lg-5">
       <div class="row content-space-t-2">
         <div class="col-lg-3 mb-7 mb-lg-0">

@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to login page with return URL
-    header("Location: login.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
+    header("Location: index.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
     exit();
 }
 

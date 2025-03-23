@@ -13,179 +13,364 @@
     </div>
     <!-- End Banner -->
 
-    <!-- Course Catalog Content -->
-    <div class="container content-space-2 content-space-b-lg-3">
-        <!-- Search Bar -->
-        <div class="container mt-4">
-            <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <div class="input-group mb-4">
-                        <input type="text" class="form-control form-control-lg" id="search-input" placeholder="Search for courses, skills, or subjects" aria-label="Search for courses">
-                        <button class="btn btn-primary" type="button" id="search-button">
+    <!-- Filter Form -->
+    <div class="container content-space-t-3 content-space-t-lg-4">
+        <form>
+            <div class="row gx-2">
+                <div class="col-lg mb-2 mb-lg-0">
+                    <!-- Form -->
+                    <label for="searchPropertyFilterForm" class="visually-hidden form-label">Search courses</label>
+                    <div class="input-group input-group-merge">
+                        <span class="input-group-prepend input-group-text">
                             <i class="bi-search"></i>
-                        </button>
+                        </span>
+                        <input type="text" class="form-control form-control-sm" id="search-input" placeholder="Search for courses, skills, or subjects" aria-label="Search courses">
                     </div>
+                    <!-- End Form -->
                 </div>
+                <!-- End Col -->
+
+                <div class="col-auto mb-2 mb-lg-0">
+                    <!-- Dropdown -->
+                    <div class="dropdown">
+                        <a class="btn btn-white btn-sm dropdown-toggle" href="#" id="priceFilterFormDropdown" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Price</a>
+
+                        <div class="dropdown-menu dropdown-menu-end dropdown-card" aria-labelledby="priceFilterFormDropdown" style="min-width: 21rem;">
+                            <!-- Card -->
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <!-- Bar Chart -->
+                                    <div class="position-relative overflow-hidden" style="height: 6rem; width: 18rem;">
+                                        <div class="position-absolute w-100 overflow-hidden">
+                                            <div style="height: 6rem; width: 18rem;">
+                                                <canvas class="js-chart" data-hs-chartjs-options='{
+                                                        "type": "bar",
+                                                        "data": {
+                                                            "labels": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+                                                            "datasets": [{
+                                                                "data": [2, 3, 5, 7, 8, 5, 3, 2, 3, 6, 5, 4, 7, 5, 4, 3, 2],
+                                                                "backgroundColor": "#e7eaf3",
+                                                                "borderColor": "#e7eaf3"
+                                                            }]
+                                                        },
+                                                        "options": {
+                                                            "responsive": true,
+                                                            "scales": {
+                                                                "yAxes": [{
+                                                                    "display": false,
+                                                                    "gridLines": {
+                                                                        "display": false,
+                                                                        "drawBorder": false
+                                                                    },
+                                                                    "ticks": {
+                                                                        "beginAtZero": true
+                                                                    }
+                                                                }],
+                                                                "xAxes": [{
+                                                                    "display": false,
+                                                                    "gridLines": {
+                                                                        "display": false,
+                                                                        "drawBorder": false
+                                                                    }
+                                                                }]
+                                                            },
+                                                            "tooltips": {
+                                                                "custom": false
+                                                            }
+                                                        }
+                                                    }'></canvas>
+                                            </div>
+                                        </div>
+
+                                        <div id="foregroundBarChartDoubleResult" class="position-absolute overflow-hidden">
+                                            <div style="height: 6rem; width: 18rem;">
+                                                <canvas class="js-chart" data-hs-chartjs-options='{
+                                                        "type": "bar",
+                                                        "data": {
+                                                            "labels": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+                                                            "datasets": [{
+                                                                "data": [2, 3, 5, 7, 8, 5, 3, 2, 3, 6, 5, 4, 7, 5, 4, 3, 2],
+                                                                "backgroundColor": "#377dff",
+                                                                "borderColor": "#377dff"
+                                                            }]
+                                                        },
+                                                        "options": {
+                                                            "scales": {
+                                                                "yAxes": [{
+                                                                    "display": false,
+                                                                    "gridLines": {
+                                                                        "display": false,
+                                                                        "drawBorder": false
+                                                                    },
+                                                                    "ticks": {
+                                                                        "beginAtZero": true
+                                                                    }
+                                                                }],
+                                                                "xAxes": [{
+                                                                    "display": false,
+                                                                    "gridLines": {
+                                                                        "display": false,
+                                                                        "drawBorder": false
+                                                                    }
+                                                                }]
+                                                            },
+                                                            "tooltips": {
+                                                                "custom": false
+                                                            }
+                                                        }
+                                                    }'></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End Bar Chart -->
+
+                                    <div class="range-slider">
+                                        <div class="js-nouislider" data-hs-nouislider-options='{
+                                                "range": {
+                                                    "min": 0,
+                                                    "max": 1000
+                                                },
+                                                "start": [0, 200],
+                                                "result_min_target_el": "#rangeSliderExampleDouble4MinResult",
+                                                "result_max_target_el": "#rangeSliderExampleDouble4MaxResult",
+                                                "foreground_target_el": "#foregroundBarChartDoubleResult"
+                                            }'>
+                                        </div>
+                                    </div>
+
+                                    <div class="row justify-content-center mt-5">
+                                        <div class="col">
+                                            <span class="d-block small mb-1">Min price:</span>
+                                            <input type="text" class="form-control form-control-sm" id="rangeSliderExampleDouble4MinResult">
+                                        </div>
+                                        <!-- End Col -->
+
+                                        <div class="col">
+                                            <span class="d-block small mb-1">Max price:</span>
+                                            <input type="text" class="form-control form-control-sm" id="rangeSliderExampleDouble4MaxResult">
+                                        </div>
+                                        <!-- End Col -->
+                                    </div>
+                                    <!-- End Row -->
+                                </div>
+
+                                <div class="card-footer border-top">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a class="btn btn-white btn-sm" href="#" id="clear-price-filter">Clear</a>
+                                        <a class="btn btn-primary btn-sm" href="#" id="apply-price-filter">Apply</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Card -->
+                        </div>
+                    </div>
+                    <!-- End Dropdown -->
+                </div>
+                <!-- End Col -->
+
+                <div class="col-auto mb-2 mb-lg-0">
+                    <!-- Dropdown -->
+                    <div class="dropdown">
+                        <a class="btn btn-white btn-sm dropdown-toggle" href="#" id="levelFilterFormDropdown" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Course Level</a>
+
+                        <div class="dropdown-menu dropdown-menu-end dropdown-card" aria-labelledby="levelFilterFormDropdown" style="min-width: 25rem;">
+                            <!-- Card -->
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <!-- Radio Button Group -->
+                                    <div class="btn-group btn-group-segment d-flex" role="group" aria-label="Course level radio button group">
+                                        <input type="radio" class="btn-check flex-fill" name="levelBtnRadio" id="levelBtnRadioAll" autocomplete="off" checked>
+                                        <label class="btn btn-sm" for="levelBtnRadioAll">All</label>
+
+                                        <input type="radio" class="btn-check flex-fill" name="levelBtnRadio" id="levelBtnRadioBeginner" autocomplete="off">
+                                        <label class="btn btn-sm" for="levelBtnRadioBeginner">Beginner</label>
+
+                                        <input type="radio" class="btn-check flex-fill" name="levelBtnRadio" id="levelBtnRadioIntermediate" autocomplete="off">
+                                        <label class="btn btn-sm" for="levelBtnRadioIntermediate">Intermediate</label>
+
+                                        <input type="radio" class="btn-check flex-fill" name="levelBtnRadio" id="levelBtnRadioAdvanced" autocomplete="off">
+                                        <label class="btn btn-sm" for="levelBtnRadioAdvanced">Advanced</label>
+                                    </div>
+                                    <!-- End Radio Button Group -->
+                                </div>
+                                <div class="card-footer border-top">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a class="btn btn-white btn-sm" href="#" id="clear-level-filter">Clear</a>
+                                        <a class="btn btn-primary btn-sm" href="#" id="apply-level-filter">Apply</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Card -->
+                        </div>
+                    </div>
+                    <!-- End Dropdown -->
+                </div>
+                <!-- End Col -->
+
+                <div class="col-auto mb-2 mb-lg-0">
+                    <!-- Dropdown -->
+                    <div class="dropdown">
+                        <a class="btn btn-white btn-sm dropdown-toggle" href="#" id="certificateFilterFormDropdown" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">Certificate</a>
+
+                        <div class="dropdown-menu dropdown-menu-end dropdown-card" aria-labelledby="certificateFilterFormDropdown" style="min-width: 20rem;">
+                            <!-- Card -->
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        <!-- Check -->
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="1" id="certificateEnabledCheckbox">
+                                            <label class="form-check-label" for="certificateEnabledCheckbox">
+                                                Certificate Enabled
+                                                <span class="d-block small text-muted">Courses with certificates upon completion</span>
+                                            </label>
+                                        </div>
+                                        <!-- End Check -->
+
+                                        <!-- Check -->
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="0" id="noCertificateCheckbox">
+                                            <label class="form-check-label" for="noCertificateCheckbox">
+                                                No Certificate
+                                                <span class="d-block small text-muted">Courses without certificates</span>
+                                            </label>
+                                        </div>
+                                        <!-- End Check -->
+                                    </div>
+                                </div>
+
+                                <div class="card-footer border-top">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a class="btn btn-white btn-sm" href="#" id="clear-certificate-filter">Clear</a>
+                                        <a class="btn btn-primary btn-sm" href="#" id="apply-certificate-filter">Apply</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Card -->
+                        </div>
+                    </div>
+                    <!-- End Dropdown -->
+                </div>
+                <!-- End Col -->
+
+                <div class="col-auto mb-2 mb-lg-0">
+                    <a class="btn btn-white btn-sm" href="#" data-bs-toggle="modal" data-bs-target="#allCategoriesModal">
+                        <i class="bi-sliders me-2"></i> More
+                    </a>
+                </div>
+                <!-- End Col -->
+            </div>
+            <!-- End Row -->
+        </form>
+    </div>
+    <!-- End Filter Form -->
+
+    <!-- Card Grid -->
+    <div class="container content-space-t-1 content-space-b-2 content-space-b-lg-3">
+        <!-- Heading -->
+        <div class="mb-5">
+            <div class="row align-items-center">
+                <div class="col-sm mb-3 mb-sm-0">
+                    <span class="d-block">1,200+ courses</span>
+                    <h1 class="h2 mb-0">Explore our course catalog</h1>
+                </div>
+                <!-- End Col -->
+
+                <div class="col-sm-auto">
+                    <!-- Select -->
+                    <select class="form-select form-select-sm" id="sort-select">
+                        <option value="newest" selected>Most recent</option>
+                        <option value="highest_rated">Highest rated</option>
+                        <option value="lowest_price">Lowest price</option>
+                        <option value="highest_price">Highest price</option>
+                    </select>
+                    <!-- End Select -->
+                </div>
+                <!-- End Col -->
+            </div>
+            <!-- End Row -->
+        </div>
+        <!-- End Heading -->
+
+        <!-- Course Cards Container -->
+        <div id="course-container" class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 mb-5">
+            <!-- Course cards will be loaded here via AJAX -->
+            <div class="col-12 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading courses...</p>
             </div>
         </div>
-        <!-- End Search Bar -->
-        
-        <div class="row">
-            <!-- Left Sidebar: Categories -->
-            <div class="col-lg-3 mb-5 mb-lg-0">
-                <!-- Navbar -->
-                <div class="navbar-expand-lg">
-                    <!-- Navbar Toggle for Mobile -->
-                    <div class="d-grid d-lg-none mb-3">
-                        <button type="button" class="navbar-toggler btn btn-white" data-bs-toggle="collapse" data-bs-target="#categoryNavMenu" aria-label="Toggle categories">
-                            <span class="d-flex justify-content-between align-items-center">
-                                <span class="text-dark">Categories</span>
-                                <i class="bi-chevron-down"></i>
-                            </span>
-                        </button>
-                    </div>
-                    <!-- End Navbar Toggle -->
+        <!-- End Course Cards -->
 
-                    <!-- Categories Navigation -->
-                    <div id="categoryNavMenu" class="collapse navbar-collapse">
-                        <div class="d-grid gap-4 flex-grow-1" id="category-sidebar">
-                            <!-- Loading indicator -->
-                            <div class="text-center py-4">
-                                <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="small text-muted mt-1 mb-0">Loading categories...</p>
+        <!-- Pagination -->
+        <div id="pagination-container" class="d-flex justify-content-center">
+            <!-- Pagination will be loaded here via AJAX -->
+        </div>
+        <!-- End Pagination -->
+    </div>
+    <!-- End Card Grid -->
+
+    <!-- FAQ Section -->
+    <div class="container content-space-b-2">
+        <div class="text-center bg-img-start py-6" style="background: url(../assets/svg/components/shape-6.svg) center no-repeat;">
+            <div class="mb-5">
+                <h2>Still curious?</h2>
+            </div>
+            <div class="w-lg-65 mx-lg-auto">
+                <!-- Accordion -->
+                <div class="accordion accordion-flush accordion-lg" id="accordionFAQ">
+                    <!-- Accordion Item 1 -->
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="headingCuriousOne">
+                            <a class="accordion-button" role="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                What types of free courses are available online?
+                            </a>
+                        </div>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingCuriousOne" data-bs-parent="#accordionFAQ">
+                            <div class="accordion-body">
+                                There are a wide variety of free courses available online across numerous fields and subjects. These include courses in programming, digital marketing, business management, generative AI, and data science. Learners can also find free courses in creative fields such as graphic design, music production, and writing. Additionally, there are free courses covering personal development topics like time management, communication skills, and emotional intelligence. Many of these courses are offered by prestigious universities and institutions, providing high-quality education at no cost.
                             </div>
                         </div>
                     </div>
-                    <!-- End Categories Navigation -->
-                    
-                    <!-- View All Categories -->
-                    <!-- <div class="mt-2 pt-3 border-top">
-                        <a href="#" class="btn btn-soft-primary w-100" data-bs-toggle="modal" data-bs-target="#allCategoriesModal">
-                            <i class="bi-grid me-1"></i> View All Categories
-                        </a>
-                    </div> -->
-                </div>
-                <!-- End Navbar -->
-            </div>
-            <!-- End Left Sidebar -->
+                    <!-- End Accordion Item 1 -->
 
-            <!-- Course Listings Column -->
-            <div class="col-lg-9">
-                <!-- Filter Bar -->
-                <div class="border-bottom pb-3 mb-5">
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                        <div class="me-2">
-                            <select class="form-select form-select-sm" id="sort-select">
-                                <option value="newest">Newest</option>
-                                <option value="highest_rated">Highest rated</option>
-                                <option value="lowest_price">Lowest price</option>
-                                <option value="highest_price">Highest price</option>
-                            </select>
+                    <!-- Accordion Item 2 -->
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="headingCuriousTwo">
+                            <a class="accordion-button collapsed" role="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                How can I access these free courses?
+                            </a>
                         </div>
-                        <div class="me-2">
-                            <select class="form-select form-select-sm" id="price-select">
-                                <option value="all">All Prices</option>
-                                <option value="paid">Paid</option>
-                                <option value="free">Free</option>
-                            </select>
-                        </div>
-                        <div>
-                            <select class="form-select form-select-sm" id="level-select">
-                                <option value="all">All Levels</option>
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate">Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                            </select>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingCuriousTwo" data-bs-parent="#accordionFAQ">
+                            <div class="accordion-body">
+                                Free courses can typically be accessed through various online platforms and educational websites. Most platforms allow you to enroll without any fees, with optional paid certificates available for those who require formal recognition. Just sign up for an account, search for your subject of interest, and start learning at your own pace.
+                            </div>
                         </div>
                     </div>
-                </div>
-                <!-- End Filter Bar -->
+                    <!-- End Accordion Item 2 -->
 
-                <!-- Course Cards Container -->
-                <div id="course-container" class="d-grid gap-5 mb-10">
-                    <!-- Course cards will be loaded here via AJAX -->
-                    <div class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                    <!-- Accordion Item 3 -->
+                    <div class="accordion-item">
+                        <div class="accordion-header" id="headingCuriousThree">
+                            <a class="accordion-button collapsed" role="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Are there any drawbacks to free online courses?
+                            </a>
                         </div>
-                        <p class="mt-2">Loading courses...</p>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingCuriousThree" data-bs-parent="#accordionFAQ">
+                            <div class="accordion-body">
+                                While free online courses offer significant benefits such as flexibility and no cost, they may sometimes lack the comprehensive support, interactive feedback, and accreditation that traditional classroom settings provide. Depending on your learning goals, you might also consider supplementing free courses with other resources to ensure a complete educational experience.
+                            </div>
+                        </div>
                     </div>
+                    <!-- End Accordion Item 3 -->
                 </div>
-                <!-- End Course Cards -->
-
-                <!-- Pagination -->
-                <div id="pagination-container" class="d-flex justify-content-between align-items-center">
-                    <!-- Pagination will be loaded here via AJAX -->
-                </div>
-                <!-- End Pagination -->
+                <!-- End Accordion -->
             </div>
-            <!-- End Course Listings Column -->
         </div>
     </div>
-    <!-- End Course Catalog Content -->
-<!-- FAQ Section -->
-<div class="container content-space-b-2">
-    <div class="text-center bg-img-start py-6" style="background: url(../assets/svg/components/shape-6.svg) center no-repeat;">
-        <div class="mb-5">
-            <h2>Still curious?</h2>
-        </div>
-        <div class="w-lg-65 mx-lg-auto">
-            <!-- Accordion -->
-            <div class="accordion accordion-flush accordion-lg" id="accordionFAQ">
-                <!-- Accordion Item 1 -->
-                <div class="accordion-item">
-                    <div class="accordion-header" id="headingCuriousOne">
-                        <a class="accordion-button" role="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                            What types of free courses are available online?
-                        </a>
-                    </div>
-                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingCuriousOne" data-bs-parent="#accordionFAQ">
-                        <div class="accordion-body">
-                            There are a wide variety of free courses available online across numerous fields and subjects. These include courses in programming, digital marketing, business management, generative AI, and data science. Learners can also find free courses in creative fields such as graphic design, music production, and writing. Additionally, there are free courses covering personal development topics like time management, communication skills, and emotional intelligence. Many of these courses are offered by prestigious universities and institutions, providing high-quality education at no cost.
-                        </div>
-                    </div>
-                </div>
-                <!-- End Accordion Item 1 -->
-
-                <!-- Accordion Item 2 -->
-                <div class="accordion-item">
-                    <div class="accordion-header" id="headingCuriousTwo">
-                        <a class="accordion-button collapsed" role="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                            How can I access these free courses?
-                        </a>
-                    </div>
-                    <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingCuriousTwo" data-bs-parent="#accordionFAQ">
-                        <div class="accordion-body">
-                            Free courses can typically be accessed through various online platforms and educational websites. Most platforms allow you to enroll without any fees, with optional paid certificates available for those who require formal recognition. Just sign up for an account, search for your subject of interest, and start learning at your own pace.
-                        </div>
-                    </div>
-                </div>
-                <!-- End Accordion Item 2 -->
-
-                <!-- Accordion Item 3 -->
-                <div class="accordion-item">
-                    <div class="accordion-header" id="headingCuriousThree">
-                        <a class="accordion-button collapsed" role="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                            Are there any drawbacks to free online courses?
-                        </a>
-                    </div>
-                    <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingCuriousThree" data-bs-parent="#accordionFAQ">
-                        <div class="accordion-body">
-                            While free online courses offer significant benefits such as flexibility and no cost, they may sometimes lack the comprehensive support, interactive feedback, and accreditation that traditional classroom settings provide. Depending on your learning goals, you might also consider supplementing free courses with other resources to ensure a complete educational experience.
-                        </div>
-                    </div>
-                </div>
-                <!-- End Accordion Item 3 -->
-
-            </div>
-            <!-- End Accordion -->
-        </div>
-    </div>
-</div>
-<!-- End FAQ Section -->
-
+    <!-- End FAQ Section -->
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
@@ -238,129 +423,55 @@
         </div>
     </div>
 </div>
-
-<!-- AJAX and Filtering Logic -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Current filter state
-        let currentFilters = {
-            sort: 'newest',
-            price: 'all',
-            level: 'all',
-            page: 1,
-            search: '',
-            subcategories: []
-        };
-        
-        // Load top categories for sidebar
-        function loadSidebarCategories() {
-            fetch('../ajax/load_top_categories.php')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('category-sidebar').innerHTML = data.html;
-                    
-                    // Add event listeners to category checkboxes
-                    document.querySelectorAll('.category-checkbox').forEach(checkbox => {
-                        checkbox.addEventListener('change', function() {
-                            updateCategoryFilters();
-                            currentFilters.page = 1;
-                            loadCourses();
-                        });
-                    });
-                    
-                    // Add event listeners to "See more" buttons
-                    document.querySelectorAll('.see-more-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const categoryId = this.getAttribute('data-category-id');
-                            const categoryName = this.getAttribute('data-category-name');
-                            
-                            // Update modal title
-                            document.getElementById('categoryModalLabel').textContent = categoryName + ' Subcategories';
-                            
-                            // Show loading in modal
-                            document.getElementById('categoryModalBody').innerHTML = `
-                                <div class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p class="mt-2">Loading subcategories...</p>
-                                </div>
-                            `;
-                            
-                            // Show the modal
-                            new bootstrap.Modal(document.getElementById('categoryModal')).show();
-                            
-                            // Load subcategories via AJAX
-                            fetch('../ajax/load_subcategories.php?category_id=' + categoryId)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    document.getElementById('categoryModalBody').innerHTML = data.subcategories;
-                                    
-                                    // Check the checkboxes that are already selected
-                                    currentFilters.subcategories.forEach(subId => {
-                                        const checkbox = document.getElementById('modal-sub-' + subId);
-                                        if (checkbox) {
-                                            checkbox.checked = true;
-                                        }
-                                    });
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error loading subcategories:', error);
-                                document.getElementById('categoryModalBody').innerHTML = `
-                                    <div class="alert alert-danger" role="alert">
-                                        Failed to load subcategories. Please try again.
-                                    </div>
-                                `;
-                            });
-                        });
-                    });
-                } else {
-                    document.getElementById('category-sidebar').innerHTML = `
-                        <div class="alert alert-info">
-                            <i class="bi-exclamation-circle me-2"></i>
-                            No categories found
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading categories:', error);
-                document.getElementById('category-sidebar').innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="bi-exclamation-triangle me-2"></i>
-                        Failed to load categories
-                    </div>
-                `;
-            });
-        }
-        
-        // Load courses function
-        function loadCourses() {
-            // Show loading indicator
-            document.getElementById('course-container').innerHTML = `
-                <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Loading courses...</p>
+    // Current filter state
+    let currentFilters = {
+        sort: 'newest',
+        price: 'all',
+        level: 'all',
+        page: 1,
+        search: '',
+        subcategories: [],
+        certificate: []
+    };
+
+    // Min and max price range
+    let priceRange = {
+        min: 0,
+        max: 1000
+    };
+
+    // Load courses function
+    function loadCourses() {
+        // Show loading indicator
+        document.getElementById('course-container').innerHTML = `
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
-            `;
-            
-            // Prepare data for the fetch request
-            const data = new URLSearchParams();
-            for (const key in currentFilters) {
-                if (key === 'subcategories') {
-                    data.append(key, JSON.stringify(currentFilters[key]));
-                } else {
-                    data.append(key, currentFilters[key]);
-                }
+                <p class="mt-2">Loading courses...</p>
+            </div>
+        `;
+
+        // Prepare data for the fetch request
+        const data = new URLSearchParams();
+        for (const key in currentFilters) {
+            if (key === 'subcategories' || key === 'certificate') {
+                data.append(key, JSON.stringify(currentFilters[key]));
+            } else {
+                data.append(key, currentFilters[key]);
             }
-            
-            // Make AJAX request
-            fetch('../ajax/load_courses.php', {
+        }
+
+        // Add price range if set
+        if (priceRange.min > 0 || priceRange.max < 1000) {
+            data.append('price_min', priceRange.min);
+            data.append('price_max', priceRange.max);
+        }
+
+        // Make AJAX request
+        fetch('../ajax/load_courses.php', {
                 method: 'POST',
                 body: data,
                 headers: {
@@ -370,12 +481,12 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update course container
+                    // Update the course container with the HTML from the server
                     document.getElementById('course-container').innerHTML = data.courses;
-                    
+
                     // Update pagination
                     document.getElementById('pagination-container').innerHTML = data.pagination;
-                    
+
                     // Add event listeners to pagination links
                     document.querySelectorAll('.page-link').forEach(link => {
                         link.addEventListener('click', function(e) {
@@ -385,13 +496,15 @@
                                 currentFilters.page = page;
                                 loadCourses();
                                 // Scroll to top of course container
-                                document.getElementById('course-container').scrollIntoView({ behavior: 'smooth' });
+                                document.getElementById('course-container').scrollIntoView({
+                                    behavior: 'smooth'
+                                });
                             }
                         });
                     });
                 } else {
                     document.getElementById('course-container').innerHTML = `
-                        <div class="text-center p-5">
+                        <div class="col-12 text-center p-5">
                             <i class="bi-exclamation-triangle display-4 text-warning mb-3"></i>
                             <h3>Error Loading Courses</h3>
                             <p>${data.message || 'Please try again later.'}</p>
@@ -402,23 +515,23 @@
             .catch(error => {
                 console.error('Error loading courses:', error);
                 document.getElementById('course-container').innerHTML = `
-                    <div class="text-center p-5">
+                    <div class="col-12 text-center p-5">
                         <i class="bi-exclamation-triangle display-4 text-danger mb-3"></i>
                         <h3>Something went wrong</h3>
                         <p>We couldn't load the courses. Please try again later.</p>
                     </div>
                 `;
             });
-        }
-        
-        // Load categories for the all categories modal
-        function loadAllCategories() {
-            fetch('../ajax/load_all_categories.php')
+    }
+
+    // Load categories for the all categories modal
+    function loadAllCategories() {
+        fetch('../ajax/load_all_categories.php')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     document.getElementById('all-categories-container').innerHTML = data.categories;
-                    
+
                     // Add event listeners to category checkboxes
                     document.querySelectorAll('#all-categories-container .form-check-input').forEach(checkbox => {
                         checkbox.addEventListener('change', function() {
@@ -434,23 +547,23 @@
                             }
                         });
                     });
-                    
+
                     // Add search functionality
                     document.getElementById('category-search').addEventListener('input', function() {
                         const searchTerm = this.value.toLowerCase();
-                        
+
                         // Search in category cards
                         document.querySelectorAll('#all-categories-container .category-card').forEach(card => {
                             const categoryName = card.querySelector('.card-header').textContent.toLowerCase();
                             const subcategoryNames = Array.from(card.querySelectorAll('.form-check-label')).map(label => label.textContent.toLowerCase());
-                            
+
                             // Check if either category name or any subcategory names match the search
                             const categoryMatches = categoryName.includes(searchTerm);
                             const subcategoryMatches = subcategoryNames.some(name => name.includes(searchTerm));
-                            
+
                             if (categoryMatches || subcategoryMatches) {
                                 card.style.display = '';
-                                
+
                                 // If searching, show/hide individual subcategories
                                 if (searchTerm) {
                                     card.querySelectorAll('.form-check').forEach(check => {
@@ -485,114 +598,193 @@
                     </div>
                 `;
             });
-        }
-        
-        // Update subcategory filters when checkboxes change
-        function updateCategoryFilters() {
-            currentFilters.subcategories = [];
-            
-            // Get all checked subcategory checkboxes
-            document.querySelectorAll('.category-checkbox:checked').forEach(checkbox => {
-                currentFilters.subcategories.push(parseInt(checkbox.getAttribute('data-subcategory')));
-            });
-            
-            // Also check the "all categories" modal
-            document.querySelectorAll('#all-categories-container .subcategory-checkbox:checked').forEach(checkbox => {
-                const subcatId = parseInt(checkbox.getAttribute('data-subcategory'));
-                if (!currentFilters.subcategories.includes(subcatId)) {
-                    currentFilters.subcategories.push(subcatId);
-                }
-            });
-            
-            // Also check the category modal
-            document.querySelectorAll('#categoryModalBody .form-check-input:checked').forEach(checkbox => {
-                const subcatId = parseInt(checkbox.getAttribute('data-subcategory'));
-                if (!currentFilters.subcategories.includes(subcatId)) {
-                    currentFilters.subcategories.push(subcatId);
-                }
-            });
-        }
-        
-        // Event listeners for filters
-        document.getElementById('sort-select').addEventListener('change', function() {
-            currentFilters.sort = this.value;
-            currentFilters.page = 1; // Reset to first page
-            loadCourses();
-        });
-        
-        document.getElementById('price-select').addEventListener('change', function() {
-            currentFilters.price = this.value;
-            currentFilters.page = 1;
-            loadCourses();
-        });
-        
-        document.getElementById('level-select').addEventListener('change', function() {
-            currentFilters.level = this.value;
-            currentFilters.page = 1;
-            loadCourses();
-        });
-        
-        // Search button event listener
-        document.getElementById('search-button').addEventListener('click', function() {
-            currentFilters.search = document.getElementById('search-input').value;
-            currentFilters.page = 1;
-            loadCourses();
-        });
-        
-        // Search input enter key event
-        document.getElementById('search-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                currentFilters.search = this.value;
-                currentFilters.page = 1;
-                loadCourses();
+    }
+
+    // Update subcategory filters when checkboxes change
+    function updateCategoryFilters() {
+        currentFilters.subcategories = [];
+
+        // Get all checked subcategory checkboxes from the "all categories" modal
+        document.querySelectorAll('#all-categories-container .subcategory-checkbox:checked').forEach(checkbox => {
+            const subcatId = parseInt(checkbox.getAttribute('data-subcategory'));
+            if (!currentFilters.subcategories.includes(subcatId)) {
+                currentFilters.subcategories.push(subcatId);
             }
         });
-        
-        // Apply subcategories button in modal
-        document.getElementById('apply-subcategories').addEventListener('click', function() {
-            // Update filters from modal checkboxes
-            document.querySelectorAll('#categoryModalBody .form-check-input').forEach(checkbox => {
-                const subcatId = parseInt(checkbox.getAttribute('data-subcategory'));
-                
-                // Find equivalent checkbox in sidebar
-                const sidebarCheckbox = document.querySelector(`.category-checkbox[data-subcategory="${subcatId}"]`);
-                
-                if (sidebarCheckbox) {
-                    sidebarCheckbox.checked = checkbox.checked;
-                }
-                
-                // Handle subcategories that aren't in the sidebar
-                if (checkbox.checked && !currentFilters.subcategories.includes(subcatId)) {
-                    currentFilters.subcategories.push(subcatId);
-                } else if (!checkbox.checked) {
-                    const index = currentFilters.subcategories.indexOf(subcatId);
-                    if (index > -1) {
-                        currentFilters.subcategories.splice(index, 1);
-                    }
-                }
-            });
-            
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
-            
-            // Reset to page 1 and load courses
-            currentFilters.page = 1;
-            loadCourses();
+
+        // Also check the category modal
+        document.querySelectorAll('#categoryModalBody .form-check-input:checked').forEach(checkbox => {
+            const subcatId = parseInt(checkbox.getAttribute('data-subcategory'));
+            if (!currentFilters.subcategories.includes(subcatId)) {
+                currentFilters.subcategories.push(subcatId);
+            }
         });
-        
-        // Apply all filters button
-        document.getElementById('apply-all-filters').addEventListener('click', function() {
-            updateCategoryFilters();
-            bootstrap.Modal.getInstance(document.getElementById('allCategoriesModal')).hide();
-            currentFilters.page = 1;
-            loadCourses();
-        });
-        
-        // Initial load
-        loadSidebarCategories();
+    }
+
+    // Update certificate filter
+    function updateCertificateFilter() {
+        currentFilters.certificate = [];
+
+        if (document.getElementById('certificateEnabledCheckbox').checked) {
+            currentFilters.certificate.push(1);
+        }
+
+        if (document.getElementById('noCertificateCheckbox').checked) {
+            currentFilters.certificate.push(0);
+        }
+    }
+
+    // Event listeners
+    
+    // Sort dropdown
+    document.getElementById('sort-select').addEventListener('change', function() {
+        currentFilters.sort = this.value;
+        currentFilters.page = 1; // Reset to first page
         loadCourses();
+    });
+
+    // Search input
+    document.getElementById('search-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            currentFilters.search = this.value;
+            currentFilters.page = 1;
+            loadCourses();
+        }
+    });
+
+    // Price filter handlers
+    document.getElementById('apply-price-filter').addEventListener('click', function(e) {
+        e.preventDefault();
+        priceRange.min = parseInt(document.getElementById('rangeSliderExampleDouble4MinResult').value) || 0;
+        priceRange.max = parseInt(document.getElementById('rangeSliderExampleDouble4MaxResult').value) || 1000;
+        currentFilters.page = 1;
+
+        // Close the dropdown
+        document.querySelector('[aria-labelledby="priceFilterFormDropdown"]').classList.remove('show');
+
+        loadCourses();
+    });
+
+    document.getElementById('clear-price-filter').addEventListener('click', function(e) {
+        e.preventDefault();
+        priceRange.min = 0;
+        priceRange.max = 1000;
+        document.getElementById('rangeSliderExampleDouble4MinResult').value = 0;
+        document.getElementById('rangeSliderExampleDouble4MaxResult').value = 1000;
+        currentFilters.page = 1;
+
+        // Close the dropdown
+        document.querySelector('[aria-labelledby="priceFilterFormDropdown"]').classList.remove('show');
+
+        loadCourses();
+    });
+
+    // Level filter handlers
+    document.getElementById('apply-level-filter').addEventListener('click', function(e) {
+        e.preventDefault();
+
+        // Get the selected level
+        if (document.getElementById('levelBtnRadioAll').checked) {
+            currentFilters.level = 'all';
+        } else if (document.getElementById('levelBtnRadioBeginner').checked) {
+            currentFilters.level = 'Beginner';
+        } else if (document.getElementById('levelBtnRadioIntermediate').checked) {
+            currentFilters.level = 'Intermediate';
+        } else if (document.getElementById('levelBtnRadioAdvanced').checked) {
+            currentFilters.level = 'Advanced';
+        }
+
+        currentFilters.page = 1;
+
+        // Close the dropdown
+        document.querySelector('[aria-labelledby="levelFilterFormDropdown"]').classList.remove('show');
+
+        loadCourses();
+    });
+
+    document.getElementById('clear-level-filter').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('levelBtnRadioAll').checked = true;
+        currentFilters.level = 'all';
+        currentFilters.page = 1;
+
+        // Close the dropdown
+        document.querySelector('[aria-labelledby="levelFilterFormDropdown"]').classList.remove('show');
+
+        loadCourses();
+    });
+
+    // Certificate filter handlers
+    document.getElementById('apply-certificate-filter').addEventListener('click', function(e) {
+        e.preventDefault();
+        updateCertificateFilter();
+        currentFilters.page = 1;
+
+        // Close the dropdown
+        document.querySelector('[aria-labelledby="certificateFilterFormDropdown"]').classList.remove('show');
+
+        loadCourses();
+    });
+
+    document.getElementById('clear-certificate-filter').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('certificateEnabledCheckbox').checked = false;
+        document.getElementById('noCertificateCheckbox').checked = false;
+        currentFilters.certificate = [];
+        currentFilters.page = 1;
+
+        // Close the dropdown
+        document.querySelector('[aria-labelledby="certificateFilterFormDropdown"]').classList.remove('show');
+
+        loadCourses();
+    });
+
+    // Apply subcategories button in modal
+    document.getElementById('apply-subcategories').addEventListener('click', function() {
+        // Update filters from modal checkboxes
+        document.querySelectorAll('#categoryModalBody .form-check-input').forEach(checkbox => {
+            const subcatId = parseInt(checkbox.getAttribute('data-subcategory'));
+
+            // Handle subcategories selection
+            if (checkbox.checked && !currentFilters.subcategories.includes(subcatId)) {
+                currentFilters.subcategories.push(subcatId);
+            } else if (!checkbox.checked) {
+                const index = currentFilters.subcategories.indexOf(subcatId);
+                if (index > -1) {
+                    currentFilters.subcategories.splice(index, 1);
+                }
+            }
+        });
+
+        // Close modal
+        var categoryModal = bootstrap.Modal.getInstance(document.getElementById('categoryModal'));
+        if (categoryModal) {
+            categoryModal.hide();
+        }
+
+        // Reset to page 1 and load courses
+        currentFilters.page = 1;
+        loadCourses();
+    });
+
+    // Apply all filters button
+    document.getElementById('apply-all-filters').addEventListener('click', function() {
+        updateCategoryFilters();
+        var allCategoriesModal = bootstrap.Modal.getInstance(document.getElementById('allCategoriesModal'));
+        if (allCategoriesModal) {
+            allCategoriesModal.hide();
+        }
+        currentFilters.page = 1;
+        loadCourses();
+    });
+
+    // Categories modal open
+    document.querySelector('[data-bs-target="#allCategoriesModal"]').addEventListener('click', function() {
         loadAllCategories();
     });
-</script>
 
+    // Initial load
+    loadCourses();
+});
+</script>
 <?php include '../includes/student-footer.php'; ?>

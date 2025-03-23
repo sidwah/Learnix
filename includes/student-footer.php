@@ -1,12 +1,12 @@
   <!-- ========== FOOTER ========== -->
-  <footer class="bg-light">
+  <footer class="bg-dark">
     <div class="container pb-1 pb-lg-5">
       <div class="row content-space-t-2">
         <div class="col-lg-3 mb-7 mb-lg-0">
           <!-- Logo -->
           <div class="mb-5">
-            <a class="navbar-brand" href="index.html" aria-label="Space">
-              <img class="navbar-brand-logo" src="../assets/svg/logos/logo.svg" alt="Image Description">
+            <a class="navbar-brand" href="index.php" aria-label="Space">
+              <img class="navbar-brand-logo" src="../assets/svg/logos/logo-white.svg" alt="Image Description">
             </a>
           </div>
           <!-- End Logo -->
@@ -22,7 +22,7 @@
         <!-- End Col -->
 
         <div class="col-sm mb-7 mb-sm-0">
-          <h5 class="mb-3">Company</h5>
+          <h5 class="text-white mb-3">Company</h5>
 
           <!-- List -->
           <ul class="list-unstyled list-py-1 mb-0">
@@ -38,7 +38,7 @@
 
 
         <div class="col-sm mb-7 mb-sm-0">
-          <h5 class="mb-3">Resources</h5>
+          <h5 class="text-white mb-3">Resources</h5>
 
           <!-- List -->
           <ul class="list-unstyled list-py-1 mb-5">
@@ -50,7 +50,7 @@
         <!-- End Col -->
 
         <div class="col-sm mb-7 mb-sm-0">
-            <h5 class="mb-3">Legal</h5>
+            <h5 class="text-white mb-3">Legal</h5>
             <!-- List -->
             <ul class="list-unstyled list-py-1 mb-0">
               <li>
