@@ -2,19 +2,10 @@
 
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
-    <!-- Banner -->
-    <div class="container content-space-t-1">
-        <div class="bg-primary rounded-2" style="background: url(../assets/svg/illustrations/master-adobe-ai-book.svg) right bottom no-repeat;">
-            <div class="w-lg-50 py-8 px-6">
-                <h1 class="display-4 text-white">Course catalog</h1>
-                <p class="lead text-white mb-0">Learnix includes over <span class="fw-semi-bold">1,200</span> courses to help you excel.</p>
-            </div>
-        </div>
-    </div>
-    <!-- End Banner -->
+ 
 
     <!-- Filter Form -->
-    <div class="container content-space-t-3 content-space-t-lg-4">
+    <div class="container content-space-t-3 content-space-t-lg-2">
         <form>
             <div class="row gx-2">
                 <div class="col-lg mb-2 mb-lg-0">

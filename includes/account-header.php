@@ -101,7 +101,7 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
 
 <body>
     <!-- ========== HEADER ========== -->
-    <header id="header" class="navbar navbar-expand-lg navbar-end navbar-light navbar-show-hide" data-hs-header-options='{
+    <header id="header" class="navbar navbar-expand-lg navbar-end navbar-light navbar-show-hide " data-hs-header-options='{
             "fixMoment": 1000,
             "fixEffect": "slide"
           }'>
