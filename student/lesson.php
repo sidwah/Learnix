@@ -14,13 +14,32 @@
         <div class="gradient-y-overlay-lg-white bg-img-start content-space-2" style="background-image: url(../assets/img/1920x800/img6.jpg);">
             <div class="container">
                 <!-- Breadcrumb Navigation with improved accessibility -->
-                <nav aria-label="breadcrumb" class="mt-2 mb-3">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Home</a></li>
-                        <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Python</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Python Setup</li>
-                    </ol>
-                </nav>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+
+                    <nav aria-label="breadcrumb" class="mt-2 mb-3">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Home</a></li>
+                            <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Python</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Python Setup</li>
+                        </ol>
+                    </nav>
+                    <!-- Streak and Achievement badges with improved positioning and accessibility -->
+                    <div >
+                        <!-- Study Streak Badge -->
+                        <div class="d-inline-block me-3">
+                            <div class="badge bg-light  border border-primary p-2 px-3">
+                                <i class="bi-fire text-warning me-1" aria-hidden="true"></i> <span class="text-primary">5 Day Streak</span>
+                            </div>
+                        </div>
+
+                        <!-- Achievements Badge -->
+                        <div class="d-inline-block">
+                            <div class="badge bg-light text-primary border border-primary p-2 px-3">
+                                <i class="bi-trophy-fill me-1" aria-hidden="true"></i> <span>3 Achievements</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-md-10 col-lg-10">
                         <small class="badge bg-success rounded-pill">Bestseller</small>
@@ -38,7 +57,7 @@
                                 <div class="flex-grow-1">
                                     <span class="ps-2">Created by <a class="link" href="author-profile.php">Christina Kray</a></span>
                                 </div>
-                            </div> 
+                            </div>
                             <!-- End Instructor Media -->
 
                             <!-- Rating with better alignment and accessibility -->
@@ -59,22 +78,7 @@
                             <!-- End Rating -->
                         </div>
 
-                        <!-- Streak and Achievement badges with improved positioning and accessibility -->
-                        <div class="position-absolute" style="top: var(--spacing-md); right: var(--spacing-lg);">
-                            <!-- Study Streak Badge -->
-                            <div class="d-inline-block me-3">
-                                <div class="badge bg-light text-primary border border-primary p-2 px-3">
-                                    <i class="bi-fire text-warning me-1" aria-hidden="true"></i> <span>5 Day Streak</span>
-                                </div>
-                            </div>
 
-                            <!-- Achievements Badge -->
-                            <div class="d-inline-block">
-                                <div class="badge bg-light text-primary border border-primary p-2 px-3">
-                                    <i class="bi-trophy-fill me-1" aria-hidden="true"></i> <span>3 Achievements</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -114,20 +118,21 @@
 
                     <!-- Module List with improved spacing and accessibility -->
                     <div class="accordion" id="courseModules">
+                        <div class="card  mb-3 bg-primary-soft border-primary" style="border-radius: var(--radius-md);">
+                            <div class="card-body p-3">
+                                <a href="#" class="d-flex justify-content-between align-items-center text-decoration-none text-primary fw-bold" aria-current="true">
+
+                                    <h6>Course Overview</h6>
+                                    <h6 class="text-primary">100%</h6>
+                                </a>
+                            </div>
+                        </div>
+
                         <div class="card border-0 mb-3 bg-primary-soft border-primary" style="border-radius: var(--radius-md);">
                             <div class="card-body p-3">
                                 <a href="#" class="d-flex justify-content-between align-items-center text-decoration-none text-primary fw-bold" aria-current="true">
-                                    <span>Course Overview</span>
-                                    <span class="text-primary">100%</span>
-                                </a>
-                            </div>
-                        </div>
-
-                        <div class="card border-0 mb-3 bg-primary-soft border-primary" style="border-radius: var(--radius-md);">
-                            <div class="card-body p-3">
-                                <a href="#" class="d-flex justify-content-between align-items-center text-decoration-none text-primary fw-bold" aria-current="true">
-                                    <span>Python Setup</span>
-                                    <span class="text-primary">75%</span>
+                                    <h6>Python Setup</h6>
+                                    <h6 class="text-primary">75%</h6>
                                 </a>
                             </div>
                         </div>
@@ -135,8 +140,8 @@
                         <div class="card border-0 mb-3" style="border-radius: var(--radius-md);">
                             <div class="card-body p-3">
                                 <a href="#" class="d-flex justify-content-between align-items-center text-decoration-none">
-                                    <span>Python Object and Data Structure</span>
-                                    <span class="text-muted">0%</span>
+                                    <h6>Python Object and Data Structure</h6>
+                                    <h6 class="text-muted">0%</h6>
                                 </a>
                             </div>
                         </div>
@@ -144,8 +149,8 @@
                         <div class="card border-0 mb-3" style="border-radius: var(--radius-md);">
                             <div class="card-body p-3">
                                 <a href="#" class="d-flex justify-content-between align-items-center text-decoration-none">
-                                    <span>Python Comparison Operators</span>
-                                    <span class="text-muted">0%</span>
+                                    <h6>Python Comparison Operators</h6>
+                                    <h6 class="text-muted">0%</h6>
                                 </a>
                             </div>
                         </div>
@@ -153,8 +158,8 @@
                         <div class="card border-0 mb-3" style="border-radius: var(--radius-md);">
                             <div class="card-body p-3">
                                 <a href="#" class="d-flex justify-content-between align-items-center text-decoration-none">
-                                    <span>Python Statements</span>
-                                    <span class="text-muted">0%</span>
+                                    <h6>Python Statements</h6>
+                                    <h6 class="text-muted">0%</h6>
                                 </a>
                             </div>
                         </div>
@@ -167,7 +172,7 @@
                                 <button class="accordion-button collapsed p-0 bg-transparent shadow-none fw-bold" type="button"
                                     data-bs-toggle="collapse" data-bs-target="#resourcesCollapse"
                                     aria-expanded="false" aria-controls="resourcesCollapse">
-                                    <span>Additional Resources</span>
+                                    <h5>Additional Resources</h5>
                                 </button>
                             </h2>
                             <div id="resourcesCollapse" class="accordion-collapse collapse" aria-labelledby="resourcesHeading">
@@ -686,294 +691,6 @@
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-<!-- Custom CSS with improved animations, styles, and design system variables -->
-<style>
-    /* Design System Variables */
-    :root {
-        /* Colors */
-        --primary: #4361ee;
-        --primary-dark: #3a56d4;
-        --primary-soft: rgba(67, 97, 238, 0.1);
-        --success: #2e9d4c;
-        --success-soft: rgba(46, 157, 76, 0.1);
-        --warning: #f5a623;
-        --warning-soft: rgba(245, 166, 35, 0.1);
-        --info: #17a2b8;
-        --info-soft: rgba(23, 162, 184, 0.1);
-        --danger: #dc3545;
-        --danger-soft: rgba(220, 53, 69, 0.1);
-        --secondary: #6c757d;
-        --secondary-soft: rgba(108, 117, 125, 0.1);
-
-        /* Spacing */
-        --spacing-xs: 0.5rem;
-        --spacing-sm: 1rem;
-        --spacing-md: 1.5rem;
-        --spacing-lg: 2rem;
-
-        /* Border Radius */
-        --radius-sm: 6px;
-        --radius-md: 10px;
-        --radius-lg: 16px;
-
-        /* Shadows */
-        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-        --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-        --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Accessibility Improvements */
-    /* Skip to main content link */
-    .visually-hidden-focusable:not(:focus):not(:focus-within) {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
-    }
-
-    /* Enhanced focus styles for accessibility */
-    :focus-visible {
-        outline: 3px solid var(--primary);
-        outline-offset: 2px;
-    }
-
-    /* High contrast focus style for dark mode or high contrast mode */
-    @media (prefers-contrast: high) {
-        :focus-visible {
-            outline: 3px solid #fff;
-            outline-offset: 2px;
-        }
-    }
-
-    /* Improved flame animation for streak badge */
-    @keyframes flicker {
-        0% {
-            opacity: 0.8;
-            transform: scale(1.0);
-        }
-
-        25% {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-
-        50% {
-            opacity: 0.8;
-            transform: scale(1.0);
-        }
-
-        75% {
-            opacity: 1;
-            transform: scale(1.05);
-        }
-
-        100% {
-            opacity: 0.8;
-            transform: scale(1.0);
-        }
-    }
-
-    .bi-fire {
-        animation: flicker 1.5s infinite;
-        transform-origin: center;
-        display: inline-block;
-        color: #FF9800;
-        font-size: 1.1em;
-    }
-
-    /* Enhanced text colors */
-    .text-primary {
-        color: var(--primary) !important;
-    }
-
-    .text-success {
-        color: var(--success) !important;
-    }
-
-    .text-warning {
-        color: var(--warning) !important;
-    }
-
-    .text-info {
-        color: var(--info) !important;
-    }
-
-    /* Standardized card styles */
-    .card {
-        border-radius: var(--radius-md);
-        border: none;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s ease;
-    }
-
-    .card:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-md);
-    }
-
-    /* Standardized padding */
-    .card-body {
-        padding: var(--spacing-md);
-    }
-
-    /* Consistent badges */
-    .badge {
-        padding: 0.5em 0.75em;
-        border-radius: 30px;
-        font-weight: 500;
-    }
-
-    /* Enhanced hover effects for interactive elements */
-    .btn-primary {
-        background-color: var(--primary);
-        border-color: var(--primary);
-        transition: all 0.3s ease;
-    }
-
-    .btn-primary:hover {
-        background-color: var(--primary-dark);
-        border-color: var(--primary-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 10px rgba(67, 97, 238, 0.3);
-    }
-
-    .btn-outline-primary {
-        color: var(--primary);
-        border-color: var(--primary);
-        transition: all 0.3s ease;
-    }
-
-    .btn-outline-primary:hover {
-        color: #fff;
-        background-color: var(--primary);
-        border-color: var(--primary);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 10px rgba(67, 97, 238, 0.2);
-    }
-
-    /* Module list item hover effects */
-    #courseModules .card:hover {
-        border-left: 3px solid var(--primary);
-    }
-
-    /* Progress bar animation */
-    .progress-bar {
-        transition: width 1.5s ease;
-        animation: progress-animation 1.5s;
-        background-color: var(--primary);
-    }
-
-    @keyframes progress-animation {
-        0% {
-            width: 0%;
-        }
-    }
-
-    /* Better contrast for text colors to improve readability */
-    .text-muted {
-        color: #6c757d !important;
-        /* Ensure WCAG AA compliance for text contrast */
-    }
-
-    /* Accessibility improvements for interactive elements */
-    .nav-link {
-        transition: all 0.3s ease;
-        position: relative;
-    }
-
-    .nav-link.active {
-        color: var(--primary) !important;
-        font-weight: 600;
-    }
-
-    .nav-link.active::after {
-        content: '';
-        position: absolute;
-        bottom: -2px;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background-color: var(--primary);
-    }
-
-    /* Standardized section margins */
-    section,
-    .section {
-        margin-bottom: var(--spacing-lg);
-    }
-
-    /* Improve tab panel focus and hover states */
-    .nav-tabs .nav-link:focus,
-    .nav-tabs .nav-link:hover {
-        border-color: #e9ecef #e9ecef #dee2e6;
-    }
-
-    /* Animation for tab transition */
-    .tab-pane.fade {
-        transition: opacity 0.15s linear;
-    }
-
-    /* Animation for elements that enter viewport */
-    .animate-in {
-        animation: fadeInUp 0.5s ease forwards;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translate3d(0, 20px, 0);
-        }
-
-        to {
-            opacity: 1;
-            transform: translate3d(0, 0, 0);
-        }
-    }
-
-    /* Collapsible section animations */
-    .collapse {
-        transition: all 0.35s ease;
-    }
-
-    /* High contrast mode adjustments */
-    @media (prefers-contrast: more) {
-        :root {
-            --primary: #0000ff;
-            --success: #008000;
-            --warning: #ff8c00;
-            --info: #0078d4;
-            --danger: #ff0000;
-        }
-
-        .bg-primary-soft,
-        .bg-success-soft,
-        .bg-warning-soft,
-        .bg-info-soft,
-        .bg-danger-soft,
-        .bg-secondary-soft {
-            background-color: #ffffff !important;
-            border: 2px solid currentColor !important;
-        }
-
-        .text-muted {
-            color: #000000 !important;
-        }
-    }
-
-    /* Reduced motion preferences */
-    @media (prefers-reduced-motion: reduce) {
-        * {
-            animation-duration: 0.001ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.001ms !important;
-        }
-    }
-</style>
 
 <!-- Required JavaScript with modernized event handling and accessibility enhancements -->
 <script>
