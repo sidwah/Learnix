@@ -30,105 +30,6 @@
                             <!-- Card -->
                             <div class="card card-sm">
                                 <div class="card-body">
-                                    <!-- Bar Chart -->
-                                    <div class="position-relative overflow-hidden" style="height: 6rem; width: 18rem;">
-                                        <div class="position-absolute w-100 overflow-hidden">
-                                            <div style="height: 6rem; width: 18rem;">
-                                                <canvas class="js-chart" data-hs-chartjs-options='{
-                                                        "type": "bar",
-                                                        "data": {
-                                                            "labels": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-                                                            "datasets": [{
-                                                                "data": [2, 3, 5, 7, 8, 5, 3, 2, 3, 6, 5, 4, 7, 5, 4, 3, 2],
-                                                                "backgroundColor": "#e7eaf3",
-                                                                "borderColor": "#e7eaf3"
-                                                            }]
-                                                        },
-                                                        "options": {
-                                                            "responsive": true,
-                                                            "scales": {
-                                                                "yAxes": [{
-                                                                    "display": false,
-                                                                    "gridLines": {
-                                                                        "display": false,
-                                                                        "drawBorder": false
-                                                                    },
-                                                                    "ticks": {
-                                                                        "beginAtZero": true
-                                                                    }
-                                                                }],
-                                                                "xAxes": [{
-                                                                    "display": false,
-                                                                    "gridLines": {
-                                                                        "display": false,
-                                                                        "drawBorder": false
-                                                                    }
-                                                                }]
-                                                            },
-                                                            "tooltips": {
-                                                                "custom": false
-                                                            }
-                                                        }
-                                                    }'></canvas>
-                                            </div>
-                                        </div>
-
-                                        <div id="foregroundBarChartDoubleResult" class="position-absolute overflow-hidden">
-                                            <div style="height: 6rem; width: 18rem;">
-                                                <canvas class="js-chart" data-hs-chartjs-options='{
-                                                        "type": "bar",
-                                                        "data": {
-                                                            "labels": ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-                                                            "datasets": [{
-                                                                "data": [2, 3, 5, 7, 8, 5, 3, 2, 3, 6, 5, 4, 7, 5, 4, 3, 2],
-                                                                "backgroundColor": "#377dff",
-                                                                "borderColor": "#377dff"
-                                                            }]
-                                                        },
-                                                        "options": {
-                                                            "scales": {
-                                                                "yAxes": [{
-                                                                    "display": false,
-                                                                    "gridLines": {
-                                                                        "display": false,
-                                                                        "drawBorder": false
-                                                                    },
-                                                                    "ticks": {
-                                                                        "beginAtZero": true
-                                                                    }
-                                                                }],
-                                                                "xAxes": [{
-                                                                    "display": false,
-                                                                    "gridLines": {
-                                                                        "display": false,
-                                                                        "drawBorder": false
-                                                                    }
-                                                                }]
-                                                            },
-                                                            "tooltips": {
-                                                                "custom": false
-                                                            }
-                                                        }
-                                                    }'></canvas>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- End Bar Chart -->
-
-                                    <div class="range-slider">
-                                        <div class="js-nouislider" data-hs-nouislider-options='{
-                                                "range": {
-                                                    "min": 0,
-                                                    "max": 1000
-                                                },
-                                                "start": [0, 200],
-                                                "result_min_target_el": "#rangeSliderExampleDouble4MinResult",
-                                                "result_max_target_el": "#rangeSliderExampleDouble4MaxResult",
-                                                "foreground_target_el": "#foregroundBarChartDoubleResult"
-                                            }'>
-                                        </div>
-                                    </div>
-
                                     <div class="row justify-content-center mt-5">
                                         <div class="col">
                                             <span class="d-block small mb-1">Min price:</span>
@@ -415,7 +316,7 @@
     </div>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+   document.addEventListener('DOMContentLoaded', function() {
     // Current filter state
     let currentFilters = {
         sort: 'newest',
@@ -625,6 +526,26 @@
         }
     }
 
+    // Helper function to close a dropdown
+    function closeDropdown(dropdownSelector) {
+        const dropdownElement = document.querySelector(dropdownSelector);
+        if (dropdownElement) {
+            const dropdown = bootstrap.Dropdown.getInstance(dropdownElement);
+            if (dropdown) {
+                dropdown.hide();
+            } else {
+                // If the dropdown instance is not found, remove the 'show' class manually
+                dropdownElement.classList.remove('show');
+                
+                // Also find and hide the dropdown menu
+                const dropdownMenu = dropdownElement.nextElementSibling;
+                if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                    dropdownMenu.classList.remove('show');
+                }
+            }
+        }
+    }
+
     // Event listeners
     
     // Sort dropdown
@@ -650,8 +571,8 @@
         priceRange.max = parseInt(document.getElementById('rangeSliderExampleDouble4MaxResult').value) || 1000;
         currentFilters.page = 1;
 
-        // Close the dropdown
-        document.querySelector('[aria-labelledby="priceFilterFormDropdown"]').classList.remove('show');
+        // Close the dropdown automatically after applying
+        closeDropdown('#priceFilterFormDropdown');
 
         loadCourses();
     });
@@ -664,8 +585,8 @@
         document.getElementById('rangeSliderExampleDouble4MaxResult').value = 1000;
         currentFilters.page = 1;
 
-        // Close the dropdown
-        document.querySelector('[aria-labelledby="priceFilterFormDropdown"]').classList.remove('show');
+        // Close the dropdown automatically after clearing
+        closeDropdown('#priceFilterFormDropdown');
 
         loadCourses();
     });
@@ -687,8 +608,8 @@
 
         currentFilters.page = 1;
 
-        // Close the dropdown
-        document.querySelector('[aria-labelledby="levelFilterFormDropdown"]').classList.remove('show');
+        // Close the dropdown automatically after applying
+        closeDropdown('#levelFilterFormDropdown');
 
         loadCourses();
     });
@@ -699,8 +620,8 @@
         currentFilters.level = 'all';
         currentFilters.page = 1;
 
-        // Close the dropdown
-        document.querySelector('[aria-labelledby="levelFilterFormDropdown"]').classList.remove('show');
+        // Close the dropdown automatically after clearing
+        closeDropdown('#levelFilterFormDropdown');
 
         loadCourses();
     });
@@ -711,8 +632,8 @@
         updateCertificateFilter();
         currentFilters.page = 1;
 
-        // Close the dropdown
-        document.querySelector('[aria-labelledby="certificateFilterFormDropdown"]').classList.remove('show');
+        // Close the dropdown automatically after applying
+        closeDropdown('#certificateFilterFormDropdown');
 
         loadCourses();
     });
@@ -724,8 +645,8 @@
         currentFilters.certificate = [];
         currentFilters.page = 1;
 
-        // Close the dropdown
-        document.querySelector('[aria-labelledby="certificateFilterFormDropdown"]').classList.remove('show');
+        // Close the dropdown automatically after clearing
+        closeDropdown('#certificateFilterFormDropdown');
 
         loadCourses();
     });
