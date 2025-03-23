@@ -200,6 +200,11 @@
       // =======================================================
       new HSGoTo('.js-go-to')
 
+      // INITIALIZATION OF STICKY BLOCKS
+      // =======================================================
+      new HSStickyBlock('.js-sticky-block', {
+        targetSelector: document.getElementById('header').classList.contains('navbar-fixed') ? '#header' : null
+      })
 
       // INITIALIZATION OF AOS
       // =======================================================
@@ -212,6 +217,11 @@
       // INITIALIZATION OF TEXT ANIMATION (TYPING)
       // =======================================================
       HSCore.components.HSTyped.init('.js-typedjs')
+
+      
+       // INITIALIZATION OF NAV SCROLLER
+      // =======================================================
+      new HsNavScroller('.js-nav-scroller')
 
 
       // INITIALIZATION OF SWIPER

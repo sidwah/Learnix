@@ -97,6 +97,7 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
 
     <!-- CSS Learnix Template -->
     <link rel="stylesheet" href="../assets/css/theme.minc619.css?v=1.0">
+    
 </head>
 
 <body>
