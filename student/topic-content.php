@@ -2,428 +2,522 @@
 
 
 <!-- Main Content -->
-<main id="content" role="main">
-    <!-- Achievement Notification Banner -->
-
-    <!-- Course Header with Background Image -->
-    <div class="position-relative">
-
-    </div>
-    <!-- Breadcrumb Navigation -->
-    <nav aria-label="breadcrumb" class="bg-light py-2 border-bottom">
-        <div class="container-fluid">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="enrolled-courses.php" class="text-decoration-none">My Courses</a></li>
-                <li class="breadcrumb-item"><a href="course-overview.php?course=python-bootcamp" class="text-decoration-none">Complete Python Bootcamp</a></li>
-                <li class="breadcrumb-item"><a href="course-section.php?section=python-setup" class="text-decoration-none">Python Setup</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Jupyter Notebook Overview</li>
-            </ol>
+<!-- Fixed layout with preserved UI style -->
+<main id="content" role="main" class="bg-light">
+    <!-- Keep existing breadcrumb and notification banner -->
+    <!-- Breadcrumb -->
+    <div class="container content-space-t-1 pb-3 ">
+        <div class="row align-items-lg-center">
+            <div class="col-lg mb-2 mb-lg-0">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb bg-primary ">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="../index.php">Home</a></li>
+                        <li class="breadcrumb-item"><a href="courses.php">Courses</a></li>
+                        <li class="breadcrumb-item active" aria-current="page"><?php echo htmlspecialchars($course['title']); ?></li>
+                        <li class="breadcrumb-item active" aria-current="page"> <!-- Module title> --></li>
+                    </ol>
+                </nav>
+                <!-- End Breadcrumb -->
+            </div>
+            <!-- End Col -->
         </div>
-    </nav>
-
-    <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center mx-4 mt-3" role="alert">
-        <div class="d-flex align-items-center">
-            <span class="badge bg-warning text-dark me-3">
-                <i class="bi-trophy-fill"></i>
-            </span>
-            <span>
-                <strong>You're making great progress!</strong> 3 more lectures to complete the Python Setup module.
-            </span>
-        </div>
-        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        <!-- End Row -->
     </div>
+    <!-- End Breadcrumb -->
 
-    <div class="row">
-        <!-- Left Sidebar -->
-        <div class="col-md-3">
-            <div class="p-3">
-                <!-- Course Navigation Card -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">Course Navigation</span>
-                        <span class="badge bg-light text-primary rounded-pill">4/12</span>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="list-group list-group-flush">
-                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="bi-check-circle text-success me-2"></i>
-                                    Course Overview
-                                </span>
-                                <span class="badge bg-success rounded-pill">100%</span>
-                            </a>
-                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center active">
-                                <span>
-                                    <i class="bi-play-circle text-white me-2"></i>
-                                    Python Setup
-                                </span>
-                                <span class="badge bg-light text-primary rounded-pill">75%</span>
-                            </a>
+    <!-- Main container with consistent layout -->
+    <div class="container mb-9">
+        <div class="row d-flex justify-content-between">
+            <!-- Left Sidebar with improved cursor styling for collapsible elements -->
+            <div class="col-md-3" style="padding-right: 40px; margin-left: -20px;">
+                <!-- Course Navigation with custom cursor on clickable elements -->
+                <div class="sidebar-module mb-4">
+                    <div class="navbar-expand-lg">
+                        <div class="collapse navbar-collapse show">
+                            <div class="nav nav-pills nav-vertical w-100">
+                                <!-- Clickable header with pointer cursor -->
+                                <a class="nav-link dropdown-toggle d-flex justify-content-between align-items-center clickable-header" data-bs-toggle="collapse" data-bs-target="#moduleAssessment">
+                                    <div>
+                                        <i class="bi-award nav-icon"></i>
+                                        <span>Intro to Python</span>
+                                    </div>
+                                    <i class="bi-chevron-down small ms-2"></i>
+                                </a>
+
+                                <div id="moduleAssessment" class="nav-collapse collapse show w-100">
+                                    <div class="ps-3">
+                                        <!-- Navigation items with proper wrapping -->
+                                        <a class="nav-link" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-2">
+                                                    <i class="bi-check-circle-fill text-success"></i>
+                                                </div>
+                                                <div class="flex-grow-1 text-wrap">
+                                                    <span class="fw-bold">Video:</span> Recap Programming with JavaScript
+                                                    <span class="d-block text-muted small">4 min</span>
+                                                </div>
+                                            </div>
+                                        </a>
+
+                                        <a class="nav-link" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-2">
+                                                    <i class="bi-check-circle-fill text-success"></i>
+                                                </div>
+                                                <div class="flex-grow-1 text-wrap">
+                                                    <span class="fw-bold">Reading:</span> About the Little Lemon receipt maker exercise
+                                                    <span class="d-block text-muted small">10 min</span>
+                                                </div>
+                                            </div>
+                                        </a>
+
+                                        <a class="nav-link active" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-2">
+                                                    <i class="bi-play-circle-fill"></i>
+                                                </div>
+                                                <div class="flex-grow-1 text-wrap">
+                                                    <span class="fw-bold">Video:</span> Introduction to JavaScript Arrays
+                                                    <span class="d-block text-muted small">8 min</span>
+                                                </div>
+                                            </div>
+                                        </a>
+
+                                        <a class="nav-link disabled" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-2">
+                                                    <i class="bi-lock-fill"></i>
+                                                </div>
+                                                <div class="flex-grow-1 text-wrap">
+                                                    <span class="fw-bold">Programming Assignment:</span> Little Lemon Receipt Maker
+                                                    <span class="d-block text-muted small">3h</span>
+                                                </div>
+                                            </div>
+                                        </a>
+
+                                        <a class="nav-link disabled" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-2">
+                                                    <i class="bi-lock-fill"></i>
+                                                </div>
+                                                <div class="flex-grow-1 text-wrap">
+                                                    <span class="fw-bold">Practice Assignment:</span> Self review: Little Lemon receipt maker
+                                                    <span class="d-block text-muted small">5 min</span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Lecture Details Card -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-info text-white">
-                        <i class="bi-list-ol me-2"></i> Lecture Contents
+                <!-- Learning Progress with pointer cursor -->
+                <div class="sidebar-module mb-4">
+                    <div class="navbar-expand-lg">
+                        <div class="collapse navbar-collapse show">
+                            <div class="nav nav-pills nav-vertical w-100">
+                                <!-- Clickable header with pointer cursor -->
+                                <a class="nav-link dropdown-toggle d-flex justify-content-between align-items-center clickable-header" data-bs-toggle="collapse" data-bs-target="#learningProgress">
+                                    <div>
+                                        <i class="bi-graph-up nav-icon"></i>
+                                        <span>Learning Progress</span>
+                                    </div>
+                                    <i class="bi-chevron-down small ms-2"></i>
+                                </a>
+
+                                <div id="learningProgress" class="nav-collapse collapse  w-100">
+                                    <div class="card border-0 bg-light w-100">
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>Current Module</span>
+                                                    <span class="text-muted">3/5 Items</span>
+                                                </div>
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-primary" style="width: 60%"></div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>Overall Course</span>
+                                                    <span class="text-muted">78% Complete</span>
+                                                </div>
+                                                <div class="progress">
+                                                    <div class="progress-bar bg-primary" style="width: 78%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>
-                                <i class="bi-check-circle text-success me-2"></i>
-                                Python 2 vs Python 3
-                            </span>
-                            <span class="badge bg-success rounded-pill">Completed</span>
+                </div>
+
+                <!-- Quiz Performance with pointer cursor -->
+                <div class="sidebar-module">
+                    <div class="navbar-expand-lg">
+                        <div class="collapse navbar-collapse show">
+                            <div class="nav nav-pills nav-vertical w-100">
+                                <!-- Clickable header with pointer cursor -->
+                                <a class="nav-link dropdown-toggle d-flex justify-content-between align-items-center clickable-header" data-bs-toggle="collapse" data-bs-target="#quizPerformance">
+                                    <div>
+                                        <i class="bi-award nav-icon"></i>
+                                        <span>Quiz Performance</span>
+                                    </div>
+                                    <i class="bi-chevron-down small ms-2"></i>
+                                </a>
+
+                                <div id="quizPerformance" class="nav-collapse collapse  w-100">
+                                    <div class="card border-0 bg-light w-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <span>Average Score</span>
+                                                <h4 class="mb-0 text-success">92%</h4>
+                                            </div>
+                                            <div class="progress mb-3">
+                                                <div class="progress-bar bg-success" style="width: 92%"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Quizzes Completed</span>
+                                                <span class="text-muted">4 of 6</span>
+                                            </div>
+                                            <button class="btn btn-success w-100 mt-3">
+                                                <i class="bi-list-check me-2"></i> View Quiz Results
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Updated CSS styles with text color hover instead of background -->
+            <style>
+                /* Remove the default caret from the dropdown-toggle class */
+                .dropdown-toggle::after {
+                    display: none;
+                }
+
+                /* Add pointer cursor to clickable header elements */
+                .clickable-header {
+                    cursor: pointer;
+                }
+
+                /* Change text color on hover instead of background */
+                .clickable-header:hover {
+                    background-color: transparent;
+                    /* Remove background hover effect */
+                    color: var(--bs-primary) !important;
+                    /* Change text to primary color */
+                }
+
+                /* Also change the icon color on hover */
+                .clickable-header:hover .nav-icon,
+                .clickable-header:hover .bi-chevron-down {
+                    color: var(--bs-primary);
+                }
+
+                /* Ensure elements take up full width */
+                .w-100 {
+                    width: 100% !important;
+                }
+
+
+
+                /* Add a little more space for the arrows */
+                .nav-vertical .nav-link {
+                    padding-right: 0.75rem;
+                }
+
+                /* Make sure nav pills wrap properly */
+                .nav-vertical {
+                    flex-direction: column;
+                    width: 100%;
+                }
+
+                /* Add slight transition for smoother interaction */
+                .clickable-header .bi-chevron-down {
+                    transition: transform 0.2s ease;
+                }
+
+                /* Rotate arrow when expanded */
+                .clickable-header[aria-expanded="true"] .bi-chevron-down {
+                    transform: rotate(180deg);
+                }
+
+                /* Add transition for text color change */
+                .clickable-header,
+                .clickable-header .nav-icon,
+                .clickable-header .bi-chevron-down {
+                    transition: color 0.2s ease;
+                }
+            </style>
+
+            <!-- Main Content Area - maintaining the right-side content -->
+            <div class="col-md-9" style="padding-left: 30px;">
+                <div class="card mb-4">
+                    <div class="card-body p-0">
+                        <div id="youTubeVideoPlayer" class="video-player video-player-inline-btn">
+                            <img class="img-fluid video-player-preview" src="../assets/img/1920x800/img6.jpg" alt="Image">
+                            <a class="js-inline-video-player video-player-btn video-player-centered" href="javascript:;" data-hs-video-player-options='{"videoId": "d4eDWc8g0e0", "isAutoplay": true}'>
+                                <span class="video-player-icon shadow-sm">
+                                    <i class="bi-play-fill"></i>
+                                </span>
+                            </a>
+                            <div class="ratio ratio-16x9">
+                                <div id="youTubeVideoIframe"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation System - simplified to match your screenshot -->
+                <div class="course-content-tabs">
+                    <!-- Tab Navigation - simpler style matching your screenshot -->
+                    <ul class="nav nav-tabs" id="courseContentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button">Description</button>
                         </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>
-                                <i class="bi-check-circle text-success me-2"></i>
-                                Command Line Basics
-                            </span>
-                            <span class="badge bg-success rounded-pill">Completed</span>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="transcript-tab" data-bs-toggle="tab" data-bs-target="#transcript" type="button">Transcript</button>
                         </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>
-                                <i class="bi-check-circle text-success me-2"></i>
-                                Installing Python
-                            </span>
-                            <span class="badge bg-success rounded-pill">Completed</span>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="notes-tab" data-bs-toggle="tab" data-bs-target="#notes" type="button">Notes</button>
                         </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center active">
-                            <span>
-                                <i class="bi-play-circle text-white me-2"></i>
-                                Jupyter Notebook Overview
-                            </span>
-                            <span class="badge bg-light text-primary rounded-pill">In Progress</span>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources" type="button">Resources</button>
                         </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center text-muted">
-                            <span>
-                                <i class="bi-lock text-muted me-2"></i>
-                                Jupyter Notebook Installation
-                            </span>
-                            <span class="badge bg-secondary rounded-pill">Locked</span>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="discussion-tab" data-bs-toggle="tab" data-bs-target="#discussion" type="button">Discussion</button>
                         </li>
                     </ul>
-                </div>
 
-                <!-- Progress Tracking Card -->
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-warning">
-                        <i class="bi-graph-up me-2"></i> Learning Progress
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Section Progress</span>
-                                <span class="text-muted">4/6 Lectures</span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-warning" role="progressbar" style="width: 65%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Overall Course</span>
-                                <span class="text-muted">35% Complete</span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-warning" role="progressbar" style="width: 35%"></div>
+                    <!-- Tab Content -->
+                    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="courseContentTabsContent">
+                        <!-- Description Tab -->
+                        <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+                            <h5>Introduction to JavaScript Arrays</h5>
+                            <p>This video introduces the fundamentals of JavaScript arrays, a powerful data structure that allows you to store multiple values in a single variable. You'll learn how to create, access, and manipulate arrays through practical examples.</p>
+                            <div class="mt-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi-clock me-2"></i>
+                                    <span>Duration: 8 minutes</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi-person-fill me-2"></i>
+                                    <span>Instructor: John Smith</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi-tag-fill me-2"></i>
+                                    <span>Topics: JavaScript Fundamentals, Arrays, Data Structures</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Quiz Performance Card -->
-                <div class="card shadow-sm">
-                    <div class="card-header bg-success text-white">
-                        <i class="bi-award me-2"></i> Quiz Performance
+                        <!-- Transcript Tab -->
+                        <div class="tab-pane fade" id="transcript" role="tabpanel" aria-labelledby="transcript-tab">
+                            <div class="transcript-container">
+                                <div class="d-flex justify-content-end mb-3">
+                                    <button class="btn btn-sm btn-outline-primary">
+                                        <i class="bi-download me-1"></i> Download Transcript
+                                    </button>
+                                </div>
+                                <div class="transcript-content">
+                                    <p><strong>00:00</strong> - Welcome to this lesson on JavaScript arrays.</p>
+                                    <p><strong>00:15</strong> - An array in JavaScript is a special variable that can hold more than one value at a time.</p>
+                                    <p><strong>00:32</strong> - To create an array, we use square brackets and separate the items with commas.</p>
+                                    <p><strong>01:05</strong> - Let's look at some examples of how to create and use arrays in our code.</p>
+                                    <!-- More transcript content would go here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes Tab -->
+                        <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+                            <div class="notes-container">
+                                <div class="mb-3">
+                                    <textarea class="form-control" id="personalNotes" rows="8" placeholder="Take notes on this lesson..."></textarea>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <button class="btn btn-primary">
+                                        <i class="bi-save me-1"></i> Save Notes
+                                    </button>
+                                    <button class="btn btn-outline-secondary">
+                                        <i class="bi-printer me-1"></i> Print Notes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resources Tab -->
+                        <div class="tab-pane fade" id="resources" role="tabpanel" aria-labelledby="resources-tab">
+                            <div class="resources-container">
+                                <h5>Additional Learning Materials</h5>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <i class="bi-file-pdf me-3 text-danger fs-4"></i>
+                                        <div>
+                                            <p class="mb-0 fw-medium">JavaScript Arrays Cheat Sheet</p>
+                                            <small class="text-muted">PDF, 256KB</small>
+                                        </div>
+                                        <a href="#" class="btn btn-sm btn-outline-primary ms-auto">Download</a>
+                                    </li>
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <i class="bi-file-code me-3 text-primary fs-4"></i>
+                                        <div>
+                                            <p class="mb-0 fw-medium">Array Practice Exercises</p>
+                                            <small class="text-muted">JS, 124KB</small>
+                                        </div>
+                                        <a href="#" class="btn btn-sm btn-outline-primary ms-auto">Download</a>
+                                    </li>
+                                    <li class="list-group-item d-flex align-items-center">
+                                        <i class="bi-link-45deg me-3 text-success fs-4"></i>
+                                        <div>
+                                            <p class="mb-0 fw-medium">MDN Web Docs: JavaScript Arrays</p>
+                                            <small class="text-muted">External Resource</small>
+                                        </div>
+                                        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array" target="_blank" class="btn btn-sm btn-outline-primary ms-auto">Visit</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Discussion Tab -->
+                        <div class="tab-pane fade" id="discussion" role="tabpanel" aria-labelledby="discussion-tab">
+                            <div class="discussion-container">
+                                <div class="mb-4">
+                                    <h5>Discussion Forum</h5>
+                                    <p class="text-muted">Join the conversation about this lesson with other students.</p>
+                                    <div class="d-grid gap-2 d-md-flex">
+                                        <button class="btn btn-primary">
+                                            <i class="bi-plus-circle me-1"></i> New Discussion
+                                        </button>
+                                        <button class="btn btn-outline-secondary">
+                                            <i class="bi-filter me-1"></i> Filter
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Sample discussion threads -->
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <img src="https://via.placeholder.com/36" class="rounded-circle me-2" alt="User">
+                                            <div>
+                                                <h6 class="mb-0">Samantha Lee</h6>
+                                                <small class="text-muted">2 days ago</small>
+                                            </div>
+                                            <span class="ms-auto badge bg-primary">3 replies</span>
+                                        </div>
+                                        <h6>Question about array methods</h6>
+                                        <p class="mb-0">Is there a difference between using push() and directly assigning a value to an array using the index?</p>
+                                    </div>
+                                </div>
+
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <img src="https://via.placeholder.com/36" class="rounded-circle me-2" alt="User">
+                                            <div>
+                                                <h6 class="mb-0">Michael Johnson</h6>
+                                                <small class="text-muted">3 days ago</small>
+                                            </div>
+                                            <span class="ms-auto badge bg-primary">5 replies</span>
+                                        </div>
+                                        <h6>Arrays vs Objects - when to use which?</h6>
+                                        <p class="mb-0">I'm confused about when I should use an array versus when I should use an object in JavaScript...</p>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-center mt-4">
+                                    <nav aria-label="Discussion pagination">
+                                        <ul class="pagination">
+                                            <li class="page-item disabled">
+                                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                                            </li>
+                                            <li class="page-item active" aria-current="page">
+                                                <a class="page-link" href="#">1</a>
+                                            </li>
+                                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                            <li class="page-item">
+                                                <a class="page-link" href="#">Next</a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span>Average Score</span>
-                            <h4 class="mb-0 text-success">92%</h4>
-                        </div>
-                        <div class="progress mb-3" style="height: 10px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 92%"></div>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span>Quizzes Completed</span>
-                            <span class="text-muted">2 of 8</span>
-                        </div>
-                        <button class="btn btn-success w-100 mt-3">
-                            <i class="bi-list-check me-2"></i> View Quiz Results
+                    <!-- Navigation Controls -->
+                    <div class="d-flex justify-content-between p-4 bg-light">
+                        <button class="btn btn-outline-secondary">
+                            <i class="bi-chevron-left me-2"></i> Previous Lecture
+                        </button>
+                        <button class="btn btn-primary">Mark as Completed</button>
+                        <button class="btn btn-outline-secondary">
+                            Next Lecture <i class="bi-chevron-right ms-2"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Main Content Area -->
-        <div class="col-md-9">
-            <!-- Lecture Header Card -->
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 class="h4 mb-1">Jupyter Notebook Overview</h2>
-                        <p class="text-muted mb-0">Lecture 4 of 12 • Duration: 15:20 min</p>
-                    </div>
-                    <div class="text-end">
-                        <div class="d-flex align-items-center mb-2">
-                            <span class="text-warning me-2">
-                                <i class="bi-star-fill"></i>
-                                <i class="bi-star-fill"></i>
-                                <i class="bi-star-fill"></i>
-                                <i class="bi-star-fill"></i>
-                                <i class="bi-star-half"></i>
-                            </span>
-                            <span class="small text-muted">(4.5)</span>
-                        </div>
-                        <div class="btn-group" role="group">
-                            <a href="#" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Ask Instructor">
-                                <i class="bi-chat-left-text"></i>
-                            </a>
-                            <a href="#" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Instructor Profile">
-                                <i class="bi-person"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body bg-light">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="d-flex align-items-center">
-                                <div class="me-3">
-                                    <img src="../assets/img/160x160/img10.jpg" class="avatar avatar-md rounded-circle" alt="Instructor">
-                                </div>
-                                <div>
-                                    <h6 class="mb-1">Christina Kray</h6>
-                                    <p class="text-muted small mb-0">Lead Python Instructor</p>
-                                </div>
-                            </div>
-                        </div
-
-                            <!-- Rest of the content remains the same as in the previous version -->
-                        <div class="video-container position-relative bg-dark">
-                            <!-- Placeholder for actual video -->
-                            <div class="d-flex justify-content-center align-items-center" style="height: 500px;">
-                                <div class="text-center text-white">
-                                    <i class="bi-play-circle display-1 mb-3"></i>
-                                    <h3>Jupyter Notebook Video</h3>
-                                    <p>Click to play the lecture video</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Video Controls Placeholder -->
-                        <div class="video-controls bg-dark p-3 d-flex align-items-center">
-                            <button class="btn btn-link text-white me-3">
-                                <i class="bi-play-fill"></i>
-                            </button>
-                            <div class="flex-grow-1">
-                                <div class="progress" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 35%"></div>
-                                </div>
-                            </div>
-                            <span class="text-white ms-3">05:34 / 15:20</span>
-                        </div>
-
-                        <!-- Tabs Navigation -->
-                        <nav class="nav nav-tabs nav-fill bg-white">
-                            <a class="nav-link active" href="#description" data-bs-toggle="tab">Description</a>
-                            <a class="nav-link" href="#transcript" data-bs-toggle="tab">Transcript</a>
-                            <a class="nav-link" href="#resources" data-bs-toggle="tab">Resources</a>
-                            <a class="nav-link" href="#discussion" data-bs-toggle="tab">Discussion</a>
-                            <a class="nav-link" href="#notes" data-bs-toggle="tab">Notes</a>
-                        </nav>
-
-                        <!-- Tab Content -->
-                        <div class="tab-content">
-                            <div class="tab-pane fade show active p-4" id="description">
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <h4 class="mb-3">About this lecture</h4>
-                                        <p>This lecture introduces Jupyter Notebook, an open-source web application that allows you to create and share documents that contain live code, equations, visualizations, and narrative text. Perfect for data analysis and machine learning projects.</p>
-                                        <p>By the end of this lecture, you'll understand how to create, edit, and run code cells in Jupyter Notebook, as well as how to use markdown for documentation and explanations alongside your code.</p>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card h-100 border-primary">
-                                            <div class="card-header bg-primary text-white">
-                                                <i class="bi-info-circle me-2"></i> Lecture Highlights
-                                            </div>
-                                            <div class="card-body">
-                                                <ul class="list-unstyled">
-                                                    <li class="mb-2">
-                                                        <i class="bi-check-circle text-success me-2"></i> Jupyter Notebook Basics
-                                                    </li>
-                                                    <li class="mb-2">
-                                                        <i class="bi-code-slash text-primary me-2"></i> Live Code Cells
-                                                    </li>
-                                                    <li class="mb-2">
-                                                        <i class="bi-markdown text-info me-2"></i> Markdown Documentation
-                                                    </li>
-                                                    <li>
-                                                        <i class="bi-graph-up text-warning me-2"></i> Data Visualization
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row mt-2">
-                                    <div class="col-md-4">
-                                        <div class="card h-100 hover-lift">
-                                            <div class="card-body">
-                                                <h5 class="card-title">
-                                                    <i class="bi-book text-primary me-2"></i> Prerequisites
-                                                </h5>
-                                                <p class="card-text">Basic understanding of Python syntax and programming concepts is recommended.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card h-100 hover-lift">
-                                            <div class="card-body">
-                                                <h5 class="card-title">
-                                                    <i class="bi-tools text-success me-2"></i> Tools You'll Need
-                                                </h5>
-                                                <ul class="list-unstyled">
-                                                    <li>Python 3.x</li>
-                                                    <li>Anaconda Distribution (Recommended)</li>
-                                                    <li>Internet Connection</li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card h-100 hover-lift">
-                                            <div class="card-body">
-                                                <h5 class="card-title">
-                                                    <i class="bi-patch-question text-warning me-2"></i> Learning Outcomes
-                                                </h5>
-                                                <ul class="list-unstyled">
-                                                    <li>Create Jupyter Notebooks</li>
-                                                    <li>Use Code and Markdown Cells</li>
-                                                    <li>Run and Share Notebooks</li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="tab-pane fade p-4" id="transcript">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5 class="mb-0">Lecture Transcript</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <p>Transcript content will be added here. This will include a detailed text version of the lecture for accessibility and review purposes.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="tab-pane fade p-4" id="resources">
-                                <div class="row ">
-                                    <div class="col-md-6">
-                                        <div class="card h-100">
-                                            <div class="card-header bg-primary text-white">
-                                                <i class="bi-file-earmark-text me-2"></i> Lecture Materials
-                                            </div>
-                                            <div class="card-body">
-                                                <ul class="list-unstyled">
-                                                    <li class="mb-2">
-                                                        <a href="#" class="text-decoration-none">
-                                                            <i class="bi-file-pdf text-danger me-2"></i> Lecture Slides (PDF)
-                                                        </a>
-                                                    </li>
-                                                    <li class="mb-2">
-                                                        <a href="#" class="text-decoration-none">
-                                                            <i class="bi-code-slash text-primary me-2"></i> Sample Notebook
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#" class="text-decoration-none">
-                                                            <i class="bi-download text-success me-2"></i> Resource Pack
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="card h-100">
-                                            <div class="card-header bg-success text-white">
-                                                <i class="bi-link-45deg me-2"></i> External Resources
-                                            </div>
-                                            <div class="card-body">
-                                                <ul class="list-unstyled">
-                                                    <li class="mb-2">
-                                                        <a href="#" class="text-decoration-none">
-                                                            <i class="bi-book text-primary me-2"></i> Jupyter Notebook Documentation
-                                                        </a>
-                                                    </li>
-                                                    <li class="mb-2">
-                                                        <a href="#" class="text-decoration-none">
-                                                            <i class="bi-youtube text-danger me-2"></i> Additional Video Tutorials
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="#" class="text-decoration-none">
-                                                            <i class="bi-globe text-info me-2"></i> Online Jupyter Notebook
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="tab-pane fade p-4" id="discussion">
-                                <div class="card">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0">Course Discussion</h5>
-                                        <button class="btn btn-sm btn-primary">
-                                            <i class="bi-plus me-2"></i>Start a Discussion
-                                        </button>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text-muted">No discussions have been started for this lecture yet. Be the first to ask a question!</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="tab-pane fade p-4" id="notes">
-                                <div class="card">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0">Your Notes</h5>
-                                        <button class="btn btn-sm btn-success">
-                                            <i class="bi-save me-2"></i>Save Notes
-                                        </button>
-                                    </div>
-                                    <div class="card-body">
-                                        <textarea class="form-control" rows="6" placeholder="Take your notes here..."></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Navigation Controls -->
-                        <div class="d-flex justify-content-between p-4 bg-white">
-                            <button class="btn btn-outline-secondary">
-                                <i class="bi-chevron-left me-2"></i> Previous Lecture
-                            </button>
-                            <button class="btn btn-primary">Mark as Completed</button>
-                            <button class="btn btn-outline-secondary">
-                                Next Lecture <i class="bi-chevron-right ms-2"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </main>
 
-<?php include '../includes/student-footer.php'; ?>
+<!-- Custom CSS to fix the specific issues -->
+<style>
+    /* Fix text wrapping in sidebar */
+    .text-wrap {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        width: 100%;
+    }
+
+    /* Ensure icon alignment */
+    .nav-icon {
+        width: 1.25rem;
+        text-align: center;
+        display: inline-block;
+    }
+
+    /* Adjust spacing in sidebar navigation */
+    .nav-vertical .nav-link {
+        padding: 0.5rem;
+        white-space: normal;
+    }
+
+    /* Fix the flex layout to ensure proper wrapping */
+    .d-flex .flex-grow-1 {
+        min-width: 0;
+    }
+
+    /* Prevent content from breaking out of containers */
+    .navbar-sidebar-aside-content {
+        max-width: 100%;
+        overflow-wrap: break-word;
+    }
+
+    /* Ensure proper spacing between sidebar and main content on mobile */
+    @media (max-width: 767.98px) {
+        .col-md-3 {
+            margin-bottom: 2rem;
+        }
+    }
+
+    /* Match the tab style in the screenshot */
+    .nav-tabs .nav-link {
+        border-radius: 0;
+        padding: 0.5rem 1rem;
+    }
+</style>
+
 
 <!-- Custom CSS for hover effects -->
 <style>
@@ -436,3 +530,6 @@
         box-shadow: 0 1rem 3rem rgba(0, 0, 0, .175);
     }
 </style>
+
+
+<?php include '../includes/student-footer.php'; ?>

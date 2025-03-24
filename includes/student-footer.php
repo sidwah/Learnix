@@ -1,4 +1,5 @@
-  <!-- ========== FOOTER ========== -->
+</body>
+<!-- ========== FOOTER ========== -->
   <footer class="bg-dark">
     <div class="container pb-1 pb-lg-5">
       <div class="row content-space-t-2">
@@ -159,6 +160,13 @@
   <!-- JS Learnix -->
   <script src="../assets/js/theme.min.js"></script>
 
+  <script src="./assets/vendor/hs-video-player/dist/hs-video-player.min.js"></script>
+
+  <!-- JS Implementing Plugins -->
+<script src="../assets/vendor/hs-sticky-block/dist/hs-sticky-block.min.js"></script>
+
+
+
   <!-- JS Plugins Init. -->
   <script>
     (function() {
@@ -195,6 +203,10 @@
       // =======================================================
       HSBsDropdown.init()
 
+      // INITIALIZATION OF VIDEO PLAYER
+    // =======================================================
+    new HSVideoPlayer('.js-inline-video-player')
+
 
       // INITIALIZATION OF GO TO
       // =======================================================
@@ -223,6 +235,7 @@
       // =======================================================
       new HsNavScroller('.js-nav-scroller')
 
+      
 
       // INITIALIZATION OF SWIPER
       // =======================================================
