@@ -813,10 +813,10 @@
                         icon.classList.remove('bi-chevron-up');
                         icon.classList.add('bi-chevron-down');
                     }
-                });
+                }); 
             }
         });
     });
 </script>
 
-<?php include '../includes/student-footer.php'; ?>
+<?php include '../includes/student-footer.php'; ?> 

@@ -1,4 +1,6 @@
 <?php
+// learn.php
+
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -7,18 +9,43 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include header
 include '../includes/signin-header.php';
 
-// // Check if course_id is provided in the URL
-// if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-//     // Redirect to courses page if no valid ID is provided
-//     header("Location: courses.php");
-//     exit();
-// }
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    // Redirect to login if not logged in
+    header("Location: login.php");
+    exit();
+}
+$user_id = $_SESSION['user_id'];
+
+// Check if course_id is provided in the URL
+if (!isset($_GET['course_id']) || !is_numeric($_GET['course_id'])) {
+    // Redirect to courses page if no valid ID is provided
+    header("Location: courses.php");
+    exit();
+}
 
 // Get course ID from URL
-$course_id = 131;
+$course_id = intval($_GET['course_id']);
 
 // Connect to database
 require_once '../backend/config.php';
+
+// First, check if user is enrolled in this course
+$enrollment_query = "SELECT enrollment_id, status, current_topic_id FROM enrollments 
+                     WHERE user_id = ? AND course_id = ? AND status = 'Active'";
+$stmt = $conn->prepare($enrollment_query);
+$stmt->bind_param("ii", $user_id, $course_id);
+$stmt->execute();
+$enrollment_result = $stmt->get_result();
+
+if ($enrollment_result->num_rows === 0) {
+    // User is not enrolled in this course
+    header("Location: courses.php");
+    exit();
+}
+$enrollment = $enrollment_result->fetch_assoc();
+$enrollment_id = $enrollment['enrollment_id'];
+$current_enrolled_topic_id = $enrollment['current_topic_id'];
 
 // Fetch course details
 $sql = "SELECT c.*, u.first_name, u.last_name, u.profile_pic, u.username, 
@@ -46,7 +73,7 @@ if ($result->num_rows === 0) {
 // Get course data
 $course = $result->fetch_assoc();
 
-// Get course modules/sections
+// Get course sections
 $sql = "SELECT * FROM course_sections 
         WHERE course_id = ? 
         ORDER BY position";
@@ -60,38 +87,67 @@ while ($section = $sections_result->fetch_assoc()) {
     $sections[] = $section;
 }
 
-// Get current section (assuming we're looking at the last section - end of course assessment)
-$current_section = end($sections);
-$section_id = $current_section['section_id'];
+// Determine the current section
+// First, check if a specific section is requested
+$current_section_id = isset($_GET['section']) ? intval($_GET['section']) : null;
 
-// Check if user is enrolled in this course
-$is_enrolled = false;
-if (isset($_SESSION['user_id'])) {
-    // Check if the user is enrolled in this course
-    $user_id = $_SESSION['user_id'];
+// If no section specified, find the last incomplete section or the first section
+if ($current_section_id === null) {
+    // If there's a current topic, get its section
+    if ($current_enrolled_topic_id) {
+        $current_section_query = "SELECT section_id FROM section_topics 
+                                  WHERE topic_id = ?";
+        $stmt = $conn->prepare($current_section_query);
+        $stmt->bind_param("i", $current_enrolled_topic_id);
+        $stmt->execute();
+        $current_section_result = $stmt->get_result();
 
-    $sql = "SELECT * FROM enrollments WHERE user_id = ? AND course_id = ? AND status = 'Active'";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ii", $user_id, $course_id);
-    $stmt->execute();
-    $enrollment_result = $stmt->get_result();
+        if ($current_section_result->num_rows > 0) {
+            $current_section = $current_section_result->fetch_assoc();
+            $current_section_id = $current_section['section_id'];
+        }
+    }
 
-    $is_enrolled = ($enrollment_result->num_rows > 0);
+    // If still no section, find the last incomplete section
+    if ($current_section_id === null) {
+        $progress_query = "SELECT s.section_id, s.position 
+                           FROM course_sections s
+                           LEFT JOIN section_topics st ON s.section_id = st.section_id
+                           LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                           WHERE s.course_id = ? AND (p.completion_status IS NULL OR p.completion_status != 'Completed')
+                           GROUP BY s.section_id
+                           ORDER BY s.position
+                           LIMIT 1";
+        $stmt = $conn->prepare($progress_query);
+        $stmt->bind_param("ii", $enrollment_id, $course_id);
+        $stmt->execute();
+        $last_incomplete_result = $stmt->get_result();
+
+        if ($last_incomplete_result->num_rows > 0) {
+            $last_incomplete_section = $last_incomplete_result->fetch_assoc();
+            $current_section_id = $last_incomplete_section['section_id'];
+        } else {
+            // If all sections are complete, use the first section
+            $current_section_id = $sections[0]['section_id'];
+        }
+    }
 }
 
-// Get assignments and other content for the current section
-$sql = "SELECT st.topic_id, st.title as topic_title, st.is_previewable,
-               tc.content_id, tc.content_type, tc.title as content_title, 
-               tc.video_url, tc.content_text, tc.external_url,
-               sq.quiz_id, sq.quiz_title, sq.pass_mark, sq.time_limit
-        FROM section_topics st
-        LEFT JOIN topic_content tc ON st.topic_id = tc.topic_id
-        LEFT JOIN section_quizzes sq ON st.topic_id = sq.topic_id
-        WHERE st.section_id = ?
-        ORDER BY st.position";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $section_id);
+// Fetch topics for the current section
+$topics_query = "SELECT st.topic_id, st.title as topic_title, st.is_previewable,
+                        tc.content_id, tc.content_type, tc.title as content_title, 
+                        tc.video_url, tc.content_text, tc.external_url,
+                        sq.quiz_id, sq.quiz_title, sq.pass_mark, sq.time_limit,
+                        COALESCE(p.completion_status, 'Not Started') as completion_status,
+                        st.topic_id = ? as is_current_topic
+                 FROM section_topics st
+                 LEFT JOIN topic_content tc ON st.topic_id = tc.topic_id
+                 LEFT JOIN section_quizzes sq ON st.topic_id = sq.topic_id
+                 LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                 WHERE st.section_id = ?
+                 ORDER BY st.position";
+$stmt = $conn->prepare($topics_query);
+$stmt->bind_param("iii", $current_enrolled_topic_id, $enrollment_id, $current_section_id);
 $stmt->execute();
 $topics_result = $stmt->get_result();
 $topics = [];
@@ -99,152 +155,435 @@ $topics = [];
 while ($topic = $topics_result->fetch_assoc()) {
     $topics[] = $topic;
 }
+// In the topic selection logic, add:
+if ($current_section_id) {
+    // Find the current topic for this enrollment and section
+    $current_topic_query = "SELECT st.topic_id 
+        FROM section_topics st
+        LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+        WHERE st.section_id = ? AND 
+              (p.completion_status IS NULL OR p.completion_status != 'Completed')
+        ORDER BY st.position
+        LIMIT 1";
 
-// Get course progress for overdue items
-$sql = "SELECT COUNT(*) as completed_topics, 
-               (SELECT COUNT(*) FROM section_topics WHERE section_id IN 
-                (SELECT section_id FROM course_sections WHERE course_id = ?)) as total_topics
-        FROM progress p
-        JOIN enrollments e ON p.enrollment_id = e.enrollment_id
-        WHERE e.user_id = ? AND e.course_id = ? AND p.completion_status = 'Completed'";
+    $stmt = $conn->prepare($current_topic_query);
+    $stmt->bind_param("ii", $enrollment_id, $current_section_id);
+    $stmt->execute();
+    $current_topic_result = $stmt->get_result();
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("iii", $course_id, $user_id, $course_id);
+    if ($current_topic_result->num_rows > 0) {
+        $current_topic = $current_topic_result->fetch_assoc();
+        $current_topic_id = $current_topic['topic_id'];
+
+        // Update the enrollment's current topic
+        $update_current_topic = "UPDATE enrollments 
+            SET current_topic_id = ? 
+            WHERE enrollment_id = ?";
+        $update_stmt = $conn->prepare($update_current_topic);
+        $update_stmt->bind_param("ii", $current_topic_id, $enrollment_id);
+        $update_stmt->execute();
+    }
+}
+
+// Calculate overall course progress
+$progress_query = "SELECT 
+                    COUNT(DISTINCT CASE WHEN p.completion_status = 'Completed' THEN st.topic_id END) as completed_topics,
+                    COUNT(DISTINCT st.topic_id) as total_topics
+                   FROM course_sections cs
+                   JOIN section_topics st ON cs.section_id = st.section_id
+                   LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                   WHERE cs.course_id = ?";
+$stmt = $conn->prepare($progress_query);
+$stmt->bind_param("ii", $enrollment_id, $course_id);
 $stmt->execute();
 $progress_result = $stmt->get_result();
 $progress = $progress_result->fetch_assoc();
 
 $completed_percentage = 0;
-if (isset($progress['total_topics']) && $progress['total_topics'] > 0) {
+if ($progress['total_topics'] > 0) {
     $completed_percentage = round(($progress['completed_topics'] / $progress['total_topics']) * 100);
+}
+
+
+// Add these queries to your existing script, before rendering the HTML
+
+// Count of incomplete video topics
+$video_count_query = "SELECT COUNT(*) as video_count 
+    FROM section_topics st
+    JOIN topic_content tc ON st.topic_id = tc.topic_id
+    LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+    WHERE tc.content_type = 'video' 
+    AND (p.completion_status IS NULL OR p.completion_status != 'Completed')
+    AND st.section_id = ?";
+$stmt = $conn->prepare($video_count_query);
+$stmt->bind_param("ii", $enrollment_id, $current_section_id);
+$stmt->execute();
+$video_result = $stmt->get_result();
+$video_count = $video_result->fetch_assoc()['video_count'];
+
+// Count of incomplete reading/text topics
+$reading_count_query = "SELECT COUNT(*) as reading_count 
+    FROM section_topics st
+    JOIN topic_content tc ON st.topic_id = tc.topic_id
+    LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+    WHERE (tc.content_type = 'text' OR tc.content_type = 'reading')
+    AND (p.completion_status IS NULL OR p.completion_status != 'Completed')
+    AND st.section_id = ?";
+$stmt = $conn->prepare($reading_count_query);
+$stmt->bind_param("ii", $enrollment_id, $current_section_id);
+$stmt->execute();
+$reading_result = $stmt->get_result();
+$reading_count = $reading_result->fetch_assoc()['reading_count'];
+
+// Count of incomplete quizzes
+$quiz_count_query = "SELECT COUNT(*) as quiz_count 
+    FROM section_topics st
+    JOIN section_quizzes sq ON st.topic_id = sq.topic_id
+    LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+    WHERE (p.completion_status IS NULL OR p.completion_status != 'Completed')
+    AND st.section_id = ?";
+$stmt = $conn->prepare($quiz_count_query);
+$stmt->bind_param("ii", $enrollment_id, $current_section_id);
+$stmt->execute();
+$quiz_result = $stmt->get_result();
+$quiz_count = $quiz_result->fetch_assoc()['quiz_count'];
+
+// Fetch course learning outcomes
+$outcomes_query = "SELECT outcome_text 
+    FROM course_learning_outcomes 
+    WHERE course_id = ?";
+$stmt = $conn->prepare($outcomes_query);
+$stmt->bind_param("i", $course_id);
+$stmt->execute();
+$outcomes_result = $stmt->get_result();
+$learning_outcomes = [];
+while ($outcome = $outcomes_result->fetch_assoc()) {
+    $learning_outcomes[] = $outcome['outcome_text'];
 }
 
 // Close database connection
 $stmt->close();
 $conn->close();
 
-// Helper function to generate assignment status HTML
-function getAssignmentStatusHTML($status, $date = null) {
-    if ($status === 'Completed') {
-        return '<span class="badge bg-success">Completed</span>';
-    } else if ($status === 'Overdue') {
-        return '<span class="badge bg-danger">Overdue</span>';
-    } else if ($status === 'Locked') {
-        return '<span class="badge bg-secondary">Locked</span>';
+// Helper function for determining topic status
+function getTopicStatus($topic)
+{
+    if ($topic['completion_status'] === 'Completed') {
+        return 'completed';
+    } elseif ($topic['is_previewable']) {
+        return 'preview';
     } else {
-        return '<span class="badge bg-primary">In Progress</span>';
+        return 'locked';
     }
 }
 
-// Format time (e.g., "4 min")
-function formatTime($minutes) {
+// Helper function to generate assignment status HTML
+function getAssignmentStatusHTML($status)
+{
+    switch ($status) {
+        case 'Completed':
+            return '<span class="badge bg-success">Completed</span>';
+        case 'Overdue':
+            return '<span class="badge bg-danger">Overdue</span>';
+        case 'Locked':
+            return '<span class="badge bg-secondary">Locked</span>';
+        default:
+            return '<span class="badge bg-primary">In Progress</span>';
+    }
+}
+// Helper functions
+function formatTime($minutes)
+{
     return $minutes . ' min';
 }
+
+function getTopicStatusIcon($topic)
+{
+    if ($topic['completion_status'] === 'Completed') {
+        return '<i class="bi bi-check-circle-fill text-success"></i>';
+    } elseif ($topic['is_previewable']) {
+        return '<i class="bi bi-unlock-fill text-primary"></i>';
+    } else {
+        return '<i class="bi bi-lock-fill text-secondary"></i>';
+    }
+}
+
+function formatContentType($content_type, $time_limit = null)
+{
+    $formatted = ucfirst($content_type);
+    if ($time_limit) {
+        $formatted .= " • " . formatTime($time_limit);
+    }
+    return $formatted;
+}
+$current_section_title = '';
+foreach ($sections as $sec) {
+    if ($sec['section_id'] == $current_section_id) {
+        $current_section_title = $sec['title'];
+        break;
+    }
+}
+
 ?>
+
+<!-- Rest of the HTML remains the same as the previous implementation -->
+
 
 <!-- Main Content -->
 <main id="content" role="main" class="bg-light">
+    <!-- Breadcrumb -->
+    <div class="container content-space-t-1 pb-3 ">
+        <div class="row align-items-lg-center">
+            <div class="col-lg mb-2 mb-lg-0">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb bg-primary ">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="../index.php">Home</a></li>
+                        <li class="breadcrumb-item"><a href="courses.php">Courses</a></li>
+                        <li class="breadcrumb-item active" aria-current="page"><?php echo htmlspecialchars($course['title']); ?></li>
+                    </ol>
+                </nav>
+                <!-- End Breadcrumb -->
+            </div>
+            <!-- End Col -->
+        </div>
+        <!-- End Row -->
+    </div>
+    <!-- End Breadcrumb -->
     <div class="container py-5">
         <div class="row">
             <!-- Left Sidebar -->
-            <div class="col-lg-3">
-                <!-- Meta Logo -->
-                <div class="mb-4">
-                    <img src="../assets/img/logo-meta.svg" alt="Meta" width="120">
-                </div>
-
-                <!-- Course Title -->
-                <div class="mb-4">
-                    <h5 class="fw-bold">Programming with JavaScript</h5>
-                    <p class="text-muted"><?php echo $course['category_name']; ?></p>
-                </div>
-
-                <!-- Navigation -->
-                <div class="accordion mb-4" id="courseNavAccordion">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#courseMaterialCollapse" aria-expanded="false" aria-controls="courseMaterialCollapse">
-                                <i class="bi bi-book me-2"></i> Course Material
-                            </button>
-                        </h2>
-                        <div id="courseMaterialCollapse" class="accordion-collapse collapse" data-bs-parent="#courseNavAccordion">
-                            <div class="accordion-body p-0">
-                                <ul class="list-group list-group-flush">
-                                    <?php foreach ($sections as $section): ?>
-                                        <li class="list-group-item border-0">
-                                            <a href="course-section.php?id=<?php echo $course_id; ?>&section=<?php echo $section['section_id']; ?>" class="text-decoration-none text-dark">
-                                                <?php echo htmlspecialchars($section['title']); ?>
-                                            </a>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            </div>
-                        </div>
+            <div class="col-lg-4">
+                <!-- Course Thumbnail with Overlay on Hover -->
+                <div class="mb-4 position-relative rounded-2 overflow-hidden course-thumbnail-container">
+                    <img class="img-fluid w-100" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="<?php echo htmlspecialchars($course['title']); ?>">
+                    <div class="course-thumbnail-overlay d-flex align-items-center justify-content-center">
+                        <a href="course-overview.php?id=<?php echo $course_id; ?>" class="btn btn-sm btn-light">
+                            <i class="bi bi-info-circle me-1"></i> Course Details
+                        </a>
                     </div>
                 </div>
 
-                <!-- Additional Links -->
-                <ul class="list-group mb-4">
-                    <li class="list-group-item border-0 bg-transparent">
-                        <a href="grades.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark">
-                            <i class="bi bi-award me-2"></i> Grades
-                        </a>
-                    </li>
-                    <li class="list-group-item border-0 bg-transparent">
-                        <a href="notes.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark">
-                            <i class="bi bi-journal-text me-2"></i> Notes
-                        </a>
-                    </li>
-                    <li class="list-group-item border-0 bg-transparent">
-                        <a href="discussion.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark">
-                            <i class="bi bi-chat-dots me-2"></i> Discussion Forums
-                        </a>
-                    </li>
-                    <li class="list-group-item border-0 bg-transparent">
-                        <a href="messages.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark">
-                            <i class="bi bi-envelope me-2"></i> Messages
-                        </a>
-                    </li>
-                    <li class="list-group-item border-0 bg-transparent">
-                        <a href="course-details.php?id=<?php echo $course_id; ?>" class="text-decoration-none text-dark">
-                            <i class="bi bi-info-circle me-2"></i> Course Info
-                        </a>
-                    </li>
-                </ul>
+                <!-- Course Title with Progress Indicator -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold mb-0"><?php echo htmlspecialchars($course['title']); ?></h5>
+                        <?php if (isset($completed_percentage)): ?>
+                            <span class="badge bg-primary"><?php echo $completed_percentage; ?>% Complete</span>
+                        <?php endif; ?>
+                    </div>
+                    <p class="text-muted d-flex align-items-center">
+                        <i class="bi bi-folder me-2"></i>
+                        <?php echo htmlspecialchars($course['category_name']); ?>
+                    </p>
+
+                    <!-- Add a simple progress bar -->
+                    <?php if (isset($completed_percentage)): ?>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: <?php echo $completed_percentage; ?>%"
+                                aria-valuenow="<?php echo $completed_percentage; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Course Material Section (Always Displayed) -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light py-3">
+                        <h5 class="mb-0 fw-bold ">
+                            <i class="bi bi-book me-2"></i> Course Material
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush course-sections-list">
+                            <?php foreach ($sections as $section): ?>
+                                <li class="list-group-item border-0 py-2 px-3 <?php echo $current_section_id == $section['section_id'] ? 'active bg-light' : ''; ?>">
+                                <a href="#" 
+   class="text-decoration-none section-link <?php echo $current_section_id == $section['section_id'] ? 'text-primary fw-bold' : 'text-dark'; ?>" 
+   data-section-id="<?php echo $section['section_id']; ?>">
+    <?php echo htmlspecialchars($section['title']); ?>
+</a>
+
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Improved Additional Links with Counters -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item border-0 py-3">
+                                <a href="grades.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-award me-2 text-warning"></i> Grades</span>
+                                    <!-- Add a badge for grades (example) -->
+                                    <span class="badge bg-light text-dark">2 Graded</span>
+                                </a>
+                            </li>
+                            <li class="list-group-item border-0 py-3">
+                                <a href="notes.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-journal-text me-2 text-info"></i> Notes</span>
+                                    <!-- Dynamically add a badge for number of notes -->
+                                    <?php if (isset($notes_count) && $notes_count > 0): ?>
+                                        <span class="badge bg-info"><?php echo $notes_count; ?></span>
+                                    <?php endif; ?>
+                                </a>
+                            </li>
+                            <li class="list-group-item border-0 py-3">
+                                <a href="discussion.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-chat-dots me-2 text-primary"></i> Discussion Forums</span>
+                                    <!-- Add a badge for new discussions -->
+                                    <span class="badge bg-danger">3 New</span>
+                                </a>
+                            </li>
+                            <li class="list-group-item border-0 py-3">
+                                <a href="messages.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-envelope me-2 text-success"></i> Messages</span>
+                                </a>
+                            </li>
+                            <li class="list-group-item border-0 py-3">
+                                <a href="course-overview.php?id=<?php echo $course_id; ?>" class="text-decoration-none text-dark">
+                                    <i class="bi bi-info-circle me-2 text-secondary"></i> Course Info
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
             <!-- End Left Sidebar -->
 
+            <!-- Add custom CSS for the improved sidebar -->
+            <style>
+                .course-thumbnail-container {
+                    transition: all 0.3s ease;
+                    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+                }
+
+                .course-thumbnail-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: rgba(0, 0, 0, 0.5);
+                    opacity: 0;
+                    transition: opacity 0.3s ease;
+                }
+
+                .course-thumbnail-container:hover .course-thumbnail-overlay {
+                    opacity: 1;
+                }
+
+                .course-sections-list .list-group-item {
+                    transition: all 0.2s ease;
+                }
+
+                .course-sections-list .list-group-item:hover {
+                    background-color: #f8f9fa;
+                }
+
+                .course-sections-list .list-group-item.active {
+                    border-left: 3px solid #0d6efd;
+                }
+
+                #showMoreSections {
+                    transition: all 0.2s ease;
+                }
+            </style>
+
+            <!-- JavaScript for the "See more" button functionality -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const showMoreBtn = document.getElementById('showMoreSections');
+                    const additionalSections = document.querySelectorAll('.additional-section');
+
+                    // Check if we need to auto-show additional sections (if current section is in them)
+                    const currentSectionActive = document.querySelector('.additional-section.active');
+                    if (currentSectionActive) {
+                        additionalSections.forEach(section => {
+                            section.style.display = 'block';
+                        });
+
+                        if (showMoreBtn) {
+                            showMoreBtn.innerHTML = '<span>See fewer sections</span> <i class="bi bi-chevron-up ms-1"></i>';
+
+                            // Scroll to the active section with smooth behavior
+                            setTimeout(() => {
+                                currentSectionActive.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center'
+                                });
+                            }, 300);
+                        }
+                    }
+
+                    if (showMoreBtn) {
+                        showMoreBtn.addEventListener('click', function() {
+                            const isHidden = additionalSections[0].style.display === 'none';
+
+                            additionalSections.forEach(section => {
+                                section.style.display = isHidden ? 'block' : 'none';
+                            });
+
+                            showMoreBtn.innerHTML = isHidden ?
+                                '<span>See fewer sections</span> <i class="bi bi-chevron-up ms-1"></i>' :
+                                '<span>See more sections</span> <i class="bi bi-chevron-down ms-1"></i>';
+
+                            // If showing sections, animate scroll to the first additional section
+                            if (isHidden && additionalSections.length > 0) {
+                                setTimeout(() => {
+                                    additionalSections[0].scrollIntoView({
+                                        behavior: 'smooth',
+                                        block: 'nearest'
+                                    });
+                                }, 100);
+                            }
+                        });
+                    }
+                });
+            </script>
+
+
             <!-- Main Content -->
-            <div class="col-lg-6">
+            <div class="col-lg-8">
+                <!-- Assessment Items -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white">
                         <button class="btn btn-link text-decoration-none text-dark p-0 d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#endOfCourseCollapse" aria-expanded="true" aria-controls="endOfCourseCollapse">
                             <span class="me-2">
                                 <i class="bi bi-caret-down-fill"></i>
                             </span>
-                            <h5 class="mb-0 fw-bold">End-of-Course Graded Assessment</h5>
+                            <h5 class="mb-0 fw-bold">Final Module Assessment</h5>
                         </button>
                     </div>
                     <div class="collapse show" id="endOfCourseCollapse">
                         <div class="card-body">
                             <!-- Progress Stats -->
                             <div class="d-flex flex-wrap mb-4 text-muted small">
-                                <div class="me-4">
-                                    <i class="bi bi-camera-video me-1"></i>
-                                    <span>1 min of videos left</span>
-                                </div>
-                                <div class="me-4">
-                                    <i class="bi bi-book me-1"></i>
-                                    <span>3 min of readings left</span>
-                                </div>
-                                <div>
-                                    <i class="bi bi-clipboard-check me-1"></i>
-                                    <span>2 graded assessments left</span>
-                                </div>
+                                <?php if ($video_count > 0): ?>
+                                    <div class="me-4">
+                                        <i class="bi bi-camera-video me-1"></i>
+                                        <span><?php echo $video_count; ?> video<?php echo $video_count > 1 ? 's' : ''; ?> left</span>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if ($reading_count > 0): ?>
+                                    <div class="me-4">
+                                        <i class="bi bi-book me-1"></i>
+                                        <span><?php echo $reading_count; ?> reading<?php echo $reading_count > 1 ? 's' : ''; ?> left</span>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if ($quiz_count > 0): ?>
+                                    <div>
+                                        <i class="bi bi-clipboard-check me-1"></i>
+                                        <span><?php echo $quiz_count; ?> graded assessment<?php echo $quiz_count > 1 ? 's' : ''; ?> left</span>
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
                             <!-- Description -->
-                            <p>In the final module, you'll synthesize the skills you gained from the course to create code for the "Little lemon receipt maker. After you complete the individual units in this module, you will be able to take the graded assessment. You'll also have to opportunity to reflect on the course content and the learning path that lies ahead.</p>
+                            <p>In the final module, you'll synthesize the skills you gained from the course to create a practical project. After completing the individual units in this module, you will be able to take the final assessment and reflect on your learning journey.</p>
 
                             <!-- Learning Objectives -->
                             <div class="mb-3">
@@ -254,9 +593,9 @@ function formatTime($minutes) {
                                 <div class="collapse mt-2" id="learningObjectivesCollapse">
                                     <div class="card card-body bg-light">
                                         <ul class="mb-0">
-                                            <li>Create a functioning receipt maker using JavaScript</li>
-                                            <li>Apply concepts learned throughout the course</li>
-                                            <li>Demonstrate proficiency in JavaScript programming</li>
+                                            <?php foreach ($learning_outcomes as $outcome): ?>
+                                                <li><?php echo htmlspecialchars($outcome); ?></li>
+                                            <?php endforeach; ?>
                                         </ul>
                                     </div>
                                 </div>
@@ -264,89 +603,87 @@ function formatTime($minutes) {
                         </div>
                     </div>
                 </div>
-
                 <!-- Assessment Items -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 fw-bold">End-of-Course Graded Assessment</h5>
-                            <span class="badge bg-warning text-dark">1 Overdue</span>
-                        </div>
+                        <h5 class="mb-0 fw-bold"> <?php echo htmlspecialchars($current_section_title); ?></h5>
                     </div>
                     <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
-                            <!-- Item 1: Video -->
-                            <li class="list-group-item d-flex align-items-center py-3">
-                                <div class="d-flex align-items-center text-success me-3">
-                                    <i class="bi bi-check-circle-fill fs-5"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-0">Recap Programming with JavaScript</h6>
-                                    <p class="mb-0 small text-muted">Video • 4 min</p>
-                                </div>
-                            </li>
+                            <?php foreach ($topics as $topic): ?>
+                                <li class="list-group-item d-flex align-items-center py-3
+            <?php echo $topic['completion_status'] === 'Completed' ? ' bg-success-subtle' : ''; ?>">
 
-                            <!-- Item 2: Reading -->
-                            <li class="list-group-item d-flex align-items-center py-3">
-                                <div class="d-flex align-items-center text-success me-3">
-                                    <i class="bi bi-check-circle-fill fs-5"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-0">About the Little Lemon receipt maker exercise</h6>
-                                    <p class="mb-0 small text-muted">Reading • 10 min</p>
-                                </div>
-                            </li>
-
-                            <!-- Item 3: Assignment (Overdue) -->
-                            <li class="list-group-item d-flex align-items-center py-3">
-                                <div class="d-flex align-items-center me-3">
-                                    <i class="bi bi-lock-fill fs-5 text-secondary"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="mb-0">Little Lemon Receipt Maker</h6>
-                                        <span class="badge bg-danger">Overdue</span>
+                                    <!-- Icon -->
+                                    <div class="d-flex align-items-center me-3">
+                                        <i class="bi <?php
+                                                        if ($topic['completion_status'] === 'Completed') {
+                                                            echo 'bi-check-circle-fill text-success';
+                                                        } else {
+                                                            switch ($topic['content_type']) {
+                                                                case 'video':
+                                                                    echo 'bi-play-circle text-primary';
+                                                                    break;
+                                                                case 'text':
+                                                                case 'reading':
+                                                                    echo 'bi-book text-info';
+                                                                    break;
+                                                                case 'quiz':
+                                                                    echo 'bi-clipboard-check text-warning';
+                                                                    break;
+                                                                case 'link':
+                                                                    echo 'bi-link-45deg text-secondary';
+                                                                    break;
+                                                                default:
+                                                                    echo 'bi-circle text-muted';
+                                                            }
+                                                        }
+                                                        ?> fs-5"></i>
                                     </div>
-                                    <p class="mb-0 small text-muted">Programming Assignment • 3h • Grade: --</p>
-                                </div>
-                                <div class="ms-2">
-                                    <a href="assignment.php?id=<?php echo $course_id; ?>&topic=<?php echo isset($topics[2]) ? $topics[2]['topic_id'] : ''; ?>" class="btn btn-primary">Resume</a>
-                                </div>
-                            </li>
 
-                            <!-- Item 4: Self Review -->
-                            <li class="list-group-item d-flex align-items-center py-3">
-                                <div class="d-flex align-items-center me-3">
-                                    <i class="bi bi-lock-fill fs-5 text-secondary"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-0">Self review: Little Lemon receipt maker</h6>
-                                    <p class="mb-0 small text-muted">Practice Assignment • 5 min • Grade: --</p>
-                                </div>
-                            </li>
+                                    <!-- Title and Info -->
+                                    <div class="flex-grow-1">
+                                        <?php
+                                        $title = htmlspecialchars($topic['topic_title'] ?? $topic['content_title']);
+                                        $content_type = $topic['content_type'] ?? 'Topic';
+                                        $time_limit = $topic['time_limit'] ?? 10;
 
-                            <!-- Item 5: Final Graded Quiz -->
-                            <li class="list-group-item d-flex align-items-center py-3">
-                                <div class="d-flex align-items-center me-3">
-                                    <i class="bi bi-lock-fill fs-5 text-secondary"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-0">Final graded quiz: Programming with JavaScript</h6>
-                                    <p class="mb-0 small text-muted">Graded Assignment • Submitted • Grade: --</p>
-                                </div>
-                            </li>
+                                        $link_available = ($topic['is_previewable'] || $topic['completion_status'] !== 'Completed');
+                                        $topic_url = ($topic['content_type'] === 'link' && !empty($topic['external_url']))
+                                            ? htmlspecialchars($topic['external_url'])
+                                            : "topic-content.php?course_id={$course_id}&topic={$topic['topic_id']}";
+                                        ?>
 
-                            <!-- Item 6: Discussion Prompt -->
-                            <li class="list-group-item d-flex align-items-center py-3">
-                                <div class="d-flex align-items-center me-3">
-                                    <i class="bi bi-lock-fill fs-5 text-secondary"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-0">What challenges did you encounter during the assignment?</h6>
-                                    <p class="mb-0 small text-muted">Discussion Prompt • 10 min</p>
-                                </div>
-                            </li>
+                                        <h6 class="mb-0">
+                                            <?php if ($link_available): ?>
+                                                <a href="<?php echo $topic_url; ?>"
+                                                    target="<?php echo $topic['content_type'] === 'link' ? '_blank' : '_self'; ?>"
+                                                    class="text-decoration-none text-dark">
+                                                    <?php echo $title; ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <?php echo $title; ?>
+                                            <?php endif; ?>
+                                        </h6>
+
+                                        <p class="mb-0 small text-muted">
+                                            <?php echo ucfirst($content_type); ?> • <?php echo $time_limit; ?> min
+                                        </p>
+                                    </div>
+
+                                    <!-- Resume Button -->
+                                    <?php if ($topic['topic_id'] == $current_topic_id && $topic['completion_status'] !== 'Completed'): ?>
+                                        <div class="ms-2">
+                                            <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $topic['topic_id']; ?>"
+                                                class="btn btn-primary btn-sm">
+                                                Resume
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
+                                </li>
+                            <?php endforeach; ?>
                         </ul>
+
                     </div>
                 </div>
 
@@ -369,88 +706,6 @@ function formatTime($minutes) {
             </div>
             <!-- End Main Content -->
 
-            <!-- Right Sidebar -->
-            <div class="col-lg-3">
-                <!-- Weekly Goal Tracker -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">Weekly goal progress tracker</h5>
-                        <p class="card-text small">Learners with goals are 75% more likely to complete their courses. Set a weekly goal now to take charge of your learning journey and boost your success!</p>
-                        <a href="#" class="btn btn-outline-primary w-100">Set your weekly goal</a>
-                    </div>
-                </div>
-
-                <!-- Course Timeline -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">Course timeline</h5>
-                        
-                        <!-- Overdue Alert -->
-                        <div class="alert alert-warning mb-3">
-                            <h6 class="alert-heading">Assessment overdue!</h6>
-                            <p class="small mb-1">You can still get back on track. Just reset your deadlines and ensure you pass your assessments by April 8 at 10:59 PM.</p>
-                            <a href="#" class="small">What does this mean?</a>
-                            <div class="mt-2">
-                                <a href="#" class="btn btn-sm btn-outline-primary">Reset</a>
-                            </div>
-                        </div>
-
-                        <!-- Timeline -->
-                        <div class="position-relative ps-4 mt-4">
-                            <!-- Timeline Line -->
-                            <div class="position-absolute top-0 bottom-0 start-0 ms-2 border-start border-2"></div>
-                            
-                            <!-- Start Date -->
-                            <div class="position-relative mb-4">
-                                <div class="position-absolute top-0 start-0 translate-middle-x">
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 16px; height: 16px;">
-                                        <i class="bi bi-calendar-event fs-6"></i>
-                                    </div>
-                                </div>
-                                <div class="ms-4">
-                                    <h6 class="mb-1 fs-6">Start date: June 14, 2024</h6>
-                                </div>
-                            </div>
-
-                            <!-- Next Deadlines -->
-                            <div class="ms-4 mb-4">
-                                <p class="mb-2 fw-bold small">Your next two deadlines</p>
-                                
-                                <!-- Module Quiz 1 -->
-                                <div class="mb-2">
-                                    <a href="#" class="text-decoration-none text-primary">Module quiz: Introduction to JavaScript</a>
-                                    <div class="d-flex align-items-center mt-1">
-                                        <span class="badge bg-danger me-2">Overdue</span>
-                                        <span class="small text-muted">Graded Assignment</span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Module Quiz 2 -->
-                                <div>
-                                    <a href="#" class="text-decoration-none text-primary">Module quiz: The Building Blocks of a Program</a>
-                                    <div class="d-flex align-items-center mt-1">
-                                        <span class="badge bg-danger me-2">Overdue</span>
-                                        <span class="small text-muted">Graded Assignment</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- End Date -->
-                            <div class="position-relative">
-                                <div class="position-absolute top-0 start-0 translate-middle-x">
-                                    <div class="rounded-circle bg-light text-dark border d-flex align-items-center justify-content-center" style="width: 16px; height: 16px;">
-                                        <i class="bi bi-flag fs-6"></i>
-                                    </div>
-                                </div>
-                                <div class="ms-4">
-                                    <h6 class="mb-1 fs-6 small">Estimated end date: November 6, 2024</h6>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- End Right Sidebar -->
         </div>
     </div>
 </main>

@@ -13,7 +13,7 @@
     <nav aria-label="breadcrumb" class="bg-light py-2 border-bottom">
         <div class="container-fluid">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="dashboard.php" class="text-decoration-none">My Courses</a></li>
+                <li class="breadcrumb-item"><a href="enrolled-courses.php" class="text-decoration-none">My Courses</a></li>
                 <li class="breadcrumb-item"><a href="course-overview.php?course=python-bootcamp" class="text-decoration-none">Complete Python Bootcamp</a></li>
                 <li class="breadcrumb-item"><a href="course-section.php?section=python-setup" class="text-decoration-none">Python Setup</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Jupyter Notebook Overview</li>

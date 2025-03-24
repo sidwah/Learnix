@@ -266,7 +266,7 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
                                     <!-- Enrolled Courses -->
                                     <?php foreach ($enrolled_courses as $key => $course): ?>
                                         <!-- Course -->
-                                        <a class="navbar-dropdown-menu-media-link" href="course-details.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
+                                        <a class="navbar-dropdown-menu-media-link" href="learn.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
                                             <div class="d-flex">
                                                 <div class="flex-shrink-0">
                                                     <img class="avatar" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="Course Thumbnail">
