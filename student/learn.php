@@ -397,12 +397,10 @@ foreach ($sections as $sec) {
                         <ul class="list-group list-group-flush course-sections-list">
                             <?php foreach ($sections as $section): ?>
                                 <li class="list-group-item border-0 py-2 px-3 <?php echo $current_section_id == $section['section_id'] ? 'active bg-light' : ''; ?>">
-                                <a href="#" 
-   class="text-decoration-none section-link <?php echo $current_section_id == $section['section_id'] ? 'text-primary fw-bold' : 'text-dark'; ?>" 
-   data-section-id="<?php echo $section['section_id']; ?>">
-    <?php echo htmlspecialchars($section['title']); ?>
-</a>
-
+                                    <a href="course-section.php?course_id=<?php echo $course_id; ?>&section=<?php echo $section['section_id']; ?>"
+                                        class="text-decoration-none <?php echo $current_section_id == $section['section_id'] ? 'text-primary fw-bold' : 'text-dark'; ?> d-flex align-items-center">
+                                        <?php echo htmlspecialchars($section['title']); ?>
+                                    </a>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
@@ -542,7 +540,6 @@ foreach ($sections as $sec) {
                     }
                 });
             </script>
-
 
             <!-- Main Content -->
             <div class="col-lg-8">
@@ -718,3 +715,4 @@ foreach ($sections as $sec) {
 </div>
 
 <?php include '../includes/student-footer.php'; ?>
+
