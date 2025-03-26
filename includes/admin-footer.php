@@ -20,6 +20,12 @@
         }
       }
     })
+
+    // INITIALIZATION OF LIVE TOAST
+    // =======================================================
+    const liveToast = new bootstrap.Toast(document.querySelector('#liveToast'))
+    document.querySelector('#liveToastBtn').addEventListener('click', () => liveToast.show())
+    
   })()
 
   

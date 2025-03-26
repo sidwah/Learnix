@@ -118,9 +118,9 @@ $user_data = mysqli_fetch_assoc($result);
       <li class="nav-item">
         <a class="nav-link" href="courses.php">All Courses</a>
       </li>
-      <li class="nav-item">
+      <!-- <li class="nav-item">
         <a class="nav-link" href="add-course.php">Add New Course</a>
-      </li>
+      </li> -->
       <li class="nav-item">
         <a class="nav-link" href="categories.php">Course Categories</a>
       </li>

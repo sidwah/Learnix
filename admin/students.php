@@ -1,3 +1,4 @@
+<!-- ../admin/students.php  -->
 <?php include '../includes/admin-header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
@@ -59,7 +60,7 @@
             </div>
 
             <!-- Pagination Controls -->
-            <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="d-flex justify-content-between align-items-center mt-3 mb-3 p-4">
                 <button id="prevPage" class="btn btn-sm btn-outline-primary">Previous</button>
                 <span id="paginationNumbers"></span>
                 <button id="nextPage" class="btn btn-sm btn-outline-primary">Next</button>

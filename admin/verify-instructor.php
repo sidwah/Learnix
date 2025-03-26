@@ -21,7 +21,7 @@
                 <div class="col-sm">
                     <h1 class="docs-page-header-title">Instructor Verification</h1>
                     <button class="btn btn-sm btn-soft-primary ms-3" id="diagnosePathsBtn">
-                        <i class="bi-tools me-1"></i> File Path Diagnostic
+                        <!-- <i class="bi-tools me-1"></i> File Path Diagnostic -->
                     </button>
                 </div>
             </div>

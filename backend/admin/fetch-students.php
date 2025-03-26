@@ -1,14 +1,31 @@
 <?php
 include("../config.php");
 
+// Fetch students with their course enrollment count
+$sql = "SELECT 
+    u.user_id AS id,
+    CONCAT(u.first_name, ' ', u.last_name) AS name, 
+    u.email, 
+    u.status, 
+    u.profile_pic,
+    COUNT(DISTINCT e.course_id) AS courses_enrolled
+FROM 
+    users u
+LEFT JOIN 
+    enrollments e ON u.user_id = e.user_id
+WHERE 
+    u.role = 'student'
+GROUP BY 
+    u.user_id, u.first_name, u.last_name, u.email, u.status, u.profile_pic";
 
-// Fetch students
-$sql = "SELECT CONCAT(first_name, ' ', last_name) AS name, email, status, profile_pic FROM users WHERE role = 'student'";
 $result = $conn->query($sql);
-
 $students = [];
+
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
+        // Ensure profile_pic is not null or empty, otherwise use a default
+        $row['profile_pic'] = !empty($row['profile_pic']) ? $row['profile_pic'] : 'default.png';
+        
         $students[] = $row;
     }
 }

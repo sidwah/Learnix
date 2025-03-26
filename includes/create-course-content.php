@@ -254,42 +254,102 @@
             <!-- Quiz Title -->
             <div class="form-group mb-3">
                 <label class="form-label">Quiz Title <span class="text-danger">*</span></label>
-                <input type="text" class="form-control quiz-title" name="quiz_titles_{sectionId}[]"
-                    placeholder="Enter a descriptive name for this quiz" required>
+                <input type="text"
+                    class="form-control quiz-title"
+                    name="quiz_titles_{sectionId}[]"
+                    placeholder="Enter a descriptive name for this quiz"
+                    required>
                 <div class="invalid-feedback">Quiz title is required</div>
                 <input type="hidden" name="quiz_section_ids_{sectionId}[]" value="{sectionId}">
             </div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
+            <div class="row">
+                <div class="col-md-4 mb-3">
                     <!-- Pass Mark -->
-                    <div class="form-group">
-                        <label class="form-label">Pass Mark (%) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control pass-mark" name="quiz_pass_marks_{sectionId}[]"
-                            min="1" max="100" value="70" required>
-                        <div class="invalid-feedback">Please enter a pass mark between 1-100</div>
-                        <small class="form-text text-muted">Recommended: 70% for standard difficulty</small>
-                    </div>
+                    <label class="form-label">Pass Mark (%) <span class="text-danger">*</span></label>
+                    <input type="number"
+                        class="form-control pass-mark"
+                        name="quiz_pass_marks_{sectionId}[]"
+                        min="1"
+                        max="100"
+                        value="70"
+                        required>
+                    <div class="invalid-feedback">Please enter a pass mark between 1-100</div>
                 </div>
-                <div class="col-md-6">
+
+                <div class="col-md-4 mb-3">
+                    <!-- Time Limit -->
+                    <label class="form-label">Time Limit (minutes)</label>
+                    <input type="number"
+                        class="form-control time-limit"
+                        name="quiz_time_limits_{sectionId}[]"
+                        min="1"
+                        placeholder="e.g. 30">
+                </div>
+
+                <div class="col-md-4 mb-3">
                     <!-- Randomize Questions -->
-                    <div class="form-group">
-                        <label class="form-label d-block">Randomize Questions</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input randomize-questions" type="checkbox"
-                                name="quiz_random_{sectionId}[]" value="1">
-                            <label class="form-check-label">Shuffle question order for each student</label>
-                        </div>
+                    <label class="form-label d-block">Randomize Questions</label>
+                    <div class="form-check form-switch mt-1">
+                        <input class="form-check-input randomize-questions"
+                            type="checkbox"
+                            name="quiz_random_{sectionId}[]"
+                            value="1">
+                        <label class="form-check-label">Shuffle order for each student</label>
                     </div>
                 </div>
             </div>
 
-            <div class="alert">
-                <small><i class="mdi mdi-information-outline me-1"></i> You will be able to add questions to this quiz in the next phase after publishing your course.</small>
+            <!-- Instructions -->
+            <div class="form-group mb-3">
+                <label class="form-label">Instructions</label>
+                <textarea class="form-control"
+                    name="quiz_instructions_{sectionId}[]"
+                    rows="3"
+                    placeholder="Write any special instructions for students..."></textarea>
+            </div>
+
+            <!-- Next Phase Note -->
+            <div class="alert alert-secondary mb-0">
+                <small>
+                    <i class="mdi mdi-information-outline me-1"></i>
+                    You will be able to add questions to this quiz in the next phase after publishing your course.
+                </small>
             </div>
         </div>
     </div>
 </template>
+<script>
+$(document).ready(function () {
+    $('#quiz-form').on('submit', function (e) {
+        e.preventDefault(); // prevent normal form submit
+
+        const form = $(this);
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: 'save_quiz.php',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                if (response.success) {
+                    alert('✅ ' + response.message);
+                    // optionally reload quizzes, clear form, etc.
+                } else {
+                    alert('❌ ' + response.message);
+                }
+            },
+            error: function () {
+                alert('❌ An error occurred while saving quizzes.');
+            }
+        });
+    });
+});
+</script>
+
+
 
 <!-- Custom CSS for Content Creation -->
 <style>

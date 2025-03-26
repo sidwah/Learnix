@@ -28,7 +28,7 @@
                         <div class="card-body">
                             <div class="section-header d-flex align-items-center">
                                 <div class="section-drag me-2">
-                                    <i class="mdi mdi-drag-horizontal handle" title="Drag to reorder"></i>
+                                    <!-- <i class="mdi mdi-drag-horizontal handle" title="Drag to reorder"></i> -->
                                 </div>
                                 <div class="section-number me-2">1</div>
                                 <div class="section-input flex-grow-1">
@@ -76,6 +76,9 @@
 
         <!-- Hidden field for section IDs -->
         <input type="hidden" id="section_ids" name="section_ids" value="">
+
+        <input type="hidden" name="positions[]" value="1">
+
     </div>
 </div>
 
@@ -351,7 +354,7 @@ function addSection() {
         <div class="card-body">
             <div class="section-header d-flex align-items-center">
                 <div class="section-drag me-2">
-                    <i class="mdi mdi-drag-horizontal handle" title="Drag to reorder"></i>
+                
                 </div>
                 <div class="section-number me-2">${newPosition}</div>
                 <div class="section-input flex-grow-1">
@@ -549,7 +552,7 @@ function loadExistingSections(courseId) {
                             <div class="card-body">
                                 <div class="section-header d-flex align-items-center">
                                     <div class="section-drag me-2">
-                                        <i class="mdi mdi-drag-horizontal handle" title="Drag to reorder"></i>
+                                    
                                     </div>
                                     <div class="section-number me-2">${index + 1}</div>
                                     <div class="section-input flex-grow-1">

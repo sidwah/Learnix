@@ -1,9 +1,7 @@
 <?php
 include("../config.php");
 
-
-// Fetch Instructors
-$sql = "SELECT CONCAT(first_name, ' ', last_name) AS name, email, status, profile_pic FROM users WHERE role = 'instructor'";
+$sql = "SELECT CONCAT(first_name, ' ', last_name) AS name, email, status, profile_pic, is_verified FROM users WHERE role = 'instructor'";
 $result = $conn->query($sql);
 
 $instructors = [];
@@ -13,7 +11,6 @@ if ($result->num_rows > 0) {
     }
 }
 
-// Check if data exists
 if (empty($instructors)) {
     echo json_encode(["error" => "No Instructor records found"]);
 } else {
