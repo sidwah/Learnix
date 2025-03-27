@@ -69,22 +69,22 @@ $stmt->close();
 
     <!-- Empty state for no sections -->
     <?php if (empty($sections)): ?>
-    <div id="emptyCurriculumState" class="row mb-4">
-        <div class="col-12">
-            <div class="card border border-dashed border-primary bg-light">
-                <div class="card-body text-center py-5">
-                    <div class="empty-state-icon mb-3">
-                        <i class="mdi mdi-notebook-outline" style="font-size: 64px; color: #3e7bfa;"></i>
+        <div id="emptyCurriculumState" class="row mb-4">
+            <div class="col-12">
+                <div class="card border border-dashed border-primary bg-light">
+                    <div class="card-body text-center py-5">
+                        <div class="empty-state-icon mb-3">
+                            <i class="mdi mdi-notebook-outline" style="font-size: 64px; color: #3e7bfa;"></i>
+                        </div>
+                        <h4>No Sections Added Yet</h4>
+                        <p class="text-muted">Start building your course by adding sections and topics.</p>
+                        <button class="btn btn-primary mt-2 add-first-section-btn">
+                            <i class="mdi mdi-plus-circle"></i> Add Your First Section
+                        </button>
                     </div>
-                    <h4>No Sections Added Yet</h4>
-                    <p class="text-muted">Start building your course by adding sections and topics.</p>
-                    <button class="btn btn-primary mt-2 add-first-section-btn">
-                        <i class="mdi mdi-plus-circle"></i> Add Your First Section
-                    </button>
                 </div>
             </div>
         </div>
-    </div>
     <?php endif; ?>
 
     <!-- Sections Container (sortable) -->
@@ -114,13 +114,13 @@ $stmt->close();
                                 <h5 class="section-title mb-0"><?php echo htmlspecialchars($section['title']); ?></h5>
                             </div>
                             <div class="section-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary edit-section-btn" 
-                                        data-section-id="<?php echo $section['section_id']; ?>"
-                                        data-section-title="<?php echo htmlspecialchars($section['title']); ?>">
+                                <button type="button" class="btn btn-sm btn-outline-primary edit-section-btn"
+                                    data-section-id="<?php echo $section['section_id']; ?>"
+                                    data-section-title="<?php echo htmlspecialchars($section['title']); ?>">
                                     <i class="mdi mdi-pencil"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger delete-section-btn" 
-                                        data-section-id="<?php echo $section['section_id']; ?>">
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-section-btn"
+                                    data-section-id="<?php echo $section['section_id']; ?>">
                                     <i class="mdi mdi-delete"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary section-collapse-btn">
@@ -155,18 +155,18 @@ $stmt->close();
                                                     </div>
                                                 </div>
                                                 <div class="topic-actions">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-topic-btn" 
-                                                            data-topic-id="<?php echo $topic['topic_id']; ?>"
-                                                            data-topic-title="<?php echo htmlspecialchars($topic['title']); ?>"
-                                                            data-topic-previewable="<?php echo $topic['is_previewable']; ?>">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-topic-btn"
+                                                        data-topic-id="<?php echo $topic['topic_id']; ?>"
+                                                        data-topic-title="<?php echo htmlspecialchars($topic['title']); ?>"
+                                                        data-topic-previewable="<?php echo $topic['is_previewable']; ?>">
                                                         <i class="mdi mdi-pencil"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-success me-1 content-topic-btn"
-                                                            data-topic-id="<?php echo $topic['topic_id']; ?>">
+                                                        data-topic-id="<?php echo $topic['topic_id']; ?>">
                                                         <i class="mdi mdi-file-document-edit"></i> Content
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-topic-btn" 
-                                                            data-topic-id="<?php echo $topic['topic_id']; ?>">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-topic-btn"
+                                                        data-topic-id="<?php echo $topic['topic_id']; ?>">
                                                         <i class="mdi mdi-delete"></i>
                                                     </button>
                                                 </div>
@@ -177,12 +177,12 @@ $stmt->close();
                             <?php endif; ?>
                         </div>
                         <div class="mt-3">
-                            <button type="button" class="btn btn-sm btn-outline-primary add-topic-btn" 
-                                    data-section-id="<?php echo $section['section_id']; ?>">
+                            <button type="button" class="btn btn-sm btn-outline-primary add-topic-btn"
+                                data-section-id="<?php echo $section['section_id']; ?>">
                                 <i class="mdi mdi-plus-circle"></i> Add Topic
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary add-quiz-btn ms-2" 
-                                    data-section-id="<?php echo $section['section_id']; ?>">
+                            <button type="button" class="btn btn-sm btn-outline-primary add-quiz-btn ms-2"
+                                data-section-id="<?php echo $section['section_id']; ?>">
                                 <i class="mdi mdi-help-circle"></i> Add Quiz
                             </button>
                         </div>
@@ -206,7 +206,7 @@ $stmt->close();
                         <div class="mb-3">
                             <label for="sectionTitle" class="form-label">Section Title <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="sectionTitle" required
-                                   placeholder="e.g., Introduction to the Course">
+                                placeholder="e.g., Introduction to the Course">
                             <div class="invalid-feedback">Please enter a section title.</div>
                         </div>
                     </form>
@@ -234,7 +234,7 @@ $stmt->close();
                         <div class="mb-3">
                             <label for="topicTitle" class="form-label">Topic Title <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="topicTitle" required
-                                   placeholder="e.g., Getting Started with HTML">
+                                placeholder="e.g., Getting Started with HTML">
                             <div class="invalid-feedback">Please enter a topic title.</div>
                         </div>
                         <div class="form-check form-switch">
@@ -306,39 +306,39 @@ $stmt->close();
     $(document).ready(function() {
         // Initialize SortableJS for sections
         initializeSortable();
-        
+
         // Initialize section collapse functionality
         initializeSectionCollapse();
-        
+
         // Add Section Button
         $('#addSectionBtn, .add-first-section-btn').click(function() {
             // Reset form
             $('#sectionForm').removeClass('was-validated')[0].reset();
             $('#sectionId').val('');
             $('#sectionModalTitle').text('Add New Section');
-            
+
             // Show modal
             $('#sectionModal').modal('show');
         });
-        
+
         // Save Section Button
         $('#saveSectionBtn').click(function() {
             const sectionForm = document.getElementById('sectionForm');
-            
+
             // Form validation
             if (!sectionForm.checkValidity()) {
                 sectionForm.classList.add('was-validated');
                 return;
             }
-            
+
             // Get form data
             const sectionId = $('#sectionId').val();
             const sectionTitle = $('#sectionTitle').val();
             const isEdit = sectionId !== '';
-            
+
             // Show loading overlay
             createOverlay('Saving section...');
-            
+
             // AJAX request to save section
             $.ajax({
                 url: isEdit ? '../ajax/curriculum/update_section.php' : '../ajax/curriculum/add_section.php',
@@ -351,18 +351,18 @@ $stmt->close();
                 success: function(response) {
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (result.success) {
                             // Hide modal
                             $('#sectionModal').modal('hide');
-                            
+
                             // Remove empty state if adding first section
                             $('#emptyCurriculumState').remove();
-                            
+
                             if (isEdit) {
                                 // Update section title
                                 $(`.section-item[data-section-id="${sectionId}"] .section-title`).text(sectionTitle);
-                                
+
                                 showAlert('success', 'Section updated successfully');
                             } else {
                                 // Append new section
@@ -414,18 +414,18 @@ $stmt->close();
                                         </div>
                                     </div>
                                 `;
-                                
+
                                 $('#sectionsContainer').append(newSection);
-                                
+
                                 // Reinitialize sortable for the new section
                                 initializeSortable();
-                                
+
                                 // Initialize section collapse
                                 initializeSectionCollapse();
-                                
+
                                 // Update section count
                                 updateCurriculumStats();
-                                
+
                                 showAlert('success', 'Section added successfully');
                             }
                         } else {
@@ -435,7 +435,7 @@ $stmt->close();
                         console.error('Error parsing response', e);
                         showAlert('danger', 'Error processing server response');
                     }
-                    
+
                     // Hide loading overlay
                     removeOverlay();
                 },
@@ -445,77 +445,77 @@ $stmt->close();
                 }
             });
         });
-        
+
         // Edit Section Button
         $(document).on('click', '.edit-section-btn', function() {
             const sectionId = $(this).data('section-id');
             const sectionTitle = $(this).data('section-title');
-            
+
             // Set form values
             $('#sectionId').val(sectionId);
             $('#sectionTitle').val(sectionTitle);
-            
+
             // Update modal title
             $('#sectionModalTitle').text('Edit Section');
-            
+
             // Show modal
             $('#sectionModal').modal('show');
         });
-        
+
         // Delete Section Button
         $(document).on('click', '.delete-section-btn', function() {
             const sectionId = $(this).data('section-id');
-            
+
             // Set confirmation message
             $('#deleteConfirmMessage').html(`
                 Are you sure you want to delete this section? <br>
                 <strong class="text-danger">This will also delete all topics and content within this section.</strong><br>
                 This action cannot be undone.
             `);
-            
+
             // Setup confirmation button
             $('#confirmDeleteBtn').data('type', 'section').data('id', sectionId);
-            
+
             // Show confirmation modal
             $('#deleteConfirmModal').modal('show');
         });
-        
+
         // Add Topic Button
         $(document).on('click', '.add-topic-btn', function() {
             const sectionId = $(this).data('section-id');
-            
+
             // Reset form
             $('#topicForm').removeClass('was-validated')[0].reset();
             $('#topicId').val('');
             $('#topicSectionId').val(sectionId);
-            
+
             // Update modal title
             $('#topicModalTitle').text('Add New Topic');
-            
+
             // Show modal
             $('#topicModal').modal('show');
         });
-        
+
         // Save Topic Button
         $('#saveTopicBtn').click(function() {
             const topicForm = document.getElementById('topicForm');
-            
+
             // Form validation
             if (!topicForm.checkValidity()) {
                 topicForm.classList.add('was-validated');
                 return;
             }
-            
+
             // Get form data
             const topicId = $('#topicId').val();
             const sectionId = $('#topicSectionId').val();
             const topicTitle = $('#topicTitle').val();
             const isPreviewable = $('#topicPreviewable').is(':checked') ? 1 : 0;
             const isEdit = topicId !== '';
-            
+
             // Show loading overlay
             createOverlay('Saving topic...');
-            
+
             // AJAX request to save topic
             $.ajax({
                 url: isEdit ? '../ajax/curriculum/update_topic.php' : '../ajax/curriculum/add_topic.php',
@@ -529,26 +529,26 @@ $stmt->close();
                 success: function(response) {
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (result.success) {
                             // Hide modal
                             $('#topicModal').modal('hide');
-                            
+
                             // Remove empty topics message
                             $(`.topics-container[data-section-id="${sectionId}"] .empty-topics-message`).remove();
-                            
+
                             if (isEdit) {
                                 // Update topic in the UI
                                 const topicElement = $(`.topic-item[data-topic-id="${topicId}"]`);
                                 topicElement.find('.topic-title').html(
                                     topicTitle + (isPreviewable ? ' <span class="badge bg-success ms-2">Preview</span>' : '')
                                 );
-                                
+
                                 // Update data attributes
                                 topicElement.find('.edit-topic-btn')
-                                            .data('topic-title', topicTitle)
-                                            .data('topic-previewable', isPreviewable);
-                                
+                                    .data('topic-title', topicTitle)
+                                    .data('topic-previewable', isPreviewable);
+
                                 showAlert('success', 'Topic updated successfully');
                             } else {
                                 // Create new topic element
@@ -587,16 +587,16 @@ $stmt->close();
                                         </div>
                                     </div>
                                 `;
-                                
+
                                 // Add to the topics container
                                 $(`.topics-container[data-section-id="${sectionId}"]`).append(newTopic);
-                                
+
                                 // Reinitialize sortable
                                 initializeSortable();
-                                
+
                                 // Update topic count
                                 updateCurriculumStats();
-                                
+
                                 showAlert('success', 'Topic added successfully');
                             }
                         } else {
@@ -606,7 +606,7 @@ $stmt->close();
                         console.error('Error parsing response', e);
                         showAlert('danger', 'Error processing server response');
                     }
-                    
+
                     // Hide loading overlay
                     removeOverlay();
                 },
@@ -616,52 +616,52 @@ $stmt->close();
                 }
             });
         });
-        
+
         // Edit Topic Button
         $(document).on('click', '.edit-topic-btn', function() {
             const topicId = $(this).data('topic-id');
             const topicTitle = $(this).data('topic-title');
             const isPreviewable = $(this).data('topic-previewable');
             const sectionId = $(this).closest('.topics-container').data('section-id');
-            
+
             // Set form values
             $('#topicId').val(topicId);
             $('#topicSectionId').val(sectionId);
             $('#topicTitle').val(topicTitle);
             $('#topicPreviewable').prop('checked', isPreviewable == 1);
-            
+
             // Update modal title
             $('#topicModalTitle').text('Edit Topic');
-            
+
             // Show modal
             $('#topicModal').modal('show');
         });
-        
+
         // Delete Topic Button
         $(document).on('click', '.delete-topic-btn', function() {
             const topicId = $(this).data('topic-id');
-            
+
             // Set confirmation message
             $('#deleteConfirmMessage').html(`
                 Are you sure you want to delete this topic? <br>
                 <strong class="text-danger">This will also delete all content associated with this topic.</strong><br>
                 This action cannot be undone.
             `);
-            
+
             // Setup confirmation button
             $('#confirmDeleteBtn').data('type', 'topic').data('id', topicId);
-            
+
             // Show confirmation modal
             $('#deleteConfirmModal').modal('show');
         });
-        
+
         // Edit Content Button
         $(document).on('click', '.content-topic-btn', function() {
             const topicId = $(this).data('topic-id');
-            
+
             // Show modal and load content editor
             $('#contentModal').modal('show');
-            
+
             // Load content editor
             $('#contentEditorContainer').html(`
                 <div class="text-center py-5">
@@ -671,7 +671,7 @@ $stmt->close();
                     <p class="mt-2">Loading content editor...</p>
                 </div>
             `);
-            
+
             // AJAX request to load content editor
             $.ajax({
                 url: '../ajax/curriculum/load_content_editor.php',
@@ -692,29 +692,30 @@ $stmt->close();
                 }
             });
         });
-        
+
         // Add Quiz Button
         $(document).on('click', '.add-quiz-btn', function() {
             const sectionId = $(this).data('section-id');
-            
+
             // Show loading overlay
             createOverlay('Loading quiz editor...');
-            
+
             // Redirect to quiz editor
-            window.location.href = `course-creator.php?step=6&view=quiz-builder&course_id=${<?php echo $course_id; ?>}&section_id=${sectionId}`;        });
-        
+            window.location.href = `quiz-builder.php?course_id=${<?php echo $course_id; ?>}&section_id=${sectionId}`;
+        });
+
         // Confirm Delete Button
         $('#confirmDeleteBtn').click(function() {
             const type = $(this).data('type');
             const id = $(this).data('id');
-            
+
             // Show loading overlay
             createOverlay(`Deleting ${type}...`);
-            
+
             // Determine the AJAX endpoint
             const endpoint = type === 'section' ? '../ajax/curriculum/delete_section.php' : '../ajax/curriculum/delete_topic.php';
             const dataKey = type === 'section' ? 'section_id' : 'topic_id';
-            
+
             // AJAX request to delete item
             $.ajax({
                 url: endpoint,
@@ -725,16 +726,16 @@ $stmt->close();
                 success: function(response) {
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (result.success) {
                             // Close modal
                             $('#deleteConfirmModal').modal('hide');
-                            
+
                             if (type === 'section') {
                                 // Remove section from UI
                                 $(`.section-item[data-section-id="${id}"]`).fadeOut(300, function() {
                                     $(this).remove();
-                                    
+
                                     // If no sections left, show empty state
                                     if ($('.section-item').length === 0) {
                                         $('#sectionsContainer').before(`
@@ -761,7 +762,7 @@ $stmt->close();
                                 // Remove topic from UI
                                 $(`.topic-item[data-topic-id="${id}"]`).fadeOut(300, function() {
                                     $(this).remove();
-                                    
+
                                     // If no topics left in section, show empty message
                                     const topicsContainer = $(this).closest('.topics-container');
                                     if (topicsContainer.find('.topic-item').length === 0) {
@@ -773,10 +774,10 @@ $stmt->close();
                                     }
                                 });
                             }
-                            
+
                             // Update curriculum stats
                             updateCurriculumStats();
-                            
+
                             showAlert('success', `${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`);
                         } else {
                             showAlert('danger', 'Error: ' + result.message);
@@ -785,7 +786,7 @@ $stmt->close();
                         console.error('Error parsing response', e);
                         showAlert('danger', 'Error processing server response');
                     }
-                    
+
                     // Hide loading overlay
                     removeOverlay();
                 },
@@ -795,12 +796,12 @@ $stmt->close();
                 }
             });
         });
-        
+
         // Preview Course Button
         $('#previewCourseBtn').click(function() {
             window.open(`course-preview.php?course_id=${<?php echo $course_id; ?>}`, '_blank');
         });
-        
+
         // Initialize SortableJS for sections and topics
         function initializeSortable() {
             // Initialize section sorting
@@ -809,7 +810,7 @@ $stmt->close();
                 if (sectionsContainer.sortableJs) {
                     sectionsContainer.sortableJs.destroy();
                 }
-                
+
                 sectionsContainer.sortableJs = new Sortable(sectionsContainer, {
                     handle: '.handle-icon',
                     animation: 150,
@@ -821,15 +822,15 @@ $stmt->close();
                     }
                 });
             }
-            
+
             // Initialize topic sorting for each section
             $('.topics-container').each(function() {
                 const container = this;
-                
+
                 if (container.sortableJs) {
                     container.sortableJs.destroy();
                 }
-                
+
                 if ($(container).find('.topic-item').length > 0) {
                     container.sortableJs = new Sortable(container, {
                         handle: '.handle-icon',
@@ -844,13 +845,13 @@ $stmt->close();
                 }
             });
         }
-        
+
         // Initialize section collapse functionality
         function initializeSectionCollapse() {
             $(document).on('click', '.section-collapse-btn', function() {
                 const sectionContent = $(this).closest('.card').find('.section-content');
                 const icon = $(this).find('i');
-                
+
                 if (sectionContent.is(':visible')) {
                     sectionContent.slideUp();
                     icon.removeClass('mdi-chevron-up').addClass('mdi-chevron-down');
@@ -860,11 +861,11 @@ $stmt->close();
                 }
             });
         }
-        
+
         // Update section order after drag and drop
         function updateSectionOrder() {
             const sections = [];
-            
+
             // Collect all sections in their current order
             $('.section-item').each(function(index) {
                 sections.push({
@@ -872,10 +873,10 @@ $stmt->close();
                     position: index + 1
                 });
             });
-            
+
             // Show saving indicator
             $('#autoSaveIndicator').addClass('show');
-            
+
             // AJAX request to update section order
             $.ajax({
                 url: '../ajax/curriculum/update_order.php',
@@ -888,10 +889,10 @@ $stmt->close();
                 success: function(response) {
                     // Hide saving indicator
                     $('#autoSaveIndicator').removeClass('show');
-                    
+
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (!result.success) {
                             showAlert('danger', 'Error updating section order: ' + result.message);
                         }
@@ -902,16 +903,16 @@ $stmt->close();
                 error: function() {
                     // Hide saving indicator
                     $('#autoSaveIndicator').removeClass('show');
-                    
+
                     showAlert('danger', 'Network error while updating section order');
                 }
             });
         }
-        
+
         // Update topic order after drag and drop
         function updateTopicOrder(sectionId) {
             const topics = [];
-            
+
             // Collect all topics in their current order
             $(`.topics-container[data-section-id="${sectionId}"] .topic-item`).each(function(index) {
                 topics.push({
@@ -919,10 +920,10 @@ $stmt->close();
                     position: index + 1
                 });
             });
-            
+
             // Show saving indicator
             $('#autoSaveIndicator').addClass('show');
-            
+
             // AJAX request to update topic order
             $.ajax({
                 url: '../ajax/curriculum/update_order.php',
@@ -935,10 +936,10 @@ $stmt->close();
                 success: function(response) {
                     // Hide saving indicator
                     $('#autoSaveIndicator').removeClass('show');
-                    
+
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (!result.success) {
                             showAlert('danger', 'Error updating topic order: ' + result.message);
                         }
@@ -949,49 +950,49 @@ $stmt->close();
                 error: function() {
                     // Hide saving indicator
                     $('#autoSaveIndicator').removeClass('show');
-                    
+
                     showAlert('danger', 'Network error while updating topic order');
                 }
             });
         }
-        
+
         // Update curriculum statistics
         function updateCurriculumStats() {
             const sectionCount = $('.section-item').length;
             const topicCount = $('.topic-item').length;
-            
+
             // Update the counts in the UI
             $('.curriculum-stats h3').eq(0).text(sectionCount);
             $('.curriculum-stats h3').eq(1).text(topicCount);
         }
     });
-    
+
     // Validate curriculum
     function validateCurriculum() {
         const sectionCount = $('.section-item').length;
-        
+
         if (sectionCount === 0) {
             showAlert('danger', 'Please add at least one section to your course curriculum.');
             return false;
         }
-        
+
         // Check if any section has no topics
         let emptySection = false;
         $('.section-item').each(function() {
             const sectionTitle = $(this).find('.section-title').text();
             const topicCount = $(this).find('.topic-item').length;
-            
+
             if (topicCount === 0) {
                 showAlert('danger', `Section "${sectionTitle}" has no topics. Please add at least one topic to each section.`);
                 emptySection = true;
                 return false; // Break the loop
             }
         });
-        
+
         if (emptySection) {
             return false;
         }
-        
+
         return true;
     }
 </script>
@@ -1001,38 +1002,38 @@ $stmt->close();
         cursor: move;
         color: #aaa;
     }
-    
+
     .section-item:hover .handle-icon,
     .topic-item:hover .handle-icon {
         color: #666;
     }
-    
+
     .sortable-ghost {
         opacity: 0.5;
         background: #f8f9fa;
     }
-    
+
     .sortable-chosen {
         background: #f8f9fa;
     }
-    
+
     .empty-state-icon {
         opacity: 0.7;
     }
-    
+
     .card-header.section-header {
         cursor: pointer;
     }
-    
+
     .topic-item {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    
+
     .topic-item:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     }
-    
+
     .border-dashed {
         border-style: dashed !important;
     }

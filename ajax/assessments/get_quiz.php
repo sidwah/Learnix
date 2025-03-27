@@ -1,76 +1,60 @@
 <?php
-// Include necessary files
-require_once '../../backend/config.php';
+require_once('../../backend/config.php');
 session_start();
 
 // Check if user is logged in and is an instructor
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'instructor') {
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit;
 }
 
-// Get instructor_id from user_id
-$user_id = $_SESSION['user_id'];
-$stmt = $conn->prepare("SELECT instructor_id FROM instructors WHERE user_id = ?");
-$stmt->bind_param("i", $user_id);
+// Get quiz ID
+$quizId = $_GET['quiz_id'] ?? null;
+
+if (!$quizId) {
+    echo json_encode(['success' => false, 'message' => 'Quiz ID is required']);
+    exit;
+}
+
+// Get quiz details
+$stmt = $conn->prepare("SELECT * FROM section_quizzes WHERE quiz_id = ?");
+$stmt->bind_param("i", $quizId);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    echo json_encode(['status' => 'error', 'message' => 'Instructor not found']);
-    exit;
-}
-
-$instructor = $result->fetch_assoc();
-$instructor_id = $instructor['instructor_id'];
-
-// Validate input data
-if (!isset($_GET['quiz_id']) || empty($_GET['quiz_id'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Quiz ID is required']);
-    exit;
-}
-
-$quiz_id = intval($_GET['quiz_id']);
-
-// Check if quiz exists and belongs to instructor's course
-$stmt = $conn->prepare("
-    SELECT q.* 
-    FROM section_quizzes q 
-    JOIN course_sections s ON q.section_id = s.section_id 
-    JOIN courses c ON s.course_id = c.course_id 
-    WHERE q.quiz_id = ? AND c.instructor_id = ?
-");
-$stmt->bind_param("ii", $quiz_id, $instructor_id);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows === 0) {
-    echo json_encode(['status' => 'error', 'message' => 'Quiz not found or not authorized']);
+    echo json_encode(['success' => false, 'message' => 'Quiz not found']);
     exit;
 }
 
 $quiz = $result->fetch_assoc();
-
-// Return quiz data
-echo json_encode([
-    'status' => 'success',
-    'data' => [
-        'quiz_id' => $quiz['quiz_id'],
-        'section_id' => $quiz['section_id'],
-        'topic_id' => $quiz['topic_id'],
-        'quiz_title' => $quiz['quiz_title'],
-        'description' => $quiz['description'],
-        'randomize_questions' => $quiz['randomize_questions'],
-        'pass_mark' => $quiz['pass_mark'],
-        'time_limit' => $quiz['time_limit'],
-        'attempts_allowed' => $quiz['attempts_allowed'],
-        'show_correct_answers' => $quiz['show_correct_answers'],
-        'shuffle_answers' => $quiz['shuffle_answers'],
-        'is_required' => $quiz['is_required'],
-        'instruction' => $quiz['instruction']
-    ]
-]);
-
 $stmt->close();
-$conn->close();
+
+// Get section's course_id
+$stmt = $conn->prepare("SELECT course_id FROM course_sections WHERE section_id = ?");
+$stmt->bind_param("i", $quiz['section_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+$courseId = $result->fetch_assoc()['course_id'];
+$stmt->close();
+
+// Check if user owns this course
+$stmt = $conn->prepare("
+    SELECT c.course_id 
+    FROM courses c 
+    JOIN instructors i ON c.instructor_id = i.instructor_id 
+    WHERE c.course_id = ? AND i.user_id = ?
+");
+$stmt->bind_param("ii", $courseId, $_SESSION['user_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    echo json_encode(['success' => false, 'message' => 'You do not have permission to access this quiz']);
+    exit;
+}
+$stmt->close();
+
+// Return the quiz details
+echo json_encode($quiz);
 ?>
