@@ -51,6 +51,13 @@
                 </a>
             </li>
 
+            <li class="side-nav-item">
+                <a href="course-creator.php" class="side-nav-link">
+                    <i class="mdi mdi-clipboard-edit-outline"></i>
+                    <span> Course Creator </span>
+                </a>
+            </li>
+
 
             <li class="side-nav-item">
                 <a data-bs-toggle="collapse" href="#sidebarStudents" aria-expanded="false" aria-controls="sidebarStudents" class="side-nav-link">
