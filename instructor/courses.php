@@ -92,15 +92,7 @@ $result = $stmt->get_result();
                     <!-- end page title -->
 
                     <div class="row mb-2">
-                        <div class="col-sm-4"></div>
-                        <div class="col-sm-8">
-                            <div class="text-sm-end">
-                                <div class="btn-group mb-3">
-                                    <button type="button" class="btn btn-primary"><a href="courses.php" class="text-white">All Courses</a></button>
-                                </div>
-                            </div>
-
-                        </div><!-- end col-->
+                        
                         <?php
                         // Assuming database connection is already established
                         if (!isset($_SESSION['user_id'])) {
@@ -315,140 +307,139 @@ ORDER BY c.updated_at DESC";
                         </div>
 
                         <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-    const createButtons = document.querySelectorAll('#createNewCourseBtn, #createFirstCourseBtn');
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const createButtons = document.querySelectorAll('#createNewCourseBtn, #createFirstCourseBtn');
 
-    function createOverlay(message = null) {
-        const overlay = document.createElement('div');
-        overlay.id = 'pageOverlay';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-        overlay.style.backdropFilter = 'blur(5px)';
-        overlay.style.zIndex = '9998';
-        overlay.style.display = 'flex';
-        overlay.style.flexDirection = 'column';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
-        overlay.style.gap = '15px';
+                                function createOverlay(message = null) {
+                                    const overlay = document.createElement('div');
+                                    overlay.id = 'pageOverlay';
+                                    overlay.style.position = 'fixed';
+                                    overlay.style.top = '0';
+                                    overlay.style.left = '0';
+                                    overlay.style.width = '100%';
+                                    overlay.style.height = '100%';
+                                    overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                                    overlay.style.backdropFilter = 'blur(5px)';
+                                    overlay.style.zIndex = '9998';
+                                    overlay.style.display = 'flex';
+                                    overlay.style.flexDirection = 'column';
+                                    overlay.style.justifyContent = 'center';
+                                    overlay.style.alignItems = 'center';
+                                    overlay.style.gap = '15px';
 
-        // Add loading spinner
-        const spinner = document.createElement('div');
-        spinner.className = 'spinner-border text-primary';
-        spinner.setAttribute('role', 'status');
-        spinner.style.width = '3rem';
-        spinner.style.height = '3rem';
-        spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
-        overlay.appendChild(spinner);
+                                    // Add loading spinner
+                                    const spinner = document.createElement('div');
+                                    spinner.className = 'spinner-border text-primary';
+                                    spinner.setAttribute('role', 'status');
+                                    spinner.style.width = '3rem';
+                                    spinner.style.height = '3rem';
+                                    spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
+                                    overlay.appendChild(spinner);
 
-        // Add message if provided
-        if (message) {
-            const messageElement = document.createElement('div');
-            messageElement.className = 'fw-semibold fs-5 text-primary';
-            messageElement.textContent = message;
-            overlay.appendChild(messageElement);
-        }
+                                    // Add message if provided
+                                    if (message) {
+                                        const messageElement = document.createElement('div');
+                                        messageElement.className = 'fw-semibold fs-5 text-primary';
+                                        messageElement.textContent = message;
+                                        overlay.appendChild(messageElement);
+                                    }
 
-        document.body.appendChild(overlay);
-        return overlay;
-    }
+                                    document.body.appendChild(overlay);
+                                    return overlay;
+                                }
 
-    function removeOverlay() {
-        const overlay = document.getElementById('pageOverlay');
-        if (overlay) {
-            document.body.removeChild(overlay);
-        }
-    }
+                                function removeOverlay() {
+                                    const overlay = document.getElementById('pageOverlay');
+                                    if (overlay) {
+                                        document.body.removeChild(overlay);
+                                    }
+                                }
 
-    function showAlert(type, message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-        alertDiv.setAttribute('role', 'alert');
-        alertDiv.innerHTML = `
+                                function showAlert(type, message) {
+                                    const alertDiv = document.createElement('div');
+                                    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+                                    alertDiv.setAttribute('role', 'alert');
+                                    alertDiv.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         `;
-        alertDiv.style.position = 'fixed';
-        alertDiv.style.top = '20px';
-        alertDiv.style.left = '50%';
-        alertDiv.style.transform = 'translateX(-50%)';
-        alertDiv.style.zIndex = '9999';
-        alertDiv.style.minWidth = '300px';
-        alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-        document.body.appendChild(alertDiv);
+                                    alertDiv.style.position = 'fixed';
+                                    alertDiv.style.top = '20px';
+                                    alertDiv.style.left = '50%';
+                                    alertDiv.style.transform = 'translateX(-50%)';
+                                    alertDiv.style.zIndex = '9999';
+                                    alertDiv.style.minWidth = '300px';
+                                    alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                                    document.body.appendChild(alertDiv);
 
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.classList.remove('show');
-                setTimeout(() => {
-                    if (alertDiv.parentNode) {
-                        alertDiv.parentNode.removeChild(alertDiv);
-                    }
-                }, 300);
-            }
-        }, 5000);
-    }
+                                    setTimeout(() => {
+                                        if (alertDiv.parentNode) {
+                                            alertDiv.classList.remove('show');
+                                            setTimeout(() => {
+                                                if (alertDiv.parentNode) {
+                                                    alertDiv.parentNode.removeChild(alertDiv);
+                                                }
+                                            }, 300);
+                                        }
+                                    }, 5000);
+                                }
 
-    function createNewCourse(e) {
-        e.preventDefault();
+                                function createNewCourse(e) {
+                                    e.preventDefault();
 
-        // Create loading overlay with message
-        const overlay = createOverlay('Preparing new course...');
+                                    // Create loading overlay with message
+                                    const overlay = createOverlay('Preparing new course...');
 
-        fetch('../ajax/courses/start_course.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-            .then(async (response) => {
-                return new Promise((resolve) => {
-                    setTimeout(async () => {
-                        removeOverlay();
+                                    fetch('../ajax/courses/start_course.php', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            }
+                                        })
+                                        .then(async (response) => {
+                                            return new Promise((resolve) => {
+                                                setTimeout(async () => {
+                                                    removeOverlay();
 
-                        if (!response.ok) {
-                            const errorText = await response.text();
-                            console.error('Full error response:', errorText);
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
+                                                    if (!response.ok) {
+                                                        const errorText = await response.text();
+                                                        console.error('Full error response:', errorText);
+                                                        throw new Error(`HTTP error! status: ${response.status}`);
+                                                    }
 
-                        const responseText = await response.text();
-                        console.log('Raw response:', responseText);
+                                                    const responseText = await response.text();
+                                                    console.log('Raw response:', responseText);
 
-                        try {
-                            resolve(JSON.parse(responseText));
-                        } catch (jsonError) {
-                            console.error('JSON parsing error:', jsonError);
-                            console.error('Problematic response text:', responseText);
-                            throw new Error('Failed to parse JSON response');
-                        }
-                    }, 2000); // 2-second delay before removing overlay
-                });
-            })
-            .then(data => {
-                if (data.success) {
-                    window.location.href = data.redirect;
-                } else {
-                    console.error('Course creation error:', data);
-                    showAlert('danger', data.message || 'Failed to create course');
-                }
-            })
-            .catch(error => {
-                removeOverlay();
-                console.error('Course creation error:', error);
-                showAlert('danger', 'An error occurred while creating the course. Please check browser console for details.');
-            });
-    }
+                                                    try {
+                                                        resolve(JSON.parse(responseText));
+                                                    } catch (jsonError) {
+                                                        console.error('JSON parsing error:', jsonError);
+                                                        console.error('Problematic response text:', responseText);
+                                                        throw new Error('Failed to parse JSON response');
+                                                    }
+                                                }, 2000); // 2-second delay before removing overlay
+                                            });
+                                        })
+                                        .then(data => {
+                                            if (data.success) {
+                                                window.location.href = data.redirect;
+                                            } else {
+                                                console.error('Course creation error:', data);
+                                                showAlert('danger', data.message || 'Failed to create course');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            removeOverlay();
+                                            console.error('Course creation error:', error);
+                                            showAlert('danger', 'An error occurred while creating the course. Please check browser console for details.');
+                                        });
+                                }
 
-    createButtons.forEach(button => {
-        button.addEventListener('click', createNewCourse);
-    });
-});
-
+                                createButtons.forEach(button => {
+                                    button.addEventListener('click', createNewCourse);
+                                });
+                            });
                         </script>
                         <?php
                         $stmt->close();

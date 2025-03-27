@@ -43,7 +43,7 @@
                     <span> All Courses </span>
                 </a>
             </li>
-
+<!-- 
             <li class="side-nav-item">
                 <a href="create-course.php" class="side-nav-link">
                     <i class="mdi mdi-clipboard-edit-outline"></i>
@@ -56,7 +56,7 @@
                     <i class="mdi mdi-clipboard-edit-outline"></i>
                     <span> Course Creator </span>
                 </a>
-            </li>
+            </li> -->
 
 
             <li class="side-nav-item">
