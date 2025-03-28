@@ -155,33 +155,58 @@ $topics = [];
 while ($topic = $topics_result->fetch_assoc()) {
     $topics[] = $topic;
 }
+
 // In the topic selection logic, add:
+// Improved current topic selection logic
 if ($current_section_id) {
-    // Find the current topic for this enrollment and section
-    $current_topic_query = "SELECT st.topic_id 
-        FROM section_topics st
-        LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
-        WHERE st.section_id = ? AND 
-              (p.completion_status IS NULL OR p.completion_status != 'Completed')
-        ORDER BY st.position
-        LIMIT 1";
+    // First check if there's a manually selected topic in the URL
+    if (isset($_GET['topic']) && is_numeric($_GET['topic'])) {
+        $current_topic_id = intval($_GET['topic']);
+    } else {
+        // Find the first incomplete topic for this enrollment and section
+        $current_topic_query = "SELECT st.topic_id 
+            FROM section_topics st
+            LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+            WHERE st.section_id = ? AND 
+                  (p.completion_status IS NULL OR p.completion_status != 'Completed')
+            ORDER BY st.position
+            LIMIT 1";
 
-    $stmt = $conn->prepare($current_topic_query);
-    $stmt->bind_param("ii", $enrollment_id, $current_section_id);
-    $stmt->execute();
-    $current_topic_result = $stmt->get_result();
+        $stmt = $conn->prepare($current_topic_query);
+        $stmt->bind_param("ii", $enrollment_id, $current_section_id);
+        $stmt->execute();
+        $current_topic_result = $stmt->get_result();
 
-    if ($current_topic_result->num_rows > 0) {
-        $current_topic = $current_topic_result->fetch_assoc();
-        $current_topic_id = $current_topic['topic_id'];
+        if ($current_topic_result->num_rows > 0) {
+            $current_topic = $current_topic_result->fetch_assoc();
+            $current_topic_id = $current_topic['topic_id'];
+        } else {
+            // If all topics are completed, use the last topic in the section
+            $last_topic_query = "SELECT st.topic_id 
+                FROM section_topics st
+                WHERE st.section_id = ?
+                ORDER BY st.position DESC
+                LIMIT 1";
+            $stmt = $conn->prepare($last_topic_query);
+            $stmt->bind_param("i", $current_section_id);
+            $stmt->execute();
+            $last_topic_result = $stmt->get_result();
+            
+            if ($last_topic_result->num_rows > 0) {
+                $last_topic = $last_topic_result->fetch_assoc();
+                $current_topic_id = $last_topic['topic_id'];
+            }
+        }
 
         // Update the enrollment's current topic
-        $update_current_topic = "UPDATE enrollments 
-            SET current_topic_id = ? 
-            WHERE enrollment_id = ?";
-        $update_stmt = $conn->prepare($update_current_topic);
-        $update_stmt->bind_param("ii", $current_topic_id, $enrollment_id);
-        $update_stmt->execute();
+        if (isset($current_topic_id)) {
+            $update_current_topic = "UPDATE enrollments 
+                SET current_topic_id = ? 
+                WHERE enrollment_id = ?";
+            $update_stmt = $conn->prepare($update_current_topic);
+            $update_stmt->bind_param("ii", $current_topic_id, $enrollment_id);
+            $update_stmt->execute();
+        }
     }
 }
 
@@ -668,15 +693,28 @@ foreach ($sections as $sec) {
                                         </p>
                                     </div>
 
-                                    <!-- Resume Button -->
-                                    <?php if ($topic['topic_id'] == $current_topic_id && $topic['completion_status'] !== 'Completed'): ?>
-                                        <div class="ms-2">
+                                    <div class="ms-2">
+                                        <?php if ($topic['completion_status'] === 'Completed'): ?>
+                                            <!-- For completed topics -->
+                                            <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $topic['topic_id']; ?>"
+                                                class="btn btn-outline-success btn-sm">
+                                                <i class="bi bi-check-circle me-1"></i> Review
+                                            </a>
+                                        <?php elseif ($topic['topic_id'] == $current_topic_id): ?>
+                                            <!-- For the current topic that's not completed -->
                                             <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $topic['topic_id']; ?>"
                                                 class="btn btn-primary btn-sm">
-                                                Resume
+                                                <i class="bi bi-play-fill me-1"></i> Resume
                                             </a>
-                                        </div>
-                                    <?php endif; ?>
+                                        <?php else: ?>
+                                            <!-- For other uncompleted topics -->
+                                            <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $topic['topic_id']; ?>"
+                                                class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-arrow-right me-1"></i> Start
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+
                                 </li>
                             <?php endforeach; ?>
                         </ul>
