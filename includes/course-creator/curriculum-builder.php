@@ -303,6 +303,8 @@ $stmt->close();
 </div>
 
 <script>
+    // At the beginning of your script
+const courseId = <?php echo $course_id; ?>;
     $(document).ready(function() {
         // Initialize SortableJS for sections
         initializeSortable();
