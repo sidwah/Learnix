@@ -19,6 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Connect to database
 require_once '../../backend/config.php';
 
+// Start output buffering to capture any unexpected output
+ob_start();
+
 // Initialize response array
 $response = ['success' => false];
 
@@ -132,9 +135,21 @@ try {
     $response['message'] = $e->getMessage();
 }
 
+// Return JSON response
+// Get any buffered output
+$output = ob_get_clean();
+
+// If there was unexpected output, log it for debugging
+if (!empty($output)) {
+    // Log the unexpected output for debugging
+    error_log('Unexpected output in delete_quiz.php: ' . $output);
+}
+
 // Set headers to prevent caching
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+
+// Ensure proper content type
 header('Content-Type: application/json');
 
 // Send the JSON response

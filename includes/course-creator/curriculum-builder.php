@@ -820,6 +820,7 @@ $stmt->close();
             }
 
             // AJAX request to delete item
+            // AJAX request to delete item
             $.ajax({
                 url: endpoint,
                 type: 'POST',
@@ -828,7 +829,11 @@ $stmt->close();
                 },
                 success: function(response) {
                     try {
-                        const result = JSON.parse(response);
+                        // Log the raw response for debugging
+                        console.log("Raw response:", response);
+
+                        // Try to parse the response as JSON - first check if it's already an object
+                        const result = typeof response === 'object' ? response : JSON.parse(response);
 
                         if (result.success) {
                             // Close modal
@@ -842,23 +847,23 @@ $stmt->close();
                                     // If no sections left, show empty state
                                     if ($('.section-item').length === 0) {
                                         $('#sectionsContainer').before(`
-                                            <div id="emptyCurriculumState" class="row mb-4">
-                                                <div class="col-12">
-                                                    <div class="card border border-dashed border-primary bg-light">
-                                                        <div class="card-body text-center py-5">
-                                                            <div class="empty-state-icon mb-3">
-                                                                <i class="mdi mdi-notebook-outline" style="font-size: 64px; color: #3e7bfa;"></i>
-                                                            </div>
-                                                            <h4>No Sections Added Yet</h4>
-                                                            <p class="text-muted">Start building your course by adding sections and topics.</p>
-                                                            <button class="btn btn-primary mt-2 add-first-section-btn">
-                                                                <i class="mdi mdi-plus-circle"></i> Add Your First Section
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                <div id="emptyCurriculumState" class="row mb-4">
+                                    <div class="col-12">
+                                        <div class="card border border-dashed border-primary bg-light">
+                                            <div class="card-body text-center py-5">
+                                                <div class="empty-state-icon mb-3">
+                                                    <i class="mdi mdi-notebook-outline" style="font-size: 64px; color: #3e7bfa;"></i>
                                                 </div>
+                                                <h4>No Sections Added Yet</h4>
+                                                <p class="text-muted">Start building your course by adding sections and topics.</p>
+                                                <button class="btn btn-primary mt-2 add-first-section-btn">
+                                                    <i class="mdi mdi-plus-circle"></i> Add Your First Section
+                                                </button>
                                             </div>
-                                        `);
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
                                     }
                                 });
                             } else if (type === 'topic') {
@@ -886,17 +891,20 @@ $stmt->close();
 
                             showAlert('success', `${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully`);
                         } else {
-                            showAlert('danger', 'Error: ' + result.message);
+                            showAlert('danger', 'Error: ' + (result.message || 'Unknown error'));
                         }
                     } catch (e) {
                         console.error('Error parsing response', e);
+                        console.log('Raw response was:', response);
                         showAlert('danger', 'Error processing server response');
                     }
 
                     // Hide loading overlay
                     removeOverlay();
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error("AJAX Error:", status, error);
+                    console.log("Response text:", xhr.responseText);
                     showAlert('danger', `Network error while deleting ${type}`);
                     removeOverlay();
                 }
