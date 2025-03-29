@@ -59,19 +59,48 @@ $section = $section_result->fetch_assoc();
 $stmt->close();
 
 // Check if there's an existing quiz for this section
-$quiz_query = "SELECT * FROM section_quizzes WHERE section_id = ?";
-$stmt = $conn->prepare($quiz_query);
-$stmt->bind_param("i", $section_id);
-$stmt->execute();
-$quiz_result = $stmt->get_result();
+// Check if we're editing an existing quiz or creating a new one
 $quiz = null;
 $quiz_id = null;
 
-if ($quiz_result->num_rows > 0) {
-    $quiz = $quiz_result->fetch_assoc();
-    $quiz_id = $quiz['quiz_id'];
+// If quiz_id is provided in URL, load that specific quiz
+if (isset($_GET['quiz_id']) && is_numeric($_GET['quiz_id'])) {
+    $quiz_id = intval($_GET['quiz_id']);
+    
+    // Verify this quiz belongs to this section
+    $quiz_query = "SELECT * FROM section_quizzes WHERE quiz_id = ? AND section_id = ?";
+    $stmt = $conn->prepare($quiz_query);
+    $stmt->bind_param("ii", $quiz_id, $section_id);
+    $stmt->execute();
+    $quiz_result = $stmt->get_result();
+    
+    if ($quiz_result->num_rows > 0) {
+        $quiz = $quiz_result->fetch_assoc();
+    } else {
+        // Quiz not found or doesn't belong to this section
+        header('Location: course-creator.php?course_id=' . $course_id . '&step=6');
+        exit;
+    }
+    $stmt->close();
+} 
+// If 'new' parameter is set, we're creating a new quiz
+else if (isset($_GET['new']) && $_GET['new'] == 1) {
+    // Keep quiz and quiz_id as null to create a new one
 }
-$stmt->close();
+// If neither quiz_id nor new parameter is provided, check if there's an existing quiz
+else {
+    $quiz_query = "SELECT * FROM section_quizzes WHERE section_id = ? LIMIT 1";
+    $stmt = $conn->prepare($quiz_query);
+    $stmt->bind_param("i", $section_id);
+    $stmt->execute();
+    $quiz_result = $stmt->get_result();
+    
+    if ($quiz_result->num_rows > 0) {
+        $quiz = $quiz_result->fetch_assoc();
+        $quiz_id = $quiz['quiz_id'];
+    }
+    $stmt->close();
+}
 
 // Set page title
 $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';

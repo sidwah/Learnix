@@ -759,15 +759,16 @@ $stmt->close();
         });
 
         // Add Quiz Button
-        $(document).on('click', '.add-quiz-btn', function() {
-            const sectionId = $(this).data('section-id');
+      // Add Quiz Button
+$(document).on('click', '.add-quiz-btn', function() {
+    const sectionId = $(this).data('section-id');
 
-            // Show loading overlay
-            createOverlay('Loading quiz editor...');
+    // Show loading overlay
+    createOverlay('Loading quiz editor...');
 
-            // Redirect to quiz editor (instructor/quiz-builder.php)
-            window.location.href = `quiz-builder.php?course_id=${courseId}&section_id=${sectionId}`;
-        });
+    // Redirect to quiz editor with a "new" parameter to always create a new quiz
+    window.location.href = `quiz-builder.php?course_id=${courseId}&section_id=${sectionId}&new=1`;
+});
 
         // Edit Quiz Button
         $(document).on('click', '.edit-quiz-btn', function() {
