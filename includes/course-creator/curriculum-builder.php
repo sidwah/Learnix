@@ -700,8 +700,8 @@ $stmt->close();
             // Show loading overlay
             createOverlay('Loading quiz editor...');
 
-            // Redirect to quiz editor
-            window.location.href = `quiz-builder.php?course_id=${<?php echo $course_id; ?>}&section_id=${sectionId}`;
+            // Redirect to quiz editor (includes/course-creator/quiz-builder.php)
+            window.location.href = `../includes/course-creator/quiz-builder.php?course_id=${<?php echo $course_id; ?>}&section_id=${sectionId}`;
         });
 
         // Confirm Delete Button
