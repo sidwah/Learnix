@@ -112,16 +112,17 @@ try {
     $stmt->close();
     
     // Reorder remaining topics
-    $stmt = $conn->prepare("
-        SET @pos = 0;
-        UPDATE section_topics 
-        SET position = (@pos := @pos + 1) 
-        WHERE section_id = ? 
-        ORDER BY position;
-    ");
-    $stmt->bind_param("i", $topic_data['section_id']);
-    $stmt->execute();
-    $stmt->close();
+  // Replace the SQL position reordering with this:
+$conn->query("SET @pos = 0");
+$stmt = $conn->prepare("
+    UPDATE section_topics 
+    SET position = (@pos := @pos + 1) 
+    WHERE section_id = ? 
+    ORDER BY position
+");
+$stmt->bind_param("i", $topic_data['section_id']);
+$stmt->execute();
+$stmt->close();
     
     // Commit transaction
     $conn->commit();

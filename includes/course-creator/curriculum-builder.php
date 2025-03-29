@@ -20,6 +20,16 @@ $stmt->execute();
 $topics_count_result = $stmt->get_result();
 $topics_count = $topics_count_result->fetch_assoc()['total_topics'] ?? 0;
 $stmt->close();
+
+// Count total quizzes in course
+$quizzes_count_query = "SELECT COUNT(*) as total_quizzes FROM section_quizzes 
+                       WHERE section_id IN (SELECT section_id FROM course_sections WHERE course_id = ?)";
+$stmt = $conn->prepare($quizzes_count_query);
+$stmt->bind_param("i", $course_id);
+$stmt->execute();
+$quizzes_count_result = $stmt->get_result();
+$quizzes_count = $quizzes_count_result->fetch_assoc()['total_quizzes'] ?? 0;
+$stmt->close();
 ?>
 
 <div class="curriculum-builder">
@@ -48,15 +58,19 @@ $stmt->close();
             <div class="curriculum-stats card bg-light">
                 <div class="card-body">
                     <div class="row text-center">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <h3 class="fw-bold"><?php echo count($sections); ?></h3>
                             <p class="text-muted mb-0">Sections</p>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <h3 class="fw-bold"><?php echo $topics_count; ?></h3>
                             <p class="text-muted mb-0">Topics</p>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <h3 class="fw-bold"><?php echo $quizzes_count; ?></h3>
+                            <p class="text-muted mb-0">Quizzes</p>
+                        </div>
+                        <div class="col-md-3">
                             <button id="previewCourseBtn" class="btn btn-outline-primary">
                                 <i class="mdi mdi-eye"></i> Preview Course
                             </button>
@@ -102,6 +116,20 @@ $stmt->close();
                 $topics[] = $topic;
             }
             $stmt->close();
+
+            // Fetch quizzes for this section
+            $quizzes_query = "SELECT * FROM section_quizzes WHERE section_id = ?";
+            $stmt = $conn->prepare($quizzes_query);
+            $stmt->bind_param("i", $section['section_id']);
+            $stmt->execute();
+            $quizzes_result = $stmt->get_result();
+            $quizzes = [];
+            while ($quiz = $quizzes_result->fetch_assoc()) {
+                $quizzes[] = $quiz;
+            }
+            $stmt->close();
+
+            $has_content = !empty($topics) || !empty($quizzes);
             ?>
             <div class="section-item mb-4" data-section-id="<?php echo $section['section_id']; ?>">
                 <div class="card">
@@ -132,9 +160,9 @@ $stmt->close();
                     <div class="card-body section-content">
                         <!-- Topics Container (sortable) -->
                         <div class="topics-container" data-section-id="<?php echo $section['section_id']; ?>">
-                            <?php if (empty($topics)): ?>
+                            <?php if (!$has_content): ?>
                                 <div class="empty-topics-message text-center py-4">
-                                    <p class="text-muted mb-0">No topics in this section yet. Add your first topic.</p>
+                                    <p class="text-muted mb-0">No content in this section yet. Add topics or quizzes.</p>
                                 </div>
                             <?php else: ?>
                                 <?php foreach ($topics as $topic): ?>
@@ -167,6 +195,40 @@ $stmt->close();
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-danger delete-topic-btn"
                                                         data-topic-id="<?php echo $topic['topic_id']; ?>">
+                                                        <i class="mdi mdi-delete"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+
+                                <?php foreach ($quizzes as $quiz): ?>
+                                    <div class="quiz-item mb-2 card bg-light border-primary" data-quiz-id="<?php echo $quiz['quiz_id']; ?>">
+                                        <div class="card-body py-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-2">
+                                                        <i class="mdi mdi-help-circle-outline text-primary" style="font-size: 1.2rem;"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="quiz-title mb-0">
+                                                            <?php echo htmlspecialchars($quiz['quiz_title']); ?>
+                                                            <span class="badge bg-primary ms-2">Quiz</span>
+                                                            <?php if (isset($quiz['pass_mark'])): ?>
+                                                                <small class="text-muted ms-2">Pass: <?php echo $quiz['pass_mark']; ?>%</small>
+                                                            <?php endif; ?>
+                                                        </h6>
+                                                    </div>
+                                                </div>
+                                                <div class="quiz-actions">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-quiz-btn"
+                                                        data-quiz-id="<?php echo $quiz['quiz_id']; ?>"
+                                                        data-section-id="<?php echo $section['section_id']; ?>">
+                                                        <i class="mdi mdi-pencil"></i> Edit
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-quiz-btn"
+                                                        data-quiz-id="<?php echo $quiz['quiz_id']; ?>">
                                                         <i class="mdi mdi-delete"></i>
                                                     </button>
                                                 </div>
@@ -304,7 +366,7 @@ $stmt->close();
 
 <script>
     // At the beginning of your script
-const courseId = <?php echo $course_id; ?>;
+    const courseId = <?php echo $course_id; ?>;
     $(document).ready(function() {
         // Initialize SortableJS for sections
         initializeSortable();
@@ -399,7 +461,7 @@ const courseId = <?php echo $course_id; ?>;
                                                 <!-- Topics Container (sortable) -->
                                                 <div class="topics-container" data-section-id="${result.section_id}">
                                                     <div class="empty-topics-message text-center py-4">
-                                                        <p class="text-muted mb-0">No topics in this section yet. Add your first topic.</p>
+                                                        <p class="text-muted mb-0">No content in this section yet. Add topics or quizzes.</p>
                                                     </div>
                                                 </div>
                                                 <div class="mt-3">
@@ -471,7 +533,7 @@ const courseId = <?php echo $course_id; ?>;
             // Set confirmation message
             $('#deleteConfirmMessage').html(`
                 Are you sure you want to delete this section? <br>
-                <strong class="text-danger">This will also delete all topics and content within this section.</strong><br>
+                <strong class="text-danger">This will also delete all topics, quizzes, and content within this section.</strong><br>
                 This action cannot be undone.
             `);
 
@@ -587,7 +649,8 @@ const courseId = <?php echo $course_id; ?>;
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+</div>
+                                </div>
                                 `;
 
                                 // Add to the topics container
@@ -703,7 +766,37 @@ const courseId = <?php echo $course_id; ?>;
             createOverlay('Loading quiz editor...');
 
             // Redirect to quiz editor (instructor/quiz-builder.php)
-            window.location.href = `quiz-builder.php?course_id=${<?php echo $course_id; ?>}&section_id=${sectionId}`;
+            window.location.href = `quiz-builder.php?course_id=${courseId}&section_id=${sectionId}`;
+        });
+
+        // Edit Quiz Button
+        $(document).on('click', '.edit-quiz-btn', function() {
+            const quizId = $(this).data('quiz-id');
+            const sectionId = $(this).data('section-id');
+
+            // Show loading overlay
+            createOverlay('Loading quiz editor...');
+
+            // Redirect to quiz editor with quiz ID
+            window.location.href = `quiz-builder.php?course_id=${courseId}&section_id=${sectionId}&quiz_id=${quizId}`;
+        });
+
+        // Delete Quiz Button
+        $(document).on('click', '.delete-quiz-btn', function() {
+            const quizId = $(this).data('quiz-id');
+
+            // Set confirmation message
+            $('#deleteConfirmMessage').html(`
+                Are you sure you want to delete this quiz? <br>
+                <strong class="text-danger">This will also delete all questions associated with this quiz.</strong><br>
+                This action cannot be undone.
+            `);
+
+            // Setup confirmation button
+            $('#confirmDeleteBtn').data('type', 'quiz').data('id', quizId);
+
+            // Show confirmation modal
+            $('#deleteConfirmModal').modal('show');
         });
 
         // Confirm Delete Button
@@ -715,8 +808,16 @@ const courseId = <?php echo $course_id; ?>;
             createOverlay(`Deleting ${type}...`);
 
             // Determine the AJAX endpoint
-            const endpoint = type === 'section' ? '../ajax/curriculum/delete_section.php' : '../ajax/curriculum/delete_topic.php';
-            const dataKey = type === 'section' ? 'section_id' : 'topic_id';
+            let endpoint = '../ajax/curriculum/delete_section.php';
+            let dataKey = 'section_id';
+
+            if (type === 'topic') {
+                endpoint = '../ajax/curriculum/delete_topic.php';
+                dataKey = 'topic_id';
+            } else if (type === 'quiz') {
+                endpoint = '../ajax/assessments/delete_quiz.php';
+                dataKey = 'quiz_id';
+            }
 
             // AJAX request to delete item
             $.ajax({
@@ -760,20 +861,23 @@ const courseId = <?php echo $course_id; ?>;
                                         `);
                                     }
                                 });
-                            } else {
+                            } else if (type === 'topic') {
                                 // Remove topic from UI
                                 $(`.topic-item[data-topic-id="${id}"]`).fadeOut(300, function() {
                                     $(this).remove();
 
-                                    // If no topics left in section, show empty message
+                                    // Check if this was the last content item
                                     const topicsContainer = $(this).closest('.topics-container');
-                                    if (topicsContainer.find('.topic-item').length === 0) {
-                                        topicsContainer.html(`
-                                            <div class="empty-topics-message text-center py-4">
-                                                <p class="text-muted mb-0">No topics in this section yet. Add your first topic.</p>
-                                            </div>
-                                        `);
-                                    }
+                                    checkSectionEmptyState(topicsContainer);
+                                });
+                            } else if (type === 'quiz') {
+                                // Remove quiz from UI
+                                $(`.quiz-item[data-quiz-id="${id}"]`).fadeOut(300, function() {
+                                    $(this).remove();
+
+                                    // Check if this was the last content item
+                                    const topicsContainer = $(this).closest('.topics-container');
+                                    checkSectionEmptyState(topicsContainer);
                                 });
                             }
 
@@ -799,9 +903,23 @@ const courseId = <?php echo $course_id; ?>;
             });
         });
 
+        // Check if a section is empty and update UI
+        function checkSectionEmptyState(topicsContainer) {
+            const hasTopics = topicsContainer.find('.topic-item').length > 0;
+            const hasQuizzes = topicsContainer.find('.quiz-item').length > 0;
+
+            if (!hasTopics && !hasQuizzes) {
+                topicsContainer.html(`
+                    <div class="empty-topics-message text-center py-4">
+                        <p class="text-muted mb-0">No content in this section yet. Add topics or quizzes.</p>
+                    </div>
+                `);
+            }
+        }
+
         // Preview Course Button
         $('#previewCourseBtn').click(function() {
-            window.open(`course-preview.php?course_id=${<?php echo $course_id; ?>}`, '_blank');
+            window.open(`course-preview.php?course_id=${courseId}`, '_blank');
         });
 
         // Initialize SortableJS for sections and topics
@@ -840,6 +958,7 @@ const courseId = <?php echo $course_id; ?>;
                         ghostClass: 'sortable-ghost',
                         chosenClass: 'sortable-chosen',
                         dragClass: 'sortable-drag',
+                        filter: '.quiz-item', // Prevent quizzes from being dragged
                         onEnd: function(evt) {
                             updateTopicOrder($(container).data('section-id'));
                         }
@@ -884,7 +1003,7 @@ const courseId = <?php echo $course_id; ?>;
                 url: '../ajax/curriculum/update_order.php',
                 type: 'POST',
                 data: {
-                    course_id: <?php echo $course_id; ?>,
+                    course_id: courseId,
                     type: 'section',
                     order: JSON.stringify(sections)
                 },
@@ -962,10 +1081,12 @@ const courseId = <?php echo $course_id; ?>;
         function updateCurriculumStats() {
             const sectionCount = $('.section-item').length;
             const topicCount = $('.topic-item').length;
+            const quizCount = $('.quiz-item').length;
 
             // Update the counts in the UI
             $('.curriculum-stats h3').eq(0).text(sectionCount);
             $('.curriculum-stats h3').eq(1).text(topicCount);
+            $('.curriculum-stats h3').eq(2).text(quizCount);
         }
     });
 
@@ -978,14 +1099,15 @@ const courseId = <?php echo $course_id; ?>;
             return false;
         }
 
-        // Check if any section has no topics
+        // Check if any section has no content (topics or quizzes)
         let emptySection = false;
         $('.section-item').each(function() {
             const sectionTitle = $(this).find('.section-title').text();
             const topicCount = $(this).find('.topic-item').length;
+            const quizCount = $(this).find('.quiz-item').length;
 
-            if (topicCount === 0) {
-                showAlert('danger', `Section "${sectionTitle}" has no topics. Please add at least one topic to each section.`);
+            if (topicCount === 0 && quizCount === 0) {
+                showAlert('danger', `Section "${sectionTitle}" has no content. Please add at least one topic or quiz to each section.`);
                 emptySection = true;
                 return false; // Break the loop
             }
@@ -1027,13 +1149,19 @@ const courseId = <?php echo $course_id; ?>;
         cursor: pointer;
     }
 
-    .topic-item {
+    .topic-item,
+    .quiz-item {
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .topic-item:hover {
+    .topic-item:hover,
+    .quiz-item:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .quiz-item {
+        border-left: 4px solid #3e7bfa;
     }
 
     .border-dashed {
