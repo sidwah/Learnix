@@ -927,9 +927,10 @@ $stmt->close();
         }
 
         // Preview Course Button
-        $('#previewCourseBtn').click(function() {
-            window.open(`course-preview.php?course_id=${courseId}`, '_blank');
-        });
+        // Preview Course Button
+$('#previewCourseBtn').click(function() {
+    window.open(`course-preview.php?course_id=${courseId}`, '_blank');
+});
 
         // Initialize SortableJS for sections and topics
         function initializeSortable() {
