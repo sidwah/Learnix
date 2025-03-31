@@ -117,7 +117,7 @@ $stmt->close();
                     if ($content_type === 'video' && $content) {
                         $video_url = $content['video_url'] ?? '';
                         $video_title = $content['title'];
-                        $video_description = $content['content_text'] ?? '';
+                        $video_description = $content['description'] ?? '';
                     }
                     ?>
                     
@@ -196,7 +196,7 @@ $stmt->close();
                     
                     if ($content_type === 'document' && $content) {
                         $document_title = $content['title'];
-                        $document_description = $content['content_text'] ?? '';
+                        $document_description = $content['description'] ?? '';
                         $document_file = $content['file_path'] ?? '';
                     }
                     ?>
@@ -258,7 +258,7 @@ $stmt->close();
                     
                     if ($content_type === 'link' && $content) {
                         $link_title = $content['title'];
-                        $link_description = $content['content_text'] ?? '';
+                        $link_description = $content['description'] ?? '';
                         $external_url = $content['external_url'] ?? '';
                     }
                     ?>

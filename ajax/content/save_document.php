@@ -113,7 +113,7 @@ try {
                     JSON_OBJECT(
                         'title', ?,
                         'content_type', ?,
-                        'content_text', ?,
+                        'description', ?,
                         'file_path', ?,
                         'position', ?
                     ),
@@ -126,7 +126,7 @@ try {
                 $content_id,
                 $current_content['title'],
                 $current_content['content_type'],
-                $current_content['content_text'],
+                $current_content['description'],
                 $current_content['file_path'],
                 $current_content['position'],
                 $_SESSION['user_id']
@@ -139,14 +139,14 @@ try {
         if ($file_path) {
             $stmt = $conn->prepare("
                 UPDATE topic_content
-                SET title = ?, content_text = ?, file_path = ?, updated_at = NOW()
+                SET title = ?, description = ?, file_path = ?, updated_at = NOW()
                 WHERE content_id = ? AND topic_id = ?
             ");
             $stmt->bind_param("sssii", $title, $description, $file_path, $content_id, $topic_id);
         } else {
             $stmt = $conn->prepare("
                 UPDATE topic_content
-                SET title = ?, content_text = ?, updated_at = NOW()
+                SET title = ?, description = ?, updated_at = NOW()
                 WHERE content_id = ? AND topic_id = ?
             ");
             $stmt->bind_param("ssii", $title, $description, $content_id, $topic_id);
@@ -200,7 +200,7 @@ try {
         // Create new content
         $stmt = $conn->prepare("
             INSERT INTO topic_content 
-            (topic_id, content_type, title, content_text, file_path, position, created_at)
+            (topic_id, content_type, title, description, file_path, position, created_at)
             VALUES (?, 'document', ?, ?, ?, 0, NOW())
         ");
         $stmt->bind_param("isss", $topic_id, $title, $description, $file_path);

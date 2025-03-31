@@ -85,7 +85,7 @@ try {
                         'title', ?,
                         'content_type', ?,
                         'external_url', ?,
-                        'content_text', ?,
+                        'description', ?,
                         'position', ?
                     ),
                     ?,
@@ -98,7 +98,7 @@ try {
                 $current_content['title'],
                 $current_content['content_type'],
                 $current_content['external_url'],
-                $current_content['content_text'],
+                $current_content['description'],
                 $current_content['position'],
                 $_SESSION['user_id']
             );
@@ -109,7 +109,7 @@ try {
         // Update existing content
         $stmt = $conn->prepare("
             UPDATE topic_content
-            SET title = ?, external_url = ?, content_text = ?, updated_at = NOW()
+            SET title = ?, external_url = ?, description = ?, updated_at = NOW()
             WHERE content_id = ? AND topic_id = ?
         ");
         $stmt->bind_param("sssii", $title, $external_url, $description, $content_id, $topic_id);
@@ -141,7 +141,7 @@ try {
         // Create new content
         $stmt = $conn->prepare("
             INSERT INTO topic_content 
-            (topic_id, content_type, title, external_url, content_text, position, created_at)
+            (topic_id, content_type, title, external_url, description, position, created_at)
             VALUES (?, 'link', ?, ?, ?, 0, NOW())
         ");
         $stmt->bind_param("isss", $topic_id, $title, $external_url, $description);

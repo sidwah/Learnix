@@ -70,11 +70,19 @@ $stmt->close();
                             <h3 class="fw-bold"><?php echo $quizzes_count; ?></h3>
                             <p class="text-muted mb-0">Quizzes</p>
                         </div>
-                        <div class="col-md-3">
-                            <button id="previewCourseBtn" class="btn btn-outline-primary">
-                                <i class="mdi mdi-eye"></i> Preview Course
-                            </button>
-                        </div>
+                        <div class="d-flex justify-content-between gap-3 mt-3">
+    <div class="col-md-3">
+        <button id="validateCourseBtn" class="btn btn-outline-warning">
+            <i class="mdi mdi-check-circle"></i> Validate Course
+        </button>
+    </div>
+    <div class="col-md-3">
+        <button id="previewCourseBtn" class="btn btn-outline-primary">
+            <i class="mdi mdi-eye"></i> Preview Course
+        </button>
+    </div>
+</div>
+
                     </div>
                 </div>
             </div>

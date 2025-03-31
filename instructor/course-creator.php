@@ -18,7 +18,7 @@ $course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : (isset($_S
 
 // If no course_id is available, redirect to the instructor dashboard
 if ($course_id <= 0) {
-    header('Location: instructor-dashboard.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -34,7 +34,7 @@ $stmt->close();
 
 // If course doesn't exist or doesn't belong to this instructor, redirect
 if (!$course) {
-    header('Location: instructor-dashboard.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -199,7 +199,7 @@ $max_step = 6; // Total number of steps in the wizard
                                 <div class="page-title-right">
                                     <ol class="breadcrumb m-0">
                                         <li class="breadcrumb-item"><a href="javascript: void(0);">Learnix</a></li>
-                                        <li class="breadcrumb-item"><a href="instructor-dashboard.php">Instructor</a></li>
+                                        <li class="breadcrumb-item"><a href="index.php">Instructor</a></li>
                                         <li class="breadcrumb-item active">Create Course</li>
                                     </ol>
                                 </div>
