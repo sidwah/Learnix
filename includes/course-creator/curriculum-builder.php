@@ -71,17 +71,17 @@ $stmt->close();
                             <p class="text-muted mb-0">Quizzes</p>
                         </div>
                         <div class="d-flex justify-content-between gap-3 mt-3">
-    <div class="col-md-3">
-        <button id="validateCourseBtn" class="btn btn-outline-warning">
-            <i class="mdi mdi-check-circle"></i> Validate Course
-        </button>
-    </div>
-    <div class="col-md-3">
-        <button id="previewCourseBtn" class="btn btn-outline-primary">
-            <i class="mdi mdi-eye"></i> Preview Course
-        </button>
-    </div>
-</div>
+                            <div class="col-md-3">
+                                <button id="validateCourseBtn" class="btn btn-outline-warning">
+                                    <i class="mdi mdi-check-circle"></i> Validate Course
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button id="previewCourseBtn" class="btn btn-outline-primary">
+                                    <i class="mdi mdi-eye"></i> Preview Course
+                                </button>
+                            </div>
+                        </div>
 
                     </div>
                 </div>
@@ -366,6 +366,32 @@ $stmt->close();
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Validation Modal -->
+    <div class="modal fade" id="validationModal" tabindex="-1" aria-labelledby="validationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="validationModalLabel">Course Validation Results</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="validationSummary" class="mb-4">
+                        <!-- Validation status summary will be inserted here -->
+                    </div>
+
+                    <div id="validationDetails">
+                        <!-- Validation details will be inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveAsDraftBtn" style="display: none;">Save as Draft</button>
+                    <button type="button" class="btn btn-success" id="submitForReviewBtn" style="display: none;">Publish</button>
                 </div>
             </div>
         </div>
@@ -1137,6 +1163,402 @@ $stmt->close();
 
         return true;
     }
+
+    // Add this script to the end of your course-creator.php file
+$(document).ready(function() {
+    // Add click handler for validate course button
+    $('#validateCourseBtn').click(function() {
+        validateCourse();
+    });
+
+    // Validation process
+    function validateCourse() {
+        // Show loading overlay with sequential messages
+        showValidationProgress();
+
+        // AJAX request to validate course
+        $.ajax({
+            url: '../ajax/courses/validate_course.php',
+            type: 'POST',
+            data: {
+                course_id: courseId
+            },
+            success: function(response) {
+                try {
+                    // Remove overlay after validation completes
+                    removeOverlay();
+                    
+                    const result = JSON.parse(response);
+                    
+                    // Display validation results
+                    displayValidationResults(result);
+                    
+                    // Show the validation modal
+                    $('#validationModal').modal('show');
+                } catch (e) {
+                    console.error('Error parsing validation response', e);
+                    removeOverlay();
+                    showAlert('danger', 'Error processing validation response');
+                }
+            },
+            error: function() {
+                removeOverlay();
+                showAlert('danger', 'Network error during course validation');
+            }
+        });
+    }
+
+    // Function to show sequential validation messages
+    function showValidationProgress() {
+        const validationMessages = [
+            "Initiating validation process...",
+            "Checking basic course information...",
+            "Validating course description...",
+            "Checking learning outcomes and requirements...",
+            "Validating curriculum structure...",
+            "Checking for empty sections or topics...",
+            "Validating assessment components...",
+            "Finalizing validation report..."
+        ];
+        
+        // Show initial overlay
+        createOverlay(validationMessages[0]);
+        
+        // Change message every 1.5 seconds
+        let messageIndex = 1;
+        const interval = setInterval(function() {
+            if (messageIndex < validationMessages.length) {
+                // Get the overlay and update its message
+                const overlay = document.getElementById('pageOverlay');
+                if (overlay) {
+                    const messageElement = overlay.querySelector('.fw-semibold');
+                    if (messageElement) {
+                        messageElement.textContent = validationMessages[messageIndex];
+                    }
+                }
+                messageIndex++;
+            } else {
+                clearInterval(interval);
+            }
+        }, 1500);
+    }
+
+    // Display validation results in the modal
+    function displayValidationResults(validationData) {
+        // Clear previous results
+        $('#validationSummary').empty();
+        $('#validationDetails').empty();
+        
+        // Hide action buttons by default
+        $('#saveAsDraftBtn').hide();
+        $('#submitForReviewBtn').hide();
+        
+        // Create summary message based on validation status
+        const passedAll = validationData.passed;
+        let summaryHtml = '';
+        
+        if (passedAll) {
+            summaryHtml = `
+                <div class="alert alert-success">
+                    <h5 class="alert-heading"><i class="mdi mdi-check-circle me-2"></i>Validation Successful</h5>
+                    <p class="mb-0">Your course meets all the requirements and is ready for publication.</p>
+                </div>
+            `;
+            
+            // Show action buttons for successful validation
+            $('#saveAsDraftBtn').show();
+            $('#submitForReviewBtn').show();
+        } else {
+            summaryHtml = `
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading"><i class="mdi mdi-alert-circle me-2"></i>Validation Failed</h5>
+                    <p class="mb-0">Please address the issues below before publishing your course.</p>
+                </div>
+            `;
+        }
+        
+        $('#validationSummary').html(summaryHtml);
+        
+        // Build details section
+        let detailsHtml = '<div class="accordion" id="validationAccordion">';
+        
+        // Add each validation category
+        const categories = [
+            { key: 'basicInfo', title: 'Basic Information', icon: 'mdi-information-outline' },
+            { key: 'description', title: 'Course Description', icon: 'mdi-text-box-outline' },
+            { key: 'outcomes', title: 'Learning Outcomes & Requirements', icon: 'mdi-check-circle-outline' },
+            { key: 'curriculum', title: 'Curriculum Structure', icon: 'mdi-book-open-variant' },
+            { key: 'assessments', title: 'Assessments', icon: 'mdi-help-circle-outline' }
+        ];
+        
+        categories.forEach((category, index) => {
+            const categoryData = validationData[category.key];
+            if (categoryData) {
+                const passed = categoryData.passed;
+                const issues = categoryData.issues || [];
+                
+                detailsHtml += `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading${index}">
+                            <button class="accordion-button ${passed ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#collapse${index}" aria-expanded="${passed ? 'false' : 'true'}" aria-controls="collapse${index}">
+                                <i class="mdi ${category.icon} me-2"></i>
+                                ${category.title}
+                                ${passed ? 
+                                    '<span class="badge bg-success ms-2"><i class="mdi mdi-check"></i> Passed</span>' : 
+                                    '<span class="badge bg-danger ms-2"><i class="mdi mdi-close"></i> Issues Found</span>'}
+                            </button>
+                        </h2>
+                        <div id="collapse${index}" class="accordion-collapse collapse ${!passed ? 'show' : ''}" 
+                             aria-labelledby="heading${index}" data-bs-parent="#validationAccordion">
+                            <div class="accordion-body">
+                `;
+                
+                if (passed) {
+                    detailsHtml += `<p class="text-success mb-0"><i class="mdi mdi-check-circle"></i> All ${category.title.toLowerCase()} requirements are met.</p>`;
+                } else {
+                    detailsHtml += '<ul class="list-group list-group-flush">';
+                    issues.forEach(issue => {
+                        let fixLink = '';
+                        
+                        // Add direct links to fix issues where applicable
+                        if (issue.fixUrl) {
+                            fixLink = `<a href="${issue.fixUrl}" class="btn btn-sm btn-outline-primary ms-2" data-bs-dismiss="modal">Fix Now</a>`;
+                        } else if (issue.step) {
+                            fixLink = `<button type="button" class="btn btn-sm btn-outline-primary ms-2 goto-step-btn" data-step="${issue.step}" data-bs-dismiss="modal">Fix Now</button>`;
+                        }
+                        
+                        detailsHtml += `
+                            <li class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
+                                <div><i class="mdi mdi-alert-circle me-2"></i>${issue.message}</div>
+                                ${fixLink}
+                            </li>
+                        `;
+                    });
+                    detailsHtml += '</ul>';
+                }
+                
+                detailsHtml += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        detailsHtml += '</div>';
+        $('#validationDetails').html(detailsHtml);
+        
+        // Set up action buttons
+        setupActionButtons(passedAll);
+    }
+
+    // Setup action buttons based on validation results
+    function setupActionButtons(validationPassed) {
+        if (validationPassed) {
+            // Save as Draft button
+            $('#saveAsDraftBtn').off('click').on('click', function() {
+                saveCourseAsDraft();
+            });
+            
+            // Submit for Review button
+            $('#submitForReviewBtn').off('click').on('click', function() {
+                submitCourseForReview();
+            });
+        }
+        
+        // Go to step button for fixing issues
+        $('.goto-step-btn').off('click').on('click', function() {
+            const stepToGo = $(this).data('step');
+            $('#validationModal').modal('hide');
+            
+            // Find and trigger the showStep function
+            if (typeof window.showStep === 'function') {
+                window.showStep(stepToGo);
+            } else {
+                // Fallback for when showStep isn't directly accessible
+                // Update progress indicator manually
+                $('.progress-step').each(function() {
+                    const step = parseInt($(this).data('step'));
+                    if (step < stepToGo) {
+                        $(this).removeClass('active').addClass('completed');
+                    } else if (step === stepToGo) {
+                        $(this).addClass('active').removeClass('completed');
+                    } else {
+                        $(this).removeClass('active completed');
+                    }
+                });
+                
+                // Show the target step
+                $('.wizard-step').removeClass('active');
+                $(`#step${stepToGo}`).addClass('active');
+                
+                // Update buttons
+                $('#prevStep').prop('disabled', stepToGo === 1);
+                $('#nextStep').html(stepToGo === 6 ? 'Finish <i class="mdi mdi-check"></i>' : 'Next <i class="mdi mdi-arrow-right"></i>');
+            }
+        });
+    }
+
+    // Save course as draft
+    function saveCourseAsDraft() {
+        createOverlay("Saving course as draft...");
+        
+        $.ajax({
+            url: '../ajax/courses/save_course_status.php',
+            type: 'POST',
+            data: {
+                course_id: courseId,
+                status: 'Draft'
+            },
+            success: function(response) {
+                try {
+                    const result = JSON.parse(response);
+                    if (result.success) {
+                        $('#validationModal').modal('hide');
+                        removeOverlay();
+                        showAlert('success', 'Course successfully saved as draft');
+                    } else {
+                        removeOverlay();
+                        showAlert('danger', 'Error: ' + result.message);
+                    }
+                } catch (e) {
+                    console.error('Error parsing response', e);
+                    removeOverlay();
+                    showAlert('danger', 'Error processing server response');
+                }
+            },
+            error: function() {
+                removeOverlay();
+                showAlert('danger', 'Network error while saving course');
+            }
+        });
+    }
+
+    // Submit course for review
+    function submitCourseForReview() {
+        // First check instructor verification status
+        createOverlay("Checking instructor verification status...");
+        
+        $.ajax({
+            url: '../ajax/instructors/check_verification_status.php',
+            type: 'POST',
+            success: function(response) {
+                try {
+                    const result = JSON.parse(response);
+                    
+                    if (result.verified) {
+                        // Instructor is verified, proceed with publishing directly
+                        updateOverlayMessage("Publishing course...");
+                        publishCourse();
+                    } else {
+                        // Instructor is not verified, submit for review
+                        updateOverlayMessage("Instructor verification required");
+                        setTimeout(function() {
+                            updateOverlayMessage("Submitting for review...");
+                            submitForReview();
+                        }, 1500);
+                    }
+                } catch (e) {
+                    console.error('Error parsing response', e);
+                    removeOverlay();
+                    showAlert('danger', 'Error processing verification status');
+                }
+            },
+            error: function() {
+                removeOverlay();
+                showAlert('danger', 'Network error while checking verification status');
+            }
+        });
+    }
+
+    // Helper function to update overlay message
+    function updateOverlayMessage(message) {
+        const overlay = document.getElementById('pageOverlay');
+        if (overlay) {
+            const messageElement = overlay.querySelector('.fw-semibold');
+            if (messageElement) {
+                messageElement.textContent = message;
+            }
+        }
+    }
+
+    // Publish course (for verified instructors)
+    function publishCourse() {
+        $.ajax({
+            url: '../ajax/courses/publish_course.php',
+            type: 'POST',
+            data: {
+                course_id: courseId
+            },
+            success: function(response) {
+                try {
+                    const result = JSON.parse(response);
+                    
+                    if (result.success) {
+                        $('#validationModal').modal('hide');
+                        removeOverlay();
+                        showAlert('success', 'Course published successfully! Students can now enroll.');
+                        
+                        // Optionally redirect to courses list or dashboard
+                        setTimeout(function() {
+                            window.location.href = 'index.php';
+                        }, 2000);
+                    } else {
+                        removeOverlay();
+                        showAlert('danger', 'Error: ' + result.message);
+                    }
+                } catch (e) {
+                    console.error('Error parsing response', e);
+                    removeOverlay();
+                    showAlert('danger', 'Error processing server response');
+                }
+            },
+            error: function() {
+                removeOverlay();
+                showAlert('danger', 'Network error while publishing course');
+            }
+        });
+    }
+
+    // Submit for review (for unverified instructors)
+    function submitForReview() {
+        $.ajax({
+            url: '../ajax/courses/submit_for_review.php',
+            type: 'POST',
+            data: {
+                course_id: courseId
+            },
+            success: function(response) {
+                try {
+                    const result = JSON.parse(response);
+                    
+                    if (result.success) {
+                        $('#validationModal').modal('hide');
+                        removeOverlay();
+                        showAlert('info', 'Your course has been submitted for review. You will be notified once it is approved.');
+                        
+                        // Optionally redirect to courses list or dashboard
+                        setTimeout(function() {
+                            window.location.href = 'index.php';
+                        }, 3000);
+                    } else {
+                        removeOverlay();
+                        showAlert('danger', 'Error: ' + result.message);
+                    }
+                } catch (e) {
+                    console.error('Error parsing response', e);
+                    removeOverlay();
+                    showAlert('danger', 'Error processing server response');
+                }
+            },
+            error: function() {
+                removeOverlay();
+                showAlert('danger', 'Network error while submitting course for review');
+            }
+        });
+    }
+});
 </script>
 
 <style>
