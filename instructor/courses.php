@@ -29,7 +29,6 @@ $result = $stmt->get_result();
 <!DOCTYPE html>
 <html lang="en">
 
-
 <head>
     <meta charset="utf-8" />
     <title>Instructor | Learnix - Empowering Education</title>
@@ -40,13 +39,69 @@ $result = $stmt->get_result();
     <link rel="shortcut icon" href="assets/images/favicon.ico">
 
     <!-- third party css -->
-    <link href="assets/css/vendor/jquery-jvectormap-1.2.2.css" rel="stylesheet" type="text/css" />
+    <link href="assets/css/vendor/dataTables.bootstrap5.css" rel="stylesheet" type="text/css" />
+    <link href="assets/css/vendor/responsive.bootstrap5.css" rel="stylesheet" type="text/css" />
     <!-- third party css end -->
 
     <!-- App css -->
     <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
     <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style" />
 
+    <style>
+        .action-icon {
+            font-size: 1.2rem;
+            display: inline-block;
+            padding: 0 3px;
+            color: #98a6ad;
+            transition: all 0.3s ease;
+        }
+        .action-icon:hover {
+            color: #3bafda;
+            transform: scale(1.2);
+        }
+        .action-icon.text-danger:hover {
+            color: #f1556c;
+        }
+        .course-thumbnail {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .table-responsive {
+            padding: 0 10px;
+        }
+        #courses-datatable_wrapper {
+            padding-top: 10px;
+        }
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.5em;
+        }
+        /* Ellipsis for long text */
+        .course-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+            display: block;
+        }
+        .course-description {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 250px;
+            display: block;
+        }
+        /* Disable expand/collapse feature */
+        table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before,
+        table.dataTable.dtr-inline.collapsed>tbody>tr>th.dtr-control:before {
+            display: none !important;
+        }
+        table.dataTable>tbody>tr.child ul.dtr-details {
+            display: none !important;
+        }
+    </style>
 </head>
 
 <body class="loading" data-layout-color="light" data-leftbar-theme="dark" data-layout-mode="fluid" data-rightbar-onstart="true">
@@ -56,7 +111,6 @@ $result = $stmt->get_result();
         <?php
         include '../includes/instructor-sidebar.php';
         ?>
-
         <!-- Left Sidebar End -->
 
         <!-- ============================================================== -->
@@ -73,7 +127,6 @@ $result = $stmt->get_result();
 
                 <!-- Start Content-->
                 <div class="container-fluid">
-
                     <!-- start page title -->
                     <div class="row">
                         <div class="col-12">
@@ -92,7 +145,6 @@ $result = $stmt->get_result();
                     <!-- end page title -->
 
                     <div class="row mb-2">
-                        
                         <?php
                         // Assuming database connection is already established
                         if (!isset($_SESSION['user_id'])) {
@@ -110,11 +162,13 @@ $result = $stmt->get_result();
                             $stmt->fetch();
                             $stmt->close();
                             // Modify query to include section count
-                            $sql = "SELECT c.*,
-(SELECT COUNT(*) FROM course_sections cs WHERE cs.course_id = c.course_id) AS section_count
-FROM courses c
-WHERE c.instructor_id = ?
-ORDER BY c.updated_at DESC";
+                            $sql = "SELECT c.*, 
+                                    (SELECT COUNT(*) FROM course_sections cs WHERE cs.course_id = c.course_id) AS section_count,
+                                    s.name AS subcategory_name
+                                    FROM courses c
+                                    LEFT JOIN subcategories s ON c.subcategory_id = s.subcategory_id
+                                    WHERE c.instructor_id = ?
+                                    ORDER BY c.updated_at DESC";
                             $stmt = $conn->prepare($sql);
                             $stmt->bind_param("i", $instructor_id);
                             $stmt->execute();
@@ -153,157 +207,124 @@ ORDER BY c.updated_at DESC";
                             return $default_image;
                         }
                         ?>
-                        <style>
-                            .course-card {
-                                transition: transform 0.3s ease, box-shadow 0.3s ease;
-                            }
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row mb-2">
+                                            <div class="col-sm-5">
+                                                <button id="createNewCourseBtn" class="btn btn-danger mb-2">
+                                                    <i class="mdi mdi-plus-circle me-2"></i> Add New Course
+                                                </button>
+                                            </div>
+                                            <div class="col-sm-7">
+                                                <!-- <div class="text-sm-end">
+                                                    <div class="input-group">
+                                                        <input type="text" id="courseSearch" class="form-control" placeholder="Search courses...">
+                                                        <button class="btn btn-light" type="button">
+                                                            <i class="mdi mdi-magnify"></i>
+                                                        </button>
+                                                    </div>
+                                                </div> -->
+                                            </div>
+                                        </div>
 
-                            .course-card:hover {
-                                transform: scale(1.02);
-                                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-                            }
+                                        <div class="table-responsive">
+                                            <table class="table table-centered w-100 dt-responsive nowrap" id="courses-datatable">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Course</th>
+                                                        <th>Category</th>
+                                                        <th>Status</th>
+                                                        <th>Sections</th>
+                                                        <th>Created Date</th>
+                                                        <th style="width: 120px;">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php while ($course = $result->fetch_assoc()) : ?>
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <?php if (!empty($course['thumbnail'])): ?>
+                                                                <img src="<?php echo displayCourseImage($course['thumbnail']); ?>" 
+                                                                     alt="course-thumbnail" class="course-thumbnail me-3">
+                                                                <?php else: ?>
+                                                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                                                                    <i class="mdi mdi-book-open-page-variant text-muted"></i>
+                                                                </div>
+                                                                <?php endif; ?>
+                                                                <div style="min-width: 0;"> <!-- Added min-width: 0 to allow text truncation -->
+                                                                    <h5 class="m-0 font-16 course-title" title="<?php echo htmlspecialchars($course['title']); ?>">
+                                                                        <?php echo htmlspecialchars($course['title']); ?>
+                                                                    </h5>
+                                                                    <p class="mb-0 text-muted course-description" title="<?php echo htmlspecialchars($course['short_description']); ?>">
+                                                                        <?php echo htmlspecialchars($course['short_description']); ?>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <?php echo htmlspecialchars($course['subcategory_name'] ?: 'Uncategorized'); ?>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-<?php 
+                                                                echo match ($course['status']) {
+                                                                    'Draft' => 'secondary',
+                                                                    'Published' => 'success',
+                                                                    'Pending' => 'warning',
+                                                                    default => 'info'
+                                                                };
+                                                            ?>">
+                                                                <?php echo htmlspecialchars($course['status']); ?>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <?php 
+                                                            $section_count = $course['section_count'] ?? 0;
+                                                            echo $section_count . ' ' . ($section_count == 1 ? 'Section' : 'Sections');
+                                                            ?>
+                                                        </td>
+                                                        <td>
+                                                            <?php echo date('M d, Y', strtotime($course['created_at'])); ?>
+                                                        </td>
+                                                        <td class="table-action">
+                                                            <a href="course-creator.php?course_id=<?php echo $course['course_id']; ?>" 
+                                                               class="action-icon" title="Edit">
+                                                               <i class="mdi mdi-square-edit-outline"></i>
+                                                            </a>
+                                                            <?php if ($course['status'] === 'Draft'): ?>
+                                                            <a href="javascript:void(0);" 
+                                                               onclick="prepareCourseForPublication(<?php echo $course['course_id']; ?>)" 
+                                                               class="action-icon" title="Publish">
+                                                               <i class="mdi mdi-publish"></i>
+                                                            </a>
+                                                            <?php endif; ?>
+                                                            <a href="javascript:void(0);" 
+                                                               class="action-icon text-danger" title="Delete">
+                                                               <i class="mdi mdi-delete"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                    <?php endwhile; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-                            .course-thumbnail {
-                                height: 200px;
-                                object-fit: cover;
-                                object-position: center;
-                            }
-
-                            .action-buttons .btn {
-                                transition: all 0.2s ease;
-                            }
-
-                            .action-buttons .btn:hover {
-                                transform: translateY(-2px);
-                            }
-
-                            .course-title {
-                                min-height: 48px;
-                                display: -webkit-box;
-                                /* -webkit-line-clamp: 2; */
-                                -webkit-box-orient: vertical;
-                                overflow: hidden;
-                            }
-
-                            /* For select2 in modal */
-                            .select2-container {
-                                z-index: 9999;
-                            }
-                        </style>
-                        <div class="container-fluid">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <input type="text" id="courseSearch" class="form-control" placeholder="Search courses by name...">
-                                </div>
-                            </div>
-
-                            <!-- Courses Section -->
-                            <div class="row">
-                                <div class="col-12">
-                                    <div class="page-title-box">
-                                        <div class="page-title-right">
-                                            <button id="createNewCourseBtn" class="btn btn-primary">
-                                                <i class="mdi mdi-plus-circle me-1"></i> Create New Course
+                                        <?php if ($result->num_rows === 0): ?>
+                                        <div class="text-center py-5">
+                                            <i class="mdi mdi-book-multiple-outline display-4 text-muted mb-3"></i>
+                                            <h4>No Courses Found</h4>
+                                            <p class="text-muted">Get started by creating your first course</p>
+                                            <button id="createFirstCourseBtn" class="btn btn-primary mt-2">
+                                                <i class="mdi mdi-plus-circle me-1"></i> Create Course
                                             </button>
                                         </div>
-                                        <h4 class="page-title">My Courses</h4>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Existing Courses Grid -->
-                            <div class="row">
-                                <?php
-                                // Fetch instructor's courses
-                                $courses_query = $conn->prepare("
-        SELECT 
-            c.course_id, 
-            c.title, 
-            c.short_description, 
-            c.thumbnail, 
-            c.status, 
-            c.created_at,
-            s.name AS subcategory_name
-        FROM courses c
-        LEFT JOIN subcategories s ON c.subcategory_id = s.subcategory_id
-        WHERE c.instructor_id = ?
-        ORDER BY c.created_at DESC
-    ");
-                                $courses_query->bind_param("i", $_SESSION['instructor_id']);
-                                $courses_query->execute();
-                                $courses_result = $courses_query->get_result();
-
-                                // Display courses
-                                while ($course = $courses_result->fetch_assoc()) {
-                                ?>
-                                    <div class="col-md-4">
-                                        <div class="card">
-                                            <div class="card-img-top position-relative">
-                                                <?php if (!empty($course['thumbnail'])): ?>
-                                                    <img src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>"
-                                                        class="img-fluid" alt="Course Thumbnail">
-                                                <?php else: ?>
-                                                    <div class="bg-light text-center py-5">
-                                                        <i class="mdi mdi-image-off-outline display-4 text-muted"></i>
-                                                    </div>
-                                                <?php endif; ?>
-                                                <span class="badge bg-<?php
-                                                                        echo match ($course['status']) {
-                                                                            'Draft' => 'secondary',
-                                                                            'Published' => 'success',
-                                                                            'Pending' => 'warning',
-                                                                            default => 'info'
-                                                                        };
-                                                                        ?> position-absolute top-0 end-0 m-2">
-                                                    <?php echo htmlspecialchars($course['status']); ?>
-                                                </span>
-                                            </div>
-                                            <div class="card-body">
-                                                <h5 class="card-title"><?php echo htmlspecialchars($course['title']); ?></h5>
-                                                <p class="card-text text-muted">
-                                                    <?php echo htmlspecialchars($course['short_description']); ?>
-                                                </p>
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <small class="text-muted">
-                                                        <?php echo htmlspecialchars($course['subcategory_name'] ?: 'Uncategorized'); ?>
-                                                    </small>
-                                                    <div class="btn-group">
-                                                        <a href="course-creator.php?course_id=<?php echo $course['course_id']; ?>"
-                                                            class="btn btn-sm btn-outline-primary">
-                                                            <i class="mdi mdi-pencil me-1"></i> Edit
-                                                        </a>
-                                                        <?php if ($course['status'] === 'Draft'): ?>
-                                                            <button class="btn btn-sm btn-outline-success"
-                                                                onclick="prepareCourseForPublication(<?php echo $course['course_id']; ?>)">
-                                                                <i class="mdi mdi-publish me-1"></i> Publish
-                                                            </button>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="card-footer text-muted">
-                                                <small>Created: <?php echo date('M d, Y', strtotime($course['created_at'])); ?></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php
-                                }
-                                $courses_query->close();
-                                ?>
-                            </div>
-
-                            <!-- No Courses Placeholder -->
-                            <?php if ($courses_result->num_rows === 0): ?>
-                                <div class="text-center py-5">
-                                    <i class="mdi mdi-book-multiple-outline display-4 text-muted mb-3"></i>
-                                    <h4>No Courses Yet</h4>
-                                    <p class="text-muted">Start creating courses to share your knowledge!</p>
-                                    <button id="createFirstCourseBtn" class="btn btn-primary mt-2">
-                                        <i class="mdi mdi-plus-circle me-1"></i> Create Your First Course
-                                    </button>
-                                </div>
-                            <?php endif; ?>
-
+                                        <?php endif; ?>
+                                    </div> <!-- end card-body-->
+                                </div> <!-- end card-->
+                            </div> <!-- end col -->
                         </div>
 
                         <script>
@@ -439,7 +460,31 @@ ORDER BY c.updated_at DESC";
                                 createButtons.forEach(button => {
                                     button.addEventListener('click', createNewCourse);
                                 });
+
+                                // Initialize DataTable with responsive disabled
+                                $('#courses-datatable').DataTable({
+                                    "order": [[4, "desc"]], // Default sort by created date
+                                    "responsive": false, // Disable responsive feature
+                                    "columnDefs": [
+                                        { "orderable": false, "targets": [5] } // Disable sorting for action column
+                                    ],
+                                    "language": {
+                                        "paginate": {
+                                            "previous": "<i class='mdi mdi-chevron-left'>",
+                                            "next": "<i class='mdi mdi-chevron-right'>"
+                                        }
+                                    },
+                                    "drawCallback": function() {
+                                        $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+                                    }
+                                });
                             });
+
+                            function prepareCourseForPublication(courseId) {
+                                // Your existing publish function implementation
+                                console.log('Preparing to publish course:', courseId);
+                                // Add your publish logic here
+                            }
                         </script>
                         <?php
                         $stmt->close();
@@ -448,9 +493,6 @@ ORDER BY c.updated_at DESC";
                         <!-- end row-->
                     </div>
                     <!-- end row-->
-
-
-
                 </div>
                 <!-- container -->
 
@@ -477,23 +519,62 @@ ORDER BY c.updated_at DESC";
         <!-- End Page content -->
         <!-- ============================================================== -->
 
-
     </div>
     <!-- END wrapper -->
-
 
     <!-- bundle -->
     <script src="assets/js/vendor.min.js"></script>
     <script src="assets/js/app.min.js"></script>
 
     <!-- third party js -->
-    <script src="assets/js/vendor/apexcharts.min.js"></script>
-    <script src="assets/js/vendor/jquery-jvectormap-1.2.2.min.js"></script>
-    <script src="assets/js/vendor/jquery-jvectormap-world-mill-en.js"></script>
+    <script src="assets/js/vendor/jquery.dataTables.min.js"></script>
+    <script src="assets/js/vendor/dataTables.bootstrap5.js"></script>
+    <script src="assets/js/vendor/dataTables.responsive.min.js"></script>
+    <script src="assets/js/vendor/responsive.bootstrap5.min.js"></script>
+    <script src="assets/js/vendor/dataTables.checkboxes.min.js"></script>
     <!-- third party js ends -->
 
     <!-- demo app -->
-    <script src="assets/js/pages/demo.dashboard.js"></script>
+    <script src="assets/js/pages/demo.datatable-init.js"></script>
     <!-- end demo js-->
+
+    <!-- Custom script for course management -->
+    <script>
+        // Enhanced course management functions
+        function deleteCourse(courseId) {
+            if (confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+                fetch(`../ajax/courses/delete_course.php?course_id=${courseId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', 'Course deleted successfully');
+                        // Refresh the table or remove the row
+                        $('#courses-datatable').DataTable().ajax.reload();
+                    } else {
+                        showAlert('danger', data.message || 'Failed to delete course');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'An error occurred while deleting the course');
+                });
+            }
+        }
+
+        // Initialize delete buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            $(document).on('click', '.delete-course', function() {
+                const courseId = $(this).data('course-id');
+                deleteCourse(courseId);
+            });
+        });
+    </script>
+    
 </body>
 </html>
