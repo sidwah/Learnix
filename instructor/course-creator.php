@@ -313,16 +313,21 @@ $max_step = 6; // Total number of steps in the wizard
                                     </div>
 
                                     <!-- Wizard Navigation -->
+                                    <!-- Wizard Navigation -->
                                     <div class="wizard-navigation">
-                                        <button type="button" class="btn btn-secondary" id="prevStep" <?php echo ($current_step == 1) ? 'disabled' : ''; ?>>
-                                            <i class="mdi mdi-arrow-left"></i> Previous
-                                        </button>
-
-                                        <button type="button" class="btn btn-primary" id="nextStep" <?php echo ($current_step == $max_step) ? 'disabled' : ''; ?>>
-                                            <?php echo ($current_step == $max_step) ? 'Finish' : 'Next'; ?> <i class="mdi mdi-arrow-right"></i>
-                                        </button>
+                                        <div class="d-flex justify-content-between w-100">
+                                            <div>
+                                                <button type="button" class="btn btn-secondary" id="prevStep" <?php echo ($current_step == 1) ? 'style="display:none;"' : ''; ?>>
+                                                    <i class="mdi mdi-arrow-left"></i> Previous
+                                                </button>
+                                            </div>
+                                            <div>
+                                                <button type="button" class="btn btn-primary" id="nextStep" <?php echo ($current_step == $max_step) ? 'style="display:none;"' : ''; ?>>
+                                                    Next <i class="mdi mdi-arrow-right"></i>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-
                                 </div> <!-- end card-body -->
                             </div> <!-- end card-->
                         </div> <!-- end col -->
@@ -436,9 +441,31 @@ $max_step = 6; // Total number of steps in the wizard
     </script>
 
     <!-- Course Creator Wizard JS -->
+
     <script>
         $(document).ready(function() {
             let currentStep = <?php echo $current_step; ?>;
+
+            // Show the specified step - make it globally accessible
+            window.showStep = function(step) {
+                // Hide all steps
+                $('.wizard-step').removeClass('active');
+
+                // Show the current step
+                $('#step' + step).addClass('active');
+
+                // Update progress indicator
+                updateProgressIndicator(step);
+
+                // Update navigation buttons based on current step
+                updateNavigationButtons(step);
+
+                // Update current step variable
+                currentStep = step;
+
+                // Update URL with current step
+                history.replaceState(null, null, '?course_id=<?php echo $course_id; ?>&step=' + step);
+            };
 
             // Navigation button handlers
             $('#nextStep').on('click', function() {
@@ -481,12 +508,30 @@ $max_step = 6; // Total number of steps in the wizard
                 // Update progress indicator
                 updateProgressIndicator(step);
 
-                // Update button states
-                $('#prevStep').prop('disabled', step === 1);
-                $('#nextStep').html(step === <?php echo $max_step; ?> ? 'Finish <i class="mdi mdi-check"></i>' : 'Next <i class="mdi mdi-arrow-right"></i>');
+                // Update navigation buttons based on current step
+                updateNavigationButtons(step);
 
                 // Update URL with current step
                 history.replaceState(null, null, '?course_id=<?php echo $course_id; ?>&step=' + step);
+            }
+
+            // Update navigation buttons based on current step
+            // Update navigation buttons based on current step
+            function updateNavigationButtons(step) {
+                // Show/hide previous button on first step
+                if (step === 1) {
+                    $('#prevStep').hide();
+                } else {
+                    $('#prevStep').show();
+                }
+
+                // Show/hide next button on last step
+                if (step === <?php echo $max_step; ?>) {
+                    $('#nextStep').hide();
+                } else {
+                    $('#nextStep').show();
+                    $('#nextStep').html('Next <i class="mdi mdi-arrow-right"></i>');
+                }
             }
 
             // Update progress indicator
@@ -579,7 +624,18 @@ $max_step = 6; // Total number of steps in the wizard
                     case 2:
                         // Description validation will be implemented in description.php
                         return typeof validateDescription === 'function' ? validateDescription() : true;
-                        // Add cases for other steps
+                    case 3:
+                        // Outcomes & requirements validation
+                        return typeof validateOutcomesRequirements === 'function' ? validateOutcomesRequirements() : true;
+                    case 4:
+                        // Pricing & settings validation
+                        return typeof validatePricingSettings === 'function' ? validatePricingSettings() : true;
+                    case 5:
+                        // Tags validation
+                        return typeof validateTags === 'function' ? validateTags() : true;
+                    case 6:
+                        // Curriculum validation
+                        return typeof validateCurriculum === 'function' ? validateCurriculum() : true;
                     default:
                         return true;
                 }
@@ -598,7 +654,6 @@ $max_step = 6; // Total number of steps in the wizard
             });
         });
     </script>
-
     <!-- Include jQuery & TouchSpin (if not already included in your project) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 

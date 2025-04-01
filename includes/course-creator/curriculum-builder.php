@@ -1164,7 +1164,7 @@ $stmt->close();
         return true;
     }
 
-    // Add this script to the end of your course-creator.php file
+// Add this script to the end of your course-creator.php file
 $(document).ready(function() {
     // Add click handler for validate course button
     $('#validateCourseBtn').click(function() {
@@ -1176,36 +1176,38 @@ $(document).ready(function() {
         // Show loading overlay with sequential messages
         showValidationProgress();
 
-        // AJAX request to validate course
-        $.ajax({
-            url: '../ajax/courses/validate_course.php',
-            type: 'POST',
-            data: {
-                course_id: courseId
-            },
-            success: function(response) {
-                try {
-                    // Remove overlay after validation completes
+        // AJAX request to validate course after showing all progress messages
+        setTimeout(function() {
+            $.ajax({
+                url: '../ajax/courses/validate_course.php',
+                type: 'POST',
+                data: {
+                    course_id: courseId
+                },
+                success: function(response) {
+                    try {
+                        // Remove overlay after validation completes
+                        removeOverlay();
+                        
+                        const result = JSON.parse(response);
+                        
+                        // Display validation results
+                        displayValidationResults(result);
+                        
+                        // Show the validation modal
+                        $('#validationModal').modal('show');
+                    } catch (e) {
+                        console.error('Error parsing validation response', e);
+                        removeOverlay();
+                        showAlert('danger', 'Error processing validation response');
+                    }
+                },
+                error: function() {
                     removeOverlay();
-                    
-                    const result = JSON.parse(response);
-                    
-                    // Display validation results
-                    displayValidationResults(result);
-                    
-                    // Show the validation modal
-                    $('#validationModal').modal('show');
-                } catch (e) {
-                    console.error('Error parsing validation response', e);
-                    removeOverlay();
-                    showAlert('danger', 'Error processing validation response');
+                    showAlert('danger', 'Network error during course validation');
                 }
-            },
-            error: function() {
-                removeOverlay();
-                showAlert('danger', 'Network error during course validation');
-            }
-        });
+            });
+        }, 8 * 1500); // Wait for all validation messages (8 messages * 1.5 seconds each)
     }
 
     // Function to show sequential validation messages
@@ -1228,19 +1230,24 @@ $(document).ready(function() {
         let messageIndex = 1;
         const interval = setInterval(function() {
             if (messageIndex < validationMessages.length) {
-                // Get the overlay and update its message
-                const overlay = document.getElementById('pageOverlay');
-                if (overlay) {
-                    const messageElement = overlay.querySelector('.fw-semibold');
-                    if (messageElement) {
-                        messageElement.textContent = validationMessages[messageIndex];
-                    }
-                }
+                // Update the overlay message
+                updateOverlayMessage(validationMessages[messageIndex]);
                 messageIndex++;
             } else {
                 clearInterval(interval);
             }
         }, 1500);
+    }
+
+    // Helper function to update overlay message
+    function updateOverlayMessage(message) {
+        const overlay = document.getElementById('pageOverlay');
+        if (overlay) {
+            const messageElement = overlay.querySelector('.fw-semibold');
+            if (messageElement) {
+                messageElement.textContent = message;
+            }
+        }
     }
 
     // Display validation results in the modal
@@ -1369,35 +1376,46 @@ $(document).ready(function() {
         
         // Go to step button for fixing issues
         $('.goto-step-btn').off('click').on('click', function() {
-            const stepToGo = $(this).data('step');
-            $('#validationModal').modal('hide');
-            
-            // Find and trigger the showStep function
-            if (typeof window.showStep === 'function') {
-                window.showStep(stepToGo);
+    const stepToGo = parseInt($(this).data('step'));
+    $('#validationModal').modal('hide');
+    
+    // Use the global showStep function
+    if (typeof window.showStep === 'function') {
+        window.showStep(stepToGo);
+    } else {
+        console.error('showStep function not available');
+        // Fallback for when showStep isn't directly accessible
+        // Update progress indicator manually
+        $('.progress-step').each(function() {
+            const step = parseInt($(this).data('step'));
+            if (step < stepToGo) {
+                $(this).removeClass('active').addClass('completed');
+            } else if (step === stepToGo) {
+                $(this).addClass('active').removeClass('completed');
             } else {
-                // Fallback for when showStep isn't directly accessible
-                // Update progress indicator manually
-                $('.progress-step').each(function() {
-                    const step = parseInt($(this).data('step'));
-                    if (step < stepToGo) {
-                        $(this).removeClass('active').addClass('completed');
-                    } else if (step === stepToGo) {
-                        $(this).addClass('active').removeClass('completed');
-                    } else {
-                        $(this).removeClass('active completed');
-                    }
-                });
-                
-                // Show the target step
-                $('.wizard-step').removeClass('active');
-                $(`#step${stepToGo}`).addClass('active');
-                
-                // Update buttons
-                $('#prevStep').prop('disabled', stepToGo === 1);
-                $('#nextStep').html(stepToGo === 6 ? 'Finish <i class="mdi mdi-check"></i>' : 'Next <i class="mdi mdi-arrow-right"></i>');
+                $(this).removeClass('active completed');
             }
         });
+        
+        // Show the target step
+        $('.wizard-step').removeClass('active');
+        $(`#step${stepToGo}`).addClass('active');
+        
+        // Update navigation buttons
+        if (stepToGo === 1) {
+            $('#prevStep').hide();
+        } else {
+            $('#prevStep').show();
+        }
+        
+        if (stepToGo === 6) { // Assuming 6 is your max step
+            $('#nextStep').hide();
+        } else {
+            $('#nextStep').show();
+            $('#nextStep').html('Next <i class="mdi mdi-arrow-right"></i>');
+        }
+    }
+});
     }
 
     // Save course as draft
@@ -1450,13 +1468,17 @@ $(document).ready(function() {
                     if (result.verified) {
                         // Instructor is verified, proceed with publishing directly
                         updateOverlayMessage("Publishing course...");
-                        publishCourse();
+                        setTimeout(function() {
+                            publishCourse();
+                        }, 1500);
                     } else {
                         // Instructor is not verified, submit for review
                         updateOverlayMessage("Instructor verification required");
                         setTimeout(function() {
                             updateOverlayMessage("Submitting for review...");
-                            submitForReview();
+                            setTimeout(function() {
+                                submitForReview();
+                            }, 1500);
                         }, 1500);
                     }
                 } catch (e) {
@@ -1470,17 +1492,6 @@ $(document).ready(function() {
                 showAlert('danger', 'Network error while checking verification status');
             }
         });
-    }
-
-    // Helper function to update overlay message
-    function updateOverlayMessage(message) {
-        const overlay = document.getElementById('pageOverlay');
-        if (overlay) {
-            const messageElement = overlay.querySelector('.fw-semibold');
-            if (messageElement) {
-                messageElement.textContent = message;
-            }
-        }
     }
 
     // Publish course (for verified instructors)
@@ -1558,8 +1569,7 @@ $(document).ready(function() {
             }
         });
     }
-});
-</script>
+});</script>
 
 <style>
     .handle-icon {
