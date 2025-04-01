@@ -499,4 +499,4 @@ ORDER BY c.updated_at DESC";
 
 <!-- Mirrored from coderthemes.com/hyper/saas/index.php by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 29 Jul 2022 10:20:07 GMT -->
 
-</html>c
+</html>
