@@ -305,7 +305,7 @@ $(document).ready(function() {
     function processAnswers() {
         let correctAnswers = 0;
         let totalQuestions = $('.question-card').length;
-        
+         
         $('.question-card').each(function() {
             const questionId = $(this).find('input[type="radio"]').attr('name').replace('question_', '');
             const selectedAnswer = $(this).find('input[type="radio"]:checked').val();
