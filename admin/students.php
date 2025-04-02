@@ -839,32 +839,114 @@
                         // Show the modal
                         const studentModal = new bootstrap.Modal(document.getElementById("studentModal"));
                         studentModal.show();
+
+                        // Fetch and display activity logs, including status changes
+                        fetch(`../backend/admin/fetch-student-activity.php?student_id=${studentId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const activityLogContainer = document.getElementById("modalActivityLog");
+
+                                if (data.logs && data.logs.length > 0) {
+                                    activityLogContainer.innerHTML = "";
+
+                                    data.logs.forEach(log => {
+                                        let activityIcon = '';
+                                        let activityClass = '';
+
+                                        // Set appropriate icon and class based on activity type
+                                        if (log.activity_type === 'status_change') {
+                                            if (log.new_status === 'active') {
+                                                activityIcon = 'bi-check-circle-fill';
+                                                activityClass = 'text-success';
+                                            } else if (log.new_status === 'suspended') {
+                                                activityIcon = 'bi-pause-circle-fill';
+                                                activityClass = 'text-warning';
+                                            } else if (log.new_status === 'banned') {
+                                                activityIcon = 'bi-x-circle-fill';
+                                                activityClass = 'text-danger';
+                                            }
+                                        } else if (log.activity_type === 'login') {
+                                            activityIcon = 'bi-box-arrow-in-right';
+                                            activityClass = 'text-primary';
+                                        } else {
+                                            activityIcon = 'bi-activity';
+                                            activityClass = 'text-secondary';
+                                        }
+
+                                        activityLogContainer.innerHTML += `
+                <li class="step-item">
+                    <div class="step-content-wrapper">
+                        <span class="step-icon step-icon-sm ${activityClass}">
+                            <i class="${activityIcon}"></i>
+                        </span>
+                        <div class="step-content">
+                            <h5 class="mb-1">${log.activity_title}</h5>
+                            <p class="fs-6 mb-1">${log.activity_details}</p>
+                            <small class="text-muted">${timeAgo(log.created_at)}</small>
+                        </div>
+                    </div>
+                </li>`;
+                                    });
+                                } else {
+                                    activityLogContainer.innerHTML = `<li class="step-item"><div class="text-muted">No activity logs available</div></li>`;
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error fetching activity logs:", error);
+                                document.getElementById("modalActivityLog").innerHTML = `<li class="step-item"><div class="text-muted">Error loading activity logs</div></li>`;
+                            });
                     }
 
                     function updateStudentStatus(studentId, newStatus, statusReason = null) {
                         createOverlay("Updating student status...");
 
-                        // In a real app, this would be an API call
-                        setTimeout(() => {
-                            let student = studentData.find(s => s.id == studentId);
+                        // Prepare data for API call
+                        const requestData = {
+                            student_id: studentId,
+                            status: newStatus
+                        };
 
-                            if (student) {
-                                student.status = newStatus;
+                        // Add reason if provided for suspended or banned status
+                        if (newStatus !== "active" && statusReason) {
+                            requestData.reason = statusReason;
+                        }
 
-                                if (newStatus !== "active" && statusReason) {
-                                    student.statusReason = statusReason;
+                        // Make API call to update status
+                        fetch("../backend/admin/update-student-status.php", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify(requestData)
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Find and update student in local data
+                                    let student = studentData.find(s => s.id == studentId);
+
+                                    if (student) {
+                                        student.status = newStatus;
+
+                                        if (newStatus !== "active" && statusReason) {
+                                            student.statusReason = statusReason;
+                                        }
+
+                                        // Update the UI
+                                        applyFilters();
+                                        updateSummaryCards();
+                                        showToast('success', data.message || `Student status updated to ${newStatus} successfully.`);
+                                    }
+                                } else {
+                                    showToast('error', data.message || 'Failed to update student status');
                                 }
-
-                                // Update the UI
-                                applyFilters();
-                                updateSummaryCards();
                                 removeOverlay();
-                                showToast('success', `Student status updated to ${newStatus} successfully.`);
-                            } else {
+                            })
+                            .catch(error => {
+                                console.error("Error updating student status:", error);
+                                showToast('error', 'An error occurred while updating student status');
                                 removeOverlay();
-                                showToast('error', 'Student not found');
-                            }
-                        }, 1000);
+                            });
                     }
 
                     function createPagination() {
