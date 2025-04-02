@@ -305,16 +305,10 @@ function timeAgo($datetime)
             <div class="row">
                 <div class="col-12">
                     <!-- Main Gallery Image -->
-                    <a class="d-block position-relative" href="#previewModal" data-bs-toggle="modal">
+                    <a class="d-block position-relative" data-bs-toggle="modal">
                         <img class="img-fluid w-100" style="height: 375px; object-fit: cover;"
                             src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>"
                             alt="<?php echo htmlspecialchars($course['title']); ?>">
-
-                        <div class="position-absolute bottom-0 end-0 mb-3 me-3">
-                            <span class="btn btn-sm btn-light">
-                                <i class="bi-arrows-fullscreen me-2"></i> View preview
-                            </span>
-                        </div>
                     </a>
                     <!-- End Gallery -->
                 </div>
@@ -471,12 +465,13 @@ function timeAgo($datetime)
                             </div>
                             <!-- End Row -->
                         </div>
-
                         <div class="mb-4">
                             <h4>Description</h4>
                         </div>
 
-                        <p><?php echo nl2br(htmlspecialchars($course['full_description'])); ?></p>
+                        <div class="text-break mb-4">
+                            <?php echo nl2br(htmlspecialchars($course['full_description'])); ?>
+                        </div>
 
                         <!-- Learning Outcomes Section -->
                         <div class="mb-4 mt-6">
