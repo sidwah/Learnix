@@ -396,7 +396,7 @@
                     <div class="col mb-4">
                         <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
                             <div class="card-body text-center">
-                                <h5 class="card-title text-inherit">Total Resolved Tickets</h5>
+                                <h5 class="card-title text-inherit">Total Resolved Issues</h5>
                                 <h1 class="card-text large text-body"> <?php echo number_format($resolved_tickets); ?></h1>
                             </div>
                         </a>
