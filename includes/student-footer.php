@@ -160,11 +160,6 @@
   <!-- JS Learnix -->
   <script src="../assets/js/theme.min.js"></script>
 
-  <script src="./assets/vendor/hs-video-player/dist/hs-video-player.min.js"></script>
-
-  <!-- JS Implementing Plugins -->
-<script src="../assets/vendor/hs-sticky-block/dist/hs-sticky-block.min.js"></script>
-
 
 
   <!-- JS Plugins Init. -->

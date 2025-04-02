@@ -13,7 +13,7 @@
     <!-- App css -->
     <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
     <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style" />
-
+    <meta name="sourcemap" content="off">
 </head>
 
 <body class="loading authentication-bg" data-layout-config='{"darkMode":false}'>
