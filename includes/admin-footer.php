@@ -1,93 +1,83 @@
+<!-- ========== FOOTER SCRIPTS ========== -->
 <!-- JS Implementing Plugins -->
-<script src="../node_modules/tom-select/dist/js/tom-select.complete.min.js"></script>
-
-
+ <!-- Latest Tom Select JS from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<!-- <script src="../assets/node_modules/tom-select/dist/js/tom-select.complete.min.js"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/vendor.min.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script> -->
 <!-- JS Front -->
-<script src="../assets/js/hs.tom-select.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/tom-select@2.0.0/dist/js/tom-select.complete.min.js"></script> -->
+<script src="../assets/js/theme.min.js"></script>
 
-<!-- JS Plugins Init. -->
+<!-- JS Plugins Initialization -->
 <script>
   (function() {
-    // INITIALIZATION OF SELECT
-    // =======================================================
-    HSCore.components.HSTomSelect.init('.js-select', {
-      render: {
-        'option': function(data, escape) {
-          return data.optionTemplate
-        },
-        'item': function(data, escape) {
-          return data.optionTemplate
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        // INITIALIZATION OF SELECT
+        if (typeof HSCore !== 'undefined' && HSCore.components.HSTomSelect) {
+          HSCore.components.HSTomSelect.init('.js-select', {
+            render: {
+              'option': function(data, escape) {
+                return data.optionTemplate;
+              },
+              'item': function(data, escape) {
+                return data.optionTemplate;
+              }
+            }
+          });
         }
+
+        // INITIALIZATION OF BSDROPDOWN (with existence check)
+        if (typeof HSBsDropdown === 'undefined' && typeof HSBsDropdownComponent !== 'undefined') {
+          window.HSBsDropdown = new HSBsDropdownComponent();
+        }
+
+        // INITIALIZATION OF HEADER
+        if (document.querySelector('#header')) {
+          new HSHeader('#header').init();
+        }
+
+        // INITIALIZATION OF NAV SCROLLER (with safety checks)
+        const navScroller = document.querySelector('.js-nav-scroller');
+        if (navScroller) {
+          new HsNavScroller(navScroller, {
+            delay: 400,
+            offset: 140
+          });
+        }
+
+        // INITIALIZATION OF LISTJS COMPONENT
+        if (typeof HSCore !== 'undefined' && HSCore.components.HSList) {
+          const docsSearch = HSCore.components.HSList.init('#docsSearch');
+          
+          // GET JSON FILE RESULTS
+          if (docsSearch) {
+            fetch('../assets/json/docs-search.json')
+              .then(response => response.json())
+              .then(data => {
+                if (data && docsSearch.getItem(0)) {
+                  docsSearch.getItem(0).add(data);
+                }
+              })
+              .catch(error => console.error('Error loading search data:', error));
+          }
+        }
+
+        // INITIALIZATION OF GO TO
+        const goToEl = document.querySelector('.js-go-to');
+        if (goToEl) {
+          new HSGoTo(goToEl).init();
+        }
+
+      } catch (error) {
+        console.error('Initialization error:', error);
       }
-    })
-
-    // INITIALIZATION OF LIVE TOAST
-    // =======================================================
-    const liveToast = new bootstrap.Toast(document.querySelector('#liveToast'))
-    document.querySelector('#liveToastBtn').addEventListener('click', () => liveToast.show())
-    
-  })()
-
-  
+    });
+  })();
 </script>
-
-<!-- ========== SECONDARY CONTENTS ========== -->
-  <!-- Go To -->
-  <a class="js-go-to go-to position-fixed" href="javascript:;" style="visibility: hidden;" data-hs-go-to-options='{
-       "offsetTop": 700,
-       "position": {
-         "init": {
-           "right": "2rem"
-         },
-         "show": {
-           "bottom": "2rem"
-         },
-         "hide": {
-           "bottom": "-2rem"
-         }
-       }
-     }'>
-    <i class="bi-chevron-up"></i>
-  </a>
-  <!-- ========== END SECONDARY CONTENTS ========== -->
-
-  <!-- JS Implementing Plugins -->
-  <script src="../assets/js/vendor.min.js"></script>
-
-  <!-- JS Front -->
-  <script src="../assets/js/theme.min.js"></script>
-
-  <!-- JS Plugins Init. -->
-  <script>
-    (function() {
-      // INITIALIZATION OF HEADER
-      // =======================================================
-      new HSHeader('#header').init()
-
-
-      // INITIALIZATION OF NAV SCROLLER
-      // =======================================================
-      new HsNavScroller('.js-nav-scroller', {
-        delay: 400,
-        offset: 140
-      })
-
-
-      // INITIALIZATION OF LISTJS COMPONENT
-      // =======================================================
-      const docsSearch = HSCore.components.HSList.init('#docsSearch')
-
-
-      // GET JSON FILE RESULTS
-      // =======================================================
-      fetch('../assets/json/docs-search.json')
-      .then(response => response.json())
-      .then(data => {
-        docsSearch.getItem(0).add(data)
-      })
-
-      // INITIALIZATION OF GO TO
-      // =======================================================
-      new HSGoTo('.js-go-to')
-    })()
-  </script>
+<!-- ========== END FOOTER SCRIPTS ========== -->
+ </body>
+</html>

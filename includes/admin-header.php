@@ -38,8 +38,8 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
   <!-- CSS Front Template -->
   <link rel="stylesheet" href="../assets/css/theme.minc619.css?v=1.0">
   <link rel="stylesheet" href="../assets/css/docs.css">
-  <link rel="stylesheet" href="../node_modules/tom-select/dist/css/tom-select.bootstrap5.css">
-
+<!-- Latest Bootstrap 5 theme for Tom Select (CDN) -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 </head>
 
 <body class="navbar-sidebar-aside-lg">
