@@ -169,10 +169,11 @@
           <?php else: ?>
             <!-- Empty State -->
             <div class="text-center py-5">
-              <img class="img-fluid mb-3" src="../assets/svg/illustrations/oc-browse.svg" alt="Empty state" width="200">
+              <i class="bi bi-book fs-1 text-primary mb-3"></i> <!-- Bootstrap icon -->
               <p>You haven't started any courses yet.</p>
               <a href="courses.php" class="btn btn-soft-primary">Browse Courses</a>
             </div>
+
             <!-- End Empty State -->
           <?php endif; ?>
         </div>
@@ -276,10 +277,11 @@
           <?php else: ?>
             <!-- Empty State -->
             <div class="text-center py-5">
-              <img class="img-fluid mb-3" src="../assets/svg/illustrations/oc-medal.svg" alt="Empty state" width="200">
+              <i class="bi bi-award fs-1 text-primary mb-3"></i> <!-- Bootstrap icon -->
               <p>You haven't completed any courses yet.</p>
               <a href="enrolled-courses.php" class="btn btn-soft-primary">See Your Courses</a>
             </div>
+
             <!-- End Empty State -->
           <?php endif; ?>
         </div>
@@ -501,11 +503,12 @@
           <?php else: ?>
             <!-- Empty State -->
             <div class="text-center py-5">
-              <img class="img-fluid mb-3" src="../assets/svg/illustrations/oc-certificate.svg" alt="No certificates" width="200">
+              <i class="bi bi-file-earmark-text fs-1 text-primary mb-3"></i> <!-- Bootstrap icon -->
               <h5>No certificates yet</h5>
               <p>Complete a course to earn your first certificate.</p>
               <a href="enrolled-courses.php" class="btn btn-soft-primary">Continue Learning</a>
             </div>
+
             <!-- End Empty State -->
           <?php endif; ?>
         </div>
@@ -642,10 +645,11 @@
                 <div class="chartjs-custom mx-auto">
                   <div style="height: 18rem; position: relative;">
                     <!-- Placeholder for chart -->
-                    <div class="d-flex flex-column align-items-center justify-content-center h-100">
-                      <img class="mb-3" src="../assets/svg/illustrations/oc-chart.svg" alt="Chart Placeholder" style="width: 10rem;">
+                    <div class="d-flex flex-column align-items-center justify-content-center">
+                      <i class="bi bi-bar-chart fs-1 text-primary mb-3"></i> <!-- Bootstrap icon -->
                       <p class="card-text">Your daily learning activity will appear here</p>
                     </div>
+
                   </div>
                 </div>
                 <!-- End Activity Chart -->
@@ -725,225 +729,12 @@
         </div>
         <!-- End Learning Activity Overview -->
 
-        <!-- Weekly Progress -->
-        <div class="mb-5">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">Weekly Progress</h3>
-          </div>
 
-          <div class="card">
-            <div class="card-body">
-              <div class="row">
-                <!-- Week Day -->
-                <div class="col text-center">
-                  <div class="mb-3">
-                    <span class="display-6">M</span>
-                  </div>
-                  <div class="avatar avatar-circle avatar-md" style="background-color: #e7f0fd;">
-                    <span class="avatar-initials" style="color: #377dff;">1</span>
-                  </div>
-                  <p class="small mt-2 mb-0">hr</p>
-                </div>
-                <!-- End Week Day -->
-
-                <!-- Week Day -->
-                <div class="col text-center">
-                  <div class="mb-3">
-                    <span class="display-6">T</span>
-                  </div>
-                  <div class="avatar avatar-circle avatar-md" style="background-color: #e7f0fd;">
-                    <span class="avatar-initials" style="color: #377dff;">2</span>
-                  </div>
-                  <p class="small mt-2 mb-0">hrs</p>
-                </div>
-                <!-- End Week Day -->
-
-                <!-- Week Day -->
-                <div class="col text-center">
-                  <div class="mb-3">
-                    <span class="display-6">W</span>
-                  </div>
-                  <div class="avatar avatar-circle avatar-md bg-primary">
-                    <span class="avatar-initials text-white">3</span>
-                  </div>
-                  <p class="small mt-2 mb-0">hrs</p>
-                </div>
-                <!-- End Week Day -->
-
-                <!-- Week Day -->
-                <div class="col text-center">
-                  <div class="mb-3">
-                    <span class="display-6">T</span>
-                  </div>
-                  <div class="avatar avatar-circle avatar-md" style="background-color: #e7f0fd;">
-                    <span class="avatar-initials" style="color: #377dff;">0</span>
-                  </div>
-                  <p class="small mt-2 mb-0">hr</p>
-                </div>
-                <!-- End Week Day -->
-
-                <!-- Week Day -->
-                <div class="col text-center">
-                  <div class="mb-3">
-                    <span class="display-6">F</span>
-                  </div>
-                  <div class="avatar avatar-circle avatar-md" style="background-color: #e7f0fd;">
-                    <span class="avatar-initials" style="color: #377dff;">1.5</span>
-                  </div>
-                  <p class="small mt-2 mb-0">hrs</p>
-                </div>
-                <!-- End Week Day -->
-
-                <!-- Week Day -->
-                <div class="col text-center">
-                  <div class="mb-3">
-                    <span class="display-6">S</span>
-                  </div>
-                  <div class="avatar avatar-circle avatar-md bg-primary">
-                    <span class="avatar-initials text-white">2</span>
-                  </div>
-                  <p class="small mt-2 mb-0">hrs</p>
-                </div>
-                <!-- End Week Day -->
-
-                <!-- Week Day -->
-                <div class="col text-center">
-                  <div class="mb-3">
-                    <span class="display-6">S</span>
-                  </div>
-                  <div class="avatar avatar-circle avatar-md">
-                    <span class="avatar-initials" style="color: #677788;">-</span>
-                  </div>
-                  <p class="small mt-2 mb-0">Today</p>
-                </div>
-                <!-- End Week Day -->
-              </div>
-            </div>
-            <div class="card-footer">
-              <div class="row align-items-center">
-                <div class="col-sm">
-                  <span class="d-block">This week: <span class="text-dark fw-semibold">9.5 hours</span></span>
-                  <span class="d-block text-muted small">Goal: 12 hours per week</span>
-                </div>
-                <div class="col-sm-auto mt-3 mt-sm-0">
-                  <div class="progress" style="height: 8px; width: 200px;">
-                    <div class="progress-bar" role="progressbar" style="width: 79.2%;" aria-valuenow="79.2" aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- End Weekly Progress -->
 
         <!-- Skills Progress -->
         <div>
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="mb-0">Skills Development</h3>
-          </div>
-
-          <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
-            <!-- Skill Card -->
-            <div class="col">
-              <div class="card h-100">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4>Web Development</h4>
-                    <span class="badge bg-soft-primary text-primary">Intermediate</span>
-                  </div>
-
-                  <!-- Skill Bars -->
-                  <div class="mb-4">
-                    <div class="d-flex justify-content-between mb-1">
-                      <span>HTML/CSS</span>
-                      <span>85%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                      <div class="progress-bar" role="progressbar" style="width: 85%;" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                  </div>
-
-                  <div class="mb-4">
-                    <div class="d-flex justify-content-between mb-1">
-                      <span>JavaScript</span>
-                      <span>68%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                      <div class="progress-bar" role="progressbar" style="width: 68%;" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                  </div>
-
-                  <div class="mb-0">
-                    <div class="d-flex justify-content-between mb-1">
-                      <span>Responsive Design</span>
-                      <span>92%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                      <div class="progress-bar" role="progressbar" style="width: 92%;" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                  </div>
-                  <!-- End Skill Bars -->
-                </div>
-                <div class="card-footer">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <span>5 courses in progress</span>
-                    <a href="#" class="btn btn-soft-primary btn-xs">View details</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- End Skill Card -->
-
-            <!-- Skill Card -->
-            <div class="col">
-              <div class="card h-100">
-                <div class="card-body">
-                  <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4>Data Science</h4>
-                    <span class="badge bg-soft-warning text-warning">Beginner</span>
-                  </div>
-
-                  <!-- Skill Bars -->
-                  <div class="mb-4">
-                    <div class="d-flex justify-content-between mb-1">
-                      <span>Python</span>
-                      <span>42%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                      <div class="progress-bar" role="progressbar" style="width: 42%;" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                  </div>
-
-                  <div class="mb-4">
-                    <div class="d-flex justify-content-between mb-1">
-                      <span>Data Visualization</span>
-                      <span>35%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                      <div class="progress-bar" role="progressbar" style="width: 35%;" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                  </div>
-
-                  <div class="mb-0">
-                    <div class="d-flex justify-content-between mb-1">
-                      <span>Machine Learning</span>
-                      <span>10%</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                      <div class="progress-bar" role="progressbar" style="width: 10%;" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                  </div>
-                  <!-- End Skill Bars -->
-                </div>
-                <div class="card-footer">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <span>2 courses in progress</span>
-                    <a href="#" class="btn btn-soft-primary btn-xs">View details</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- End Skill Card -->
           </div>
 
           <!-- Achievements -->
@@ -956,11 +747,13 @@
                 <!-- Achievement -->
                 <div class="col-6 col-md-3 text-center mb-4 mb-md-0">
                   <div class="avatar avatar-lg avatar-circle mb-3 mx-auto">
-                    <img class="avatar-img" src="../assets/svg/illustrations/oc-medal.svg" alt="Perfect Attendance">
+                    <i class="bi bi-award fs-1 text-primary"></i> <!-- Bootstrap icon -->
                   </div>
                   <h6>5-Day Streak</h6>
                   <p class="small text-muted mb-0">Learn 5 days in a row</p>
                 </div>
+
+
                 <!-- End Achievement -->
 
                 <!-- Achievement -->
@@ -1011,53 +804,10 @@
       <!-- End Tab 4 -->
     </div>
     <!-- End Tab Content -->
+
   </div>
   <!-- End Dashboard Tabs Section -->
 
-  <!-- Create Collection Modal -->
-  <div class="modal fade" id="createCollectionModal" tabindex="-1" aria-labelledby="createCollectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="createCollectionModalLabel">Create New Collection</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form>
-            <!-- Form Group -->
-            <div class="mb-4">
-              <label for="collectionNameLabel" class="form-label">Collection Name</label>
-              <input type="text" class="form-control" id="collectionNameLabel" placeholder="Enter collection name" aria-label="Enter collection name">
-            </div>
-            <!-- End Form Group -->
-
-            <!-- Form Group -->
-            <div class="mb-4">
-              <label for="collectionDescriptionLabel" class="form-label">Description (optional)</label>
-              <textarea class="form-control" id="collectionDescriptionLabel" placeholder="Enter a short description" rows="3"></textarea>
-            </div>
-            <!-- End Form Group -->
-
-            <!-- Form Check -->
-            <div class="mb-4">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="" id="privateCollectionCheck">
-                <label class="form-check-label" for="privateCollectionCheck">
-                  Make this collection private
-                </label>
-              </div>
-            </div>
-            <!-- End Form Check -->
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-white" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary">Create Collection</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- End Create Collection Modal -->
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 <?php include '../includes/student-footer.php'; ?>
