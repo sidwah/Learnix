@@ -10,6 +10,9 @@
 <!-- <script src="https://cdn.jsdelivr.net/npm/tom-select@2.0.0/dist/js/tom-select.complete.min.js"></script> -->
 <script src="../assets/js/theme.min.js"></script>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
 <!-- JS Plugins Initialization -->
 <script>
   (function() {
@@ -30,10 +33,12 @@
           });
         }
 
-        // INITIALIZATION OF BSDROPDOWN (with existence check)
-        if (typeof HSBsDropdown === 'undefined' && typeof HSBsDropdownComponent !== 'undefined') {
-          window.HSBsDropdown = new HSBsDropdownComponent();
-        }
+// Ensure HSBsDropdownComponent is only initialized once
+if (typeof HSBsDropdownComponent !== 'undefined' && typeof window.HSBsDropdown === 'undefined') {
+    window.HSBsDropdown = new HSBsDropdownComponent();
+}
+
+
 
         // INITIALIZATION OF HEADER
         if (document.querySelector('#header')) {
