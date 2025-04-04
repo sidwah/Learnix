@@ -56,30 +56,29 @@ switch ($topic['content_type']) {
         // Show video preview
         if (!empty($topic['video_url'])) {
             echo '<div class="ratio ratio-16x9 mb-4">';
-            
+
             $video_url = $topic['video_url'];
-    
+
             // Vimeo embed
             if (preg_match('/vimeo\.com\/(\d+)/', $video_url, $matches)) {
                 $embed_url = "https://player.vimeo.com/video/{$matches[1]}?title=0&byline=0&portrait=0&transparent=0";
                 echo '<iframe id="vimeo-player" src="' . htmlspecialchars($embed_url) . '" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-    
-            // YouTube embed
+
+                // YouTube embed
             } elseif (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w\-]+)/', $video_url, $matches)) {
                 $embed_url = "https://www.youtube-nocookie.com/embed/{$matches[1]}?enablejsapi=1&modestbranding=1&rel=0&controls=0";
                 echo '<iframe id="youtube-player" src="' . htmlspecialchars($embed_url) . '" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
-    
             } else {
                 echo '<p class="text-danger">Unsupported video platform.</p>';
             }
-    
+
             echo '</div>';
         } else {
             echo '<p class="text-center"><i class="bi bi-play-circle display-4"></i></p>';
             echo '<p class="text-center">Video preview available after enrollment</p>';
         }
         break;
-    
+
 
     case 'text':
         // Show first 300 characters of text content

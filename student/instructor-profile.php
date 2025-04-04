@@ -280,59 +280,59 @@ if (isset($_GET['username'])) {
                     </div>
 
                     <?php
-$experienceData = $instructor['professional_experience'] ?? '';
-$experience = !empty($experienceData) ? json_decode($experienceData, true) : [];
+                    $experienceData = $instructor['professional_experience'] ?? '';
+                    $experience = !empty($experienceData) ? json_decode($experienceData, true) : [];
 
-$latestExperience = !empty($experience) ? end($experience) : null;
-?>
+                    $latestExperience = !empty($experience) ? end($experience) : null;
+                    ?>
 
-<?php if ($latestExperience && !empty($latestExperience['job_title']) && !empty($latestExperience['company_name'])): ?>
-    <div class="d-flex small mb-3">
-        <div class="flex-shrink-0">
-            <i class="bi-briefcase-fill"></i>
-        </div>
-        <div class="flex-grow-1 ms-2">
-            <?php echo htmlspecialchars($latestExperience['job_title'] . ', ' . $latestExperience['company_name']); ?>
-        </div>
-    </div>
-<?php endif; ?>
-
-<?php
-$bio = trim($instructor['bio'] ?? '');
-?>
-
-<!-- About Me -->
-<?php if (!empty($bio)): ?>
-    <p><?php echo nl2br(htmlspecialchars($bio)); ?></p>
-<?php endif; ?>
-
-<!-- My Journey Timeline -->
-<?php if (!empty($experience)): ?>
-    <div class="collapse" id="collapseJourneySection">
-        <h5 class="mt-4 mb-3">My Journey</h5>
-
-        <div class="timeline">
-            <?php foreach ($experience as $exp): ?>
-                <div class="timeline-item">
-                    <h6 class="mb-1 pt-1"><?php echo htmlspecialchars($exp['job_title']); ?></h6>
-                    <p class="text-muted mb-1 small ms-4">
-                        <?php echo htmlspecialchars($exp['company_name']); ?> &bullet; <?php echo (int)$exp['years_worked']; ?> year(s)
-                    </p>
-                    <?php if (!empty($exp['job_description'])): ?>
-                        <p class="text-muted mb-3 small ms-4"><?php echo nl2br(htmlspecialchars($exp['job_description'])); ?></p>
+                    <?php if ($latestExperience && !empty($latestExperience['job_title']) && !empty($latestExperience['company_name'])): ?>
+                        <div class="d-flex small mb-3">
+                            <div class="flex-shrink-0">
+                                <i class="bi-briefcase-fill"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-2">
+                                <?php echo htmlspecialchars($latestExperience['job_title'] . ', ' . $latestExperience['company_name']); ?>
+                            </div>
+                        </div>
                     <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
 
-    <!-- Toggle Link -->
-    <a class="link link-collapse" data-bs-toggle="collapse" href="#collapseJourneySection" role="button" aria-expanded="false" aria-controls="collapseJourneySection">
-        <span class="link-collapse-default">Show My Journey</span>
-        <span class="link-collapse-active">Hide My Journey</span>
-    </a>
-<?php else: ?>
-    <div class="alert alert-soft-secondary text-center small" role="alert"">The instructor hasn't added any professional experience yet.</div>
+                    <?php
+                    $bio = trim($instructor['bio'] ?? '');
+                    ?>
+
+                    <!-- About Me -->
+                    <?php if (!empty($bio)): ?>
+                        <p><?php echo nl2br(htmlspecialchars($bio)); ?></p>
+                    <?php endif; ?>
+
+                    <!-- My Journey Timeline -->
+                    <?php if (!empty($experience)): ?>
+                        <div class="collapse" id="collapseJourneySection">
+                            <h5 class="mt-4 mb-3">My Journey</h5>
+
+                            <div class="timeline">
+                                <?php foreach ($experience as $exp): ?>
+                                    <div class="timeline-item">
+                                        <h6 class="mb-1 pt-1"><?php echo htmlspecialchars($exp['job_title']); ?></h6>
+                                        <p class="text-muted mb-1 small ms-4">
+                                            <?php echo htmlspecialchars($exp['company_name']); ?> &bullet; <?php echo (int)$exp['years_worked']; ?> year(s)
+                                        </p>
+                                        <?php if (!empty($exp['job_description'])): ?>
+                                            <p class="text-muted mb-3 small ms-4"><?php echo nl2br(htmlspecialchars($exp['job_description'])); ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <!-- Toggle Link -->
+                        <a class="link link-collapse" data-bs-toggle="collapse" href="#collapseJourneySection" role="button" aria-expanded="false" aria-controls="collapseJourneySection">
+                            <span class="link-collapse-default">Show My Journey</span>
+                            <span class="link-collapse-active">Hide My Journey</span>
+                        </a>
+                    <?php else: ?>
+                        <div class="alert alert-soft-secondary text-center small" role="alert"">The instructor hasn't added any professional experience yet.</div>
 <?php endif; ?>
 
 
@@ -437,104 +437,104 @@ $bio = trim($instructor['bio'] ?? '');
                     ?>
 
                     <!-- Courses -->
-                    <div class="border-top pt-5 mt-5">
-                        <div class="mb-4">
-                            <h4>Courses taught by <?php echo htmlspecialchars($instructor['first_name'] . ' ' . $instructor['last_name']); ?></h4>
-                        </div>
-
-                        <?php if (!empty($coursePreview)): ?>
-                            <div class="d-grid gap-5 mb-7">
-                                <?php foreach ($coursePreview as $course): ?>
-                                    <!-- Course Card -->
-                                    <a class="d-block" href="course-overview.php?id=<?php echo $course['course_id']; ?>">
-                                        <div class="row">
-                                            <div class="col-sm-5 col-lg-3 mb-3 mb-sm-0">
-                                                <!-- Fixed size image container -->
-                                                <div style="height: 80px; overflow: hidden;">
-                                                    <?php
-                                                    $thumbnailPath = !empty($course['thumbnail']) ?
-                                                        '../uploads/thumbnails/' . htmlspecialchars($course['thumbnail']) :
-                                                        '../assets/svg/components/placeholder-img.svg';
-                                                    ?>
-                                                    <img class="card-img" src="<?php echo $thumbnailPath; ?>"
-                                                        alt="<?php echo htmlspecialchars($course['title']); ?>"
-                                                        style="width: 100%; height: 100%; object-fit: cover;">
-                                                </div>
-                                            </div>
-
-                                            <div class="col-sm-7 col-lg-9">
-                                                <div class="row">
-                                                    <div class="col-lg-6 mb-2 mb-lg-0">
-                                                        <h5 class="text-inherit"><?php echo htmlspecialchars($course['title']); ?></h5>
-
-                                                        <div class="d-flex align-items-center flex-wrap">
-                                                            <!-- Rating -->
-                                                            <div class="d-flex gap-1">
-                                                                <?php for ($i = 0; $i < 5; $i++): ?>
-                                                                    <img src="../assets/svg/illustrations/star.svg" alt="Review rating" width="16">
-                                                                <?php endfor; ?>
-                                                            </div>
-                                                            <div class="ms-1">
-                                                                <span class="text-body ms-1"><?php echo number_format($course['average_rating'], 2); ?></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-lg-6">
-                                                        <div class="row">
-                                                            <div class="col-7">
-                                                                <div class="text-muted small mb-2">
-                                                                    <i class="bi-book me-1"></i> <?php echo $course['lesson_count']; ?> lessons
-                                                                </div>
-                                                                <div class="text-muted small">
-                                                                    <i class="bi-clock me-1"></i> <?php
-                                                                                                    $hours = floor($course['total_duration_seconds'] / 3600);
-                                                                                                    $minutes = floor(($course['total_duration_seconds'] % 3600) / 60);
-                                                                                                    echo $hours . 'h ' . $minutes . 'm';
-                                                                                                    ?>
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="col-5 text-end">
-                                                                <h5 class="text-primary mb-0">$<?php echo number_format($course['price'], 2); ?></h5>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                    <!-- End Course Card -->
-                                <?php endforeach; ?>
+                    <div class=" border-top pt-5 mt-5">
+                            <div class="mb-4">
+                                <h4>Courses taught by <?php echo htmlspecialchars($instructor['first_name'] . ' ' . $instructor['last_name']); ?></h4>
                             </div>
 
-                            <?php if (count($courses) > $maxCourses && !empty($instructor['username'])): ?>
-                                <div class="text-end small">
-                                    <a class="link" href="courses.php?instructor=<?php echo urlencode($instructor['username']); ?>">
-                                        See all courses <i class="bi-chevron-right small ms-1"></i>
-                                    </a>
+                            <?php if (!empty($coursePreview)): ?>
+                                <div class="d-grid gap-5 mb-7">
+                                    <?php foreach ($coursePreview as $course): ?>
+                                        <!-- Course Card -->
+                                        <a class="d-block" href="course-overview.php?id=<?php echo $course['course_id']; ?>">
+                                            <div class="row">
+                                                <div class="col-sm-5 col-lg-3 mb-3 mb-sm-0">
+                                                    <!-- Fixed size image container -->
+                                                    <div style="height: 80px; overflow: hidden;">
+                                                        <?php
+                                                        $thumbnailPath = !empty($course['thumbnail']) ?
+                                                            '../uploads/thumbnails/' . htmlspecialchars($course['thumbnail']) :
+                                                            '../assets/svg/components/placeholder-img.svg';
+                                                        ?>
+                                                        <img class="card-img" src="<?php echo $thumbnailPath; ?>"
+                                                            alt="<?php echo htmlspecialchars($course['title']); ?>"
+                                                            style="width: 100%; height: 100%; object-fit: cover;">
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-sm-7 col-lg-9">
+                                                    <div class="row">
+                                                        <div class="col-lg-6 mb-2 mb-lg-0">
+                                                            <h5 class="text-inherit"><?php echo htmlspecialchars($course['title']); ?></h5>
+
+                                                            <div class="d-flex align-items-center flex-wrap">
+                                                                <!-- Rating -->
+                                                                <div class="d-flex gap-1">
+                                                                    <?php for ($i = 0; $i < 5; $i++): ?>
+                                                                        <img src="../assets/svg/illustrations/star.svg" alt="Review rating" width="16">
+                                                                    <?php endfor; ?>
+                                                                </div>
+                                                                <div class="ms-1">
+                                                                    <span class="text-body ms-1"><?php echo number_format($course['average_rating'], 2); ?></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-lg-6">
+                                                            <div class="row">
+                                                                <div class="col-7">
+                                                                    <div class="text-muted small mb-2">
+                                                                        <i class="bi-book me-1"></i> <?php echo $course['lesson_count']; ?> lessons
+                                                                    </div>
+                                                                    <div class="text-muted small">
+                                                                        <i class="bi-clock me-1"></i> <?php
+                                                                                                        $hours = floor($course['total_duration_seconds'] / 3600);
+                                                                                                        $minutes = floor(($course['total_duration_seconds'] % 3600) / 60);
+                                                                                                        echo $hours . 'h ' . $minutes . 'm';
+                                                                                                        ?>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-5 text-end">
+                                                                    <h5 class="text-primary mb-0">$<?php echo number_format($course['price'], 2); ?></h5>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <!-- End Course Card -->
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <?php if (count($courses) > $maxCourses && !empty($instructor['username'])): ?>
+                                    <div class="text-end small">
+                                        <a class="link" href="courses.php?instructor=<?php echo urlencode($instructor['username']); ?>">
+                                            See all courses <i class="bi-chevron-right small ms-1"></i>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+
+                            <?php else: ?>
+                                <div class="alert alert-soft-secondary text-center">
+                                    This instructor hasn't published any courses yet.
                                 </div>
                             <?php endif; ?>
+                        </div>
+                        <!-- End Courses -->
 
-                        <?php else: ?>
-                            <div class="alert alert-soft-secondary text-center">
-                                This instructor hasn't published any courses yet.
+
+                        <!-- Reviews -->
+                        <div class="border-top pt-5 mt-5">
+                            <div class="mb-4">
+                                <h4>Reviews</h4>
                             </div>
-                        <?php endif; ?>
-                    </div>
-                    <!-- End Courses -->
 
-
-<!-- Reviews -->
-<div class="border-top pt-5 mt-5">
-    <div class="mb-4">
-        <h4>Reviews</h4>
-    </div>
-
-    <?php
-    // Fetch all reviews for the instructor's courses
-    try {
-        $stmt = $conn->prepare("
+                            <?php
+                            // Fetch all reviews for the instructor's courses
+                            try {
+                                $stmt = $conn->prepare("
             SELECT cr.rating_id, cr.review_text, cr.rating, cr.created_at,
                    u.user_id, u.first_name, u.last_name, u.profile_pic,
                    c.title as course_title, c.course_id
@@ -546,82 +546,82 @@ $bio = trim($instructor['bio'] ?? '');
             ORDER BY cr.created_at DESC
             LIMIT 5
         ");
-        $stmt->bind_param("i", $instructor['instructor_id']);
-        $stmt->execute();
-        $reviews = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    } catch (Exception $e) {
-        // Silently fail - we'll handle empty results below
-        $reviews = [];
-    }
-    ?>
+                                $stmt->bind_param("i", $instructor['instructor_id']);
+                                $stmt->execute();
+                                $reviews = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                            } catch (Exception $e) {
+                                // Silently fail - we'll handle empty results below
+                                $reviews = [];
+                            }
+                            ?>
 
-    <?php if (!empty($reviews)): ?>
-    <!-- Comment -->
-    <ul class="list-comment list-comment-divider mb-7">
-        <?php foreach ($reviews as $review): ?>
-        <!-- Item -->
-        <li class="list-comment-item">
-            <!-- Media -->
-            <div class="d-flex align-items-center mb-3">
-                <div class="flex-shrink-0">
-                    <?php if (!empty($review['profile_pic'])): ?>
-                        <img class="avatar avatar-sm avatar-circle" src="../uploads/profile/<?php echo htmlspecialchars($review['profile_pic']); ?>" alt="User">
-                    <?php else: ?>
-                        <div class="avatar avatar-sm avatar-soft-primary avatar-circle">
-                            <span class="avatar-initials"><?php echo substr($review['first_name'], 0, 1) . substr($review['last_name'], 0, 1); ?></span>
+                            <?php if (!empty($reviews)): ?>
+                                <!-- Comment -->
+                                <ul class="list-comment list-comment-divider mb-7">
+                                    <?php foreach ($reviews as $review): ?>
+                                        <!-- Item -->
+                                        <li class="list-comment-item">
+                                            <!-- Media -->
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="flex-shrink-0">
+                                                    <?php if (!empty($review['profile_pic'])): ?>
+                                                        <img class="avatar avatar-sm avatar-circle" src="../uploads/profile/<?php echo htmlspecialchars($review['profile_pic']); ?>" alt="User">
+                                                    <?php else: ?>
+                                                        <div class="avatar avatar-sm avatar-soft-primary avatar-circle">
+                                                            <span class="avatar-initials"><?php echo substr($review['first_name'], 0, 1) . substr($review['last_name'], 0, 1); ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <div class="flex-grow-1 ms-3">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <h6 class="mb-0"><?php echo htmlspecialchars($review['first_name'] . ' ' . $review['last_name']); ?></h6>
+                                                        <span class="d-block small text-muted"><?php echo date('F j, Y', strtotime($review['created_at'])); ?></span>
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        On <a href="course-overview.php?id=<?php echo $review['course_id']; ?>"><?php echo htmlspecialchars($review['course_title']); ?></a>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <!-- End Media -->
+
+                                            <div class="d-flex gap-1 mb-3 ms-8">
+                                                <?php for ($i = 0; $i < 5; $i++): ?>
+                                                    <?php if ($i < $review['rating']): ?>
+                                                        <img src="../assets/svg/illustrations/star.svg" alt="Review rating" width="16">
+                                                    <?php else: ?>
+                                                        <img src="../assets/svg/illustrations/star-muted.svg" alt="Review rating" width="16">
+                                                    <?php endif; ?>
+                                                <?php endfor; ?>
+                                            </div>
+
+                                            <div class="mb-5 ms-7">
+                                                <p class="mb-1 small ms-2"><?php echo nl2br(htmlspecialchars($review['review_text'])); ?></p>
+                                            </div>
+                                        </li>
+                                        <!-- End Item -->
+                                    <?php endforeach; ?>
+                                </ul>
+                                <!-- End Comment -->
+
+                                <!-- See All Reviews Button -->
+                                <div class="text-center">
+                                    <a class="btn btn-outline-primary btn-transition btn-sm" href="instructor-reviews.php?id=<?php echo $instructor['instructor_id']; ?>">
+                                        See All Reviews <i class="bi-chevron-right small ms-1"></i>
+                                    </a>
+                                </div>
+
+                            <?php else: ?>
+                                <div class="alert alert-soft-secondary text-center">
+                                    This instructor hasn't received any reviews yet.
+                                </div>
+                            <?php endif; ?>
                         </div>
-                    <?php endif; ?>
-                </div>
-
-                <div class="flex-grow-1 ms-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0"><?php echo htmlspecialchars($review['first_name'] . ' ' . $review['last_name']); ?></h6>
-                        <span class="d-block small text-muted"><?php echo date('F j, Y', strtotime($review['created_at'])); ?></span>
-                    </div>
-                    <small class="text-muted">
-                        On <a href="course-overview.php?id=<?php echo $review['course_id']; ?>"><?php echo htmlspecialchars($review['course_title']); ?></a>
-                    </small>
-                </div>
-            </div>
-            <!-- End Media -->
-            
-            <div class="d-flex gap-1 mb-3 ms-8">
-                <?php for ($i = 0; $i < 5; $i++): ?>
-                    <?php if ($i < $review['rating']): ?>
-                        <img src="../assets/svg/illustrations/star.svg" alt="Review rating" width="16">
-                    <?php else: ?>
-                        <img src="../assets/svg/illustrations/star-muted.svg" alt="Review rating" width="16">
-                    <?php endif; ?>
-                <?php endfor; ?>
-            </div>
-
-            <div class="mb-5 ms-7">
-                <p class="mb-1 small ms-2"><?php echo nl2br(htmlspecialchars($review['review_text'])); ?></p>
-            </div>
-        </li>
-        <!-- End Item -->
-        <?php endforeach; ?>
-    </ul>
-    <!-- End Comment -->
-    
-    <!-- See All Reviews Button -->
-    <div class="text-center">
-        <a class="btn btn-outline-primary btn-transition btn-sm" href="instructor-reviews.php?id=<?php echo $instructor['instructor_id']; ?>">
-            See All Reviews <i class="bi-chevron-right small ms-1"></i>
-        </a>
-    </div>
-    
-    <?php else: ?>
-    <div class="alert alert-soft-secondary text-center">
-        This instructor hasn't received any reviews yet.
-    </div>
-    <?php endif; ?>
-</div>
-<!-- End Reviews -->
+                        <!-- End Reviews -->
 
 
-                    <!-- Sticky Block End Point -->
-                    <div id="stickyBlockEndPoint"></div>
+                        <!-- Sticky Block End Point -->
+                        <div id="stickyBlockEndPoint"></div>
                 </div>
             </div>
             <!-- End Col -->

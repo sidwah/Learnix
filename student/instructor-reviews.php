@@ -72,7 +72,7 @@ if (isset($_GET['username'])) {
         $stmt->bind_param("i", $instructor['instructor_id']);
         $stmt->execute();
         $rating_counts = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        
+
         $ratings_distribution = [
             5 => 0,
             4 => 0,
@@ -80,13 +80,13 @@ if (isset($_GET['username'])) {
             2 => 0,
             1 => 0
         ];
-        
+
         $total_reviews = 0;
         foreach ($rating_counts as $rc) {
             $ratings_distribution[$rc['rating']] = $rc['count'];
             $total_reviews += $rc['count'];
         }
-        
+
         // Calculate percentages for progress bars
         $ratings_percentages = [];
         foreach ($ratings_distribution as $rating => $count) {
@@ -102,18 +102,18 @@ if (isset($_GET['username'])) {
             JOIN courses c ON cr.course_id = c.course_id
             JOIN users u ON cr.user_id = u.user_id
             WHERE c.instructor_id = ? ";
-        
+
         $query_params = [$instructor['instructor_id']];
-        
+
         // Add rating filter if selected
         if ($rating_filter !== null) {
             $query .= "AND cr.rating = ? ";
             $query_params[] = $rating_filter;
         }
-        
+
         // Add review text filter (only show reviews with text)
         $query .= "AND cr.review_text IS NOT NULL AND cr.review_text != '' ";
-        
+
         // Add sorting
         switch ($sort) {
             case 'oldest':
@@ -130,44 +130,43 @@ if (isset($_GET['username'])) {
                 $query .= "ORDER BY cr.created_at DESC ";
                 break;
         }
-        
+
         // Add pagination
         $query .= "LIMIT ?, ?";
         $query_params[] = $offset;
         $query_params[] = $limit;
-        
+
         // Prepare for different parameter types
         $stmt = $conn->prepare($query);
         $types = str_repeat('i', count($query_params));
         $stmt->bind_param($types, ...$query_params);
         $stmt->execute();
         $reviews = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        
+
         // Get total reviews for pagination (considering filters)
         $count_query = "
             SELECT COUNT(*) as total
             FROM course_ratings cr
             JOIN courses c ON cr.course_id = c.course_id
             WHERE c.instructor_id = ? ";
-        
+
         $count_params = [$instructor['instructor_id']];
-        
+
         if ($rating_filter !== null) {
             $count_query .= "AND cr.rating = ? ";
             $count_params[] = $rating_filter;
         }
-        
+
         $count_query .= "AND cr.review_text IS NOT NULL AND cr.review_text != '' ";
-        
+
         $stmt = $conn->prepare($count_query);
         $types = str_repeat('i', count($count_params));
         $stmt->bind_param($types, ...$count_params);
         $stmt->execute();
         $result = $stmt->get_result()->fetch_assoc();
         $total_filtered_reviews = $result['total'];
-        
+
         $total_pages = ceil($total_filtered_reviews / $limit);
-        
     } catch (Exception $e) {
         echo "Error fetching instructor reviews: " . $e->getMessage();
         exit;
@@ -216,9 +215,9 @@ if (isset($_GET['username'])) {
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-4">
                             <div class="flex-shrink-0">
-                                <img class="avatar avatar-lg avatar-circle" 
-                                     src="../uploads/instructor-profile/<?php echo !empty($instructor['profile_pic']) ? htmlspecialchars($instructor['profile_pic']) : 'default.png'; ?>" 
-                                     alt="<?php echo htmlspecialchars($instructor['first_name'] . ' ' . $instructor['last_name']); ?>">
+                                <img class="avatar avatar-lg avatar-circle"
+                                    src="../uploads/instructor-profile/<?php echo !empty($instructor['profile_pic']) ? htmlspecialchars($instructor['profile_pic']) : 'default.png'; ?>"
+                                    alt="<?php echo htmlspecialchars($instructor['first_name'] . ' ' . $instructor['last_name']); ?>">
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <h4 class="mb-0">
@@ -255,9 +254,9 @@ if (isset($_GET['username'])) {
                                         <?php echo $rating; ?> <img src="../assets/svg/illustrations/star.svg" alt="Star" width="12">
                                     </div>
                                     <div class="progress flex-grow-1" style="height: 8px;">
-                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $ratings_percentages[$rating]; ?>%;" 
-                                             aria-valuenow="<?php echo $ratings_percentages[$rating]; ?>" 
-                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                        <div class="progress-bar" role="progressbar" style="width: <?php echo $ratings_percentages[$rating]; ?>%;"
+                                            aria-valuenow="<?php echo $ratings_percentages[$rating]; ?>"
+                                            aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                     <div class="flex-shrink-0 ms-2">
                                         <span class="small"><?php echo number_format($ratings_distribution[$rating]); ?></span>
@@ -270,14 +269,14 @@ if (isset($_GET['username'])) {
                         <div class="mb-4">
                             <h5 class="mb-3">Filter by Rating</h5>
                             <div class="d-grid gap-2">
-                                <a href="?username=<?php echo urlencode($instructor['username']); ?>&sort=<?php echo $sort; ?>" 
-                                   class="btn btn-sm <?php echo $rating_filter === null ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                                <a href="?username=<?php echo urlencode($instructor['username']); ?>&sort=<?php echo $sort; ?>"
+                                    class="btn btn-sm <?php echo $rating_filter === null ? 'btn-primary' : 'btn-outline-primary'; ?>">
                                     All Reviews
                                 </a>
                                 <?php foreach ([5, 4, 3, 2, 1] as $rating): ?>
-                                    <a href="?username=<?php echo urlencode($instructor['username']); ?>&rating=<?php echo $rating; ?>&sort=<?php echo $sort; ?>" 
-                                       class="btn btn-sm <?php echo $rating_filter === $rating ? 'btn-primary' : 'btn-outline-primary'; ?>">
-                                        <?php echo $rating; ?> Star<?php echo $rating !== 1 ? 's' : ''; ?> 
+                                    <a href="?username=<?php echo urlencode($instructor['username']); ?>&rating=<?php echo $rating; ?>&sort=<?php echo $sort; ?>"
+                                        class="btn btn-sm <?php echo $rating_filter === $rating ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                                        <?php echo $rating; ?> Star<?php echo $rating !== 1 ? 's' : ''; ?>
                                         (<?php echo number_format($ratings_distribution[$rating]); ?>)
                                     </a>
                                 <?php endforeach; ?>
@@ -297,8 +296,8 @@ if (isset($_GET['username'])) {
                                 ];
                                 ?>
                                 <?php foreach ($sort_options as $sort_key => $sort_label): ?>
-                                    <a href="?username=<?php echo urlencode($instructor['username']); ?><?php echo $rating_filter !== null ? '&rating=' . $rating_filter : ''; ?>&sort=<?php echo $sort_key; ?>" 
-                                       class="btn btn-sm <?php echo $sort === $sort_key ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                                    <a href="?username=<?php echo urlencode($instructor['username']); ?><?php echo $rating_filter !== null ? '&rating=' . $rating_filter : ''; ?>&sort=<?php echo $sort_key; ?>"
+                                        class="btn btn-sm <?php echo $sort === $sort_key ? 'btn-primary' : 'btn-outline-primary'; ?>">
                                         <?php echo $sort_label; ?>
                                     </a>
                                 <?php endforeach; ?>
@@ -335,7 +334,7 @@ if (isset($_GET['username'])) {
                                             <h5 class="mb-0"><?php echo htmlspecialchars($review['first_name'] . ' ' . $review['last_name']); ?></h5>
                                             <span class="d-block small text-muted"><?php echo date('F j, Y', strtotime($review['created_at'])); ?></span>
                                         </div>
-                                        
+
                                         <div class="d-flex align-items-center mb-2">
                                             <div class="d-flex gap-1 me-2">
                                                 <?php for ($i = 0; $i < 5; $i++): ?>
@@ -347,11 +346,11 @@ if (isset($_GET['username'])) {
                                                 <?php endfor; ?>
                                             </div>
                                         </div>
-                                        
+
                                         <div class="mb-3">
                                             <p class="mb-3"><?php echo nl2br(htmlspecialchars($review['review_text'])); ?></p>
                                         </div>
-                                        
+
                                         <!-- Course Link -->
                                         <div class="d-flex align-items-center border-top pt-3">
                                             <div class="flex-shrink-0 me-3">
@@ -376,7 +375,7 @@ if (isset($_GET['username'])) {
                         <?php endforeach; ?>
                     </ul>
                     <!-- End Comment -->
-                    
+
                     <!-- Pagination -->
                     <?php if ($total_pages > 1): ?>
                         <nav aria-label="Page navigation">
@@ -388,7 +387,7 @@ if (isset($_GET['username'])) {
                                         </a>
                                     </li>
                                 <?php endif; ?>
-                                
+
                                 <?php
                                 $start_page = max(1, $page - 2);
                                 $end_page = min($start_page + 4, $total_pages);
@@ -396,13 +395,13 @@ if (isset($_GET['username'])) {
                                     $start_page = max(1, $end_page - 4);
                                 }
                                 ?>
-                                
+
                                 <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
                                     <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
                                         <a class="page-link" href="?username=<?php echo urlencode($instructor['username']); ?><?php echo $rating_filter !== null ? '&rating=' . $rating_filter : ''; ?>&sort=<?php echo $sort; ?>&page=<?php echo $i; ?>"><?php echo $i; ?></a>
                                     </li>
                                 <?php endfor; ?>
-                                
+
                                 <?php if ($page < $total_pages): ?>
                                     <li class="page-item">
                                         <a class="page-link" href="?username=<?php echo urlencode($instructor['username']); ?><?php echo $rating_filter !== null ? '&rating=' . $rating_filter : ''; ?>&sort=<?php echo $sort; ?>&page=<?php echo $page + 1; ?>" aria-label="Next">
@@ -414,7 +413,7 @@ if (isset($_GET['username'])) {
                         </nav>
                     <?php endif; ?>
                     <!-- End Pagination -->
-                    
+
                 <?php else: ?>
                     <div class="card">
                         <div class="card-body text-center py-5">
