@@ -1237,65 +1237,86 @@ function timeAgo($datetime)
             </div>
             <!-- End Heading -->
 
+            <?php
+            // require_once 'db_connect.php';
+
+            $query = "SELECT 
+    c.course_id,
+    c.title,
+    c.price,
+    c.thumbnail,
+    c.created_at,
+    s.name AS category,
+    COUNT(t.topic_id) AS lessons,
+    AVG(r.rating) AS rating,
+    cs.estimated_duration
+FROM courses c
+LEFT JOIN subcategories s ON c.subcategory_id = s.subcategory_id
+LEFT JOIN course_ratings r ON c.course_id = r.course_id
+LEFT JOIN course_settings cs ON c.course_id = cs.course_id
+LEFT JOIN course_sections sec ON c.course_id = sec.course_id
+LEFT JOIN section_topics t ON sec.section_id = t.section_id
+WHERE c.status = 'published'
+GROUP BY c.course_id
+ORDER BY c.created_at DESC
+LIMIT 3";
+
+            $result = mysqli_query($conn, $query);
+            ?>
+
             <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3">
-                <?php
-                // This would be populated with similar courses from the database
-                // Here's a placeholder for the loop
-                for ($i = 0; $i < 3; $i++):
-                ?>
-                    <div class="col mb-5">
-                        <!-- Card -->
-                        <a class="card card-flush shadow-none h-100" href="#">
-                            <div class="card-pinned">
-                                <img class="card-img-top" src="../assets/img/480x320/img<?php echo $i + 19; ?>.jpg" alt="Course Image">
-                                <?php if ($i === 0): ?>
-                                    <div class="card-pinned-top-start">
-                                        <span class="badge bg-success rounded-pill">New</span>
-                                    </div>
-                                <?php elseif ($i === 2): ?>
-                                    <div class="card-pinned-top-start">
-                                        <span class="badge bg-primary rounded-pill">Popular</span>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Body -->
-                            <div class="card-body">
-                                <span class="card-subtitle text-body">Web Development</span>
-
-                                <div class="row align-items-center mb-3">
-                                    <div class="col">
-                                        <h4 class="card-title text-inherit">Introduction to HTML & CSS</h4>
-                                    </div>
-                                    <!-- End Col -->
-
-                                    <div class="col-auto">
-                                        <h3 class="card-title text-primary">$49.99</h3>
-                                    </div>
-                                    <!-- End Col -->
+                <?php if (mysqli_num_rows($result) > 0): ?>
+                    <?php $index = 0;
+                    while ($row = mysqli_fetch_assoc($result)): ?>
+                        <div class="col mb-5">
+                            <a class="card card-flush shadow-none h-100" href="course-overview.php?id=<?php echo $row['course_id']; ?>">
+                                <div class="card-pinned" style="height: 180px; overflow: hidden;">
+                                    <img class="card-img-top" src="../uploads/thumbnails/<?php echo htmlspecialchars($row['thumbnail'] ?? 'default.jpg'); ?>" alt="Course Image">
+                                    <?php if ($index === 0): ?>
+                                        <div class="card-pinned-top-start">
+                                            <span class="badge bg-success rounded-pill">New</span>
+                                        </div>
+                                    <?php elseif ($index === 2): ?>
+                                        <div class="card-pinned-top-start">
+                                            <span class="badge bg-primary rounded-pill">Popular</span>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
-                                <!-- End Row -->
 
-                                <ul class="list-inline list-separator text-body small">
-                                    <li class="list-inline-item">
-                                        <i class="bi-book small me-1"></i> 24 lessons
-                                    </li>
-                                    <li class="list-inline-item">
-                                        <i class="bi-clock small me-1"></i> 12 hours
-                                    </li>
-                                    <li class="list-inline-item">
-                                        <i class="bi-star-fill text-warning small me-1"></i> 4.8
-                                    </li>
-                                </ul>
-                            </div>
-                            <!-- End Body -->
-                        </a>
-                        <!-- End Card -->
-                    </div>
-                    <!-- End Col -->
-                <?php endfor; ?>
+                                <div class="card-body">
+                                    <span class="card-subtitle text-body"><?php echo htmlspecialchars($row['category'] ?? ''); ?></span>
+
+                                    <div class="row align-items-center mb-3">
+                                        <div class="col">
+                                            <h4 class="card-title text-inherit"><?php echo htmlspecialchars($row['title'] ?? 'Untitled'); ?></h4>
+                                        </div>
+
+                                        <div class="col-auto">
+                                            <h3 class="card-title text-primary">$<?php echo number_format($row['price'] ?? 0, 2); ?></h3>
+                                        </div>
+                                    </div>
+
+                                    <ul class="list-inline list-separator text-body small">
+                                        <li class="list-inline-item">
+                                            <i class="bi-book small me-1"></i> <?php echo $row['lessons'] ?? 0; ?> lessons
+                                        </li>
+                                        <li class="list-inline-item">
+                                            <i class="bi-clock small me-1"></i> <?php echo htmlspecialchars($row['estimated_duration'] ?? 'N/A'); ?>
+                                        </li>
+                                        <li class="list-inline-item">
+                                            <i class="bi-star-fill text-warning small me-1"></i> <?php echo number_format($row['rating'] ?? 0, 1); ?>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </a>
+                        </div>
+                    <?php $index++;
+                    endwhile; ?>
+                <?php else: ?>
+                    <p>No published courses available at the moment.</p>
+                <?php endif; ?>
             </div>
-            <!-- End Row -->
+
         </div>
         <!-- End Card Grid -->
     </div>
@@ -1366,15 +1387,47 @@ function timeAgo($datetime)
                     topic_id: topicId
                 },
                 success: function(response) {
-                    // Small timeout for better UX
                     setTimeout(function() {
                         if (response.trim() === '') {
                             previewContent.html('<div class="alert alert-info">No preview content available for this lesson.</div>');
                         } else {
                             previewContent.html(response);
+
+                            // Vimeo support
+                            var vimeoIframe = document.querySelector('#vimeo-player');
+                            if (vimeoIframe) {
+                                var vimeoPlayer = new Vimeo.Player(vimeoIframe);
+                                vimeoPlayer.on('ended', function() {
+                                    $('#previewModal').modal('hide');
+                                });
+                            }
+
+                            // YouTube support
+                            var ytIframe = document.querySelector('#youtube-player');
+                            if (ytIframe) {
+                                // Global callback for YouTube API
+                                window.onYouTubeIframeAPIReady = function() {
+                                    var ytPlayer = new YT.Player(ytIframe, {
+                                        events: {
+                                            'onStateChange': function(event) {
+                                                if (event.data === YT.PlayerState.ENDED) {
+                                                    $('#previewModal').modal('hide');
+                                                }
+                                            }
+                                        }
+                                    });
+                                };
+
+                                // If API is already loaded, trigger manually
+                                if (typeof YT !== 'undefined' && YT && YT.Player) {
+                                    window.onYouTubeIframeAPIReady();
+                                }
+                            }
+
                         }
                     }, 400);
                 },
+
                 error: function(xhr, status, error) {
                     previewContent.html(
                         '<div class="alert alert-danger">' +
@@ -1388,15 +1441,5 @@ function timeAgo($datetime)
         });
     });
 </script>
-<!-- Add this at the bottom of your file, just before the closing body tag -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize HSSticky component for sticky block functionality
-        if (window.HSSticky) {
-            HSCore.components.HSSticky.init('.js-sticky-block');
-        } else {
-            console.error('HSSticky component not found. Make sure you have included the necessary JS files.');
-        }
-    });
-</script>
+
 <?php include '../includes/student-footer.php'; ?>

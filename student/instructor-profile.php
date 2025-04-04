@@ -280,57 +280,61 @@ if (isset($_GET['username'])) {
                     </div>
 
                     <?php
-                    $experience = json_decode($instructor['professional_experience'], true);
-                    $latestExperience = !empty($experience) ? end($experience) : null;
-                    ?>
+$experienceData = $instructor['professional_experience'] ?? '';
+$experience = !empty($experienceData) ? json_decode($experienceData, true) : [];
 
-                    <?php if ($latestExperience && !empty($latestExperience['job_title']) && !empty($latestExperience['company_name'])): ?>
-                        <div class="d-flex small mb-3">
-                            <div class="flex-shrink-0">
-                                <i class="bi-briefcase-fill"></i>
-                            </div>
-                            <div class="flex-grow-1 ms-2">
-                                <?php echo htmlspecialchars($latestExperience['job_title'] . ', ' . $latestExperience['company_name']); ?>
-                            </div>
-                        </div>
+$latestExperience = !empty($experience) ? end($experience) : null;
+?>
+
+<?php if ($latestExperience && !empty($latestExperience['job_title']) && !empty($latestExperience['company_name'])): ?>
+    <div class="d-flex small mb-3">
+        <div class="flex-shrink-0">
+            <i class="bi-briefcase-fill"></i>
+        </div>
+        <div class="flex-grow-1 ms-2">
+            <?php echo htmlspecialchars($latestExperience['job_title'] . ', ' . $latestExperience['company_name']); ?>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php
+$bio = trim($instructor['bio'] ?? '');
+?>
+
+<!-- About Me -->
+<?php if (!empty($bio)): ?>
+    <p><?php echo nl2br(htmlspecialchars($bio)); ?></p>
+<?php endif; ?>
+
+<!-- My Journey Timeline -->
+<?php if (!empty($experience)): ?>
+    <div class="collapse" id="collapseJourneySection">
+        <h5 class="mt-4 mb-3">My Journey</h5>
+
+        <div class="timeline">
+            <?php foreach ($experience as $exp): ?>
+                <div class="timeline-item">
+                    <h6 class="mb-1 pt-1"><?php echo htmlspecialchars($exp['job_title']); ?></h6>
+                    <p class="text-muted mb-1 small ms-4">
+                        <?php echo htmlspecialchars($exp['company_name']); ?> &bullet; <?php echo (int)$exp['years_worked']; ?> year(s)
+                    </p>
+                    <?php if (!empty($exp['job_description'])): ?>
+                        <p class="text-muted mb-3 small ms-4"><?php echo nl2br(htmlspecialchars($exp['job_description'])); ?></p>
                     <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
 
-                    <?php
-                    $bio = trim($instructor['bio'] ?? '');
-                    $experience = json_decode($instructor['professional_experience'], true);
-                    ?>
+    <!-- Toggle Link -->
+    <a class="link link-collapse" data-bs-toggle="collapse" href="#collapseJourneySection" role="button" aria-expanded="false" aria-controls="collapseJourneySection">
+        <span class="link-collapse-default">Show My Journey</span>
+        <span class="link-collapse-active">Hide My Journey</span>
+    </a>
+<?php else: ?>
+    <div class="alert alert-soft-secondary text-center small" role="alert"">The instructor hasn't added any professional experience yet.</div>
+<?php endif; ?>
 
-                    <!-- About Me -->
-                    <?php if (!empty($bio)): ?>
-                        <p><?php echo nl2br(htmlspecialchars($bio)); ?></p>
-                    <?php endif; ?>
-
-                    <!-- My Journey Timeline -->
-                    <?php if (!empty($experience)): ?>
-                        <div class="collapse" id="collapseJourneySection">
-                            <h5 class="mt-4 mb-3">My Journey</h5>
-
-                            <div class="timeline">
-                                <?php foreach ($experience as $exp): ?>
-                                    <div class="timeline-item">
-                                        <h6 class="mb-1 pt-1"><?php echo htmlspecialchars($exp['job_title']); ?></h6>
-                                        <p class="text-muted mb-1 small ms-4">
-                                            <?php echo htmlspecialchars($exp['company_name']); ?> &bullet; <?php echo (int)$exp['years_worked']; ?> year(s)
-                                        </p>
-                                        <?php if (!empty($exp['job_description'])): ?>
-                                            <p class="text-muted mb-3 small ms-4"><?php echo nl2br(htmlspecialchars($exp['job_description'])); ?></p>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-
-                        <!-- Toggle Link -->
-                        <a class="link link-collapse" data-bs-toggle="collapse" href="#collapseJourneySection" role="button" aria-expanded="false" aria-controls="collapseJourneySection">
-                            <span class="link-collapse-default">Show My Journey</span>
-                            <span class="link-collapse-active">Hide My Journey</span>
-                        </a>
-                    <?php endif; ?>
 
                     <style>
                         .timeline {

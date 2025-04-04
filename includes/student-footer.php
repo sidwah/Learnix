@@ -160,6 +160,13 @@
   <!-- JS Learnix -->
   <script src="../assets/js/theme.min.js"></script>
 
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Vimeo -->
+<script src="https://player.vimeo.com/api/player.js"></script>
+<!-- YouTube -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
 
 
   <!-- JS Plugins Init. -->
