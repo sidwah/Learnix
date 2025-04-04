@@ -346,24 +346,7 @@ function timeAgo($datetime)
                         </ul>
                     </div>
 
-                    <div class="col-sm-6 column-divider-sm">
-                        <div class="pl-md-4">
-                            <h2 class="mb-0">
-                                <?php if ($course['price'] > 0): ?>
-                                    $<?php echo number_format($course['price'], 2); ?>
-                                <?php else: ?>
-                                    Free
-                                <?php endif; ?>
-                            </h2>
-                            <?php if ($course['price'] > 0): ?>
-                                <span class="d-block text-dark mb-3">30-day money-back guarantee</span>
-                                <a href="checkout.php?course_id=<?php echo $course_id; ?>">Get Started Now</a>
-                            <?php else: ?>
-                                <span class="d-block text-dark mb-3">Lifetime Access</span>
-                                <a href="enroll.php?course_id=<?php echo $course_id; ?>">Enroll for Free</a>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                   
                 </div>
                 <!-- End Row -->
 
