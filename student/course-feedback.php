@@ -1,7 +1,7 @@
 
 
 
-<?php include '../includes/account-header.php'; ?>
+<?php include '../includes/student-header.php'; ?>
   <!-- ========== END HEADER ========== -->
 
 
