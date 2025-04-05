@@ -335,6 +335,34 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         $stmt->execute();
     }
     
+    // Calculate overall course progress to update enrollments table
+    $progress_query = "SELECT 
+                        COUNT(DISTINCT CASE WHEN p.completion_status = 'Completed' THEN st.topic_id END) as completed_topics,
+                        COUNT(DISTINCT st.topic_id) as total_topics
+                       FROM course_sections cs
+                       JOIN section_topics st ON cs.section_id = st.section_id
+                       LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                       WHERE cs.course_id = ?";
+    $stmt = $conn->prepare($progress_query);
+    $stmt->bind_param("ii", $enrollment_id, $course_id);
+    $stmt->execute();
+    $progress_result = $stmt->get_result();
+    $progress_data = $progress_result->fetch_assoc();
+    
+    $completed_percentage = 0;
+    if ($progress_data['total_topics'] > 0) {
+        $completed_percentage = round(($progress_data['completed_topics'] / $progress_data['total_topics']) * 100);
+    }
+    
+    // Update the completion percentage in enrollments table
+    $update_enrollment = "UPDATE enrollments 
+                         SET completion_percentage = ?, 
+                             last_accessed = NOW()
+                         WHERE enrollment_id = ?";
+    $stmt = $conn->prepare($update_enrollment);
+    $stmt->bind_param("di", $completed_percentage, $enrollment_id);
+    $stmt->execute();
+    
     // Check if this section has any more uncompleted topics
     $remaining_topics_query = "SELECT COUNT(*) as remaining_count
                               FROM section_topics st
@@ -358,7 +386,6 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     }
     exit();
 }
-
 // At the end of your file, after all processing:
 ob_end_flush();
 

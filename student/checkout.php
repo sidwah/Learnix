@@ -596,7 +596,7 @@ $review_count = 124; // Example count
                             <h4 class="card-header-title m-0"><i class="bi-lock-fill me-2"></i> Secure Payment Information</h4>
                         </div>
                         <div class="card-body p-4">
-                            <form action="../backend/students/process-payment.php" method="post" id="payment-form">
+                            <form action="../backend/student/process-payment.php" method="post" id="payment-form">
                                 <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
                                 
                                 <!-- Name -->
@@ -631,12 +631,12 @@ $review_count = 124; // Example count
                                     <div id="card-errors" role="alert" class="text-danger mt-2"></div>
                                 </div>
                                 
-                                <div class="form-check mb-4">
+                                <!-- <div class="form-check mb-4">
                                     <input class="form-check-input" type="checkbox" id="saveCard" name="saveCard">
                                     <label class="form-check-label" for="saveCard">
                                         Save this card for future purchases
                                     </label>
-                                </div>
+                                </div> -->
                                 <button type="submit" class="btn checkout-btn btn-lg w-100 pulse-animation text-white" id="submit-button">
     <i class="bi-lock-fill me-2"></i> Pay Securely $<?php echo $formatted_price; ?>
 </button>

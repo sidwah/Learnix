@@ -1160,7 +1160,7 @@ function timeAgo($datetime)
                                                 <i class="bi-cart me-1"></i> Buy Now
                                             </a>
                                         <?php else: ?>
-                                            <a class="btn btn-primary btn-transition" href="enroll.php?course_id=<?php echo $course_id; ?>">
+                                            <a class="btn btn-primary btn-transition" href="../backend/student/enroll.php?course_id=<?php echo $course_id; ?>">
                                                 <i class="bi-journal-check me-1"></i> Enroll Now
                                             </a>
                                         <?php endif; ?>

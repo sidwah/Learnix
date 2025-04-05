@@ -180,7 +180,7 @@
 
       <div class="col-lg-9">
         <div class="d-grid gap-3 gap-lg-5">
-          <div id="editAddressCard" class="card">
+          <div class="card">
             <div class="card-header border-bottom">
               <h4 class="card-header-title">Help Center</h4>
             </div>

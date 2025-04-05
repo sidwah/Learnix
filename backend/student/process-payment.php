@@ -5,20 +5,20 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Include necessary files
-require_once '../backend/config.php';
-require_once '../backend/stripe-config.php';
+require_once '../config.php';
+require_once '../stripe-config.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['error_message'] = "You must be logged in to complete a purchase.";
-    header("Location: ../");
+    header("Location: ../../student/");
     exit();
 }
 
 // Check if course_id and stripeToken are provided
 if (!isset($_POST['course_id']) || !isset($_POST['stripeToken'])) {
     $_SESSION['error_message'] = "Missing required information.";
-    header("Location: courses.php");
+    header("Location: ../../student/courses.php");
     exit();
 }
 
@@ -36,7 +36,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
     $_SESSION['error_message'] = "Course not found or not available.";
-    header("Location: courses.php");
+    header("Location: ../../student/courses.php");
     exit();
 }
 
@@ -52,7 +52,7 @@ $enrollment_result = $stmt->get_result();
 
 if ($enrollment_result->num_rows > 0) {
     $_SESSION['info_message'] = "You are already enrolled in this course.";
-    header("Location: learn.php?course_id=" . $course_id);
+    header("Location: ../../student/learn.php?course_id=" . $course_id);
     exit();
 }
 
@@ -125,7 +125,7 @@ $conn->commit();
 
 // Success, redirect to success page
 $_SESSION['success_message'] = "Payment successful! You are now enrolled in the course.";
-header("Location: payment-success.php?course_id=" . $course_id);
+header("Location: ../../student/payment-success.php?course_id=" . $course_id);
 exit();
             
         } catch (Exception $e) {
@@ -134,25 +134,25 @@ exit();
             $_SESSION['error_message'] = "Enrollment failed after payment. Please contact support.";
             // Log the error
             error_log("Enrollment error: " . $e->getMessage());
-            header("Location: checkout.php?course_id=" . $course_id);
+            header("Location: ../../student/checkout.php?course_id=" . $course_id);
             exit();
         }
     } else {
         $_SESSION['error_message'] = "Payment failed. Please try again.";
-        header("Location: checkout.php?course_id=" . $course_id);
+        header("Location: ../../student/checkout.php?course_id=" . $course_id);
         exit();
     }
     
 } catch (\Stripe\Exception\CardException $e) {
     // Card was declined
     $_SESSION['error_message'] = "Your card was declined: " . $e->getError()->message;
-    header("Location: checkout.php?course_id=" . $course_id);
+    header("Location: ../../student/checkout.php?course_id=" . $course_id);
     exit();
 } catch (\Exception $e) {
     // Other Stripe error
     $_SESSION['error_message'] = "Payment error: " . $e->getMessage();
     // Log the error
     error_log("Stripe error: " . $e->getMessage());
-    header("Location: checkout.php?course_id=" . $course_id);
+    header("Location: ../../student/checkout.php?course_id=" . $course_id);
     exit();
 }

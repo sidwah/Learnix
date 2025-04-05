@@ -387,6 +387,9 @@
 
 <!-- JS Custom -->
 <script>
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
     // Function to load courses data from the server
     function loadCourses(status = 'all', searchTerm = '') {
         // Show a loading indicator
@@ -460,28 +463,35 @@
     }
 
     // Function to display courses in the table
-    // Function to display courses in the table
-    function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
-        const tableBody = document.querySelector('tbody');
-        tableBody.innerHTML = '';
+// Function to display courses with pagination
+function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
+    const tableBody = document.querySelector('tbody');
+    tableBody.innerHTML = '';
 
-        // Filter courses based on status and search term
-        const filteredCourses = courses.filter(course => {
-            const matchesStatus = filterStatus === 'all' ||
-                (filterStatus === 'published' && course.status === 'Published' && course.approval_status === 'Approved' && !course.is_suspended) ||
-                (filterStatus === 'pending' && course.approval_status === 'Pending') ||
-                (filterStatus === 'rejected' && course.approval_status === 'Rejected') ||
-                (filterStatus === 'suspended' && course.is_suspended);
+    // Filter courses based on status and search term
+    const filteredCourses = courses.filter(course => {
+        const matchesStatus = filterStatus === 'all' ||
+            (filterStatus === 'published' && course.status === 'Published' && course.approval_status === 'Approved' && !course.is_suspended) ||
+            (filterStatus === 'pending' && course.approval_status === 'Pending') ||
+            (filterStatus === 'rejected' && course.approval_status === 'Rejected') ||
+            (filterStatus === 'suspended' && course.is_suspended);
 
-            const matchesSearch = searchTerm === '' ||
-                course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                course.instructor_name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = searchTerm === '' ||
+            course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            course.instructor_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-            return matchesStatus && matchesSearch;
-        });
+        return matchesStatus && matchesSearch;
+    });
 
-        if (filteredCourses.length === 0) {
-            tableBody.innerHTML = `
+    // Calculate pagination
+    const totalItems = filteredCourses.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+    const paginatedCourses = filteredCourses.slice(startIndex, endIndex);
+
+    if (paginatedCourses.length === 0) {
+        tableBody.innerHTML = `
             <tr>
                 <td colspan="6" class="text-center py-4">
                     <div class="alert alert-info">
@@ -490,20 +500,21 @@
                 </td>
             </tr>
         `;
-            return;
-        }
+        updatePaginationControls(totalPages, 0);
+        return;
+    }
 
-        // Create table rows for each course
-        filteredCourses.forEach(course => {
-            const thumbnailPath = course.thumbnail ? `../uploads/thumbnails/${course.thumbnail}` : '../assets/img/300x200/img1.jpg';
+    // Create table rows for each course
+    paginatedCourses.forEach(course => {
+        const thumbnailPath = course.thumbnail ? `../uploads/thumbnails/${course.thumbnail}` : '../assets/img/300x200/img1.jpg';
 
-            // Determine course status display
-            let statusBadge = '';
-            let actionButtons = '';
+        // Determine course status display
+        let statusBadge = '';
+        let actionButtons = '';
 
-            if (course.is_suspended) {
-                statusBadge = `<span class="badge bg-secondary">Suspended</span>`;
-                actionButtons = `
+        if (course.is_suspended) {
+            statusBadge = `<span class="badge bg-secondary">Suspended</span>`;
+            actionButtons = `
                 <button class="btn btn-sm btn-soft-primary view-course" data-course-id="${course.course_id}">
                     <i class="bi-eye"></i>
                 </button>
@@ -513,9 +524,9 @@
                     <i class="bi-arrow-counterclockwise"></i>
                 </button>
             `;
-            } else if (course.status === 'Published' && course.approval_status === 'Approved') {
-                statusBadge = `<span class="badge bg-success">Published</span>`;
-                actionButtons = `
+        } else if (course.status === 'Published' && course.approval_status === 'Approved') {
+            statusBadge = `<span class="badge bg-success">Published</span>`;
+            actionButtons = `
                 <button class="btn btn-sm btn-soft-primary view-course" data-course-id="${course.course_id}">
                     <i class="bi-eye"></i>
                 </button>
@@ -525,9 +536,9 @@
                     <i class="bi-pause-fill"></i>
                 </button>
             `;
-            } else if (course.approval_status === 'Pending') {
-                statusBadge = `<span class="badge bg-warning">Pending</span>`;
-                actionButtons = `
+        } else if (course.approval_status === 'Pending') {
+            statusBadge = `<span class="badge bg-warning">Pending</span>`;
+            actionButtons = `
                 <button class="btn btn-sm btn-soft-primary view-course" data-course-id="${course.course_id}">
                     <i class="bi-eye"></i>
                 </button>
@@ -542,9 +553,9 @@
                     <i class="bi-x-lg"></i>
                 </button>
             `;
-            } else if (course.approval_status === 'Rejected') {
-                statusBadge = `<span class="badge bg-danger">Rejected</span>`;
-                actionButtons = `
+        } else if (course.approval_status === 'Rejected') {
+            statusBadge = `<span class="badge bg-danger">Rejected</span>`;
+            actionButtons = `
                 <button class="btn btn-sm btn-soft-primary view-course" data-course-id="${course.course_id}">
                     <i class="bi-eye"></i>
                 </button>
@@ -554,16 +565,16 @@
                     <i class="bi-check-lg"></i>
                 </button>
             `;
-            }
+        }
 
-            // Create enrollment badge
-            const enrollmentCount = parseInt(course.enrollment_count) || 0;
-            const enrollmentBadge = enrollmentCount > 0 ?
-                `<span class="badge bg-soft-info text-info">${enrollmentCount} students</span>` :
-                `<span class="badge bg-soft-secondary text-secondary">0 students</span>`;
+        // Create enrollment badge
+        const enrollmentCount = parseInt(course.enrollment_count) || 0;
+        const enrollmentBadge = enrollmentCount > 0 ?
+            `<span class="badge bg-soft-info text-info">${enrollmentCount} students</span>` :
+            `<span class="badge bg-soft-secondary text-secondary">0 students</span>`;
 
-            // Add table row
-            tableBody.innerHTML += `
+        // Add table row
+        tableBody.innerHTML += `
             <tr data-course-id="${course.course_id}">
                 <td>
                     <div class="d-flex align-items-center">
@@ -590,11 +601,98 @@
                 </td>
             </tr>
         `;
-        });
+    });
 
-        // Re-attach event listeners to buttons
-        attachEventListeners();
+    // Update pagination controls
+    updatePaginationControls(totalPages, totalItems);
+    
+    // Re-attach event listeners to buttons
+    attachEventListeners();
+}
+
+// Function to update pagination controls
+function updatePaginationControls(totalPages, totalItems) {
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    const prevButton = document.getElementById('prevPage');
+    const nextButton = document.getElementById('nextPage');
+    
+    // Clear existing pagination numbers
+    paginationNumbers.innerHTML = '';
+    
+    // Update previous button state
+    prevButton.disabled = currentPage === 1;
+    
+    // Update next button state
+    nextButton.disabled = currentPage === totalPages || totalPages === 0;
+    
+    // Show current page and total pages
+    const pageInfo = document.createElement('span');
+    pageInfo.className = 'mx-2';
+    // pageInfo.textContent = `Page ${currentPage} of ${totalPages} (${totalItems} items)`;
+    paginationNumbers.appendChild(pageInfo);
+    
+    // Add page number buttons (optional - for direct page navigation)
+    if (totalPages > 1) {
+        const maxVisiblePages = 5; // Maximum number of page buttons to show
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+        
+        // Adjust if we're at the end
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+        
+        // Add "First" button if needed
+        if (startPage > 1) {
+            const firstButton = document.createElement('button');
+            firstButton.className = 'btn btn-sm btn-outline-primary mx-1';
+            firstButton.textContent = '1';
+            firstButton.addEventListener('click', () => {
+                currentPage = 1;
+                loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
+            });
+            paginationNumbers.appendChild(firstButton);
+            
+            if (startPage > 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'mx-1';
+                ellipsis.textContent = '...';
+                paginationNumbers.appendChild(ellipsis);
+            }
+        }
+        
+        // Add page number buttons
+        for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.className = `btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1`;
+            pageButton.textContent = i;
+            pageButton.addEventListener('click', () => {
+                currentPage = i;
+                loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
+            });
+            paginationNumbers.appendChild(pageButton);
+        }
+        
+        // Add "Last" button if needed
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'mx-1';
+                ellipsis.textContent = '...';
+                paginationNumbers.appendChild(ellipsis);
+            }
+            
+            const lastButton = document.createElement('button');
+            lastButton.className = 'btn btn-sm btn-outline-primary mx-1';
+            lastButton.textContent = totalPages;
+            lastButton.addEventListener('click', () => {
+                currentPage = totalPages;
+                loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
+            });
+            paginationNumbers.appendChild(lastButton);
+        }
     }
+}
 
     // Function to attach event listeners to buttons
     function attachEventListeners() {
@@ -925,68 +1023,68 @@
             });
     }
 
-// Function to reject a course with enhanced debugging
-function rejectCourse(courseId, reason) {
-    console.log(`Attempting to reject course ID: ${courseId} with reason: "${reason}"`);
-    
-    // Show loading state
-    const submitButton = document.getElementById('submitCourseAction');
-    const originalButtonText = submitButton.innerHTML;
-    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Rejecting...';
-    submitButton.disabled = true;
-    
-    // Create the request body
-    const formData = new URLSearchParams();
-    formData.append('course_id', courseId);
-    formData.append('reason', reason);
-    
-    console.log('Request payload:', formData.toString());
+    // Function to reject a course with enhanced debugging
+    function rejectCourse(courseId, reason) {
+        console.log(`Attempting to reject course ID: ${courseId} with reason: "${reason}"`);
 
-    fetch('../ajax/admin/reject_course.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        return response.text().then(text => {
-            try {
-                // Try to parse the response as JSON
-                const data = JSON.parse(text);
-                console.log('Parsed response:', data);
-                return data;
-            } catch (e) {
-                // If parsing fails, log the raw response
-                console.error('Failed to parse response as JSON:', text);
-                throw new Error('Invalid JSON response from server');
-            }
-        });
-    })
-    .then(data => {
-        // Reset button state
-        submitButton.innerHTML = originalButtonText;
-        submitButton.disabled = false;
-        
-        if (data.status === 'success') {
-            console.log('Course rejection successful');
-            showToast('success', 'Course rejected successfully');
-            loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
-        } else {
-            console.error('Server returned error:', data.message);
-            showToast('danger', data.message || 'Error rejecting course');
-        }
-    })
-    .catch(error => {
-        // Reset button state
-        submitButton.innerHTML = originalButtonText;
-        submitButton.disabled = false;
-        
-        console.error('Error rejecting course:', error);
-        showToast('danger', 'Failed to reject course. Please try again.');
-    });
-}
+        // Show loading state
+        const submitButton = document.getElementById('submitCourseAction');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Rejecting...';
+        submitButton.disabled = true;
+
+        // Create the request body
+        const formData = new URLSearchParams();
+        formData.append('course_id', courseId);
+        formData.append('reason', reason);
+
+        console.log('Request payload:', formData.toString());
+
+        fetch('../ajax/admin/reject_course.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.text().then(text => {
+                    try {
+                        // Try to parse the response as JSON
+                        const data = JSON.parse(text);
+                        console.log('Parsed response:', data);
+                        return data;
+                    } catch (e) {
+                        // If parsing fails, log the raw response
+                        console.error('Failed to parse response as JSON:', text);
+                        throw new Error('Invalid JSON response from server');
+                    }
+                });
+            })
+            .then(data => {
+                // Reset button state
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+
+                if (data.status === 'success') {
+                    console.log('Course rejection successful');
+                    showToast('success', 'Course rejected successfully');
+                    loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
+                } else {
+                    console.error('Server returned error:', data.message);
+                    showToast('danger', data.message || 'Error rejecting course');
+                }
+            })
+            .catch(error => {
+                // Reset button state
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+
+                console.error('Error rejecting course:', error);
+                showToast('danger', 'Failed to reject course. Please try again.');
+            });
+    }
     // Function to suspend a course
     function suspendCourse(courseId) {
         fetch('../ajax/admin/suspend_course.php', {
@@ -1220,9 +1318,19 @@ function rejectCourse(courseId, reason) {
             });
         });
 
-        // Pagination controls (placeholder functionality)
+
+        // Pagination controls
         document.getElementById('prevPage').addEventListener('click', function() {
-            showToast('info', 'Previous page clicked');
+            if (currentPage > 1) {
+                currentPage--;
+                loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', function() {
+            // We don't know the total pages here, but the next button will be disabled if we're on the last page
+            currentPage++;
+            loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
         });
 
         document.getElementById('nextPage').addEventListener('click', function() {

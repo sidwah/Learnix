@@ -227,7 +227,7 @@ $stmt->close();
                                 <p class="mb-0">
                                     <i class="mdi mdi-file-document"></i> 
                                     <?php echo htmlspecialchars(basename($document_file)); ?>
-                                    <a href="../../uploads/documents/<?php echo htmlspecialchars($document_file); ?>" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                    <a href="../uploads/documents/<?php echo htmlspecialchars($document_file); ?>" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
                                         <i class="mdi mdi-eye"></i> View
                                     </a>
                                 </p>
@@ -314,7 +314,7 @@ $stmt->close();
                                             <span class="resource-name"><?php echo htmlspecialchars(basename($resource['resource_path'])); ?></span>
                                         </div>
                                         <div>
-                                            <a href="../../uploads/resources/<?php echo htmlspecialchars($resource['resource_path']); ?>" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                                            <a href="../uploads/resources/<?php echo htmlspecialchars($resource['resource_path']); ?>" target="_blank" class="btn btn-sm btn-outline-primary me-1">
                                                 <i class="mdi mdi-eye"></i>
                                             </a>
                                             <button type="button" class="btn btn-sm btn-outline-danger delete-resource-btn">

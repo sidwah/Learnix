@@ -188,23 +188,44 @@
 
                         <!-- Body -->
                         <div class="card-body">
+
                             <!-- Header with Stats -->
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <div>
                                     <h3 class="mb-1">My Learning</h3>
                                     <p class="text-muted mb-0">Welcome back! Continue your learning journey</p>
                                 </div>
+                                <?php
+                                // Get basic counts from enrollments table
+                                $stats_query = "SELECT 
+        COUNT(CASE WHEN status = 'Active' AND completion_percentage < 100 THEN 1 END) as active_courses,
+        COUNT(CASE WHEN completion_percentage >= 100 THEN 1 END) as completed_courses,
+        COUNT(*) as total_courses
+        FROM enrollments 
+        WHERE user_id = ?";
+
+                                $stats_stmt = $conn->prepare($stats_query);
+                                $stats_stmt->bind_param("i", $_SESSION['user_id']);
+                                $stats_stmt->execute();
+                                $stats_result = $stats_stmt->get_result();
+                                $stats = $stats_result->fetch_assoc();
+
+                                // If no stats found, set defaults
+                                $active_courses = $stats['active_courses'] ?? 0;
+                                $completed_courses = $stats['completed_courses'] ?? 0;
+                                $total_hours = rand(5, 50); // Placeholder
+                                ?>
                                 <div class="d-flex">
                                     <div class="me-3 text-center">
-                                        <div class="fs-5 fw-bold text-primary"><?php echo rand(5, 20); ?></div>
+                                        <div class="fs-5 fw-bold text-primary"><?php echo $active_courses; ?></div>
                                         <div class="small text-muted">Active Courses</div>
                                     </div>
                                     <div class="me-3 text-center">
-                                        <div class="fs-5 fw-bold text-success"><?php echo rand(1, 15); ?></div>
+                                        <div class="fs-5 fw-bold text-success"><?php echo $completed_courses; ?></div>
                                         <div class="small text-muted">Completed</div>
                                     </div>
                                     <div class="text-center">
-                                        <div class="fs-5 fw-bold text-warning"><?php echo rand(5, 50); ?>h</div>
+                                        <div class="fs-5 fw-bold text-warning"><?php echo $total_hours; ?>h</div>
                                         <div class="small text-muted">This Month</div>
                                     </div>
                                 </div>
@@ -224,7 +245,6 @@
                                             </li>
                                             <li><a class="dropdown-item" href="#" data-filter="active"><i class="bi bi-play-circle me-2"></i>In Progress</a></li>
                                             <li><a class="dropdown-item" href="#" data-filter="completed"><i class="bi bi-check-circle me-2"></i>Completed</a></li>
-                                            <li><a class="dropdown-item" href="#" data-filter="favorite"><i class="bi bi-heart me-2"></i>Favorites</a></li>
                                         </ul>
                                     </div>
 
@@ -294,167 +314,153 @@
                                 </div>
                             </div>
 
-                            <!-- Recently Accessed Section -->
-                            <div class="mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="mb-0">Continue Learning</h5>
-                                    <a href="#" class="small text-decoration-none">View all</a>
-                                </div>
-                                <div class="row g-3">
-                                    <!-- Sample Recently Accessed Course Cards -->
-                                    <div class="col-md-6 col-lg-3">
-                                        <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
-                                            <div class="card-img-top position-relative">
-                                                <img src="../uploads/thumbnails/default.jpg" class="card-img-top" alt="Course thumbnail">
-                                                <div class="badge bg-primary position-absolute top-0 start-0 m-2">New</div>
-                                            </div>
-                                            <div class="card-body">
-                                                <h6 class="card-title mb-1">Advanced JavaScript Patterns</h6>
-                                                <p class="small text-muted mb-2">Last accessed: 2 hours ago</p>
-                                                <div class="progress mb-3" style="height: 4px;">
-                                                    <div class="progress-bar bg-warning" style="width: 45%"></div>
-                                                </div>
-                                                <a href="#" class="btn btn-sm btn-outline-primary w-100">Continue</a>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6 col-lg-3">
-                                        <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
-                                            <div class="card-img-top position-relative">
-                                                <img src="../uploads/thumbnails/default.jpg" class="card-img-top" alt="Course thumbnail">
-                                                <div class="badge bg-success position-absolute top-0 start-0 m-2">Popular</div>
-                                            </div>
-                                            <div class="card-body">
-                                                <h6 class="card-title mb-1">UX Design Fundamentals</h6>
-                                                <p class="small text-muted mb-2">Last accessed: 1 day ago</p>
-                                                <div class="progress mb-3" style="height: 4px;">
-                                                    <div class="progress-bar bg-info" style="width: 78%"></div>
-                                                </div>
-                                                <a href="#" class="btn btn-sm btn-outline-primary w-100">Continue</a>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6 col-lg-3">
-                                        <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
-                                            <div class="card-img-top position-relative">
-                                                <img src="../uploads/thumbnails/default.jpg" class="card-img-top" alt="Course thumbnail">
-                                            </div>
-                                            <div class="card-body">
-                                                <h6 class="card-title mb-1">Python Data Analysis</h6>
-                                                <p class="small text-muted mb-2">Last accessed: 3 days ago</p>
-                                                <div class="progress mb-3" style="height: 4px;">
-                                                    <div class="progress-bar bg-danger" style="width: 22%"></div>
-                                                </div>
-                                                <a href="#" class="btn btn-sm btn-outline-primary w-100">Continue</a>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6 col-lg-3">
-                                        <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
-                                            <div class="card-img-top position-relative">
-                                                <img src="../uploads/thumbnails/default.jpg" class="card-img-top" alt="Course thumbnail">
-                                                <div class="badge bg-info position-absolute top-0 start-0 m-2">Updated</div>
-                                            </div>
-                                            <div class="card-body">
-                                                <h6 class="card-title mb-1">Cloud Architecture</h6>
-                                                <p class="small text-muted mb-2">Last accessed: 1 week ago</p>
-                                                <div class="progress mb-3" style="height: 4px;">
-                                                    <div class="progress-bar bg-success" style="width: 95%"></div>
-                                                </div>
-                                                <a href="#" class="btn btn-sm btn-outline-primary w-100">Continue</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- All Courses Section -->
-                            <div class="mt-5">
+                            <div>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h5 class="mb-0">My Courses</h5>
-                                    <div class="small text-muted">Showing <?php echo $result->num_rows; ?> courses</div>
+                                    <?php
+                                    // Count total enrollments
+                                    $count_query = "SELECT COUNT(*) as total FROM enrollments WHERE user_id = ?";
+                                    $count_stmt = $conn->prepare($count_query);
+                                    $count_stmt->bind_param("i", $_SESSION['user_id']);
+                                    $count_stmt->execute();
+                                    $count_result = $count_stmt->get_result();
+                                    $count_data = $count_result->fetch_assoc();
+                                    $total_courses = $count_data['total'] ?? 0;
+                                    ?>
+                                    <div class="small text-muted">Showing <?php echo $total_courses; ?> courses</div>
                                 </div>
 
+                                <?php
+                                // Fetch enrolled courses
+                                $query = "SELECT c.*, e.enrollment_id, e.enrolled_at, e.completion_percentage, e.status as enrollment_status 
+             FROM enrollments e 
+             JOIN courses c ON e.course_id = c.course_id 
+             WHERE e.user_id = ? 
+             ORDER BY e.enrolled_at DESC";
+
+                                $stmt = $conn->prepare($query);
+                                $stmt->bind_param("i", $_SESSION['user_id']);
+                                $stmt->execute();
+                                $result = $stmt->get_result();
+
+                                // Set default values for all possible fields
+                                $defaults = [
+                                    'course_id' => 0,
+                                    'title' => 'Untitled Course',
+                                    'thumbnail' => 'default.jpg',
+                                    'short_description' => 'No description available',
+                                    'enrollment_id' => 0,
+                                    'enrolled_at' => date('Y-m-d H:i:s'),
+                                    'completion_percentage' => 0,
+                                    'enrollment_status' => 'active'
+                                ];
+
+                                // Debug progress values
+                                echo "<!-- DEBUG: Progress values -->";
+                                ?>
+
                                 <div class="row g-4" id="coursesContainer">
-                                    <?php
-                                    if ($result->num_rows > 0) {
-                                        while ($course = $result->fetch_assoc()) {
-                                            $progress = round($course['completion_percentage']);
-                                            $statusClass = $progress == 100 ? 'bg-success' : ($progress > 70 ? 'bg-primary' : ($progress > 30 ? 'bg-info' : 'bg-warning'));
-                                    ?>
-                                            <div class="col-md-6 col-lg-4 col-xl-3 course-card"
-                                                data-status="<?php echo $course['enrollment_status']; ?>"
+                                    <?php if ($result->num_rows > 0) : ?>
+                                        <?php while ($course = $result->fetch_assoc()) :
+                                            // Merge with defaults to ensure all fields exist
+                                            $course = array_merge($defaults, $course);
+
+                                            // Debug this specific course's progress value
+                                            echo "<!-- Course: " . htmlspecialchars($course['title']) . " - Progress: " . $course['completion_percentage'] . " -->";
+
+                                            // Convert properly, ensuring we handle all possible data formats
+                                            $progress = 0;
+                                            if (isset($course['completion_percentage'])) {
+                                                if (is_numeric($course['completion_percentage'])) {
+                                                    $progress = floatval($course['completion_percentage']);
+                                                }
+                                            }
+
+                                            // Ensure the progress is within valid range and rounded
+                                            $progress = min(max(round($progress), 0), 100);
+
+                                            // Debug the processed progress value
+                                            echo "<!-- After processing: " . $progress . " -->";
+
+                                            $statusClass = ($progress >= 100) ? 'bg-success' : ($progress > 70 ? 'bg-primary' : ($progress > 30 ? 'bg-info' : 'bg-warning'));
+                                        ?>
+                                            <div class="col-md-6 col-lg-4 mb-3 course-card"
+                                                data-status="<?= htmlspecialchars($course['enrollment_status']) ?>"
                                                 data-favorite="0"
-                                                data-progress="<?php echo $progress; ?>">
-                                                <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                                                data-progress="<?= $progress ?>">
+
+                                                <div class="card h-100 border-0 shadow-sm hover-shadow">
+                                                    <!-- Card Image -->
                                                     <div class="card-img-top position-relative">
-                                                        <img src="../uploads/thumbnails/<?php echo $course['thumbnail']; ?>" class="card-img-top" alt="<?php echo $course['title']; ?>">
-                                                        <div class="position-absolute top-0 end-0 m-2">
-                                                            <button class="btn btn-sm btn-icon btn-light rounded-circle btn-favorite" data-course-id="<?php echo $course['course_id']; ?>">
-                                                                <i class="bi-heart"></i>
-                                                            </button>
-                                                        </div>
-                                                        <?php if ($progress == 100): ?>
-                                                            <div class="position-absolute top-0 start-0 m-2">
-                                                                <span class="badge bg-success">Completed</span>
-                                                            </div>
-                                                        <?php endif; ?>
+                                                        <img class="card-img-top"
+                                                            src="../uploads/thumbnails/<?= htmlspecialchars($course['thumbnail']) ?>"
+                                                            alt="<?= htmlspecialchars($course['title']) ?>">
                                                     </div>
 
                                                     <div class="card-body">
-                                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                                            <h6 class="card-title mb-0 flex-grow-1"><?php echo $course['title']; ?></h6>
-                                                            <span class="badge bg-light text-dark small ms-2"><?php echo rand(1, 5); ?> <i class="bi-star-fill text-warning small"></i></span>
+                                                        <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
+                                                        <p class="card-text small text-truncate">
+                                                            <?= htmlspecialchars($course['short_description']) ?>
+                                                        </p>
+
+                                                        <!-- Progress Bar -->
+                                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                                            <small><?= $progress ?>% complete</small>
+                                                            <?php if ($progress >= 100) : ?>
+                                                                <span class="badge bg-success">Completed</span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <div class="progress mb-3" style="height: 5px;">
+                                                            <div class="progress-bar <?= $statusClass ?>"
+                                                                role="progressbar"
+                                                                style="width: <?= $progress ?>%;"
+                                                                aria-valuenow="<?= $progress ?>"
+                                                                aria-valuemin="0"
+                                                                aria-valuemax="100"></div>
                                                         </div>
 
-                                                        <p class="small text-muted mb-3"><?php echo substr($course['short_description'], 0, 80); ?>...</p>
-
-                                                        <div class="d-flex justify-content-between align-items-center mb-2 small">
-                                                            <span>Progress</span>
-                                                            <span class="fw-bold"><?php echo $progress; ?>%</span>
-                                                        </div>
-                                                        <div class="progress mb-3" style="height: 6px;">
-                                                            <div class="progress-bar <?php echo $statusClass; ?>" style="width: <?php echo $progress; ?>%"></div>
-                                                        </div>
-
-                                                        <div class="d-flex justify-content-between">
-                                                            <a href="learn.php?course_id=<?php echo $course['course_id']; ?>" class="btn btn-sm <?php echo $progress == 100 ? 'btn-outline-success' : 'btn-primary'; ?> flex-grow-1 me-2">
-                                                                <?php echo $progress == 100 ? 'Review' : 'Continue'; ?>
-                                                            </a>
-                                                            <a href="course-overview.php?id=<?php echo $course['course_id']; ?>" class="btn btn-sm btn-outline-secondary" title="Details">
-                                                                <i class="bi-three-dots"></i>
+                                                        <div class="d-grid gap-2">
+                                                            <?php if ($progress < 100) : ?>
+                                                                <a href="learn.php?course_id=<?= (int)$course['course_id'] ?>"
+                                                                    class="btn btn-primary btn-sm">
+                                                                    Continue Learning
+                                                                </a>
+                                                            <?php else : ?>
+                                                                <a href="learn.php?course_id=<?= (int)$course['course_id'] ?>"
+                                                                    class="btn btn-outline-primary btn-sm">
+                                                                    Review Course
+                                                                </a>
+                                                            <?php endif; ?>
+                                                            <a href="course-overview.php?id=<?= (int)$course['course_id'] ?>"
+                                                                class="btn btn-outline-secondary btn-sm">
+                                                                Course Details
                                                             </a>
                                                         </div>
                                                     </div>
 
-                                                    <div class="card-footer bg-transparent small text-muted border-0 pt-0">
+                                                    <div class="card-footer bg-white small text-muted">
                                                         <div class="d-flex justify-content-between">
-                                                            <span><i class="bi-calendar me-1"></i> <?php echo date('M d, Y', strtotime($course['enrolled_at'])); ?></span>
-                                                            <span><i class="bi-clock me-1"></i> <?php echo rand(1, 10); ?>h</span>
+                                                            <span>Enrolled: <?= date('M d, Y', strtotime($course['enrolled_at'])) ?></span>
+                                                            <span>
+                                                                <i class="bi-clock"></i>
+                                                                <?= rand(1, 10) ?> hrs
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        <?php
-                                        }
-                                    } else {
-                                        ?>
+                                        <?php endwhile; ?>
+                                    <?php else : ?>
                                         <div class="col-12 text-center py-5">
                                             <div class="mb-4">
-                                                <i class="bi-book display-4 text-muted opacity-25"></i>
+                                                <i class="bi-book display-4 text-muted"></i>
                                             </div>
-                                            <h4 class="mb-3">No courses enrolled yet</h4>
-                                            <p class="text-muted mb-4">Discover our catalog and start your learning journey today</p>
-                                            <a href="courses.php" class="btn btn-primary px-4">
-                                                <i class="bi-search me-2"></i>Browse Courses
-                                            </a>
+                                            <h5>You haven't enrolled in any courses yet</h5>
+                                            <p class="text-muted">Browse our catalog to find a course that interests you.</p>
+                                            <a href="courses.php" class="btn btn-primary">Browse Courses</a>
                                         </div>
-                                    <?php
-                                    }
-                                    ?>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
@@ -538,7 +544,7 @@
                                         courseCards.forEach((card, index) => {
                                             const shouldShow = filter === 'all' ||
                                                 (filter === 'active' && parseFloat(card.dataset.progress) < 100) ||
-                                                (filter === 'completed' && parseFloat(card.dataset.progress) === 100) ||
+                                                (filter === 'completed' && parseFloat(card.dataset.progress) >= 100) ||
                                                 (filter === 'favorite' && card.dataset.favorite === '1');
 
                                             card.style.opacity = '0';
@@ -546,8 +552,12 @@
 
                                             setTimeout(() => {
                                                 card.style.display = shouldShow ? '' : 'none';
-                                                card.style.opacity = '';
-                                                card.style.transform = '';
+                                                setTimeout(() => {
+                                                    if (shouldShow) {
+                                                        card.style.opacity = '';
+                                                        card.style.transform = '';
+                                                    }
+                                                }, 50);
                                             }, index * 50);
                                         });
                                     });
@@ -582,18 +592,19 @@
                                         });
 
                                         // Animate reordering
-                                        courseCards.forEach((card, index) => {
-                                            setTimeout(() => {
-                                                coursesContainer.appendChild(card);
-                                                card.style.opacity = '0';
-                                                card.style.transform = 'translateY(20px)';
+                                        courseCards.forEach(card => card.style.opacity = '0');
 
-                                                setTimeout(() => {
-                                                    card.style.opacity = '';
-                                                    card.style.transform = '';
-                                                }, 50);
-                                            }, index * 50);
-                                        });
+                                        setTimeout(() => {
+                                            courseCards.forEach(card => coursesContainer.appendChild(card));
+
+                                            setTimeout(() => {
+                                                courseCards.forEach((card, index) => {
+                                                    setTimeout(() => {
+                                                        card.style.opacity = '';
+                                                    }, index * 50);
+                                                });
+                                            }, 100);
+                                        }, 300);
                                     });
                                 });
 
@@ -606,64 +617,79 @@
 
                                         const view = this.dataset.view;
                                         const courseCards = document.querySelectorAll('.course-card');
-                                        const coursesContainer = document.getElementById('coursesContainer');
 
-                                        // Add transition class
-                                        coursesContainer.classList.add('transition-all');
+                                        courseCards.forEach(card => {
+                                            // Fade out
+                                            card.style.opacity = '0';
+                                            card.style.transition = 'opacity 0.3s ease';
+                                        });
 
+                                        // Change layout after fade out
                                         setTimeout(() => {
                                             courseCards.forEach(card => {
                                                 card.classList.remove('col-md-6', 'col-lg-4', 'col-xl-3', 'col-12');
+                                                const cardElement = card.querySelector('.card');
 
                                                 if (view === 'list') {
                                                     card.classList.add('col-12');
-                                                    // Add list view specific modifications
-                                                    card.querySelector('.card').classList.add('flex-row');
-                                                    card.querySelector('.card-img-top').classList.add('w-25');
-                                                    card.querySelector('.card-body').classList.add('flex-grow-1');
+                                                    cardElement.classList.add('flex-row');
+                                                    cardElement.querySelector('.card-img-top').style.width = '25%';
+                                                    cardElement.querySelector('.card-body').classList.add('flex-grow-1');
                                                 } else {
-                                                    card.classList.add('col-md-6', 'col-lg-4', 'col-xl-3');
-                                                    // Reset grid view
-                                                    card.querySelector('.card').classList.remove('flex-row');
-                                                    card.querySelector('.card-img-top').classList.remove('w-25');
-                                                    card.querySelector('.card-body').classList.remove('flex-grow-1');
+                                                    card.classList.add('col-md-6', 'col-lg-4');
+                                                    cardElement.classList.remove('flex-row');
+                                                    cardElement.querySelector('.card-img-top').style.width = '';
+                                                    cardElement.querySelector('.card-body').classList.remove('flex-grow-1');
                                                 }
                                             });
 
-                                            // Remove transition class after layout change
+                                            // Fade back in
                                             setTimeout(() => {
-                                                coursesContainer.classList.remove('transition-all');
-                                            }, 300);
-                                        }, 50);
+                                                courseCards.forEach(card => {
+                                                    card.style.opacity = '1';
+                                                });
+                                            }, 100);
+                                        }, 300);
                                     });
                                 });
 
-                                // Favorite functionality with animation
-                                document.querySelectorAll('.btn-favorite').forEach(button => {
-                                    button.addEventListener('click', function() {
-                                        const icon = this.querySelector('i');
-                                        const card = this.closest('.course-card');
+                                // Show archived courses toggle
+                                document.getElementById('showArchivedSwitch').addEventListener('change', function() {
+                                    const showArchived = this.checked;
+                                    const courseCards = document.querySelectorAll('.course-card');
 
-                                        if (icon.classList.contains('bi-heart')) {
-                                            // Add to favorites
-                                            icon.classList.remove('bi-heart');
-                                            icon.classList.add('bi-heart-fill', 'text-danger');
-                                            card.dataset.favorite = '1';
-
-                                            // Add bounce animation
-                                            this.classList.add('animate__animated', 'animate__bounce');
-                                            setTimeout(() => {
-                                                this.classList.remove('animate__animated', 'animate__bounce');
-                                            }, 1000);
-                                        } else {
-                                            // Remove from favorites
-                                            icon.classList.remove('bi-heart-fill', 'text-danger');
-                                            icon.classList.add('bi-heart');
-                                            card.dataset.favorite = '0';
+                                    courseCards.forEach(card => {
+                                        if (card.dataset.status === 'suspended' || card.dataset.status === 'expired') {
+                                            card.style.display = showArchived ? '' : 'none';
                                         }
-
-                                        // AJAX call to update favorite status would go here
                                     });
+                                });
+
+                                // Add page transitions
+                                document.addEventListener('click', function(e) {
+                                    // Check if the clicked element is a course link
+                                    const courseLink = e.target.closest('a[href^="learn.php"], a[href^="course-overview.php"]');
+                                    if (courseLink) {
+                                        e.preventDefault();
+                                        const href = courseLink.getAttribute('href');
+
+                                        // Create and show overlay
+                                        const overlay = document.createElement('div');
+                                        overlay.className = 'position-fixed top-0 start-0 w-100 h-100 bg-white';
+                                        overlay.style.opacity = '0';
+                                        overlay.style.transition = 'opacity 0.3s ease';
+                                        overlay.style.zIndex = '9999';
+
+                                        document.body.appendChild(overlay);
+
+                                        // Animate overlay
+                                        setTimeout(() => {
+                                            overlay.style.opacity = '1';
+                                            setTimeout(() => {
+                                                window.location.href = href;
+                                            }, 300);
+                                        }, 10);
+                                    }
                                 });
                             });
                         </script>

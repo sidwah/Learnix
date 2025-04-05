@@ -7,14 +7,14 @@ if (session_status() === PHP_SESSION_NONE) {
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to login page with return URL
-    header("Location: index.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
+    header("Location: ../../index.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
     exit();
 }
 
 // Check if course_id is provided
 if (!isset($_GET['course_id']) || !is_numeric($_GET['course_id'])) {
     // Redirect to courses page if no course ID
-    header("Location: courses.php");
+    header("Location: ../../student/courses.php");
     exit();
 }
 
@@ -22,7 +22,7 @@ $course_id = intval($_GET['course_id']);
 $user_id = $_SESSION['user_id'];
 
 // Connect to database
-require_once '../backend/config.php';
+require_once '../config.php';
 
 // First, check if the course exists and is published
 $sql = "SELECT * FROM courses WHERE course_id = ? AND status = 'Published'";
@@ -34,7 +34,7 @@ $result = $stmt->get_result();
 if ($result->num_rows === 0) {
     // Course doesn't exist or isn't published
     $_SESSION['error_message'] = "Course not found or not available.";
-    header("Location: courses.php");
+    header("Location: ../../student/courses.php");
     exit();
 }
 
@@ -50,7 +50,7 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     // User is already enrolled, redirect to learning page
     $_SESSION['info_message'] = "You are already enrolled in this course.";
-    header("Location: learn.php?course_id=" . $course_id);
+    header("Location: ../../student/learn.php?course_id=" . $course_id);
     exit();
 }
 
@@ -87,17 +87,17 @@ if ($course['price'] == 0) {
         
         // Set success message and redirect
         $_SESSION['success_message'] = "You have successfully enrolled in this course!";
-        header("Location: learn.php?course_id=" . $course_id);
+        header("Location: ../../student/learn.php?course_id=" . $course_id);
         exit();
     } else {
         // Error during enrollment
         $_SESSION['error_message'] = "There was an error enrolling in this course. Please try again.";
-        header("Location: course-overview.php?id=" . $course_id);
+        header("Location: ../../student/course-overview.php?id=" . $course_id);
         exit();
     }
 } else {
     // Paid course, redirect to checkout
-    header("Location: checkout.php?course_id=" . $course_id);
+    header("Location: ../../student/checkout.php?course_id=" . $course_id);
     exit();
 }
 
