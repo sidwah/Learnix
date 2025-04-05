@@ -312,7 +312,7 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
                                     <?php if ($total_courses > 3): ?>
                                         <!-- See All Courses Link -->
                                         <div class="dropdown-divider my-3"></div>
-                                        <a class="dropdown-item text-center" href="enrolled-courses.php">
+                                        <a class="dropdown-item text-center" href="my-courses.php">
                                             <span>See All Courses (<?php echo htmlspecialchars($total_courses); ?>)</span>
                                             <i class="bi-chevron-right small ms-1"></i>
                                         </a>

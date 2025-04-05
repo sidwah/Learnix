@@ -76,7 +76,7 @@ $course = $result->fetch_assoc();
 // Check if course is free
 if ($course['price'] == 0) {
     // Redirect to enroll page for free courses
-    header("Location: enroll.php?course_id=" . $course_id);
+    header("Location: ../backend/student/enroll.php?course_id=" . $course_id);
     exit();
 }
 
@@ -596,7 +596,7 @@ $review_count = 124; // Example count
                             <h4 class="card-header-title m-0"><i class="bi-lock-fill me-2"></i> Secure Payment Information</h4>
                         </div>
                         <div class="card-body p-4">
-                            <form action="process-payment.php" method="post" id="payment-form">
+                            <form action="../backend/students/process-payment.php" method="post" id="payment-form">
                                 <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
                                 
                                 <!-- Name -->

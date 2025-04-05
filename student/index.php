@@ -117,7 +117,7 @@
         <div class="mb-5">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="mb-0">In Progress</h3>
-            <a class="link" href="enrolled-courses.php">View all <i class="bi-chevron-right small ms-1"></i></a>
+            <a class="link" href="my-courses.php">View all <i class="bi-chevron-right small ms-1"></i></a>
           </div>
 
           <?php if (count($enrolled_courses) > 0): ?>
@@ -279,7 +279,7 @@
             <div class="text-center py-5">
               <i class="bi bi-award fs-1 text-primary mb-3"></i> <!-- Bootstrap icon -->
               <p>You haven't completed any courses yet.</p>
-              <a href="enrolled-courses.php" class="btn btn-soft-primary">See Your Courses</a>
+              <a href="my-courses.php" class="btn btn-soft-primary">See Your Courses</a>
             </div>
 
             <!-- End Empty State -->
@@ -506,7 +506,7 @@
               <i class="bi bi-file-earmark-text fs-1 text-primary mb-3"></i> <!-- Bootstrap icon -->
               <h5>No certificates yet</h5>
               <p>Complete a course to earn your first certificate.</p>
-              <a href="enrolled-courses.php" class="btn btn-soft-primary">Continue Learning</a>
+              <a href="my-courses.php" class="btn btn-soft-primary">Continue Learning</a>
             </div>
 
             <!-- End Empty State -->

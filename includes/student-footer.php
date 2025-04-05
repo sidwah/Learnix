@@ -1,4 +1,4 @@
-</body>
+
 <!-- ========== FOOTER ========== -->
   <footer class="bg-dark">
     <div class="container pb-1 pb-lg-5">

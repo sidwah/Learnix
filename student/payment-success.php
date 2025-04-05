@@ -78,7 +78,7 @@ $instructor_name = htmlspecialchars($course['first_name'] . ' ' . $course['last_
                             <a href="learn.php?course_id=<?php echo $course_id; ?>" class="btn btn-primary btn-lg px-4 gap-3">
                                 <i class="bi-play-circle me-2"></i> Start Learning
                             </a>
-                            <a href="enrolled-courses.php" class="btn btn-outline-secondary btn-lg px-4">
+                            <a href="my-courses.php" class="btn btn-outline-secondary btn-lg px-4">
                                 <i class="bi-grid me-2"></i> Go to Dashboard
                             </a>
                         </div>

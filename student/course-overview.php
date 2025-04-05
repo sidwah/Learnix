@@ -1334,7 +1334,7 @@ LIMIT 3";
                 <?php else: ?>
                     <div class="d-flex align-items-center justify-content-between w-100">
                         <p class="h5 mb-0 text-success">Free</p>
-                        <a href="enroll.php?course_id=<?php echo $course_id; ?>" class="btn btn-success btn-lg">Enroll Now</a>
+                        <a href="../backend/student/enroll.php?course_id=<?php echo $course_id; ?>" class="btn btn-success btn-lg">Enroll Now</a>
                     </div>
                 <?php endif; ?>
             </div>
