@@ -269,16 +269,16 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
                                         <a class="navbar-dropdown-menu-media-link" href="learn.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
                                             <div class="d-flex">
                                                 <div class="flex-shrink-0">
-                                                    <img class="avatar" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="Course Thumbnail">
+                                                    <img class="avatar" style="height: auto; width: 60px; object-fit: cover;" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="Course Thumbnail">
                                                 </div>
 
                                                 <div class="flex-grow-1 ms-3">
                                                     <div class="mb-3">
-                                                        <span class="navbar-dropdown-menu-media-title"><?php echo htmlspecialchars($course['title']); ?></span>
-                                                        <p class="navbar-dropdown-menu-media-desc">By <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?></p>
+                                                        <span class="navbar-dropdown-menu-media-title " style="font-size: 0.7rem;"><?php echo htmlspecialchars($course['title']); ?></span>
+                                                        <p class="navbar-dropdown-menu-media-desc" style="font-size: 0.7rem;">By <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?></p>
                                                     </div>
                                                     <div class="d-flex justify-content-between">
-                                                        <span class="card-subtitle text-body">
+                                                        <span class="card-subtitle text-body " style="font-size: 0.6rem;">
                                                             <?php 
                                                             if ($course['completion_percentage'] >= 100) {
                                                                 echo 'Completed';
@@ -287,12 +287,12 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
                                                             }
                                                             ?>
                                                         </span>
-                                                        <small class="text-dark fw-semi-bold"><?php echo htmlspecialchars(number_format($course['completion_percentage'], 0)); ?>%</small>
+                                                        <small style="font-size: 0.6rem;" class="text-dark fw-semi-bold"><?php echo htmlspecialchars(number_format($course['completion_percentage'], 0)); ?>%</small>
                                                     </div>
-                                                    <div class="progress">
+                                                    <div class="progress" style="height: 0.25rem;">
                                                         <div class="progress-bar <?php echo $course['completion_percentage'] >= 100 ? 'bg-success' : ''; ?>" 
                                                             role="progressbar" 
-                                                            style="width: <?php echo htmlspecialchars($course['completion_percentage']); ?>%;" 
+                                                            style="width: <?php echo htmlspecialchars($course['completion_percentage']); ?>%; " 
                                                             aria-valuenow="<?php echo htmlspecialchars($course['completion_percentage']); ?>" 
                                                             aria-valuemin="0" 
                                                             aria-valuemax="100"></div>
@@ -310,7 +310,7 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
                                     <?php if ($total_courses > 3): ?>
                                         <!-- See All Courses Link -->
                                         <div class="dropdown-divider my-3"></div>
-                                        <a class="dropdown-item text-center" href="my-courses.php">
+                                        <a class="dropdown-item text-center" href="enrolled-courses.php">
                                             <span>See All Courses (<?php echo htmlspecialchars($total_courses); ?>)</span>
                                             <i class="bi-chevron-right small ms-1"></i>
                                         </a>

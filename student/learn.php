@@ -1,5 +1,6 @@
 <?php
 // learn.php
+// ob_start();
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
@@ -12,7 +13,7 @@ include '../includes/signin-header.php';
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Redirect to login if not logged in
-    header("Location: login.php");
+    header("Location: index.php");
     exit();
 }
 $user_id = $_SESSION['user_id'];

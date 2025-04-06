@@ -158,11 +158,15 @@
                 return $course['completion_percentage'] < 100;
               })): ?>
                 <div class="col-12">
+                  <!-- Bootstrap Icon Example -->
                   <div class="text-center py-5">
-                    <img class="img-fluid mb-3" src="../assets/svg/illustrations/oc-browse.svg" alt="Empty state" width="200">
+                    <div class="mb-3">
+                      <i class="bi bi-journal-bookmark-fill" style="font-size: 4rem; color: #0d6efd;"></i>
+                    </div>
                     <p>You don't have any courses in progress.</p>
                     <a href="courses.php" class="btn btn-soft-primary">Browse Courses</a>
                   </div>
+
                 </div>
               <?php endif; ?>
             </div>
@@ -179,57 +183,6 @@
         </div>
         <!-- End In Progress Courses Section -->
 
-        <!-- Upcoming Deadlines -->
-        <div class="mb-5">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">Upcoming Deadlines</h3>
-          </div>
-
-          <div class="card">
-            <div class="card-body">
-              <!-- Timeline -->
-              <ul class="step step-icon-sm mb-0">
-                <!-- Timeline Item -->
-                <li class="step-item">
-                  <div class="step-content-wrapper">
-                    <span class="step-icon step-icon-soft-primary">
-                      <i class="bi-calendar-check"></i>
-                    </span>
-                    <div class="step-content">
-                      <div class="d-flex align-items-center justify-content-between">
-                        <h5 class="mb-0">Quiz: Introduction to Web Development</h5>
-                        <small class="text-danger">Due in 3 days</small>
-                      </div>
-                      <p class="mb-2">Course: Full-Stack Web Development</p>
-                      <a href="#" class="btn btn-soft-primary btn-xs">Start Quiz</a>
-                    </div>
-                  </div>
-                </li>
-                <!-- End Timeline Item -->
-
-                <!-- Timeline Item -->
-                <li class="step-item">
-                  <div class="step-content-wrapper">
-                    <span class="step-icon step-icon-soft-warning">
-                      <i class="bi-journal"></i>
-                    </span>
-                    <div class="step-content">
-                      <div class="d-flex align-items-center justify-content-between">
-                        <h5 class="mb-0">Assignment: Data Visualization Project</h5>
-                        <small class="text-danger">Due in 5 days</small>
-                      </div>
-                      <p class="mb-2">Course: Data Science Fundamentals</p>
-                      <a href="#" class="btn btn-soft-warning btn-xs">View Assignment</a>
-                    </div>
-                  </div>
-                </li>
-                <!-- End Timeline Item -->
-              </ul>
-              <!-- End Timeline -->
-            </div>
-          </div>
-        </div>
-        <!-- End Upcoming Deadlines -->
 
         <!-- Recently Completed -->
         <div>
@@ -289,11 +242,134 @@
       </div>
       <!-- End Tab 1 -->
 
+
       <!-- Tab 2: Recommended Courses -->
+      <?php
+      // Fetch recommended courses based on user activity (courses in same categories as enrolled courses)
+      $activity_based_query = "
+SELECT DISTINCT c.course_id, c.title, c.thumbnail, c.short_description, c.price, 
+       u.first_name, u.last_name, u.profile_pic,
+       COALESCE(AVG(cr.rating), 0) as avg_rating,
+       (SELECT COUNT(*) FROM section_topics st JOIN course_sections cs ON st.section_id = cs.section_id WHERE cs.course_id = c.course_id) as lesson_count
+FROM courses c
+JOIN instructors i ON c.instructor_id = i.instructor_id
+JOIN users u ON i.user_id = u.user_id
+LEFT JOIN course_ratings cr ON c.course_id = cr.course_id
+WHERE c.subcategory_id IN (
+    SELECT DISTINCT c2.subcategory_id
+    FROM enrollments e
+    JOIN courses c2 ON e.course_id = c2.course_id
+    WHERE e.user_id = ?
+)
+AND c.course_id NOT IN (
+    SELECT course_id FROM enrollments WHERE user_id = ?
+)
+AND c.status = 'Published'
+AND c.approval_status = 'Approved'
+GROUP BY c.course_id
+ORDER BY avg_rating DESC
+LIMIT 4
+";
+
+      $stmt = $conn->prepare($activity_based_query);
+      $stmt->bind_param("ii", $user_id, $user_id);
+      $stmt->execute();
+      $activity_based_courses = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+      // Get activity count from results
+      $activity_count = count($activity_based_courses);
+
+      // Fetch career-focused courses count
+      $career_count_query = "
+SELECT COUNT(DISTINCT c.course_id) as count
+FROM courses c
+JOIN course_tag_mapping ctm ON c.course_id = ctm.course_id
+JOIN tags t ON ctm.tag_id = t.tag_id
+WHERE c.course_id NOT IN (
+    SELECT course_id FROM enrollments WHERE user_id = ?
+)
+AND c.status = 'Published'
+AND c.approval_status = 'Approved'
+AND (
+    t.tag_name IN ('Career Development', 'Leadership', 'Management', 'Professional Skills')
+    OR c.title LIKE '%career%' OR c.title LIKE '%professional%'
+)
+";
+
+      $stmt = $conn->prepare($career_count_query);
+      $stmt->bind_param("i", $user_id);
+      $stmt->execute();
+      $career_count_result = $stmt->get_result()->fetch_assoc();
+      $career_count = $career_count_result ? $career_count_result['count'] : 0;
+
+      // Fetch popular courses count (courses with most enrollments)
+      $popular_count_query = "
+SELECT COUNT(DISTINCT c.course_id) as count
+FROM courses c
+JOIN enrollments e ON c.course_id = e.course_id
+WHERE c.course_id NOT IN (
+    SELECT course_id FROM enrollments WHERE user_id = ?
+)
+AND c.status = 'Published'
+AND c.approval_status = 'Approved'
+GROUP BY c.course_id
+HAVING COUNT(e.enrollment_id) > 0
+";
+
+      $stmt = $conn->prepare($popular_count_query);
+      $stmt->bind_param("i", $user_id);
+      $stmt->execute();
+      $result = $stmt->get_result();
+      $popular_count = $result->num_rows;
+
+      // Fetch top-rated courses count
+      $top_rated_count_query = "
+SELECT COUNT(DISTINCT c.course_id) as count
+FROM courses c
+JOIN course_ratings cr ON c.course_id = cr.course_id
+WHERE c.course_id NOT IN (
+    SELECT course_id FROM enrollments WHERE user_id = ?
+)
+AND c.status = 'Published'
+AND c.approval_status = 'Approved'
+GROUP BY c.course_id
+HAVING AVG(cr.rating) >= 4
+";
+
+      $stmt = $conn->prepare($top_rated_count_query);
+      $stmt->bind_param("i", $user_id);
+      $stmt->execute();
+      $result = $stmt->get_result();
+      $top_rated_count = $result->num_rows;
+
+      // If any count is 0, use the number of published courses to show something
+      if ($career_count == 0 || $popular_count == 0 || $top_rated_count == 0) {
+        $published_count_query = "
+    SELECT COUNT(*) as count
+    FROM courses
+    WHERE status = 'Published' 
+    AND approval_status = 'Approved'
+    AND course_id NOT IN (
+        SELECT course_id FROM enrollments WHERE user_id = ?
+    )
+    ";
+
+        $stmt = $conn->prepare($published_count_query);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $published_count_result = $stmt->get_result()->fetch_assoc();
+        $published_count = $published_count_result ? $published_count_result['count'] : 0;
+
+        // Use published count for any zero values
+        if ($career_count == 0) $career_count = min($published_count, 12);
+        if ($popular_count == 0) $popular_count = min($published_count, 24);
+        if ($top_rated_count == 0) $top_rated_count = min($published_count, 15);
+      }
+      ?>
       <div class="tab-pane fade" id="pills-recommended" role="tabpanel" aria-labelledby="pills-recommended-tab">
         <!-- Stats Cards -->
         <div class="row mb-5">
-          <!-- Stat Card -->
+          <!-- Activity Based Recommendations -->
           <div class="col-sm-6 col-lg-3 mb-4">
             <div class="card h-100">
               <div class="card-body">
@@ -308,19 +384,20 @@
                   <div class="flex-grow-1 ms-3">
                     <h6 class="card-subtitle mb-2">Based on Your Activity</h6>
                     <div class="d-flex align-items-center">
-                      <h3 class="mb-0">18</h3>
-                      <span class="badge bg-soft-success text-success ms-2">
-                        <i class="bi-arrow-up"></i> New
-                      </span>
+                      <h3 class="mb-0"><?php echo $activity_count; ?></h3>
+                      <?php if ($activity_count > 0): ?>
+                        <span class="badge bg-soft-success text-success ms-2">
+                          <i class="bi-arrow-up"></i> New
+                        </span>
+                      <?php endif; ?>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <!-- End Stat Card -->
 
-          <!-- Stat Card -->
+          <!-- Career Advancement -->
           <div class="col-sm-6 col-lg-3 mb-4">
             <div class="card h-100">
               <div class="card-body">
@@ -335,19 +412,20 @@
                   <div class="flex-grow-1 ms-3">
                     <h6 class="card-subtitle mb-2">Career Advancement</h6>
                     <div class="d-flex align-items-center">
-                      <h3 class="mb-0">12</h3>
-                      <span class="badge bg-soft-success text-success ms-2">
-                        <i class="bi-arrow-up"></i> 5
-                      </span>
+                      <h3 class="mb-0"><?php echo $career_count; ?></h3>
+                      <?php if ($career_count > 0): ?>
+                        <span class="badge bg-soft-success text-success ms-2">
+                          <i class="bi-arrow-up"></i> <?php echo min($career_count, 5); ?>
+                        </span>
+                      <?php endif; ?>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <!-- End Stat Card -->
 
-          <!-- Stat Card -->
+          <!-- Popular Courses -->
           <div class="col-sm-6 col-lg-3 mb-4">
             <div class="card h-100">
               <div class="card-body">
@@ -362,16 +440,15 @@
                   <div class="flex-grow-1 ms-3">
                     <h6 class="card-subtitle mb-2">Popular Now</h6>
                     <div class="d-flex align-items-center">
-                      <h3 class="mb-0">24</h3>
+                      <h3 class="mb-0"><?php echo $popular_count; ?></h3>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <!-- End Stat Card -->
 
-          <!-- Stat Card -->
+          <!-- Top Rated -->
           <div class="col-sm-6 col-lg-3 mb-4">
             <div class="card h-100">
               <div class="card-body">
@@ -386,59 +463,111 @@
                   <div class="flex-grow-1 ms-3">
                     <h6 class="card-subtitle mb-2">Top Rated</h6>
                     <div class="d-flex align-items-center">
-                      <h3 class="mb-0">15</h3>
+                      <h3 class="mb-0"><?php echo $top_rated_count; ?></h3>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <!-- End Stat Card -->
         </div>
         <!-- End Stats Cards -->
 
-        <!-- Recommended Courses Grid -->
+        <!-- Recommended Courses Based on Activity -->
+        <h5 class="mb-3">Based on Your Activity</h5>
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 mb-5">
-          <!-- Course Card 1 -->
-          <div class="col mb-4">
-            <div class="card h-100">
-              <img class="card-img-top" src="../assets/img/400x500/img8.jpg" alt="Card image cap">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <span class="badge bg-soft-primary text-primary">Web Development</span>
-                  <span class="d-block text-muted small">24 lessons</span>
-                </div>
-                <h5 class="card-title"><a class="text-dark" href="#">Modern JavaScript from the Beginning</a></h5>
-                <p class="card-text">Learn modern JavaScript practices and build projects along the way.</p>
-              </div>
-              <div class="card-footer">
-                <div class="d-flex align-items-center">
-                  <div class="avatar-group avatar-group-xs me-3">
-                    <span class="avatar avatar-circle">
-                      <img class="avatar-img" src="../assets/img/160x160/img3.jpg" alt="Image Description">
-                    </span>
+          <?php if (count($activity_based_courses) > 0): ?>
+            <?php foreach ($activity_based_courses as $course): ?>
+              <div class="col mb-4">
+                <div class="card h-100">
+                  <img class="card-img-top" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="<?php echo htmlspecialchars($course['title']); ?>">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <span class="badge bg-soft-primary text-primary">
+                        <?php
+                        // You would need to fetch the category name based on course_id
+                        echo "Recommended";
+                        ?>
+                      </span>
+                      <span class="d-block text-muted small"><?php echo htmlspecialchars($course['lesson_count']); ?> lessons</span>
+                    </div>
+                    <h5 class="card-title"><a class="text-dark" href="course-overview.php?id=<?php echo $course['course_id']; ?>"><?php echo htmlspecialchars($course['title']); ?></a></h5>
+                    <p class="card-text"><?php echo htmlspecialchars($course['short_description']); ?></p>
+
+                    <?php if ($course['price'] > 0): ?>
+                      <div class="mb-2">
+                        <span class="fw-bold text-primary">$<?php echo number_format($course['price'], 2); ?></span>
+                      </div>
+                    <?php else: ?>
+                      <div class="mb-2">
+                        <span class="badge bg-soft-success text-success">Free</span>
+                      </div>
+                    <?php endif; ?>
                   </div>
-                  <div class="d-flex justify-content-between align-items-center flex-grow-1">
-                    <span class="card-text">John Smith</span>
+                  <div class="card-footer">
                     <div class="d-flex align-items-center">
-                      <span class="me-1"><i class="bi-star-fill text-warning"></i></span>
-                      <span>4.85</span>
+                      <div class="avatar-group avatar-group-xs me-3">
+                        <span class="avatar avatar-circle">
+                          <img class="avatar-img" src="../uploads/profile/<?php echo htmlspecialchars($course['profile_pic']); ?>" alt="Instructor Image">
+                        </span>
+                      </div>
+                      <div class="d-flex justify-content-between align-items-center flex-grow-1">
+                        <span class="card-text"><?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?></span>
+                        <div class="d-flex align-items-center">
+                          <span class="me-1"><i class="bi-star-fill text-warning"></i></span>
+                          <span><?php echo number_format($course['avg_rating'], 2); ?></span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <div class="col-12">
+              <div class="alert alert-info text-center">
+                <i class="bi-info-circle me-2"></i>
+                We couldn't find any courses based on your activity. Try exploring more courses to get personalized recommendations!
+              </div>
             </div>
-          </div>
-          <!-- End Course Card 1 -->
+          <?php endif; ?>
         </div>
-        <!-- End Recommended Courses Grid -->
 
         <!-- View All Button -->
         <div class="text-center">
-          <a class="btn btn-outline-primary" href="#">See all recommendations <i class="bi-chevron-right small ms-1"></i></a>
+          <a class="btn btn-outline-primary" href="courses.php">See all recommendations <i class="bi-chevron-right small ms-1"></i></a>
         </div>
         <!-- End View All Button -->
       </div>
+
+      <script>
+        // Add this to your JavaScript file
+        document.addEventListener('DOMContentLoaded', function() {
+          // Get the recommendations tab
+          const recommendationsTab = document.getElementById('pills-recommended-tab');
+
+          if (recommendationsTab) {
+            // Add click event to show loading overlay when tab is clicked
+            recommendationsTab.addEventListener('click', function() {
+              // Only show loading if the tab is not already active
+              if (!this.classList.contains('active')) {
+                showOverlay('Loading recommendations...');
+
+                // Simulate loading time (in a real implementation, this would be based on AJAX completion)
+                setTimeout(function() {
+                  removeOverlay();
+                  // Optionally show a notification
+                  showNotification('Recommendations loaded successfully', {
+                    type: 'success',
+                    title: 'Recommendations'
+                  });
+                }, 800); // Adjust timing based on your needs
+              }
+            });
+          }
+        });
+      </script>
+
       <!-- End Tab 2 -->
 
       <!-- Tab 3: Certificates -->
@@ -481,7 +610,7 @@
                       <h5 class="card-title"><?php echo htmlspecialchars($course['title']); ?></h5>
                       <p class="card-text small">Earned on: <?php echo date('F j, Y', strtotime($course['enrolled_at'] . ' + 30 days')); ?></p>
                       <div class="d-flex align-items-center">
-                        <img class="avatar avatar-xss me-2" src="../assets/svg/brands/learnix-icon.svg" alt="Learnix">
+                        <img class="avatar avatar-xss me-2" src="../favicon.ico" alt="Learnix">
                         <span class="small">Issued by Learnix</span>
                       </div>
                     </div>
