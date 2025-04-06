@@ -192,7 +192,7 @@ if ($current_section_id) {
             $stmt->bind_param("i", $current_section_id);
             $stmt->execute();
             $last_topic_result = $stmt->get_result();
-            
+
             if ($last_topic_result->num_rows > 0) {
                 $last_topic = $last_topic_result->fetch_assoc();
                 $current_topic_id = $last_topic['topic_id'];
@@ -289,7 +289,7 @@ while ($outcome = $outcomes_result->fetch_assoc()) {
 
 // Close database connection
 $stmt->close();
-$conn->close();
+// $conn->close();
 
 // Helper function for determining topic status
 function getTopicStatus($topic)
@@ -626,6 +626,8 @@ foreach ($sections as $sec) {
                         </div>
                     </div>
                 </div>
+
+
                 <!-- Assessment Items -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white">
@@ -633,17 +635,55 @@ foreach ($sections as $sec) {
                     </div>
                     <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
-                            <?php foreach ($topics as $topic): ?>
+                            <?php
+                            // Merge topics and quizzes
+                            $merged_items = $topics;
+
+                            // Get quizzes for this section
+                            if (isset($current_section_id)) {
+                                $quiz_sql = "SELECT 
+                    sq.quiz_id, 
+                    sq.quiz_title as topic_title, 
+                    'quiz' as content_type, 
+                    sq.time_limit,
+                    sq.pass_mark,
+                    COALESCE(sqa.is_completed, 0) as is_completed,
+                    IF(sqa.is_completed = 1, 'Completed', 'Not Started') as completion_status
+                FROM section_quizzes sq
+                LEFT JOIN (
+                    SELECT quiz_id, MAX(is_completed) as is_completed 
+                    FROM student_quiz_attempts 
+                    WHERE user_id = ? 
+                    GROUP BY quiz_id
+                ) sqa ON sq.quiz_id = sqa.quiz_id
+                WHERE sq.section_id = ?";
+
+                                $quiz_stmt = $conn->prepare($quiz_sql);
+                                $quiz_stmt->bind_param("ii", $user_id, $current_section_id);
+                                $quiz_stmt->execute();
+                                $quiz_result = $quiz_stmt->get_result();
+
+                                while ($quiz = $quiz_result->fetch_assoc()) {
+                                    $merged_items[] = $quiz;
+                                }
+                            }
+
+                            // Sort by position if available, or just preserve the original order
+                            // Here you would add logic to sort by position if needed
+
+                            foreach ($merged_items as $item):
+                                $is_quiz = ($item['content_type'] === 'quiz');
+                            ?>
                                 <li class="list-group-item d-flex align-items-center py-3
-            <?php echo $topic['completion_status'] === 'Completed' ? ' bg-success-subtle' : ''; ?>">
+                <?php echo $item['completion_status'] === 'Completed' ? ' bg-success-subtle' : ''; ?>">
 
                                     <!-- Icon -->
                                     <div class="d-flex align-items-center me-3">
                                         <i class="bi <?php
-                                                        if ($topic['completion_status'] === 'Completed') {
+                                                        if ($item['completion_status'] === 'Completed') {
                                                             echo 'bi-check-circle-fill text-success';
                                                         } else {
-                                                            switch ($topic['content_type']) {
+                                                            switch ($item['content_type']) {
                                                                 case 'video':
                                                                     echo 'bi-play-circle text-primary';
                                                                     break;
@@ -657,6 +697,9 @@ foreach ($sections as $sec) {
                                                                 case 'link':
                                                                     echo 'bi-link-45deg text-secondary';
                                                                     break;
+                                                                case 'document':
+                                                                    echo 'bi-file-earmark-text text-info';
+                                                                    break;
                                                                 default:
                                                                     echo 'bi-circle text-muted';
                                                             }
@@ -667,26 +710,30 @@ foreach ($sections as $sec) {
                                     <!-- Title and Info -->
                                     <div class="flex-grow-1">
                                         <?php
-                                        $title = htmlspecialchars($topic['topic_title'] ?? $topic['content_title']);
-                                        $content_type = $topic['content_type'] ?? 'Topic';
-                                        $time_limit = $topic['time_limit'] ?? 10;
+                                        $title = htmlspecialchars($item['topic_title'] ?? $item['content_title']);
+                                        $content_type = $item['content_type'] ?? 'Topic';
+                                        $time_limit = $item['time_limit'] ?? 10;
 
-                                        $link_available = ($topic['is_previewable'] || $topic['completion_status'] !== 'Completed');
-                                        $topic_url = ($topic['content_type'] === 'link' && !empty($topic['external_url']))
-                                            ? htmlspecialchars($topic['external_url'])
-                                            : "topic-content.php?course_id={$course_id}&topic={$topic['topic_id']}";
+                                        // For quizzes, we use a different URL
+                                        if ($is_quiz) {
+                                            $item_url = "take_quiz.php?course_id={$course_id}&quiz_id={$item['quiz_id']}";
+                                        } else {
+                                            $link_available = (isset($item['is_previewable']) && $item['is_previewable'] || $item['completion_status'] !== 'Completed');
+                                            $item_url = ($item['content_type'] === 'link' && !empty($item['external_url']))
+                                                ? htmlspecialchars($item['external_url'])
+                                                : "topic-content.php?course_id={$course_id}&topic={$item['topic_id']}";
+                                        }
                                         ?>
 
                                         <h6 class="mb-0">
-                                            <?php if ($link_available): ?>
-                                                <a href="<?php echo $topic_url; ?>"
-                                                    target="<?php echo $topic['content_type'] === 'link' ? '_blank' : '_self'; ?>"
-                                                    class="text-decoration-none text-dark">
-                                                    <?php echo $title; ?>
-                                                </a>
-                                            <?php else: ?>
+                                            <a href="<?php echo $item_url; ?>"
+                                                target="<?php echo (!$is_quiz && $item['content_type'] === 'link') ? '_blank' : '_self'; ?>"
+                                                class="text-decoration-none text-dark">
                                                 <?php echo $title; ?>
-                                            <?php endif; ?>
+                                                <?php if ($is_quiz && isset($item['pass_mark'])): ?>
+                                                    <span class="badge bg-light text-dark ms-1">Pass: <?php echo $item['pass_mark']; ?>%</span>
+                                                <?php endif; ?>
+                                            </a>
                                         </h6>
 
                                         <p class="mb-0 small text-muted">
@@ -695,24 +742,47 @@ foreach ($sections as $sec) {
                                     </div>
 
                                     <div class="ms-2">
-                                        <?php if ($topic['completion_status'] === 'Completed'): ?>
-                                            <!-- For completed topics -->
-                                            <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $topic['topic_id']; ?>"
-                                                class="btn btn-outline-success btn-sm">
-                                                <i class="bi bi-check-circle me-1"></i> Review
-                                            </a>
-                                        <?php elseif ($topic['topic_id'] == $current_topic_id): ?>
-                                            <!-- For the current topic that's not completed -->
-                                            <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $topic['topic_id']; ?>"
-                                                class="btn btn-primary btn-sm">
-                                                <i class="bi bi-play-fill me-1"></i> Resume
-                                            </a>
+                                        <?php if ($item['completion_status'] === 'Completed'): ?>
+                                            <!-- For completed items -->
+                                            <?php if ($is_quiz): ?>
+                                                <a href="quiz_results.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
+                                                    class="btn btn-outline-success btn-sm">
+                                                    <i class="bi bi-clipboard-check me-1"></i> Results
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                    class="btn btn-outline-success btn-sm">
+                                                    <i class="bi bi-check-circle me-1"></i> Review
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php elseif (($is_quiz && isset($item['quiz_id']) && isset($current_quiz_id) && $item['quiz_id'] == $current_quiz_id) ||
+                                            (!$is_quiz && isset($item['topic_id']) && isset($current_topic_id) && $item['topic_id'] == $current_topic_id)
+                                        ): ?>
+                                            <!-- For the current item that's not completed -->
+                                            <?php if ($is_quiz): ?>
+                                                <a href="take_quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
+                                                    class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-play-fill me-1"></i> Resume
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                    class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-play-fill me-1"></i> Resume
+                                                </a>
+                                            <?php endif; ?>
                                         <?php else: ?>
-                                            <!-- For other uncompleted topics -->
-                                            <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $topic['topic_id']; ?>"
-                                                class="btn btn-outline-primary btn-sm">
-                                                <i class="bi bi-arrow-right me-1"></i> Start
-                                            </a>
+                                            <!-- For other uncompleted items -->
+                                            <?php if ($is_quiz): ?>
+                                                <a href="take_quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
+                                                    class="btn btn-outline-primary btn-sm">
+                                                    <i class="bi bi-pencil-square me-1"></i> Take Quiz
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                    class="btn btn-outline-primary btn-sm">
+                                                    <i class="bi bi-arrow-right me-1"></i> Start
+                                                </a>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
 
