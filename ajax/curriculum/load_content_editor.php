@@ -350,35 +350,170 @@ $stmt->close();
 <!-- Initialize TinyMCE for rich text editing -->
 <script src="https://cdn.tiny.cloud/1/4fnlr08nx5aczp8z0vkgtm2sblkj0y9qywi9iox6hs7ghxgv/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    $(document).ready(function() {
-        // Initialize TinyMCE for rich text editor
-        tinymce.init({
-            selector: '.rich-editor',
-            height: 400,
-            menubar: true,
-            plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-            ],
-            toolbar: 'undo redo | blocks | ' +
-                'bold italic backcolor | alignleft aligncenter ' +
-                'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | help',
-            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 16px; line-height: 1.6; }'
-        });
-        
-        // Toggle content editor containers based on selected type
-        $('input[name="contentType"]').change(function() {
-            const contentType = $(this).val();
+
+$(document).ready(function() {
+    // Single TinyMCE initialization
+    function initializeTinyMCE() {
+        try {
+            tinymce.init({
+                selector: '.rich-editor',
+                height: 400,
+                menubar: true,
+                plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                ],
+                toolbar: 'undo redo | blocks | ' +
+                    'bold italic backcolor | alignleft aligncenter ' +
+                    'alignright alignjustify | bullist numlist outdent indent | ' +
+                    'removeformat | help',
+                content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 16px; line-height: 1.6; }',
+                setup: function(editor) {
+                    editor.on('init', function() {
+                        console.log('TinyMCE editor initialized:', editor.id);
+                    });
+                },
+                init_instance_callback: function(editor) {
+                    console.log('TinyMCE instance loaded:', editor.id);
+                }
+            });
+        } catch (error) {
+            console.error('Error initializing TinyMCE:', error);
             
-            // Hide all content editor containers
-            $('.content-editor-container').hide();
-            
-            // Show the selected container
-            $(`#${contentType}EditorContainer`).show();
-        });
+            // Fallback to standard textarea if TinyMCE fails
+            $('.rich-editor').each(function() {
+                $(this).prop('rows', 10);
+            });
+        }
+    }
+
+    // Initialize TinyMCE
+    initializeTinyMCE();
+
+    // Toggle content editor containers based on selected type
+    $('input[name="contentType"]').change(function() {
+        const contentType = $(this).val();
         
+        // Hide all content editor containers
+        $('.content-editor-container').hide();
+        
+        // Show the selected container
+        $(`#${contentType}EditorContainer`).show();
+    });
+
+   // Enhanced save text content function with self-healing TinyMCE
+$('.save-text-btn').click(function() {
+    const textTitle = $('#textTitle').val().trim();
+    
+    // Robust TinyMCE content retrieval with self-healing
+    let textContent = '';
+    try {
+        // Check if TinyMCE is initialized and working
+        let editor = tinymce.get('textContent');
+        
+        if (!editor) {
+            console.warn('TinyMCE editor not found, attempting to reinitialize');
+            
+            // Force reinitialization
+            tinymce.remove();
+            
+            // Reinitialize TinyMCE
+            tinymce.init({
+                selector: '#textContent',
+                height: 400,
+                menubar: true,
+                plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                ],
+                toolbar: 'undo redo | blocks | ' +
+                    'bold italic backcolor | alignleft aligncenter ' +
+                    'alignright alignjustify | bullist numlist outdent indent | ' +
+                    'removeformat | help'
+            });
+            
+            // Retry getting the editor
+            editor = tinymce.get('textContent');
+        }
+        
+        // Get content safely
+        if (editor) {
+            textContent = editor.getContent();
+        } else {
+            // Absolute fallback
+            textContent = $('#textContent').val();
+            console.error('Could not reinitialize TinyMCE');
+            showAlert('warning', 'There was an issue with the text editor. Please try again or refresh the page.');
+            return;
+        }
+    } catch (error) {
+        console.error('Critical error with TinyMCE:', error);
+        
+        // Fallback to textarea value
+        textContent = $('#textContent').val();
+        
+        // Show warning to user
+        showAlert('warning', 'There was an issue with the text editor. Please try again or refresh the page.');
+        return;
+    }
+    
+    const topicId = $('.content-editor').data('topic-id');
+    const contentId = <?php echo $content_id; ?>;
+    
+    // Validate inputs
+    if (!textTitle) {
+        showAlert('danger', 'Please enter a content title');
+        return;
+    }
+    
+    if (!textContent) {
+        showAlert('danger', 'Please enter content text');
+        return;
+    }
+    
+    // Show loading overlay
+    createOverlay('Saving text content...');
+    
+    // Send AJAX request
+    $.ajax({
+        url: '../ajax/content/save_text.php',
+        type: 'POST',
+        data: {
+            topic_id: topicId,
+            content_id: contentId,
+            title: textTitle,
+            content_text: textContent
+        },
+        success: function(response) {
+            try {
+                const result = JSON.parse(response);
+                
+                if (result.success) {
+                    showAlert('success', 'Text content saved successfully');
+                    
+                    // Update content ID for future saves
+                    if (result.content_id) {
+                        $('.content-editor').data('content-id', result.content_id);
+                    }
+                } else {
+                    showAlert('danger', 'Error: ' + result.message);
+                }
+            } catch (e) {
+                console.error('Error parsing response', e);
+                showAlert('danger', 'Error processing server response');
+            }
+            
+            // Hide loading overlay
+            removeOverlay();
+        },
+        error: function() {
+            showAlert('danger', 'Network error while saving text content');
+            removeOverlay();
+        }
+    });
+});  
         // Save video content
         $('.save-video-btn').click(function() {
             const videoTitle = $('#videoTitle').val().trim();
@@ -441,65 +576,6 @@ $stmt->close();
             });
         });
         
-        // Save text content
-        $('.save-text-btn').click(function() {
-            const textTitle = $('#textTitle').val().trim();
-            const textContent = tinymce.get('textContent').getContent();
-            const topicId = $('.content-editor').data('topic-id');
-            const contentId = <?php echo $content_id; ?>;
-            
-            // Validate inputs
-            if (!textTitle) {
-                showAlert('danger', 'Please enter a content title');
-                return;
-            }
-            
-            if (!textContent) {
-                showAlert('danger', 'Please enter content text');
-                return;
-            }
-            
-            // Show loading overlay
-            createOverlay('Saving text content...');
-            
-            // Send AJAX request
-            $.ajax({
-                url: '../ajax/content/save_text.php',
-                type: 'POST',
-                data: {
-                    topic_id: topicId,
-                    content_id: contentId,
-                    title: textTitle,
-                    content_text: textContent
-                },
-                success: function(response) {
-                    try {
-                        const result = JSON.parse(response);
-                        
-                        if (result.success) {
-                            showAlert('success', 'Text content saved successfully');
-                            
-                            // Update content ID for future saves
-                            if (result.content_id) {
-                                $('.content-editor').data('content-id', result.content_id);
-                            }
-                        } else {
-                            showAlert('danger', 'Error: ' + result.message);
-                        }
-                    } catch (e) {
-                        console.error('Error parsing response', e);
-                        showAlert('danger', 'Error processing server response');
-                    }
-                    
-                    // Hide loading overlay
-                    removeOverlay();
-                },
-                error: function() {
-                    showAlert('danger', 'Network error while saving text content');
-                    removeOverlay();
-                }
-            });
-        });
         
         // Save document content
         $('.save-document-btn').click(function() {
@@ -563,7 +639,7 @@ $stmt->close();
                                                 <p class="mb-0">
                                                     <i class="mdi mdi-file-document"></i> 
                                                     ${result.file_name}
-                                                    <a href="../../uploads/documents/${result.file_path}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                                    <a href="../uploads/documents/${result.file_path}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
                                                         <i class="mdi mdi-eye"></i> View
                                                     </a>
                                                 </p>

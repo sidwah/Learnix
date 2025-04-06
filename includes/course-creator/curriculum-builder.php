@@ -755,43 +755,62 @@ $stmt->close();
         });
 
         // Edit Content Button
-        $(document).on('click', '.content-topic-btn', function() {
-            const topicId = $(this).data('topic-id');
+$(document).on('click', '.content-topic-btn', function() {
+    const topicId = $(this).data('topic-id');
 
-            // Show modal and load content editor
-            $('#contentModal').modal('show');
+    // Ensure the modal exists before trying to show it
+    const contentModal = $('#contentModal');
+    if (contentModal.length) {
+        contentModal.modal('show');
+    } else {
+        console.error('Content modal not found');
+        return;
+    }
 
-            // Load content editor
-            $('#contentEditorContainer').html(`
-                <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Loading content editor...</p>
+    // Get the content editor container
+    const contentEditorContainer = $('#contentEditorContainer');
+    if (!contentEditorContainer.length) {
+        console.error('Content editor container not found');
+        return;
+    }
+
+    // Load content editor with loading state
+    contentEditorContainer.html(`
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading content editor...</p>
+        </div>
+    `);
+
+    // AJAX request to load content editor
+    $.ajax({
+        url: '../ajax/curriculum/load_content_editor.php',
+        type: 'GET',
+        data: {
+            topic_id: topicId
+        },
+        success: function(response) {
+            // Safely update the container with the response
+            contentEditorContainer.html(response);
+        },
+        error: function(xhr, status, error) {
+            // More detailed error handling
+            contentEditorContainer.html(`
+                <div class="alert alert-danger mb-0">
+                    <h5 class="alert-heading">Error Loading Content Editor</h5>
+                    <p class="mb-0">There was a problem loading the content editor. 
+                    ${xhr.status ? 'Error code: ' + xhr.status : ''} 
+                    ${error ? 'Details: ' + error : ''}</p>
                 </div>
             `);
-
-            // AJAX request to load content editor
-            $.ajax({
-                url: '../ajax/curriculum/load_content_editor.php',
-                type: 'GET',
-                data: {
-                    topic_id: topicId
-                },
-                success: function(response) {
-                    $('#contentEditorContainer').html(response);
-                },
-                error: function() {
-                    $('#contentEditorContainer').html(`
-                        <div class="alert alert-danger mb-0">
-                            <h5 class="alert-heading">Error Loading Content Editor</h5>
-                            <p class="mb-0">There was a problem loading the content editor. Please try again later.</p>
-                        </div>
-                    `);
-                }
-            });
-        });
-
+            
+            // Log the full error for debugging
+            console.error('Content editor load error:', status, error);
+        }
+    });
+});
         // Add Quiz Button
         // Add Quiz Button
         $(document).on('click', '.add-quiz-btn', function() {

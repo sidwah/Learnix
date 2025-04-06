@@ -1,4 +1,6 @@
 <?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/toast.php'; ?>
+
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -30,29 +32,87 @@
         </div>
         <!-- End Page Header -->
 
+        <!-- Nav -->
+        <div class="text-center">
+            <ul class="nav nav-segment nav-pills mb-2" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="category-tab" href="#category" data-bs-toggle="pill" data-bs-target="#category" role="tab" aria-controls="category" aria-selected="true">Category</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="sub-category-tab" href="#sub-category" data-bs-toggle="pill" data-bs-target="#sub-category" role="tab" aria-controls="sub-category" aria-selected="false">Sub Category</a>
+                </li>
+            </ul>
+        </div>
+        <!-- End Nav -->
 
-        <!-- Categories Table -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5 class="mb-0">Categories List</h5>
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="category" role="tabpanel" aria-labelledby="category-tab">
+                <!-- Categories Table -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Categories List</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Category Name</th>
+                                    <th>Slug</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoriesTableBody">
+                                <!-- Data will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- End Categories Table -->
             </div>
-            <div class="card-body">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>Category Name</th>
-                            <th>Slug</th>
-                            <th>Created At</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="categoriesTableBody">
-                        <!-- Data will be loaded dynamically -->
-                    </tbody>
-                </table>
+
+            <div class="tab-pane fade" id="sub-category" role="tabpanel" aria-labelledby="sub-category-tab">
+                <!-- Subcategories Table -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <h5 class="mb-0 me-3">Subcategories List</h5>
+                            <div class="dropdown ms-3">
+                            <div class="d-flex align-items-center me-3">
+    <select id="categoryFilter" class="form-select form-select-sm" style="width: auto;">
+        <option value="all">All Categories</option>
+        <!-- Categories will be populated dynamically -->
+    </select>
+</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSubcategoryModal">
+                            <i class="bi bi-plus-lg"></i> Add Subcategory
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <!-- <th>Parent Category</th> -->
+                                    <th>Subcategory Name</th>
+                                    <th>Slug</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subcategoriesTableBody">
+                                <!-- Data will be loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- End Subcategories Table -->
             </div>
         </div>
-        <!-- End Categories Table -->
+        <!-- End Tab Content -->
+
 
         <!-- Add Category Modal -->
         <!-- Spinner HTML -->
@@ -92,39 +152,24 @@
         </div>
         <!-- End Add Category Modal -->
 
+
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script>
-            // Show alert notification function
-            function showAlert(type, message) {
-                const alertDiv = document.createElement('div');
-                alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-                alertDiv.setAttribute('role', 'alert');
-                alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-                // Position the alert
-                alertDiv.style.position = 'fixed';
-                alertDiv.style.top = '20px';
-                alertDiv.style.left = '50%';
-                alertDiv.style.transform = 'translateX(-50%)';
-                alertDiv.style.zIndex = '9999';
-                alertDiv.style.minWidth = '300px';
-                alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                document.body.appendChild(alertDiv);
-                // Auto-dismiss after 5 seconds
-                setTimeout(() => {
-                    if (alertDiv.parentNode) {
-                        alertDiv.classList.remove('show');
-                        setTimeout(() => {
-                            if (alertDiv.parentNode) {
-                                alertDiv.parentNode.removeChild(alertDiv);
-                            }
-                        }, 300);
-                    }
-                }, 5000);
-            }
+            // Function to update and show the toast
+            function updateAndShowToast(type, message) {
+                // Get the toast element
+                const toastElement = document.getElementById('liveToast');
 
+                // Ensure toast appears above overlay
+                toastElement.style.zIndex = '10000';
+
+                // Update the toast body message
+                toastElement.querySelector('.toast-body').textContent = message;
+
+                // Show the toast with a standard duration
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show();
+            }
             // Create and apply page overlay for loading effect
             function createOverlay() {
                 const overlay = document.createElement('div');
@@ -191,9 +236,9 @@
                         success: function(response) {
                             if (response.error) {
                                 removeOverlay();
-                                showAlert('danger', response.error);
+                                updateAndShowToast('danger', response.error);
                             } else {
-                                showAlert('success', response.success);
+                                updateAndShowToast('success', response.success);
                                 $('#addCategoryModal').modal('hide'); // Hide modal on success
 
                                 // Keep overlay during page reload
@@ -204,7 +249,7 @@
                         },
                         error: function(xhr, status, error) {
                             removeOverlay();
-                            showAlert('danger', 'Error adding category: ' + error);
+                            updateAndShowToast('danger', 'Error adding category: ' + error);
                         }
                     });
                 });
@@ -244,12 +289,111 @@
         </div>
         <!-- End Edit Category Modal -->
 
+        <!-- Add Subcategory Modal -->
+        <div class="modal fade" id="addSubcategoryModal" data-bs-backdrop="static" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Subcategory</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addSubcategoryForm">
+                            <div class="mb-3">
+                                <label class="form-label">Parent Category</label>
+                                <select class="form-select" id="add_subcategory_category" name="category_id" required>
+                                    <option value="">Select Parent Category</option>
+                                    <!-- Categories will be loaded dynamically -->
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Subcategory Name</label>
+                                <input type="text" class="form-control" id="add_subcategory_name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Slug</label>
+                                <input type="text" class="form-control" id="add_subcategory_slug" name="slug" readonly>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-white" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Add Subcategory</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Add Subcategory Modal -->
+
+        <!-- Edit Subcategory Modal -->
+        <div class="modal fade" id="editSubcategoryModal" data-bs-backdrop="static" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Subcategory</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editSubcategoryForm">
+                            <input type="hidden" id="edit_subcategory_id">
+                            <div class="mb-3">
+                                <label class="form-label">Parent Category</label>
+                                <select class="form-select" id="edit_subcategory_category" required>
+                                    <option value="">Select Parent Category</option>
+                                    <!-- Categories will be loaded dynamically -->
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Subcategory Name</label>
+                                <input type="text" class="form-control" id="edit_subcategory_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Slug</label>
+                                <input type="text" class="form-control" id="edit_subcategory_slug">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-white" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Update Subcategory</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Edit Subcategory Modal -->
+
         <!-- JavaScript (AJAX) -->
         <script>
             document.addEventListener("DOMContentLoaded", function() {
                 loadCategories();
-                // loadAddCategoryForm();
 
+                // Add this: Check if hash is #sub-category and load subcategories
+                if (window.location.hash === "#sub-category") {
+                    // Activate the tab
+                    document.getElementById('sub-category-tab').click();
+                }
+
+                // Make formatDate and generateSlug functions globally available
+                window.formatDate = function(dateStr) {
+                    let date = new Date(dateStr);
+                    return date.toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+                };
+
+                window.generateSlug = function(text) {
+                    return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+                };
+
+                // Load subcategories when tab is clicked
+                document.getElementById('sub-category-tab').addEventListener('click', function() {
+                    loadSubcategories();
+                    loadCategoriesForDropdown();
+                });
+
+                // Function to load categories
                 function loadCategories() {
                     fetch("../backend/courses/fetch_categories.php")
                         .then(response => response.json())
@@ -258,21 +402,21 @@
                             tableBody.innerHTML = "";
                             data.forEach(category => {
                                 tableBody.innerHTML += `
-                    <tr>
-                        <td>${category.name}</td>
-                        <td>${category.slug}</td>
-                        <td>${formatDate(category.created_at)}</td>
-                        <td>
-                            <a href="#" class="px-2 edit-btn" data-bs-toggle="modal" data-bs-target="#editCategoryModal"
-                                data-id="${category.category_id}" data-name="${category.name}" data-slug="${category.slug}">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <a href="#" class="text-danger px-2 delete-btn" data-id="${category.category_id}">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    `;
+                <tr>
+                    <td>${category.name}</td>
+                    <td>${category.slug}</td>
+                    <td>${formatDate(category.created_at)}</td>
+                    <td>
+                        <a href="#" class="px-2 edit-btn" data-bs-toggle="modal" data-bs-target="#editCategoryModal"
+                            data-id="${category.category_id}" data-name="${category.name}" data-slug="${category.slug}">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="#" class="text-danger px-2 delete-btn" data-id="${category.category_id}">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                `;
                             });
                             attachEventListeners();
                         })
@@ -280,19 +424,127 @@
                             console.error('Failed to fetch categories: ', error);
                         });
                 }
+                // Store all subcategories for filtering
+                let allSubcategories = [];
 
-                function formatDate(dateStr) {
-                    let date = new Date(dateStr);
-                    return date.toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric'
+                // Function to load subcategories
+                function loadSubcategories() {
+                    fetch("../backend/courses/fetch_subcategories.php")
+                        .then(response => response.json())
+                        .then(data => {
+                            // Store all subcategories for filtering
+                            allSubcategories = data;
+
+                            // Populate the table with all subcategories
+                            populateSubcategoriesTable(allSubcategories);
+
+                            // Attach event listeners
+                            attachSubcategoryEventListeners();
+                        })
+                        .catch(error => {
+                            console.error('Failed to fetch subcategories: ', error);
+                        });
+                }
+
+                // Function to populate subcategories table
+                function populateSubcategoriesTable(subcategories) {
+                    let tableBody = document.getElementById("subcategoriesTableBody");
+                    tableBody.innerHTML = "";
+
+                    if (subcategories.length === 0) {
+                        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center">No subcategories found</td>
+            </tr>
+        `;
+                        return;
+                    }
+
+                    subcategories.forEach(subcategory => {
+                        tableBody.innerHTML += `
+        <tr>
+          <!--  <td>${subcategory.category_name}</td> -->
+            <td>${subcategory.name}</td>
+            <td>${subcategory.slug}</td>
+            <td>${formatDate(subcategory.created_at)}</td>
+            <td>
+                <a href="#" class="px-2 edit-subcategory-btn" data-bs-toggle="modal" data-bs-target="#editSubcategoryModal"
+                    data-id="${subcategory.subcategory_id}" data-name="${subcategory.name}" 
+                    data-slug="${subcategory.slug}" data-category="${subcategory.category_id}">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <a href="#" class="text-danger px-2 delete-subcategory-btn" data-id="${subcategory.subcategory_id}">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </td>
+        </tr>
+        `;
                     });
                 }
 
+                // Function to load categories for dropdowns and filters
+              // Function to load categories for dropdowns and filters
+function loadCategoriesForDropdown() {
+    fetch("../backend/courses/fetch_categories.php")
+        .then(response => response.json())
+        .then(data => {
+            // Populate add subcategory dropdown
+            let addDropdown = document.getElementById("add_subcategory_category");
+            if (addDropdown) {
+                addDropdown.innerHTML = '<option value="">Select Parent Category</option>';
+                data.forEach(category => {
+                    addDropdown.innerHTML += `<option value="${category.category_id}">${category.name}</option>`;
+                });
+            }
+            
+            // Populate edit subcategory dropdown
+            let editDropdown = document.getElementById("edit_subcategory_category");
+            if (editDropdown) {
+                editDropdown.innerHTML = '<option value="">Select Parent Category</option>';
+                data.forEach(category => {
+                    editDropdown.innerHTML += `<option value="${category.category_id}">${category.name}</option>`;
+                });
+            }
+            
+            // Populate filter dropdown
+            let filterDropdown = document.getElementById("categoryFilter");
+            if (filterDropdown) {
+                // Keep the "All Categories" option and add the rest
+                let html = '<option value="all">All Categories</option>';
+                data.forEach(category => {
+                    html += `<option value="${category.category_id}">${category.name}</option>`;
+                });
+                filterDropdown.innerHTML = html;
+                
+                // Add change event listener to filter
+                filterDropdown.addEventListener('change', function() {
+                    const categoryId = this.value;
+                    filterSubcategories(categoryId);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Failed to fetch categories for dropdown: ', error);
+        });
+}
 
+                // Function to filter subcategories by category
+                function filterSubcategories(categoryId) {
+                    if (categoryId === 'all') {
+                        // Show all subcategories
+                        populateSubcategoriesTable(allSubcategories);
+                    } else {
+                        // Filter subcategories by category
+                        const filteredSubcategories = allSubcategories.filter(subcategory =>
+                            subcategory.category_id === categoryId
+                        );
+                        populateSubcategoriesTable(filteredSubcategories);
+                    }
 
-
+                    // Reattach event listeners after updating the table
+                    attachSubcategoryEventListeners();
+                }
+                // Event listeners for category actions
                 function attachEventListeners() {
                     document.querySelectorAll(".edit-btn").forEach(button => {
                         button.addEventListener("click", function() {
@@ -325,14 +577,7 @@
                         let name = document.getElementById("edit_category_name").value.trim();
                         let slug = document.getElementById("edit_category_slug").value;
 
-                        let updateBtn = document.querySelector("#editCategoryForm button[type='submit']");
-                        // updateBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Updating...`;
-                        // updateBtn.disabled = true;
-                        $('#loadingSpinner').css('display', 'block'); // Show spinner before the AJAX request
-                        setTimeout(function() {
-                            window.location.reload(true); // Refresh the page 2 seconds after the modal is hidden
-                        }, 2000);
-
+                        createOverlay();
 
                         fetch("../backend/courses/category_actions.php", {
                                 method: "POST",
@@ -345,24 +590,20 @@
                             }).then(response => response.json())
                             .then(data => {
                                 if (data.error) {
-                                    alert(data.error); // Show error message if there is a problem
-                                    $('#loadingSpinner').css('display', 'none'); // Hide spinner on error
-
+                                    removeOverlay();
+                                    updateAndShowToast('danger', data.error);
                                 } else {
+                                    updateAndShowToast('success', 'Category updated successfully');
                                     new bootstrap.Modal(document.getElementById("editCategoryModal")).hide();
                                     setTimeout(function() {
-                                        window.location.reload(true); // Refresh the page 2 seconds after the modal is hidden
+                                        window.location.reload(true);
                                     }, 2000);
-                                    location.reload(); // Refresh the page to show updated data
                                 }
-                                updateBtn.innerHTML = "Update Category";
-                                updateBtn.disabled = false;
                             })
                             .catch(error => {
+                                removeOverlay();
                                 console.error('Error updating category: ', error);
-                                alert('Failed to update category. Please try again.');
-                                updateBtn.innerHTML = "Update Category";
-                                updateBtn.disabled = false;
+                                updateAndShowToast('danger', 'Failed to update category. Please try again.');
                             });
                     });
 
@@ -370,52 +611,207 @@
                         button.addEventListener("click", function() {
                             let categoryId = this.getAttribute("data-id");
                             if (confirm("Are you sure you want to delete this category?")) {
-                                let deleteBtn = this;
-                                // deleteBtn.innerHTML = `<span class="spinner-border spinner-border-sm text-danger"></span>`;
-                                // deleteBtn.disabled = true;
-                                $('#loadingSpinner').css('display', 'block'); // Show spinner before the AJAX request
-                                setTimeout(function() {
-                                    window.location.reload(true); // Refresh the page 2 seconds after the modal is hidden
-                                }, 2000);
+                                createOverlay();
 
                                 fetch("../backend/courses/category_actions.php", {
-                                    method: "POST",
-                                    body: new URLSearchParams({
-                                        action: "delete",
-                                        id: categoryId
-                                    }),
-                                }).then(() => {
-                                    loadCategories();
-                                }).catch(error => {
-                                    $('#loadingSpinner').css('display', 'none'); // Hide spinner on error
-
-                                    console.error('Error deleting category: ', error);
-                                    alert('Failed to delete category. Please try again.');
-                                    deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
-                                    deleteBtn.disabled = false;
-                                });
+                                        method: "POST",
+                                        body: new URLSearchParams({
+                                            action: "delete",
+                                            id: categoryId
+                                        }),
+                                    }).then(response => response.json())
+                                    .then(data => {
+                                        if (data.error) {
+                                            removeOverlay();
+                                            updateAndShowToast('danger', data.error);
+                                        } else {
+                                            updateAndShowToast('success', 'Category deleted successfully');
+                                            setTimeout(function() {
+                                                window.location.reload(true);
+                                            }, 2000);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        removeOverlay();
+                                        console.error('Error deleting category: ', error);
+                                        updateAndShowToast('danger', 'Failed to delete category. Please try again.');
+                                    });
                             }
                         });
                     });
                 }
 
-                function generateSlug(text) {
-                    return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+                // Event listeners for subcategory actions
+                function attachSubcategoryEventListeners() {
+                    // Edit subcategory button click
+                    document.querySelectorAll(".edit-subcategory-btn").forEach(button => {
+                        button.addEventListener("click", function() {
+                            let id = this.getAttribute("data-id");
+                            let name = this.getAttribute("data-name");
+                            let slug = this.getAttribute("data-slug");
+                            let categoryId = this.getAttribute("data-category");
+
+                            let editNameInput = document.getElementById("edit_subcategory_name");
+                            let editSlugInput = document.getElementById("edit_subcategory_slug");
+                            let editCategorySelect = document.getElementById("edit_subcategory_category");
+                            let updateBtn = document.querySelector("#editSubcategoryForm button[type='submit']");
+
+                            // Set initial values
+                            document.getElementById("edit_subcategory_id").value = id;
+                            editNameInput.value = name;
+                            editSlugInput.value = slug;
+                            editCategorySelect.value = categoryId;
+                            editSlugInput.disabled = true; // Disable slug input
+                            updateBtn.disabled = true;
+
+                            // Enable update button if subcategory name is changed
+                            editNameInput.addEventListener("input", () => {
+                                editSlugInput.value = generateSlug(editNameInput.value);
+                                updateBtn.disabled = editNameInput.value.trim() === name.trim() &&
+                                    editCategorySelect.value === categoryId;
+                            });
+
+                            // Enable update button if category is changed
+                            editCategorySelect.addEventListener("change", () => {
+                                updateBtn.disabled = editNameInput.value.trim() === name.trim() &&
+                                    editCategorySelect.value === categoryId;
+                            });
+                        });
+                    });
+
+                    // Edit subcategory form submission
+                    document.getElementById("editSubcategoryForm").addEventListener("submit", function(e) {
+                        e.preventDefault();
+                        let id = document.getElementById("edit_subcategory_id").value;
+                        let name = document.getElementById("edit_subcategory_name").value.trim();
+                        let slug = document.getElementById("edit_subcategory_slug").value;
+                        let categoryId = document.getElementById("edit_subcategory_category").value;
+
+                        createOverlay();
+
+                        fetch("../backend/courses/subcategory_actions.php", {
+                                method: "POST",
+                                body: new URLSearchParams({
+                                    action: "edit",
+                                    id,
+                                    name,
+                                    slug,
+                                    category_id: categoryId
+                                }),
+                            }).then(response => response.json())
+                            .then(data => {
+                                if (data.error) {
+                                    removeOverlay();
+                                    updateAndShowToast('danger', data.error);
+                                } else {
+                                    updateAndShowToast('success', 'Subcategory updated successfully');
+                                    new bootstrap.Modal(document.getElementById("editSubcategoryModal")).hide();
+                                    setTimeout(function() {
+                                        window.location.reload(true);
+                                    }, 2000);
+                                }
+                            })
+                            .catch(error => {
+                                removeOverlay();
+                                console.error('Error updating subcategory: ', error);
+                                updateAndShowToast('danger', 'Failed to update subcategory. Please try again.');
+                            });
+                    });
+
+                    // Delete subcategory button click
+                    document.querySelectorAll(".delete-subcategory-btn").forEach(button => {
+                        button.addEventListener("click", function() {
+                            let subcategoryId = this.getAttribute("data-id");
+                            if (confirm("Are you sure you want to delete this subcategory?")) {
+                                createOverlay();
+
+                                fetch("../backend/courses/subcategory_actions.php", {
+                                        method: "POST",
+                                        body: new URLSearchParams({
+                                            action: "delete",
+                                            id: subcategoryId
+                                        }),
+                                    }).then(response => response.json())
+                                    .then(data => {
+                                        if (data.error) {
+                                            removeOverlay();
+                                            updateAndShowToast('danger', data.error);
+                                        } else {
+                                            updateAndShowToast('success', 'Subcategory deleted successfully');
+                                            setTimeout(function() {
+                                                window.location.reload(true);
+                                            }, 2000);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        removeOverlay();
+                                        console.error('Error deleting subcategory: ', error);
+                                        updateAndShowToast('danger', 'Failed to delete subcategory. Please try again.');
+                                    });
+                            }
+                        });
+                    });
+                }
+
+                // Initialize subcategory form handlers
+                if (document.getElementById("add_subcategory_name")) {
+                    document.getElementById("add_subcategory_name").addEventListener("input", function() {
+                        if (document.getElementById("add_subcategory_slug")) {
+                            document.getElementById("add_subcategory_slug").value = generateSlug(this.value);
+                        }
+                    });
+                }
+
+                if (document.getElementById("addSubcategoryForm")) {
+                    document.getElementById("addSubcategoryForm").addEventListener("submit", function(e) {
+                        e.preventDefault();
+
+                        const subcategoryName = document.getElementById("add_subcategory_name").value;
+                        const subcategorySlug = document.getElementById("add_subcategory_slug").value;
+                        const categoryId = document.getElementById("add_subcategory_category").value;
+
+                        if (!subcategoryName || !categoryId) {
+                            updateAndShowToast('danger', 'Please fill in all required fields');
+                            return;
+                        }
+
+                        createOverlay();
+
+                        $.ajax({
+                            type: "POST",
+                            url: "../backend/courses/add_subcategory.php",
+                            data: {
+                                name: subcategoryName,
+                                slug: subcategorySlug,
+                                category_id: categoryId
+                            },
+                            dataType: 'json',
+                            success: function(response) {
+                                if (response.error) {
+                                    removeOverlay();
+                                    updateAndShowToast('danger', response.error);
+                                } else {
+                                    updateAndShowToast('success', response.success);
+                                    $('#addSubcategoryModal').modal('hide');
+                                    setTimeout(function() {
+                                        window.location.reload(true);
+                                    }, 2000);
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                removeOverlay();
+                                updateAndShowToast('danger', 'Error adding subcategory: ' + error);
+                            }
+                        });
+                    });
                 }
             });
         </script>
 
-
-
-
     </div>
     <!-- End Content -->
-
-
-
-
-
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
+
 
 <?php include '../includes/admin-footer.php'; ?>

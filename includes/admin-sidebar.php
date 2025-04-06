@@ -1,21 +1,21 @@
 <?php
 $user_id = $_SESSION["user_id"];
-  // Query to fetch first name logs from users table
-  $query = "SELECT first_name, last_name
+// Query to fetch first name logs from users table
+$query = "SELECT first_name, last_name
             FROM users
             WHERE $user_id";
 
-  // Execute the query
-  $result = mysqli_query($conn, $query);
+// Execute the query
+$result = mysqli_query($conn, $query);
 
-  // Check if the query was successful and fetch the data
-  if (!$result) {
+// Check if the query was successful and fetch the data
+if (!$result) {
 
-      die("Error executing query: " . mysqli_error($conn));
-  }
+  die("Error executing query: " . mysqli_error($conn));
+}
 
-  // Close the database connection
-  // mysqli_close($conn);
+// Close the database connection
+// mysqli_close($conn);
 ?>
 <!-- Navbar Collapse -->
 <div id="navbarVerticalNavMenu" class="collapse navbar-collapse">
@@ -34,28 +34,28 @@ $user_id = $_SESSION["user_id"];
         <a class="nav-link active" href="#">Admin</a>
       </li>
       <li class="nav-item">
-      <?php
-$user_id = $_SESSION["user_id"];
-// Query to fetch first name logs from users table
-$query = "SELECT first_name, last_name 
+        <?php
+        $user_id = $_SESSION["user_id"];
+        // Query to fetch first name logs from users table
+        $query = "SELECT first_name, last_name 
           FROM users 
           WHERE user_id = $user_id";  // Added "user_id =" before the variable
 
-// Execute the query
-$result = mysqli_query($conn, $query);
+        // Execute the query
+        $result = mysqli_query($conn, $query);
 
-// Check if the query was successful and fetch the data
-if (!$result) {
-    die("Error executing query: " . mysqli_error($conn));
-}
+        // Check if the query was successful and fetch the data
+        if (!$result) {
+          die("Error executing query: " . mysqli_error($conn));
+        }
 
-// Fetch the user data
-$user_data = mysqli_fetch_assoc($result);
+        // Fetch the user data
+        $user_data = mysqli_fetch_assoc($result);
 
-// Close the database connection
-// mysqli_close($conn);
-?>
-<a class="nav-link" href="#"><?php echo htmlspecialchars($user_data['first_name']); ?> </a>
+        // Close the database connection
+        // mysqli_close($conn);
+        ?>
+        <a class="nav-link" href="#"><?php echo htmlspecialchars($user_data['first_name']); ?> </a>
       </li>
     </ul>
     <!-- End Nav -->
@@ -83,11 +83,46 @@ $user_data = mysqli_fetch_assoc($result);
       <li class="nav-item">
         <a class="nav-link" href="instructors.php">Instructors</a>
       </li>
-      <!-- <li class="nav-item">
-        <a class="nav-link" href="admins.php">Admins</a>
-      </li> -->
       <li class="nav-item">
         <a class="nav-link" href="verify-instructor.php">Verify Instructor</a>
+      </li>
+
+      <li class="nav-item my-2 my-lg-5"></li>
+
+      <!-- Course Management -->
+      <li class="nav-item">
+        <span class="nav-subtitle">Course Management</span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="courses.php">All Courses</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="categories.php">Course Categories</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="enrollments.php">Manage Enrollments</a>
+      </li>
+
+      <li class="nav-item my-2 my-lg-5"></li>
+
+      <!-- Content & Learning Management -->
+      <li class="nav-item">
+        <span class="nav-subtitle">Content & Learning Management</span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="course-materials.php">Course Materials</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="lesson-plans.php">Lesson Plans</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="forums.php">Discussion Forums</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="quizzes.php">Quizzes & Exams</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="certificates.php">Certificates & Badges</a>
       </li>
 
       <li class="nav-item my-2 my-lg-5"></li>
@@ -111,25 +146,6 @@ $user_data = mysqli_fetch_assoc($result);
 
       <li class="nav-item my-2 my-lg-5"></li>
 
-      <!-- Course Management -->
-      <li class="nav-item">
-        <span class="nav-subtitle">Course Management</span>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="courses.php">All Courses</a>
-      </li>
-      <!-- <li class="nav-item">
-        <a class="nav-link" href="add-course.php">Add New Course</a>
-      </li> -->
-      <li class="nav-item">
-        <a class="nav-link" href="categories.php">Course Categories</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="enrollments.php">Manage Enrollments</a>
-      </li>
-
-      <li class="nav-item my-2 my-lg-5"></li>
-
       <!-- Payments & Earnings -->
       <li class="nav-item">
         <span class="nav-subtitle">Payments & Earnings</span>
@@ -139,28 +155,6 @@ $user_data = mysqli_fetch_assoc($result);
       </li>
       <li class="nav-item">
         <a class="nav-link" href="instructor-earnings.php">Instructor Earnings</a>
-      </li>
-
-      <li class="nav-item my-2 my-lg-5"></li>
-
-      <!-- Content & Learning Management -->
-      <li class="nav-item">
-        <span class="nav-subtitle">Content & Learning Mgt</span>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="course-materials.php">Course Materials</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="lesson-plans.php">Lesson Plans</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="forums.php">Discussion Forums</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="quizzes.php">Quizzes & Exams</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="certificates.php">Certificates & Badges</a>
       </li>
 
       <li class="nav-item my-2 my-lg-5"></li>
@@ -222,45 +216,46 @@ $user_data = mysqli_fetch_assoc($result);
   </div>
 </div>
 <!-- End Navbar Collapse -->
- 
+
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-  const navLinks = document.querySelectorAll('#navbarSettings .nav-link');
-  const currentPath = window.location.pathname; // Get the current path
-  let activeLink = null;
+  document.addEventListener("DOMContentLoaded", function() {
+    const navLinks = document.querySelectorAll('#navbarSettings .nav-link');
+    const currentPath = window.location.pathname; // Get the current path
+    let activeLink = null;
 
-  // Check localStorage for the saved link
-  const savedLink = localStorage.getItem('activeNavLink');
+    // Check localStorage for the saved link
+    const savedLink = localStorage.getItem('activeNavLink');
 
-  if (savedLink && currentPath.includes(savedLink)) {
-    // Set the active class on the saved link if it matches the current page
-    activeLink = Array.from(navLinks).find(link => link.getAttribute('href') === savedLink);
-    if (activeLink) {
-      activeLink.classList.add('active');
-    }
-  } else {
-    // Automatically set the active class based on URL
-    navLinks.forEach(link => {
-      if (link.getAttribute('href') === currentPath.substring(currentPath.lastIndexOf('/') + 1)) {
-        activeLink = link;
-        link.classList.add('active');
-        localStorage.setItem('activeNavLink', link.getAttribute('href')); // Save the current active link
+    if (savedLink && currentPath.includes(savedLink)) {
+      // Set the active class on the saved link if it matches the current page
+      activeLink = Array.from(navLinks).find(link => link.getAttribute('href') === savedLink);
+      if (activeLink) {
+        activeLink.classList.add('active');
       }
-    });
-  }
+    } else {
+      // Automatically set the active class based on URL
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath.substring(currentPath.lastIndexOf('/') + 1)) {
+          activeLink = link;
+          link.classList.add('active');
+          localStorage.setItem('activeNavLink', link.getAttribute('href')); // Save the current active link
+        }
+      });
+    }
 
-  // Add click event to all nav links
-  navLinks.forEach(link => {
-    link.addEventListener('click', function() {
-      localStorage.setItem('activeNavLink', this.getAttribute('href')); // Save on click
+    // Add click event to all nav links
+    navLinks.forEach(link => {
+      link.addEventListener('click', function() {
+        localStorage.setItem('activeNavLink', this.getAttribute('href')); // Save on click
+      });
     });
+
+    // Scroll to the active link if it exists
+    if (activeLink) {
+      activeLink.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
   });
-
-  // Scroll to the active link if it exists
-  if (activeLink) {
-    activeLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-});
 </script>
-
-
