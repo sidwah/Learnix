@@ -1,4 +1,4 @@
-<?php include '../includes/student-header.php'; ?>
+<?php include '../includes/signin-header.php'; ?>
 
 
 <!-- ========== MAIN CONTENT ========== -->
@@ -385,7 +385,7 @@
 
                                             $statusClass = ($progress >= 100) ? 'bg-success' : ($progress > 70 ? 'bg-primary' : ($progress > 30 ? 'bg-info' : 'bg-warning'));
                                         ?>
-                                            <div class="col-md-6 col-lg-4 mb-3 course-card"
+                                            <div class="col-md-6 col-lg-4 mb-3 course-card w-50"
                                                 data-status="<?= htmlspecialchars($course['enrollment_status']) ?>"
                                                 data-favorite="0"
                                                 data-progress="<?= $progress ?>">
@@ -398,7 +398,7 @@
                                                             alt="<?= htmlspecialchars($course['title']) ?>">
                                                     </div>
 
-                                                    <div class="card-body">
+                                                    <div class="card-body" style=" margin-bottom: -2rem;">
                                                         <h5 class="card-title"><?= htmlspecialchars($course['title']) ?></h5>
                                                         <p class="card-text small text-truncate">
                                                             <?= htmlspecialchars($course['short_description']) ?>
@@ -420,7 +420,7 @@
                                                                 aria-valuemax="100"></div>
                                                         </div>
 
-                                                        <div class="d-grid gap-2">
+                                                        <div class="d-grid gap-2 ">
                                                             <?php if ($progress < 100) : ?>
                                                                 <a href="learn.php?course_id=<?= (int)$course['course_id'] ?>"
                                                                     class="btn btn-primary btn-sm">

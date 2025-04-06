@@ -1,4 +1,4 @@
-<?php include '../includes/student-header.php'; ?>
+<?php include '../includes/signin-header.php'; ?>
 <!-- ========== END HEADER ========== -->
 
 
@@ -151,15 +151,15 @@
                     </a>
                   </li>
                   <li class="nav-item">
-                      <a class="nav-link" href="FAQ.php">
-                        <i class="bi-card-list nav-icon"></i> FAQ's
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link" href="report.php">
-                        <i class="bi-exclamation-triangle nav-icon"></i> Report Issues
-                      </a>
-                    </li>
+                    <a class="nav-link" href="FAQ.php">
+                      <i class="bi-card-list nav-icon"></i> FAQ's
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="report.php">
+                      <i class="bi-exclamation-triangle nav-icon"></i> Report Issues
+                    </a>
+                  </li>
                   <li class="nav-item">
                     <a class="nav-link" href="../backend/signout.php">
                       <i class="bi-box-arrow-right nav-icon"></i> Sign out
@@ -188,78 +188,76 @@
 
             <!-- Body -->
             <div class="card-body">
+              <?php
+              // session_start();
+              $user_id = $_SESSION['user_id'];
+
+              // Enrolled Courses
+              $enrolled_sql = "SELECT COUNT(*) AS count FROM enrollments WHERE user_id = ?";
+              $enrolled_stmt = $conn->prepare($enrolled_sql);
+              $enrolled_stmt->bind_param("i", $user_id);
+              $enrolled_stmt->execute();
+              $enrolled_count = $enrolled_stmt->get_result()->fetch_assoc()['count'];
+
+
+              // Get basic counts from enrollments table
+              $stats_query = "SELECT 
+COUNT(CASE WHEN status = 'Active' AND completion_percentage < 100 THEN 1 END) as active_courses,
+COUNT(CASE WHEN completion_percentage >= 100 THEN 1 END) as completed_courses,
+COUNT(*) as total_courses
+FROM enrollments 
+WHERE user_id = ?";
+
+              $stats_stmt = $conn->prepare($stats_query);
+              $stats_stmt->bind_param("i", $_SESSION['user_id']);
+              $stats_stmt->execute();
+              $stats_result = $stats_stmt->get_result();
+              $stats = $stats_result->fetch_assoc();
+
+              // If no stats found, set defaults
+              $active_count = $stats['active_courses'] ?? 0;
+              $completed_count = $stats['completed_courses'] ?? 0;
+              // $total_hours = rand(5, 50); // Placeholder
+
+              ?>
+
               <div class="row">
-                <!-- Card -->
+                <!-- Enrolled Courses -->
                 <div class="col-md-4">
-                  <a class="card card-sm" href="#">
+                  <a class="card card-sm shadow-sm rounded" href="#">
                     <div class="card-body text-center">
-                      <h1 class="card-text large text-body">0</h1>
+                      <i class="bi bi-journal-plus fs-1 text-primary mb-2"></i>
+                      <h1 class="card-text large text-body"><?= $enrolled_count ?></h1>
                       <h5 class="card-title text-inherit">Enrolled Courses</h5>
                     </div>
                   </a>
                 </div>
-                <!-- End Card -->
-                <!-- Card -->
+
+                <!-- Completed Courses -->
                 <div class="col-md-4">
-                  <a class="card card-sm" href="#">
+                  <a class="card card-sm shadow-sm rounded" href="#">
                     <div class="card-body text-center">
-                      <h1 class="card-text large text-body">0</h1>
+                      <i class="bi bi-check2-circle fs-1 text-success mb-2"></i>
+                      <h1 class="card-text large text-body"><?= $completed_count ?></h1>
                       <h5 class="card-title text-inherit">Completed Courses</h5>
                     </div>
                   </a>
                 </div>
-                <!-- End Card -->
-                <!-- Card -->
+
+                <!-- In Progress Courses -->
                 <div class="col-md-4">
-                  <a class="card card-sm" href="#">
+                  <a class="card card-sm shadow-sm rounded" href="#">
                     <div class="card-body text-center">
-                      <h1 class="card-text large text-body">0</h1>
-                      <h5 class="card-title text-inherit">Completed Courses</h5>
+                      <i class="bi bi-hourglass-split fs-1 text-warning mb-2"></i>
+                      <h1 class="card-text large text-body"><?= $active_count ?></h1>
+                      <h5 class="card-title text-inherit">In Progress Courses</h5>
                     </div>
                   </a>
                 </div>
-                <!-- End Card -->
               </div>
+
             </div>
             <!-- End Body -->
-            <?php if ($_SESSION['role'] === 'admin' || ($_SESSION['role'] === 'instructor')): ?>
-              <!-- Body -->
-              <div class="card-body">
-                <div class="row">
-                  <!-- Card -->
-                  <div class="col-md-4">
-                    <a class="card card-sm" href="#">
-                      <div class="card-body text-center">
-                        <h1 class="card-text large text-body">0</h1>
-                        <h5 class="card-title text-inherit">Total Students</h5>
-                      </div>
-                    </a>
-                  </div>
-                  <!-- End Card -->
-                  <!-- Card -->
-                  <div class="col-md-4">
-                    <a class="card card-sm" href="#">
-                      <div class="card-body text-center">
-                        <h1 class="card-text large text-body">0</h1>
-                        <h5 class="card-title text-inherit">Total Courses</h5>
-                      </div>
-                    </a>
-                  </div>
-                  <!-- End Card -->
-                  <!-- Card -->
-                  <div class="col-md-4">
-                    <a class="card card-sm" href="#">
-                      <div class="card-body text-center">
-                        <h1 class="card-text large text-body">0</h1>
-                        <h5 class="card-title text-inherit">Total Earnings</h5>
-                      </div>
-                    </a>
-                  </div>
-                  <!-- End Card -->
-                </div>
-              </div>
-              <!-- End Body -->
-            <?php endif; ?>
           </div>
           <!-- End Card -->
 
