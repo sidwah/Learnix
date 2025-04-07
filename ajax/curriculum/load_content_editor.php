@@ -70,24 +70,24 @@ $stmt->close();
                 <div class="card-body">
                     <h5 class="card-title">Content Type</h5>
                     <p class="card-text">Select the type of content for this topic</p>
-                    
+
                     <div class="content-type-selector">
                         <div class="btn-group w-100" role="group">
                             <input type="radio" class="btn-check" name="contentType" id="contentTypeVideo" value="video" autocomplete="off" <?php echo ($content_type === 'video') ? 'checked' : ''; ?>>
                             <label class="btn btn-outline-primary" for="contentTypeVideo">
                                 <i class="mdi mdi-play-circle-outline"></i> Video
                             </label>
-                            
+
                             <input type="radio" class="btn-check" name="contentType" id="contentTypeText" value="text" autocomplete="off" <?php echo ($content_type === 'text') ? 'checked' : ''; ?>>
                             <label class="btn btn-outline-primary" for="contentTypeText">
                                 <i class="mdi mdi-text-box-outline"></i> Text
                             </label>
-                            
+
                             <input type="radio" class="btn-check" name="contentType" id="contentTypeDocument" value="document" autocomplete="off" <?php echo ($content_type === 'document') ? 'checked' : ''; ?>>
                             <label class="btn btn-outline-primary" for="contentTypeDocument">
                                 <i class="mdi mdi-file-document-outline"></i> Document
                             </label>
-                            
+
                             <input type="radio" class="btn-check" name="contentType" id="contentTypeLink" value="link" autocomplete="off" <?php echo ($content_type === 'link') ? 'checked' : ''; ?>>
                             <label class="btn btn-outline-primary" for="contentTypeLink">
                                 <i class="mdi mdi-link"></i> Link
@@ -113,19 +113,19 @@ $stmt->close();
                     $video_url = '';
                     $video_title = '';
                     $video_description = '';
-                    
+
                     if ($content_type === 'video' && $content) {
                         $video_url = $content['video_url'] ?? '';
                         $video_title = $content['title'];
                         $video_description = $content['description'] ?? '';
                     }
                     ?>
-                    
+
                     <div class="mb-3">
                         <label for="videoTitle" class="form-label">Video Title <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="videoTitle" value="<?php echo htmlspecialchars($video_title); ?>" placeholder="Enter a title for this video">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="videoUrl" class="form-label">Video URL <span class="text-danger">*</span></label>
                         <input type="url" class="form-control" id="videoUrl" value="<?php echo htmlspecialchars($video_url); ?>" placeholder="Enter YouTube or Vimeo URL">
@@ -133,19 +133,19 @@ $stmt->close();
                             Paste a YouTube or Vimeo URL (e.g., https://www.youtube.com/watch?v=12345)
                         </small>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="videoDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="videoDescription" rows="3" placeholder="Enter a description for this video"><?php echo htmlspecialchars($video_description); ?></textarea>
                     </div>
-                    
+
                     <button type="button" class="btn btn-primary save-video-btn">
                         <i class="mdi mdi-content-save"></i> Save Video Content
                     </button>
                 </div>
             </div>
         </div>
-        
+
         <!-- Text content editor -->
         <div class="content-editor-container" id="textEditorContainer" style="<?php echo ($content_type === 'text') ? '' : 'display: none;'; ?>">
             <div class="card">
@@ -157,30 +157,30 @@ $stmt->close();
                     // If we have text content, get the details
                     $text_title = '';
                     $text_content = '';
-                    
+
                     if ($content_type === 'text' && $content) {
                         $text_title = $content['title'];
                         $text_content = $content['content_text'] ?? '';
                     }
                     ?>
-                    
+
                     <div class="mb-3">
                         <label for="textTitle" class="form-label">Content Title <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="textTitle" value="<?php echo htmlspecialchars($text_title); ?>" placeholder="Enter a title for this content">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="textContent" class="form-label">Content <span class="text-danger">*</span></label>
                         <textarea class="form-control rich-editor" id="textContent" rows="10"><?php echo htmlspecialchars($text_content); ?></textarea>
                     </div>
-                    
+
                     <button type="button" class="btn btn-primary save-text-btn">
                         <i class="mdi mdi-content-save"></i> Save Text Content
                     </button>
                 </div>
             </div>
         </div>
-        
+
         <!-- Document content editor -->
         <div class="content-editor-container" id="documentEditorContainer" style="<?php echo ($content_type === 'document') ? '' : 'display: none;'; ?>">
             <div class="card">
@@ -193,24 +193,24 @@ $stmt->close();
                     $document_title = '';
                     $document_description = '';
                     $document_file = '';
-                    
+
                     if ($content_type === 'document' && $content) {
                         $document_title = $content['title'];
                         $document_description = $content['description'] ?? '';
                         $document_file = $content['file_path'] ?? '';
                     }
                     ?>
-                    
+
                     <div class="mb-3">
                         <label for="documentTitle" class="form-label">Document Title <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="documentTitle" value="<?php echo htmlspecialchars($document_title); ?>" placeholder="Enter a title for this document">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="documentDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="documentDescription" rows="3" placeholder="Enter a description for this document"><?php echo htmlspecialchars($document_description); ?></textarea>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="documentFile" class="form-label">Upload Document <span class="text-danger">*</span></label>
                         <input class="form-control" type="file" id="documentFile">
@@ -218,31 +218,31 @@ $stmt->close();
                             Allowed file types: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX (max 10MB)
                         </small>
                     </div>
-                    
+
                     <?php if ($document_file): ?>
-                    <div class="mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6>Current Document</h6>
-                                <p class="mb-0">
-                                    <i class="mdi mdi-file-document"></i> 
-                                    <?php echo htmlspecialchars(basename($document_file)); ?>
-                                    <a href="../uploads/documents/<?php echo htmlspecialchars($document_file); ?>" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
-                                        <i class="mdi mdi-eye"></i> View
-                                    </a>
-                                </p>
+                        <div class="mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>Current Document</h6>
+                                    <p class="mb-0">
+                                        <i class="mdi mdi-file-document"></i>
+                                        <?php echo htmlspecialchars(basename($document_file)); ?>
+                                        <a href="../uploads/documents/<?php echo htmlspecialchars($document_file); ?>" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                                            <i class="mdi mdi-eye"></i> View
+                                        </a>
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
                     <?php endif; ?>
-                    
+
                     <button type="button" class="btn btn-primary save-document-btn">
                         <i class="mdi mdi-content-save"></i> Save Document Content
                     </button>
                 </div>
             </div>
         </div>
-        
+
         <!-- Link content editor -->
         <div class="content-editor-container" id="linkEditorContainer" style="<?php echo ($content_type === 'link') ? '' : 'display: none;'; ?>">
             <div class="card">
@@ -255,19 +255,19 @@ $stmt->close();
                     $link_title = '';
                     $link_description = '';
                     $external_url = '';
-                    
+
                     if ($content_type === 'link' && $content) {
                         $link_title = $content['title'];
                         $link_description = $content['description'] ?? '';
                         $external_url = $content['external_url'] ?? '';
                     }
                     ?>
-                    
+
                     <div class="mb-3">
                         <label for="linkTitle" class="form-label">Link Title <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="linkTitle" value="<?php echo htmlspecialchars($link_title); ?>" placeholder="Enter a title for this link">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="externalUrl" class="form-label">External URL <span class="text-danger">*</span></label>
                         <input type="url" class="form-control" id="externalUrl" value="<?php echo htmlspecialchars($external_url); ?>" placeholder="Enter external URL">
@@ -275,12 +275,12 @@ $stmt->close();
                             Enter the full URL including https:// (e.g., https://example.com/resource)
                         </small>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="linkDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="linkDescription" rows="3" placeholder="Enter a description for this link"><?php echo htmlspecialchars($link_description); ?></textarea>
                     </div>
-                    
+
                     <button type="button" class="btn btn-primary save-link-btn">
                         <i class="mdi mdi-content-save"></i> Save Link Content
                     </button>
@@ -297,7 +297,7 @@ $stmt->close();
             </div>
             <div class="card-body">
                 <p class="text-muted">Upload supplementary materials for this topic (optional)</p>
-                
+
                 <!-- Resource list -->
                 <div class="resource-list mb-3">
                     <?php if (empty($resources)): ?>
@@ -327,7 +327,7 @@ $stmt->close();
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
-                
+
                 <!-- Resource upload -->
                 <div class="resource-upload">
                     <div class="mb-3">
@@ -337,7 +337,7 @@ $stmt->close();
                             Allowed file types: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, ZIP (max 10MB)
                         </small>
                     </div>
-                    
+
                     <button type="button" class="btn btn-outline-primary upload-resource-btn">
                         <i class="mdi mdi-upload"></i> Upload Resource
                     </button>
@@ -349,124 +349,102 @@ $stmt->close();
 
 <!-- Initialize TinyMCE for rich text editing -->
 <script src="https://cdn.tiny.cloud/1/4fnlr08nx5aczp8z0vkgtm2sblkj0y9qywi9iox6hs7ghxgv/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
-<script>
+<!-- <script>
+    $(document).ready(function() {
+        // Single TinyMCE initialization
+        function initializeTinyMCE() {
+            try {
+                tinymce.init({
+                    selector: '.rich-editor',
+                    height: 400,
+                    menubar: true,
+                    plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | ' +
+                        'bold italic backcolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | help',
+                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 16px; line-height: 1.6; }',
+                    setup: function(editor) {
+                        editor.on('init', function() {
+                            console.log('TinyMCE editor initialized:', editor.id);
+                        });
+                    },
+                    init_instance_callback: function(editor) {
+                        console.log('TinyMCE instance loaded:', editor.id);
+                    }
+                });
+            } catch (error) {
+                console.error('Error initializing TinyMCE:', error);
 
-$(document).ready(function() {
-    // Single TinyMCE initialization
-    function initializeTinyMCE() {
-        try {
-            tinymce.init({
-                selector: '.rich-editor',
-                height: 400,
-                menubar: true,
-                plugins: [
-                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                ],
-                toolbar: 'undo redo | blocks | ' +
-                    'bold italic backcolor | alignleft aligncenter ' +
-                    'alignright alignjustify | bullist numlist outdent indent | ' +
-                    'removeformat | help',
-                content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 16px; line-height: 1.6; }',
-                setup: function(editor) {
-                    editor.on('init', function() {
-                        console.log('TinyMCE editor initialized:', editor.id);
-                    });
-                },
-                init_instance_callback: function(editor) {
-                    console.log('TinyMCE instance loaded:', editor.id);
-                }
-            });
-        } catch (error) {
-            console.error('Error initializing TinyMCE:', error);
-            
-            // Fallback to standard textarea if TinyMCE fails
-            $('.rich-editor').each(function() {
-                $(this).prop('rows', 10);
-            });
+                // Fallback to standard textarea if TinyMCE fails
+                $('.rich-editor').each(function() {
+                    $(this).prop('rows', 10);
+                });
+            }
         }
-    }
 
-    // Initialize TinyMCE
-    initializeTinyMCE();
+        // Initialize TinyMCE
+        initializeTinyMCE();
 
-    // Toggle content editor containers based on selected type
-    $('input[name="contentType"]').change(function() {
-        const contentType = $(this).val();
-        
-        // Hide all content editor containers
-        $('.content-editor-container').hide();
-        
-        // Show the selected container
-        $(`#${contentType}EditorContainer`).show();
-    });
+        // Toggle content editor containers based on selected type
+        $('input[name="contentType"]').change(function() {
+            const contentType = $(this).val();
 
-   // Enhanced save text content function with comprehensive debugging
+            // Hide all content editor containers
+            $('.content-editor-container').hide();
+
+            // Show the selected container
+            $(`#${contentType}EditorContainer`).show();
+        });
+
+       // Save text content
 $('.save-text-btn').click(function() {
-    // Log the start of the save process
-    console.log('Save button clicked');
-
-    // Check TinyMCE global object
-    console.log('TinyMCE global object:', typeof tinymce !== 'undefined' ? 'exists' : 'does not exist');
-
     const textTitle = $('#textTitle').val().trim();
-    console.log('Text Title:', textTitle);
-
-    // Comprehensive TinyMCE debugging
+    
+    // Robust check for TinyMCE availability
     let textContent = '';
+    
     try {
-        // Log all available methods
-        console.log('TinyMCE methods:', Object.keys(tinymce));
-
-        // Check if get method exists
-        console.log('tinymce.get method exists:', typeof tinymce.get === 'function');
-
-        // Attempt to get editor instances
-        console.log('Current TinyMCE instances:', tinymce.editors);
-
-        // Try to get the specific editor
-        const editor = tinymce.get('textContent');
-        console.log('Editor retrieved:', editor ? 'Found' : 'Not Found');
-
-        // If editor is found, get content
-        if (editor) {
-            textContent = editor.getContent();
-            console.log('Editor content length:', textContent.length);
-        } else {
-            // Fallback method
+        // Check if TinyMCE is defined and loaded
+        if (typeof tinymce === 'undefined') {
+            console.error('TinyMCE is not loaded');
             textContent = $('#textContent').val();
-            console.warn('Falling back to textarea value');
+        } else {
+            // Check if editors array exists
+            const editors = tinymce.editors || [];
+            
+            // Try to find the specific editor
+            const editor = editors.find(ed => ed.id === 'textContent') || tinymce.get('textContent');
+            
+            if (editor) {
+                // Get content from editor
+                textContent = editor.getContent();
+            } else {
+                // Fallback to textarea
+                textContent = $('#textContent').val();
+                console.warn('Could not find TinyMCE editor, using textarea value');
+            }
         }
-
-        // Additional checks
-        console.log('Textarea value:', $('#textContent').val());
-        console.log('Final text content:', textContent);
-
     } catch (error) {
-        console.error('Critical error in TinyMCE content retrieval:', error);
-        
-        // Fallback to textarea
+        console.error('Error retrieving TinyMCE content:', error);
         textContent = $('#textContent').val();
-        console.warn('Used textarea value due to error');
     }
 
-    // Validate inputs with detailed logging
+    // Validate inputs
     if (!textTitle) {
-        console.warn('No text title entered');
         showAlert('danger', 'Please enter a content title');
         return;
     }
     
-    if (!textContent) {
-        console.warn('No text content found');
-        console.log('Textarea value:', $('#textContent').val());
-        console.log('TinyMCE editor:', tinymce.get('textContent'));
+    if (!textContent || textContent.trim() === '') {
         showAlert('danger', 'Please enter content text');
         return;
     }
-
-    // Continue with save process...
+    
     const topicId = $('.content-editor').data('topic-id');
     const contentId = <?php echo $content_id; ?>;
     
@@ -512,27 +490,62 @@ $('.save-text-btn').click(function() {
     });
 });
 
-// Add an additional initialization check
-$(document).ready(function() {
-    console.log('Document ready');
-    
-    // Check TinyMCE initialization
-    function checkTinyMCEInitialization() {
-        if (typeof tinymce === 'undefined') {
-            console.error('TinyMCE script not loaded');
-            return;
-        }
+        // Add an additional initialization check
+        $(document).ready(function() {
+            console.log('Document ready');
 
-        // Verify TinyMCE is available
-        console.log('TinyMCE initialization check:', tinymce.editors.length, 'editors found');
-        
-        // Force reinitialization if no editors
-        if (tinymce.editors.length === 0) {
-            console.warn('No TinyMCE editors found, attempting reinitialization');
+            // Check TinyMCE initialization
+            function checkTinyMCEInitialization() {
+                if (typeof tinymce === 'undefined') {
+                    console.error('TinyMCE script not loaded');
+                    return;
+                }
+
+                // Verify TinyMCE is available
+                console.log('TinyMCE initialization check:', tinymce.editors.length, 'editors found');
+
+                // Force reinitialization if no editors
+                if (tinymce.editors.length === 0) {
+                    console.warn('No TinyMCE editors found, attempting reinitialization');
+                    try {
+                        tinymce.init({
+                            selector: '#textContent',
+                            height: 400,
+                            plugins: [
+                                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                            ],
+                            toolbar: 'undo redo | blocks | ' +
+                                'bold italic backcolor | alignleft aligncenter ' +
+                                'alignright alignjustify | bullist numlist outdent indent | ' +
+                                'removeformat | help'
+                        });
+                    } catch (error) {
+                        console.error('Failed to reinitialize TinyMCE:', error);
+                    }
+                }
+            }
+
+            // Run initialization check
+            checkTinyMCEInitialization();
+        });
+      
+</script> -->
+<script>
+    $(document).ready(function() {
+        // Single TinyMCE initialization with safe checks
+        function initializeTinyMCE() {
             try {
+                // Remove any existing instances first
+                if (typeof tinymce !== 'undefined') {
+                    tinymce.remove();
+                }
+
                 tinymce.init({
-                    selector: '#textContent',
+                    selector: '.rich-editor',
                     height: 400,
+                    menubar: true,
                     plugins: [
                         'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
                         'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -541,17 +554,176 @@ $(document).ready(function() {
                     toolbar: 'undo redo | blocks | ' +
                         'bold italic backcolor | alignleft aligncenter ' +
                         'alignright alignjustify | bullist numlist outdent indent | ' +
-                        'removeformat | help'
+                        'removeformat | help',
+                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 16px; line-height: 1.6; }',
+                    setup: function(editor) {
+                        editor.on('init', function() {
+                            console.log('TinyMCE editor initialized:', editor.id);
+                        });
+                    },
+                    init_instance_callback: function(editor) {
+                        console.log('TinyMCE instance loaded:', editor.id);
+                    }
                 });
             } catch (error) {
-                console.error('Failed to reinitialize TinyMCE:', error);
+                console.error('Error initializing TinyMCE:', error);
+
+                // Fallback to standard textarea if TinyMCE fails
+                $('.rich-editor').each(function() {
+                    $(this).prop('rows', 10);
+                });
             }
         }
+
+        // Initialize TinyMCE
+        initializeTinyMCE();
+
+        // Toggle content editor containers based on selected type
+        $('input[name="contentType"]').change(function() {
+            const contentType = $(this).val();
+
+            // Hide all content editor containers
+            $('.content-editor-container').hide();
+
+            // Show the selected container
+            $(`#${contentType}EditorContainer`).show();
+        });
+
+     // Save text content with extremely robust retrieval
+$('.save-text-btn').click(function() {
+    const textTitle = $('#textTitle').val().trim();
+    
+    // Extremely robust content retrieval
+    let textContent = '';
+    
+    try {
+        // Force reinitialize if needed
+        if (typeof tinymce === 'undefined' || !tinymce.editors || tinymce.editors.length === 0) {
+            console.warn('Forcing TinyMCE reinitialization');
+            tinymce.remove();
+            tinymce.init({
+                selector: '#textContent',
+                height: 400,
+                plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                ],
+                toolbar: 'undo redo | blocks | ' +
+                    'bold italic backcolor | alignleft aligncenter ' +
+                    'alignright alignjustify | bullist numlist outdent indent | ' +
+                    'removeformat | help'
+            });
+        }
+
+        // Multiple methods to retrieve editor
+        const editorMethods = [
+            () => tinymce.get('textContent'),
+            () => tinymce.editors.find(ed => ed.id === 'textContent'),
+            () => {
+                // Last resort: try to find by selector
+                const editors = tinymce.editors;
+                console.log('Available editors:', editors.map(ed => ed.id));
+                return editors[0];
+            }
+        ];
+
+        // Try each method to get the editor
+        let editor = null;
+        for (const method of editorMethods) {
+            editor = method();
+            if (editor) break;
+        }
+
+        // Retrieve content
+        if (editor) {
+            try {
+                textContent = editor.getContent() || 
+                             (editor.getBody && editor.getBody() ? editor.getBody().textContent : '') || 
+                             $('#textContent').val();
+            } catch (editorError) {
+                console.warn('Error getting editor content:', editorError);
+                textContent = $('#textContent').val();
+            }
+            
+            console.log('Retrieved content:', {
+                method: editor.id,
+                length: textContent.length
+            });
+        } else {
+            // Absolute fallback
+            textContent = $('#textContent').val();
+            console.warn('Could not retrieve TinyMCE editor content');
+        }
+    } catch (error) {
+        console.error('Critical error retrieving content:', error);
+        textContent = $('#textContent').val();
     }
 
-    // Run initialization check
-    checkTinyMCEInitialization();
-});  
+    // Validate inputs
+    if (!textTitle) {
+        showAlert('danger', 'Please enter a content title');
+        return;
+    }
+    
+    if (!textContent || textContent.trim() === '') {
+        // Log additional diagnostic information
+        console.log('Content retrieval diagnostics:', {
+            textareaValue: $('#textContent').val(),
+            tinymceExists: typeof tinymce !== 'undefined',
+            editorsCount: tinymce ? tinymce.editors.length : 'N/A',
+            editorIds: tinymce ? tinymce.editors.map(ed => ed.id) : 'N/A'
+        });
+
+        showAlert('danger', 'Please enter content text');
+        return;
+    }
+    
+    const topicId = $('.content-editor').data('topic-id');
+    const contentId = <?php echo $content_id; ?>;
+    
+    // Show loading overlay
+    createOverlay('Saving text content...');
+    
+    // Send AJAX request
+    $.ajax({
+        url: '../ajax/content/save_text.php',
+        type: 'POST',
+        data: {
+            topic_id: topicId,
+            content_id: contentId,
+            title: textTitle,
+            content_text: textContent
+        },
+        success: function(response) {
+            try {
+                const result = JSON.parse(response);
+                
+                if (result.success) {
+                    showAlert('success', 'Text content saved successfully');
+                    
+                    // Update content ID for future saves
+                    if (result.content_id) {
+                        $('.content-editor').data('content-id', result.content_id);
+                    }
+                } else {
+                    showAlert('danger', 'Error: ' + result.message);
+                }
+            } catch (e) {
+                console.error('Error parsing response', e);
+                showAlert('danger', 'Error processing server response');
+            }
+            
+            // Hide loading overlay
+            removeOverlay();
+        },
+        error: function() {
+            showAlert('danger', 'Network error while saving text content');
+            removeOverlay();
+        }
+    });
+});
+
         // Save video content
         $('.save-video-btn').click(function() {
             const videoTitle = $('#videoTitle').val().trim();
@@ -559,21 +731,21 @@ $(document).ready(function() {
             const videoDescription = $('#videoDescription').val().trim();
             const topicId = $('.content-editor').data('topic-id');
             const contentId = <?php echo $content_id; ?>;
-            
+
             // Validate inputs
             if (!videoTitle) {
                 showAlert('danger', 'Please enter a video title');
                 return;
             }
-            
+
             if (!videoUrl) {
                 showAlert('danger', 'Please enter a video URL');
                 return;
             }
-            
+
             // Show loading overlay
             createOverlay('Saving video content...');
-            
+
             // Send AJAX request
             $.ajax({
                 url: '../ajax/content/save_video.php',
@@ -588,10 +760,10 @@ $(document).ready(function() {
                 success: function(response) {
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (result.success) {
                             showAlert('success', 'Video content saved successfully');
-                            
+
                             // Update content ID for future saves
                             if (result.content_id) {
                                 $('.content-editor').data('content-id', result.content_id);
@@ -603,7 +775,7 @@ $(document).ready(function() {
                         console.error('Error parsing response', e);
                         showAlert('danger', 'Error processing server response');
                     }
-                    
+
                     // Hide loading overlay
                     removeOverlay();
                 },
@@ -613,8 +785,8 @@ $(document).ready(function() {
                 }
             });
         });
-        
-        
+
+
         // Save document content
         $('.save-document-btn').click(function() {
             const documentTitle = $('#documentTitle').val().trim();
@@ -622,32 +794,32 @@ $(document).ready(function() {
             const documentFile = $('#documentFile')[0].files[0];
             const topicId = $('.content-editor').data('topic-id');
             const contentId = <?php echo $content_id; ?>;
-            
+
             // Validate inputs
             if (!documentTitle) {
                 showAlert('danger', 'Please enter a document title');
                 return;
             }
-            
+
             if (!documentFile && contentId === 0) {
                 showAlert('danger', 'Please select a document to upload');
                 return;
             }
-            
+
             // Show loading overlay
             createOverlay('Saving document content...');
-            
+
             // Create form data for file upload
             const formData = new FormData();
             formData.append('topic_id', topicId);
             formData.append('content_id', contentId);
             formData.append('title', documentTitle);
             formData.append('description', documentDescription);
-            
+
             if (documentFile) {
                 formData.append('document_file', documentFile);
             }
-            
+
             // Send AJAX request
             $.ajax({
                 url: '../ajax/content/save_document.php',
@@ -658,15 +830,15 @@ $(document).ready(function() {
                 success: function(response) {
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (result.success) {
                             showAlert('success', 'Document content saved successfully');
-                            
+
                             // Update content ID for future saves
                             if (result.content_id) {
                                 $('.content-editor').data('content-id', result.content_id);
                             }
-                            
+
                             // If a new file was uploaded, update the current document display
                             if (result.file_path) {
                                 const currentDocument = `
@@ -685,14 +857,14 @@ $(document).ready(function() {
                                         </div>
                                     </div>
                                 `;
-                                
+
                                 // Add the current document display if not already present
                                 if ($('#documentEditorContainer .card-body > .mb-3:last-child').find('h6').text() !== 'Current Document') {
                                     $('#documentFile').closest('.mb-3').after(currentDocument);
                                 } else {
                                     $('#documentEditorContainer .card-body > .mb-3:last-child').replaceWith(currentDocument);
                                 }
-                                
+
                                 // Clear the file input
                                 $('#documentFile').val('');
                             }
@@ -703,7 +875,7 @@ $(document).ready(function() {
                         console.error('Error parsing response', e);
                         showAlert('danger', 'Error processing server response');
                     }
-                    
+
                     // Hide loading overlay
                     removeOverlay();
                 },
@@ -713,7 +885,7 @@ $(document).ready(function() {
                 }
             });
         });
-        
+
         // Save link content
         $('.save-link-btn').click(function() {
             const linkTitle = $('#linkTitle').val().trim();
@@ -721,21 +893,21 @@ $(document).ready(function() {
             const linkDescription = $('#linkDescription').val().trim();
             const topicId = $('.content-editor').data('topic-id');
             const contentId = <?php echo $content_id; ?>;
-            
+
             // Validate inputs
             if (!linkTitle) {
                 showAlert('danger', 'Please enter a link title');
                 return;
             }
-            
+
             if (!externalUrl) {
                 showAlert('danger', 'Please enter an external URL');
                 return;
             }
-            
+
             // Show loading overlay
             createOverlay('Saving link content...');
-            
+
             // Send AJAX request
             $.ajax({
                 url: '../ajax/content/save_link.php',
@@ -750,10 +922,10 @@ $(document).ready(function() {
                 success: function(response) {
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (result.success) {
                             showAlert('success', 'Link content saved successfully');
-                            
+
                             // Update content ID for future saves
                             if (result.content_id) {
                                 $('.content-editor').data('content-id', result.content_id);
@@ -765,7 +937,7 @@ $(document).ready(function() {
                         console.error('Error parsing response', e);
                         showAlert('danger', 'Error processing server response');
                     }
-                    
+
                     // Hide loading overlay
                     removeOverlay();
                 },
@@ -775,26 +947,26 @@ $(document).ready(function() {
                 }
             });
         });
-        
+
         // Upload resource
         $('.upload-resource-btn').click(function() {
             const resourceFile = $('#resourceFile')[0].files[0];
             const topicId = $('.content-editor').data('topic-id');
-            
+
             // Validate input
             if (!resourceFile) {
                 showAlert('danger', 'Please select a resource file to upload');
                 return;
             }
-            
+
             // Show loading overlay
             createOverlay('Uploading resource...');
-            
+
             // Create form data for file upload
             const formData = new FormData();
             formData.append('topic_id', topicId);
             formData.append('resource_file', resourceFile);
-            
+
             // Send AJAX request
             $.ajax({
                 url: '../ajax/content/upload_resource.php',
@@ -805,10 +977,10 @@ $(document).ready(function() {
                 success: function(response) {
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (result.success) {
                             showAlert('success', 'Resource uploaded successfully');
-                            
+
                             // Add the resource to the list
                             const resourceItem = `
                                 <div class="resource-item card mb-2" data-resource-id="${result.resource_id}">
@@ -830,13 +1002,13 @@ $(document).ready(function() {
                                     </div>
                                 </div>
                             `;
-                            
+
                             // Remove empty resources message if present
                             $('.empty-resources').remove();
-                            
+
                             // Add the resource to the list
                             $('.resource-list').append(resourceItem);
-                            
+
                             // Clear the file input
                             $('#resourceFile').val('');
                         } else {
@@ -846,7 +1018,7 @@ $(document).ready(function() {
                         console.error('Error parsing response', e);
                         showAlert('danger', 'Error processing server response');
                     }
-                    
+
                     // Hide loading overlay
                     removeOverlay();
                 },
@@ -856,21 +1028,21 @@ $(document).ready(function() {
                 }
             });
         });
-        
+
         // Delete resource
         $(document).on('click', '.delete-resource-btn', function() {
             const resourceItem = $(this).closest('.resource-item');
             const resourceId = resourceItem.data('resource-id');
             const topicId = $('.content-editor').data('topic-id');
-            
+
             // Confirm delete
             if (!confirm('Are you sure you want to delete this resource? This action cannot be undone.')) {
                 return;
             }
-            
+
             // Show loading overlay
             createOverlay('Deleting resource...');
-            
+
             // Send AJAX request
             $.ajax({
                 url: '../ajax/content/delete_resource.php',
@@ -882,13 +1054,13 @@ $(document).ready(function() {
                 success: function(response) {
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (result.success) {
                             showAlert('success', 'Resource deleted successfully');
-                            
+
                             // Remove the resource from the list
                             resourceItem.remove();
-                            
+
                             // If no resources left, show empty message
                             if ($('.resource-item').length === 0) {
                                 $('.resource-list').html(`
@@ -904,7 +1076,7 @@ $(document).ready(function() {
                         console.error('Error parsing response', e);
                         showAlert('danger', 'Error processing server response');
                     }
-                    
+
                     // Hide loading overlay
                     removeOverlay();
                 },
