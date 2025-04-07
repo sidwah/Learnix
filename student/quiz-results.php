@@ -301,7 +301,7 @@ function formatTime($seconds) {
                         ?>
                         
                         <?php if ($can_retake): ?>
-                            <a href="take_quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz_id; ?>" class="btn btn-primary">
+                            <a href="take-quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz_id; ?>" class="btn btn-primary">
                                 Retake Quiz
                             </a>
                         <?php else: ?>
