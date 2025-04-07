@@ -1085,6 +1085,7 @@ function updatePaginationControls(totalPages, totalItems) {
                 showToast('danger', 'Failed to reject course. Please try again.');
             });
     }
+   
     // Function to suspend a course
     function suspendCourse(courseId) {
         fetch('../ajax/admin/suspend_course.php', {
