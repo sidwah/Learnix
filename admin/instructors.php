@@ -492,23 +492,23 @@
                         fetch("../backend/admin/fetch-instructors.php")
                             .then(response => response.json())
                             .then(data => {
-                                instructorData = data.map((instructor, index) => ({
+                                instructorData = data.map((instructor) => ({
                                     id: instructor.id,
                                     name: instructor.name,
                                     email: instructor.email,
                                     status: instructor.status,
                                     profile_pic: instructor.profile_pic,
-                                    isVerified: instructor.is_verified == 1,
-                                    courses: 0,
-                                    students: 0,
-                                    revenue: 0,
-                                    phone: "N/A",
-                                    location: "N/A",
-                                    joinDate: new Date(), // Placeholder for now
-                                    bio: "Instructor bio not available.",
-                                    specializations: [],
-                                    coursesList: [],
-                                    statusReason: instructor.status !== "active" ? "No reason provided" : null
+                                    isVerified: instructor.verification_status === 'verified',
+                                    courses: parseInt(instructor.courses_count) || 0,
+                                    students: parseInt(instructor.students_count) || 0,
+                                    revenue: parseFloat(instructor.total_revenue) || 0,
+                                    phone: instructor.phone || "N/A",
+                                    location: instructor.location || "N/A",
+                                    joinDate: new Date(instructor.join_date),
+                                    bio: instructor.bio || "Instructor bio not available.",
+                                    specializations: instructor.specializations || [],
+                                    coursesList: instructor.courses_list || [],
+                                    statusReason: instructor.status_reason || (instructor.status !== "active" ? "No reason provided" : null)
                                 }));
 
                                 filteredInstructors = [...instructorData];
@@ -713,12 +713,14 @@
                         }
 
                         // Show verified badge if applicable
-                        const verifiedBadge = document.getElementById("modalVerifiedBadge");
-                        if (instructor.isVerified) {
-                            verifiedBadge.classList.remove("d-none");
-                        } else {
-                            verifiedBadge.classList.add("d-none");
-                        }
+                        // const verifiedBadge = document.getElementById("modalVerifiedBadge");
+                        // console.log("Is Verified:", instructor.isVerified); 
+                        // console.log("Is Verified:", verifiedBadge); // Should log `true` for verified instructors
+                        // if (instructor.isVerified) {
+                        //     verifiedBadge.classList.remove("d-none");
+                        // } else {
+                        //     verifiedBadge.classList.add("d-none");
+                        // }
 
                         // Set summary cards data
                         document.getElementById("modalCourseCount").textContent = instructor.courses;
