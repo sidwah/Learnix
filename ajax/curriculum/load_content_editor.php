@@ -402,76 +402,73 @@ $(document).ready(function() {
         $(`#${contentType}EditorContainer`).show();
     });
 
-   // Enhanced save text content function with self-healing TinyMCE
+   // Enhanced save text content function with comprehensive debugging
 $('.save-text-btn').click(function() {
+    // Log the start of the save process
+    console.log('Save button clicked');
+
+    // Check TinyMCE global object
+    console.log('TinyMCE global object:', typeof tinymce !== 'undefined' ? 'exists' : 'does not exist');
+
     const textTitle = $('#textTitle').val().trim();
-    
-    // Robust TinyMCE content retrieval with self-healing
+    console.log('Text Title:', textTitle);
+
+    // Comprehensive TinyMCE debugging
     let textContent = '';
     try {
-        // Check if TinyMCE is initialized and working
-        let editor = tinymce.get('textContent');
-        
-        if (!editor) {
-            console.warn('TinyMCE editor not found, attempting to reinitialize');
-            
-            // Force reinitialization
-            tinymce.remove();
-            
-            // Reinitialize TinyMCE
-            tinymce.init({
-                selector: '#textContent',
-                height: 400,
-                menubar: true,
-                plugins: [
-                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                    'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
-                ],
-                toolbar: 'undo redo | blocks | ' +
-                    'bold italic backcolor | alignleft aligncenter ' +
-                    'alignright alignjustify | bullist numlist outdent indent | ' +
-                    'removeformat | help'
-            });
-            
-            // Retry getting the editor
-            editor = tinymce.get('textContent');
-        }
-        
-        // Get content safely
+        // Log all available methods
+        console.log('TinyMCE methods:', Object.keys(tinymce));
+
+        // Check if get method exists
+        console.log('tinymce.get method exists:', typeof tinymce.get === 'function');
+
+        // Attempt to get editor instances
+        console.log('Current TinyMCE instances:', tinymce.editors);
+
+        // Try to get the specific editor
+        const editor = tinymce.get('textContent');
+        console.log('Editor retrieved:', editor ? 'Found' : 'Not Found');
+
+        // If editor is found, get content
         if (editor) {
             textContent = editor.getContent();
+            console.log('Editor content length:', textContent.length);
         } else {
-            // Absolute fallback
+            // Fallback method
             textContent = $('#textContent').val();
-            console.error('Could not reinitialize TinyMCE');
-            showAlert('warning', 'There was an issue with the text editor. Please try again or refresh the page.');
-            return;
+            console.warn('Falling back to textarea value');
         }
+
+        // Additional checks
+        console.log('Textarea value:', $('#textContent').val());
+        console.log('Final text content:', textContent);
+
     } catch (error) {
-        console.error('Critical error with TinyMCE:', error);
+        console.error('Critical error in TinyMCE content retrieval:', error);
         
-        // Fallback to textarea value
+        // Fallback to textarea
         textContent = $('#textContent').val();
-        
-        // Show warning to user
-        showAlert('warning', 'There was an issue with the text editor. Please try again or refresh the page.');
-        return;
+        console.warn('Used textarea value due to error');
     }
-    
-    const topicId = $('.content-editor').data('topic-id');
-    const contentId = <?php echo $content_id; ?>;
-    
-    // Validate inputs
+
+    // Validate inputs with detailed logging
     if (!textTitle) {
+        console.warn('No text title entered');
         showAlert('danger', 'Please enter a content title');
         return;
     }
     
     if (!textContent) {
+        console.warn('No text content found');
+        console.log('Textarea value:', $('#textContent').val());
+        console.log('TinyMCE editor:', tinymce.get('textContent'));
         showAlert('danger', 'Please enter content text');
         return;
     }
+
+    // Continue with save process...
+    const topicId = $('.content-editor').data('topic-id');
+    const contentId = <?php echo $content_id; ?>;
     
     // Show loading overlay
     createOverlay('Saving text content...');
@@ -513,6 +510,47 @@ $('.save-text-btn').click(function() {
             removeOverlay();
         }
     });
+});
+
+// Add an additional initialization check
+$(document).ready(function() {
+    console.log('Document ready');
+    
+    // Check TinyMCE initialization
+    function checkTinyMCEInitialization() {
+        if (typeof tinymce === 'undefined') {
+            console.error('TinyMCE script not loaded');
+            return;
+        }
+
+        // Verify TinyMCE is available
+        console.log('TinyMCE initialization check:', tinymce.editors.length, 'editors found');
+        
+        // Force reinitialization if no editors
+        if (tinymce.editors.length === 0) {
+            console.warn('No TinyMCE editors found, attempting reinitialization');
+            try {
+                tinymce.init({
+                    selector: '#textContent',
+                    height: 400,
+                    plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | ' +
+                        'bold italic backcolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | help'
+                });
+            } catch (error) {
+                console.error('Failed to reinitialize TinyMCE:', error);
+            }
+        }
+    }
+
+    // Run initialization check
+    checkTinyMCEInitialization();
 });  
         // Save video content
         $('.save-video-btn').click(function() {
