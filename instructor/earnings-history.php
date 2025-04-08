@@ -17,8 +17,6 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
 <!DOCTYPE html>
     <html lang="en">
-
-    
     <head>
         <meta charset="utf-8" />
         <title>Instructor | Learnix - Empowering Education</title>
@@ -67,7 +65,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                         <div class="row">
                             <div class="col-12">
                                 <div class="page-title-box">
-                                    <h4 class="page-title">Annoucements</h4>
+                                    <h4 class="page-title">Earnings History</h4>
                                 </div>
                             </div>
                         </div>

@@ -43,38 +43,13 @@
                     <span> All Courses </span>
                 </a>
             </li>
-<!-- 
-            <li class="side-nav-item">
-                <a href="create-course.php" class="side-nav-link">
-                    <i class="mdi mdi-clipboard-edit-outline"></i>
-                    <span> Create Course </span>
-                </a>
-            </li>
-
-            <li class="side-nav-item">
-                <a href="course-creator.php" class="side-nav-link">
-                    <i class="mdi mdi-clipboard-edit-outline"></i>
-                    <span> Course Creator </span>
-                </a>
-            </li> -->
 
 
             <li class="side-nav-item">
-                <a data-bs-toggle="collapse" href="#sidebarStudents" aria-expanded="false" aria-controls="sidebarStudents" class="side-nav-link">
-                    <i class="uil-users-alt"></i>
+            <a href="all-students.php" class="side-nav-link">                    
+                <i class="uil-users-alt"></i>
                     <span> Students </span>
-                    <span class="menu-arrow"></span>
                 </a>
-                <div class="collapse" id="sidebarStudents">
-                    <ul class="side-nav-second-level">
-                        <li>
-                            <a href="all-students.php">All Students</a>
-                        </li>
-                        <li>
-                            <a href="track-progress.php">Track Progress</a>
-                        </li>
-                    </ul>
-                </div>
             </li>
 
             <li class="side-nav-item">
@@ -100,7 +75,7 @@
                             <a href="earnings.php">Earnings Overview</a>
                         </li>
                         <li>
-                            <a href="payment-history.php">Payment History</a>
+                            <a href="earnings-history.php">Earnings History</a>
                         </li>
                         <li>
                             <a href="payout-settings.php">Payout Settings</a>
@@ -153,7 +128,7 @@
                 <div class="collapse" id="sidebarHelp">
                     <ul class="side-nav-second-level">
                         <li>
-                            <a href="instuctor/faq.php">FAQs</a>
+                            <a href="FAQs.php">FAQs</a>
                         </li>
                         <li>
                             <a href="tutorials.php">Tutorials</a>

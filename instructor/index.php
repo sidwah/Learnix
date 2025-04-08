@@ -131,9 +131,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     $total_courses_sql = "SELECT COUNT(*) AS total_courses FROM courses WHERE instructor_id = '$instructor_id'"; // Change instructor_id dynamically
                     $total_courses = $conn->query($total_courses_sql)->fetch_assoc()['total_courses'];
 
-                    // Fetch Total Students
-                    // $total_students_sql = "SELECT COUNT(*) AS total_students FROM users WHERE role = 'student'";
-                    // $total_students = $conn->query($total_students_sql)->fetch_assoc()['total_students'];
+
 
                     // Fetch Active Courses
                     $active_courses_sql = "SELECT COUNT(*) AS active_courses FROM courses WHERE status = 'published' AND instructor_id = $instructor_id"; // Change dynamically
@@ -141,7 +139,8 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
                     // Performance Rating (Placeholder)
                     $performance_rating = 0.0; // You can define logic for this
-                    $total_students = 0;
+
+
 
                     $conn->close();
                     ?>
@@ -207,11 +206,28 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                             <div class="card shadow-none m-0 border-start">
                                                 <div class="card-body text-center">
                                                     <i class="dripicons-user text-muted" style="font-size: 24px;"></i>
+                                                    <?php
+                                                    include '../backend/config.php'; // Ensure connection file is correct
+                                                    // Fetch total students enrolled in instructor's courses
+                                                    $total_students_sql = "SELECT COUNT(DISTINCT u.user_id) AS total_students 
+                                      FROM users u 
+                                      JOIN enrollments e ON u.user_id = e.user_id 
+                                      JOIN courses c ON e.course_id = c.course_id 
+                                      WHERE c.instructor_id = ? AND u.role = 'student'";
+
+                                                    $stmt = $conn->prepare($total_students_sql);
+                                                    $stmt->bind_param("i", $instructor_id);
+                                                    $stmt->execute();
+                                                    $total_students_result = $stmt->get_result();
+                                                    $total_students = $total_students_result->fetch_assoc()['total_students'];
+                                                    ?>
                                                     <h3><span><?php echo $total_students; ?></span></h3>
                                                     <p class="text-muted font-15 mb-0">Total Students</p>
                                                 </div>
                                             </div>
                                         </div>
+                                        <?php $conn->close(); ?>
+
 
                                         <div class="col-sm-6 col-lg-3">
                                             <div class="card shadow-none m-0 border-start">
@@ -554,6 +570,6 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
         <!-- end demo js-->
 </body>
 
-<!-- Mirrored from coderthemes.com/hyper/saas/index.php by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 29 Jul 2022 10:20:07 GMT -->
+
 
 </html>
