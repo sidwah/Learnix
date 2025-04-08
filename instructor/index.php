@@ -145,6 +145,48 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
                     $conn->close();
                     ?>
+                    <ul class="list-unstyled topbar-menu float-end mb-2">
+
+                        <?php
+                        // Define verification status messages based on status
+                        if (isset($userData['verification_status'])) {
+                            if ($userData['verification_status'] === 'unverified') {
+                        ?>
+                                <li class="me-3">
+                                    <div class="alert alert-warning py-1 px-2 d-flex align-items-center mt-2 me-auto" role="alert">
+                                        <i class="mdi mdi-alert-circle me-1"></i>
+                                        <small>Your instructor account needs verification. <a href="profile.php" class="alert-link">Complete verification now</a></small>
+                                    </div>
+                                </li>
+                            <?php
+                            } elseif ($userData['verification_status'] === 'pending') {
+                            ?>
+                                <li class="me-3">
+                                    <div class="alert alert-info py-1 px-2 mb-0 d-flex align-items-center" role="alert">
+                                        <i class="mdi mdi-clock-outline me-1"></i>
+                                        <small>Verification in progress. <a href="profile.php" class="alert-link">Check status</a></small>
+                                        <button type="button" class="btn-close ms-2 p-0" style="font-size: 0.65rem;" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                </li>
+                            <?php
+                            } elseif ($userData['verification_status'] === 'verified' && isset($_SESSION['recently_verified']) && $_SESSION['recently_verified']) {
+                                // Only show this if they were recently verified
+                                // You'd need to set this session variable when verifying
+                                // And clear it after they've seen this message
+                                unset($_SESSION['recently_verified']); // Clear it after showing once
+                            ?>
+                                <li class="me-3">
+                                    <div class="alert alert-success py-1 px-2 mb-0 d-flex align-items-center verification-success" role="alert">
+                                        <i class="mdi mdi-check-circle me-1"></i>
+                                        <small>Congratulations! Your account is now verified. <a href="create-course.php" class="alert-link">Start creating courses</a></small>
+                                        <button type="button" class="btn-close ms-2 p-0" style="font-size: 0.65rem;" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                </li>
+                        <?php
+                            }
+                        }
+                        ?>
+                    </ul>
 
                     <div class="row">
                         <div class="col-12">
@@ -203,138 +245,138 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     <div class="row">
                         <div class="col-lg-4">
                             <div class="card">
-                            <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center">
-        <h4 class="header-title">Course Progress Overview</h4>
-        <div class="dropdown">
-            <a href="#" class="dropdown-toggle arrow-none card-drop" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="mdi mdi-dots-vertical"></i>
-            </a>
-            <div class="dropdown-menu dropdown-menu-end">
-                <a href="javascript:void(0);" class="dropdown-item">View Course Analytics</a>
-                <a href="javascript:void(0);" class="dropdown-item">Export Report</a>
-                <a href="javascript:void(0);" class="dropdown-item">Manage Courses</a>
-                <a href="javascript:void(0);" class="dropdown-item">Settings</a>
-            </div>
-        </div>
-    </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h4 class="header-title">Course Progress Overview</h4>
+                                        <div class="dropdown">
+                                            <a href="#" class="dropdown-toggle arrow-none card-drop" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="mdi mdi-dots-vertical"></i>
+                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-end">
+                                                <a href="javascript:void(0);" class="dropdown-item">View Course Analytics</a>
+                                                <a href="javascript:void(0);" class="dropdown-item">Export Report</a>
+                                                <a href="javascript:void(0);" class="dropdown-item">Manage Courses</a>
+                                                <a href="javascript:void(0);" class="dropdown-item">Settings</a>
+                                            </div>
+                                        </div>
+                                    </div>
 
-    <div id="chart-container" class="mt-3 mb-4 chartjs-chart" style="height: 330px;">
-        <canvas id="course-status-chart"></canvas>
-        <div id="no-courses-message" class="text-center d-none">
-            <i class="mdi mdi-information-outline text-info h1 mb-3"></i>
-            <h4 class="text-muted">No Courses Available</h4>
-            <p class="text-muted">You haven't created any courses yet. Start by creating your first course!</p>
-            <a href="create-course.php" class="btn btn-primary mt-2">Create New Course</a>
-        </div>
-    </div>
+                                    <div id="chart-container" class="mt-3 mb-4 chartjs-chart" style="height: 330px;">
+                                        <canvas id="course-status-chart"></canvas>
+                                        <div id="no-courses-message" class="text-center d-none">
+                                            <i class="mdi mdi-information-outline text-info h1 mb-3"></i>
+                                            <h4 class="text-muted">No Courses Available</h4>
+                                            <p class="text-muted">You haven't created any courses yet. Start by creating your first course!</p>
+                                            <a href="create-course.php" class="btn btn-primary mt-2">Create New Course</a>
+                                        </div>
+                                    </div>
 
-    <div class="row text-center mt-2 py-2">
-        <div class="col-sm-4">
-            <div class="my-2 my-sm-0">
-                <i class="mdi mdi-book-check text-success mt-3 h3" aria-label="Published"></i>
-                <h3 class="fw-normal">
-                    <span id="published-count">0</span>
-                </h3>
-                <p class="text-muted mb-0">Published</p>
-            </div>
-        </div>
-        <div class="col-sm-4">
-            <div class="my-2 my-sm-0">
-                <i class="mdi mdi-pencil text-primary mt-3 h3" aria-label="Draft"></i>
-                <h3 class="fw-normal">
-                    <span id="draft-count">0</span>
-                </h3>
-                <p class="text-muted mb-0">Draft</p>
-            </div>
-        </div>
-        <div class="col-sm-4">
-            <div class="my-2 my-sm-0">
-                <i class="mdi mdi-timer-sand text-danger mt-3 h3" aria-label="Pending Approval"></i>
-                <h3 class="fw-normal">
-                    <span id="pending-count">0</span>
-                </h3>
-                <p class="text-muted mb-0">Pending Approval</p>
-            </div>
-        </div>
-    </div>
+                                    <div class="row text-center mt-2 py-2">
+                                        <div class="col-sm-4">
+                                            <div class="my-2 my-sm-0">
+                                                <i class="mdi mdi-book-check text-success mt-3 h3" aria-label="Published"></i>
+                                                <h3 class="fw-normal">
+                                                    <span id="published-count">0</span>
+                                                </h3>
+                                                <p class="text-muted mb-0">Published</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="my-2 my-sm-0">
+                                                <i class="mdi mdi-pencil text-primary mt-3 h3" aria-label="Draft"></i>
+                                                <h3 class="fw-normal">
+                                                    <span id="draft-count">0</span>
+                                                </h3>
+                                                <p class="text-muted mb-0">Draft</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="my-2 my-sm-0">
+                                                <i class="mdi mdi-timer-sand text-danger mt-3 h3" aria-label="Pending Approval"></i>
+                                                <h3 class="fw-normal">
+                                                    <span id="pending-count">0</span>
+                                                </h3>
+                                                <p class="text-muted mb-0">Pending Approval</p>
+                                            </div>
+                                        </div>
+                                    </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            fetch("http://localhost:8888/Learnix/backend/courses/get_course_status.php")
-                .then(response => response.text())
-                .then(text => {
-                    console.log("Raw Response:", text);
-                    try {
-                        let data = JSON.parse(text);
-                        console.log("Parsed JSON:", data);
-                        if (data.error) {
-                            console.error("API Error:", data.error);
-                            return;
-                        }
+                                    <script>
+                                        document.addEventListener("DOMContentLoaded", function() {
+                                            fetch("http://localhost:8888/Learnix/backend/courses/get_course_status.php")
+                                                .then(response => response.text())
+                                                .then(text => {
+                                                    console.log("Raw Response:", text);
+                                                    try {
+                                                        let data = JSON.parse(text);
+                                                        console.log("Parsed JSON:", data);
+                                                        if (data.error) {
+                                                            console.error("API Error:", data.error);
+                                                            return;
+                                                        }
 
-                        // Update counts
-                        const publishedCount = data.published || 0;
-                        const draftCount = data.draft || 0;
-                        const pendingCount = data.pending || 0;
+                                                        // Update counts
+                                                        const publishedCount = data.published || 0;
+                                                        const draftCount = data.draft || 0;
+                                                        const pendingCount = data.pending || 0;
 
-                        document.getElementById("published-count").textContent = publishedCount;
-                        document.getElementById("draft-count").textContent = draftCount;
-                        document.getElementById("pending-count").textContent = pendingCount;
+                                                        document.getElementById("published-count").textContent = publishedCount;
+                                                        document.getElementById("draft-count").textContent = draftCount;
+                                                        document.getElementById("pending-count").textContent = pendingCount;
 
-                        // Check if all counts are zero
-                        if (publishedCount === 0 && draftCount === 0 && pendingCount === 0) {
-                            // Hide chart and show no courses message
-                            document.getElementById("course-status-chart").style.display = 'none';
-                            document.getElementById("no-courses-message").classList.remove('d-none');
-                        } else {
-                            // Render chart normally
-                            var ctx = document.getElementById("course-status-chart").getContext("2d");
-                            new Chart(ctx, {
-                                type: "doughnut",
-                                data: {
-                                    labels: ["Published", "Draft", "Pending Approval"],
-                                    datasets: [{
-                                        data: [publishedCount, draftCount, pendingCount],
-                                        backgroundColor: ["#0acf97", "#727cf5", "#fa5c7c"],
-                                        hoverBackgroundColor: ["#0acf97cc", "#727cf5cc", "#fa5c7ccc"],
-                                        borderWidth: 2,
-                                    }],
-                                },
-                                options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    cutout: "55%",
-                                    plugins: {
-                                        legend: {
-                                            position: "bottom",
-                                            labels: {
-                                                color: "#6c757d",
-                                                font: {
-                                                    size: 14
-                                                },
-                                            },
-                                        },
-                                        tooltip: {
-                                            enabled: true,
-                                            callbacks: {
-                                                label: function(tooltipItem) {
-                                                    return `${tooltipItem.label}: ${tooltipItem.raw}`;
-                                                },
-                                            },
-                                        },
-                                    },
-                                },
-                            });
-                        }
-                    } catch (error) {
-                        console.error("JSON Parse Error:", error);
-                    }
-                })
-                .catch(error => console.error("Error fetching course data:", error));
-        });
-    </script>
-</div><!-- end card body-->
+                                                        // Check if all counts are zero
+                                                        if (publishedCount === 0 && draftCount === 0 && pendingCount === 0) {
+                                                            // Hide chart and show no courses message
+                                                            document.getElementById("course-status-chart").style.display = 'none';
+                                                            document.getElementById("no-courses-message").classList.remove('d-none');
+                                                        } else {
+                                                            // Render chart normally
+                                                            var ctx = document.getElementById("course-status-chart").getContext("2d");
+                                                            new Chart(ctx, {
+                                                                type: "doughnut",
+                                                                data: {
+                                                                    labels: ["Published", "Draft", "Pending Approval"],
+                                                                    datasets: [{
+                                                                        data: [publishedCount, draftCount, pendingCount],
+                                                                        backgroundColor: ["#0acf97", "#727cf5", "#fa5c7c"],
+                                                                        hoverBackgroundColor: ["#0acf97cc", "#727cf5cc", "#fa5c7ccc"],
+                                                                        borderWidth: 2,
+                                                                    }],
+                                                                },
+                                                                options: {
+                                                                    responsive: true,
+                                                                    maintainAspectRatio: false,
+                                                                    cutout: "55%",
+                                                                    plugins: {
+                                                                        legend: {
+                                                                            position: "bottom",
+                                                                            labels: {
+                                                                                color: "#6c757d",
+                                                                                font: {
+                                                                                    size: 14
+                                                                                },
+                                                                            },
+                                                                        },
+                                                                        tooltip: {
+                                                                            enabled: true,
+                                                                            callbacks: {
+                                                                                label: function(tooltipItem) {
+                                                                                    return `${tooltipItem.label}: ${tooltipItem.raw}`;
+                                                                                },
+                                                                            },
+                                                                        },
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    } catch (error) {
+                                                        console.error("JSON Parse Error:", error);
+                                                    }
+                                                })
+                                                .catch(error => console.error("Error fetching course data:", error));
+                                        });
+                                    </script>
+                                </div><!-- end card body-->
                             </div> <!-- end card -->
                         </div><!-- end col-->
 
@@ -375,8 +417,8 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                         }
 
                         // Fetch latest 9 courses with category
-// Fetch latest 9 courses with subcategory
-$sql = "SELECT c.course_id, c.title, c.price, c.status, c.created_at, 
+                        // Fetch latest 9 courses with subcategory
+                        $sql = "SELECT c.course_id, c.title, c.price, c.status, c.created_at, 
                COALESCE(sub.name, 'Uncategorized') AS subcategory
         FROM courses c
         LEFT JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id

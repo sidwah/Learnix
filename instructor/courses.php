@@ -120,6 +120,23 @@ $result = $stmt->get_result();
         table.dataTable>tbody>tr.child ul.dtr-details {
             display: none !important;
         }
+        
+        /* Custom overlay styles */
+        .custom-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 9998;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
     </style>
 </head>
 
@@ -315,15 +332,14 @@ $result = $stmt->get_result();
                                                                 </a>
                                                                 <?php if ($course['status'] === 'Draft'): ?>
                                                                     <a href="javascript:void(0);"
-                                                                        onclick="prepareCourseForPublication(<?php echo $course['course_id']; ?>)"
-                                                                        class="action-icon" title="Publish">
-                                                                        <i class="mdi mdi-publish"></i>
+                                                                        class="action-icon text-danger delete-course"
+                                                                        data-course-id="<?php echo $course['course_id']; ?>"
+                                                                        data-course-title="<?php echo htmlspecialchars($course['title']); ?>"
+                                                                        title="Delete">
+                                                                        <i class="mdi mdi-delete"></i>
                                                                     </a>
                                                                 <?php endif; ?>
-                                                                <a href="javascript:void(0);"
-                                                                    class="action-icon text-danger" title="Delete">
-                                                                    <i class="mdi mdi-delete"></i>
-                                                                </a>
+
                                                             </td>
                                                         </tr>
                                                     <?php endwhile; ?>
@@ -346,52 +362,57 @@ $result = $stmt->get_result();
                             </div> <!-- end col -->
                         </div>
 
+                        <!-- Delete Course Confirmation Modal -->
+                        <div class="modal fade" id="deleteCourseModal" tabindex="-1" aria-labelledby="deleteCourseModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-scrollable ">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-danger text-white">
+                                        <h5 class="modal-title" id="deleteCourseModalLabel">Confirm Deletion</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Are you sure you want to delete this course? This action cannot be undone.</p>
+                                        <p class="mb-0"><strong>Course:</strong> <span id="courseToDelete"></span></p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-danger" id="confirmDeleteCourse">Delete Course</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <script>
+                            
                             document.addEventListener('DOMContentLoaded', function() {
                                 const createButtons = document.querySelectorAll('#createNewCourseBtn, #createFirstCourseBtn');
 
-                                function createOverlay(message = null) {
-                                    const overlay = document.createElement('div');
-                                    overlay.id = 'pageOverlay';
-                                    overlay.style.position = 'fixed';
-                                    overlay.style.top = '0';
-                                    overlay.style.left = '0';
-                                    overlay.style.width = '100%';
-                                    overlay.style.height = '100%';
-                                    overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-                                    overlay.style.backdropFilter = 'blur(5px)';
-                                    overlay.style.zIndex = '9998';
-                                    overlay.style.display = 'flex';
-                                    overlay.style.flexDirection = 'column';
-                                    overlay.style.justifyContent = 'center';
-                                    overlay.style.alignItems = 'center';
-                                    overlay.style.gap = '15px';
-
-                                    // Add loading spinner
-                                    const spinner = document.createElement('div');
-                                    spinner.className = 'spinner-border text-primary';
-                                    spinner.setAttribute('role', 'status');
-                                    spinner.style.width = '3rem';
-                                    spinner.style.height = '3rem';
-                                    spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
-                                    overlay.appendChild(spinner);
-
-                                    // Add message if provided
-                                    if (message) {
-                                        const messageElement = document.createElement('div');
-                                        messageElement.className = 'fw-semibold fs-5 text-primary';
-                                        messageElement.textContent = message;
-                                        overlay.appendChild(messageElement);
+                                // Centralized utility functions for overlay and notifications
+                                function showOverlay(message = null) {
+                                    // Remove any existing overlay
+                                    const existingOverlay = document.querySelector('.custom-overlay');
+                                    if (existingOverlay) {
+                                        existingOverlay.remove();
                                     }
+
+                                    // Create new overlay
+                                    const overlay = document.createElement('div');
+                                    overlay.className = 'custom-overlay';
+                                    overlay.innerHTML = `
+                                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        ${message ? `<div class="fw-semibold fs-5 text-primary">${message}</div>` : ''}
+                                    `;
 
                                     document.body.appendChild(overlay);
                                     return overlay;
                                 }
 
                                 function removeOverlay() {
-                                    const overlay = document.getElementById('pageOverlay');
+                                    const overlay = document.querySelector('.custom-overlay');
                                     if (overlay) {
-                                        document.body.removeChild(overlay);
+                                        overlay.remove();
                                     }
                                 }
 
@@ -400,9 +421,10 @@ $result = $stmt->get_result();
                                     alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
                                     alertDiv.setAttribute('role', 'alert');
                                     alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
+                                        ${message}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    `;
+                                    // Position the alert
                                     alertDiv.style.position = 'fixed';
                                     alertDiv.style.top = '20px';
                                     alertDiv.style.left = '50%';
@@ -410,8 +432,10 @@ $result = $stmt->get_result();
                                     alertDiv.style.zIndex = '9999';
                                     alertDiv.style.minWidth = '300px';
                                     alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                                    
                                     document.body.appendChild(alertDiv);
-
+                                    
+                                    // Auto-dismiss after 5 seconds
                                     setTimeout(() => {
                                         if (alertDiv.parentNode) {
                                             alertDiv.classList.remove('show');
@@ -428,7 +452,7 @@ $result = $stmt->get_result();
                                     e.preventDefault();
 
                                     // Create loading overlay with message
-                                    const overlay = createOverlay('Preparing new course...');
+                                    showOverlay('Preparing new course...');
 
                                     fetch('../ajax/courses/start_course.php', {
                                             method: 'POST',
@@ -501,13 +525,66 @@ $result = $stmt->get_result();
                                         $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
                                     }
                                 });
-                            });
+                                
+                                // Course deletion functionality
+                                let courseIdToDelete = null;
 
-                            function prepareCourseForPublication(courseId) {
-                                // Your existing publish function implementation
-                                console.log('Preparing to publish course:', courseId);
-                                // Add your publish logic here
-                            }
+                                function showDeleteCourseModal(courseId, courseTitle) {
+                                    courseIdToDelete = courseId;
+                                    document.getElementById('courseToDelete').textContent = courseTitle || 'This course';
+                                    const deleteModal = new bootstrap.Modal(document.getElementById('deleteCourseModal'));
+                                    deleteModal.show();
+                                }
+
+                                function deleteCourse(courseId) {
+                                    showOverlay('Deleting course...');
+                                    
+                                    fetch(`../ajax/courses/delete_course.php`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        },
+                                        body: JSON.stringify({ course_id: courseId })
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        removeOverlay();
+                                        if (data.success) {
+                                            // Show success notification
+                                            showAlert('success', 'Course deleted successfully');
+                                            
+                                            // Remove the row from the DataTable
+                                            const table = $('#courses-datatable').DataTable();
+                                            table.row($(`tr[data-course-id="${courseId}"]`)).remove().draw();
+                                        } else {
+                                            showAlert('danger', data.message || 'Failed to delete course');
+                                        }
+                                    })
+                                    .catch(error => {
+                                        removeOverlay();
+                                        console.error('Error:', error);
+                                        showAlert('danger', 'An error occurred while deleting the course');
+                                    });
+                                }
+                                
+                                // Attach event handlers for delete functionality
+                                $(document).on('click', '.delete-course', function(e) {
+                                    e.preventDefault();
+                                    const courseId = $(this).data('course-id');
+                                    const courseTitle = $(this).data('course-title');
+                                    showDeleteCourseModal(courseId, courseTitle);
+                                });
+                                
+                                document.getElementById('confirmDeleteCourse').addEventListener('click', function() {
+                                    if (courseIdToDelete) {
+                                        deleteCourse(courseIdToDelete);
+                                        // Close the modal
+                                        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteCourseModal'));
+                                        deleteModal.hide();
+                                    }
+                                });
+                            });
                         </script>
                         <?php
                         $stmt->close();
@@ -656,47 +733,8 @@ $result = $stmt->get_result();
     <script src="assets/js/vendor/dataTables.checkboxes.min.js"></script>
     <!-- third party js ends -->
 
-    <!-- demo app -->
-    <!-- <script src="assets/js/pages/demo.datatable-init.js"></script> -->
-    <!-- end demo js-->
-
-    <!-- Custom script for course management -->
+    <!-- Custom script for course preview modal -->
     <script>
-        // Enhanced course management functions
-        function deleteCourse(courseId) {
-            if (confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
-                fetch(`../ajax/courses/delete_course.php?course_id=${courseId}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showAlert('success', 'Course deleted successfully');
-                            // Refresh the table or remove the row
-                            $('#courses-datatable').DataTable().ajax.reload();
-                        } else {
-                            showAlert('danger', data.message || 'Failed to delete course');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showAlert('danger', 'An error occurred while deleting the course');
-                    });
-            }
-        }
-
-        // Initialize delete buttons
-        document.addEventListener('DOMContentLoaded', function() {
-            $(document).on('click', '.delete-course', function() {
-                const courseId = $(this).data('course-id');
-                deleteCourse(courseId);
-            });
-        });
-
         // Course preview modal functionality
         document.addEventListener('DOMContentLoaded', function() {
             const previewModal = new bootstrap.Modal(document.getElementById('coursePreviewModal'));
@@ -740,7 +778,6 @@ $result = $stmt->get_result();
                 // Update Edit Course button URL
                 $('#previewEditButton').attr('href', `course-creator.php?course_id=${course.course_id}`);
 
-                // Set thumbnail
                 // Set thumbnail - use icon placeholder if no image available
                 if (course.thumbnail) {
                     // Show actual thumbnail image
@@ -766,7 +803,7 @@ $result = $stmt->get_result();
 
                 // Set price
                 const priceDisplay = parseFloat(course.price) > 0 ?
-                    '$' + parseFloat(course.price).toFixed(2) :
+                    "$" + parseFloat(course.price).toFixed(2) :
                     'Free';
                 $('#previewPrice').text(priceDisplay);
 
@@ -941,15 +978,13 @@ $result = $stmt->get_result();
                 // Create error display in the modal
                 $('#coursePreviewLoader').hide();
                 $('#coursePreviewContent').html(`
-            <div class="alert alert-danger">
-                <i class="mdi mdi-alert-circle-outline me-2"></i>
-                ${message}
-            </div>
-        `).show();
+                    <div class="alert alert-danger">
+                        <i class="mdi mdi-alert-circle-outline me-2"></i>
+                        ${message}
+                    </div>
+                `).show();
             }
         });
     </script>
-
 </body>
-
 </html>

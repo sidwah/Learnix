@@ -1,34 +1,36 @@
-<div class="navbar-custom">
-    <ul class="list-unstyled topbar-menu float-end mb-0">
-        <li class="dropdown notification-list">
-            <a class="nav-link dropdown-toggle nav-user arrow-none me-0" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
-                <span class="account-user-avatar">
-                    <?php
-                    include("../backend/config.php");
-                    // Near the top of your file where you fetch user data
-                    $user_id = $_SESSION['user_id'];
+<?php
+include("../backend/config.php");
+// Near the top of your file where you fetch user data
+$user_id = $_SESSION['user_id'];
 
-                    // Get user profile pic, name and verification status
-                    $query = "SELECT u.profile_pic, u.first_name, u.last_name, i.verification_status 
+// Get user profile pic, name and verification status
+$query = "SELECT u.profile_pic, u.first_name, u.last_name, i.verification_status 
                   FROM users u 
                   LEFT JOIN instructors i ON u.user_id = i.user_id 
                   WHERE u.user_id = ?";
-                    $stmt = mysqli_prepare($conn, $query);
-                    mysqli_stmt_bind_param($stmt, "i", $user_id);
-                    mysqli_stmt_execute($stmt);
-                    $result = mysqli_stmt_get_result($stmt);
-                    $userData = mysqli_fetch_assoc($result);
+$stmt = mysqli_prepare($conn, $query);
+mysqli_stmt_bind_param($stmt, "i", $user_id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$userData = mysqli_fetch_assoc($result);
 
-                    // Set profile image path
-                    $defaultImage = "default.png";
-                    $profileImage = $userData['profile_pic'] ? "../uploads/instructor-profile/" . $userData['profile_pic'] : $defaultImage;
+// Set profile image path
+$defaultImage = "default.png";
+$profileImage = $userData['profile_pic'] ? "../uploads/instructor-profile/" . $userData['profile_pic'] : $defaultImage;
 
-                    // Store user name for display
-                    $userName = $userData['first_name'] . ' ' . $userData['last_name'];
+// Store user name for display
+$userName = $userData['first_name'] . ' ' . $userData['last_name'];
 
-                    // Determine verification status
-                    $isVerified = isset($userData['verification_status']) && $userData['verification_status'] === 'verified';
-                    ?>
+// Determine verification status
+$isVerified = isset($userData['verification_status']) && $userData['verification_status'] === 'verified';
+?>
+<div class="navbar-custom">
+    <ul class="list-unstyled topbar-menu float-end mb-0">
+
+        <li class="dropdown notification-list">
+            <a class="nav-link dropdown-toggle nav-user arrow-none me-0" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                <span class="account-user-avatar">
+
                     <!-- Profile image with verification badge -->
                     <div style="position: relative; display: inline-block;">
                         <img src="<?php echo htmlspecialchars($profileImage); ?>" alt="user-image" class="rounded-circle avatar-lg img-thumbnail">
@@ -93,5 +95,14 @@
         } catch (error) {
             console.error("Error fetching instructor details:", error);
         }
+
+        // Auto-fade success message after 5 seconds
+        setTimeout(() => {
+            const successAlert = document.querySelector('.verification-success');
+            if (successAlert) {
+                const bsAlert = new bootstrap.Alert(successAlert);
+                bsAlert.close();
+            }
+        }, 5000);
     });
 </script>
