@@ -1,4 +1,5 @@
 <?php
+// ../ajax/content/save_video.php
 require '../../backend/session_start.php';
 require '../../backend/config.php';
 
@@ -8,31 +9,65 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     exit;
 }
 
+// Get input data - handle both POST and JSON input
+$contentType = isset($_SERVER["CONTENT_TYPE"]) ? trim($_SERVER["CONTENT_TYPE"]) : '';
+$isJson = strpos($contentType, 'application/json') !== false;
+
+if ($isJson) {
+    // Handle JSON input
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
+
+    // Extract data fields
+    $topic_id = isset($data['topic_id']) ? intval($data['topic_id']) : 0;
+    $title = isset($data['title']) ? trim($data['title']) : '';
+    $description = isset($data['description']) ? trim($data['description']) : '';
+    $content_id = isset($data['content_id']) ? intval($data['content_id']) : 0;
+    $source = isset($data['source']) ? trim($data['source']) : 'url';
+    
+    if ($source === 'url') {
+        $video_url = isset($data['video_url']) ? trim($data['video_url']) : '';
+        $video_file = null;
+    } else {
+        $video_url = null;
+        $video_file = isset($data['video_file']) ? trim($data['video_file']) : '';
+    }
+} else {
+    // Handle form POST data
+    $topic_id = isset($_POST['topic_id']) ? intval($_POST['topic_id']) : 0;
+    $title = isset($_POST['title']) ? trim($_POST['title']) : '';
+    $description = isset($_POST['description']) ? trim($_POST['description']) : '';
+    $content_id = isset($_POST['content_id']) ? intval($_POST['content_id']) : 0;
+    $source = isset($_POST['source']) ? trim($_POST['source']) : 'url';
+    
+    if ($source === 'url') {
+        $video_url = isset($_POST['video_url']) ? trim($_POST['video_url']) : '';
+        $video_file = null;
+    } else {
+        $video_url = null;
+        $video_file = isset($_POST['video_file']) ? trim($_POST['video_file']) : '';
+    }
+}
+
 // Validate required input
-if (!isset($_POST['topic_id']) || !isset($_POST['title']) || !isset($_POST['video_url'])) {
+if (!$topic_id || empty($title)) {
     echo json_encode(['success' => false, 'message' => 'Missing required parameters']);
     exit;
 }
 
-$topic_id = intval($_POST['topic_id']);
-$title = trim($_POST['title']);
-$video_url = trim($_POST['video_url']);
-$description = isset($_POST['description']) ? trim($_POST['description']) : '';
-$content_id = isset($_POST['content_id']) ? intval($_POST['content_id']) : 0;
-
-// Validate input
-if (empty($title)) {
-    echo json_encode(['success' => false, 'message' => 'Title cannot be empty']);
-    exit;
-}
-
-if (empty($video_url)) {
+// Validate content based on source
+if ($source === 'url' && empty($video_url)) {
     echo json_encode(['success' => false, 'message' => 'Video URL cannot be empty']);
     exit;
 }
 
-// Validate video URL
-if (!filter_var($video_url, FILTER_VALIDATE_URL)) {
+if ($source === 'upload' && empty($video_file) && !isset($_FILES['video_file'])) {
+    echo json_encode(['success' => false, 'message' => 'Video file cannot be empty']);
+    exit;
+}
+
+// Validate video URL if source is url
+if ($source === 'url' && !filter_var($video_url, FILTER_VALIDATE_URL)) {
     echo json_encode(['success' => false, 'message' => 'Invalid video URL format']);
     exit;
 }
@@ -56,6 +91,46 @@ if (!$topic_data || $topic_data['instructor_id'] != $_SESSION['instructor_id']) 
     exit;
 }
 
+// Handle file upload if source is upload and a new file is being uploaded
+if ($source === 'upload' && isset($_FILES['video_file']) && $_FILES['video_file']['error'] === UPLOAD_ERR_OK) {
+    $file = $_FILES['video_file'];
+    
+    // Validate file type
+    $allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska'];
+    $fileType = $file['type'];
+    
+    if (!in_array($fileType, $allowedTypes)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid file type. Allowed types: MP4, WebM, MOV, MKV']);
+        exit;
+    }
+    
+    // Validate file size (max 100MB)
+    $maxSize = 100 * 1024 * 1024; // 100MB in bytes
+    if ($file['size'] > $maxSize) {
+        echo json_encode(['success' => false, 'message' => 'File size exceeds the 100MB limit']);
+        exit;
+    }
+    
+    // Generate unique filename
+    $filename = 'video_topic_' . $topic_id . '_' . time() . '_' . rand(1000, 9999) . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+    $uploadDir = '../../uploads/videos/';
+    
+    // Create directory if it doesn't exist
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    
+    $targetPath = $uploadDir . $filename;
+    
+    // Move uploaded file
+    if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+        $video_file = $filename;
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to upload file']);
+        exit;
+    }
+}
+
 // Start transaction
 $conn->begin_transaction();
 
@@ -74,52 +149,68 @@ try {
         $stmt->close();
         
         if ($current_content) {
-            // Save the current version
-            $stmt = $conn->prepare("
-                INSERT INTO topic_content_versions 
-                (content_id, version_number, content_data, created_by, created_at)
-                SELECT 
-                    ?, 
-                    IFNULL((SELECT MAX(version_number) FROM topic_content_versions WHERE content_id = ?) + 1, 1),
-                    JSON_OBJECT(
-                        'title', ?,
-                        'content_type', ?,
-                        'video_url', ?,
-                        'description', ?,
-                        'position', ?
-                    ),
-                    ?,
-                    NOW()
-            ");
-            $stmt->bind_param(
-                "iissssis",
-                $content_id,
-                $content_id,
-                $current_content['title'],
-                $current_content['content_type'],
-                $current_content['video_url'],
-                $current_content['description'],
-                $current_content['position'],
-                $_SESSION['user_id']
-            );
-            $stmt->execute();
-            $stmt->close();
+            // Save the current version if versioning table exists
+            if ($conn->query("SHOW TABLES LIKE 'topic_content_versions'")->num_rows > 0) {
+                $stmt = $conn->prepare("
+                    INSERT INTO topic_content_versions 
+                    (content_id, version_number, content_data, created_by, created_at)
+                    SELECT 
+                        ?, 
+                        IFNULL((SELECT MAX(version_number) FROM topic_content_versions WHERE content_id = ?) + 1, 1),
+                        JSON_OBJECT(
+                            'title', ?,
+                            'content_type', ?,
+                            'video_url', ?,
+                            'video_file', ?,
+                            'description', ?,
+                            'position', ?
+                        ),
+                        ?,
+                        NOW()
+                ");
+                $stmt->bind_param(
+                    "iisssssis",
+                    $content_id,
+                    $content_id,
+                    $current_content['title'],
+                    $current_content['content_type'],
+                    $current_content['video_url'],
+                    $current_content['video_file'],
+                    $current_content['description'],
+                    $current_content['position'],
+                    $_SESSION['user_id']
+                );
+                $stmt->execute();
+                $stmt->close();
+            }
         }
         
-        // Update existing content
-        $stmt = $conn->prepare("
-            UPDATE topic_content
-            SET title = ?, video_url = ?, description = ?, updated_at = NOW()
-            WHERE content_id = ? AND topic_id = ?
-        ");
-        $stmt->bind_param("sssii", $title, $video_url, $description, $content_id, $topic_id);
+        // Update existing content based on source
+        if ($source === 'url') {
+            $stmt = $conn->prepare("
+                UPDATE topic_content
+                SET title = ?, video_url = ?, video_file = NULL, description = ?, updated_at = NOW()
+                WHERE content_id = ? AND topic_id = ?
+            ");
+            $stmt->bind_param("sssii", $title, $video_url, $description, $content_id, $topic_id);
+        } else {
+            $stmt = $conn->prepare("
+                UPDATE topic_content
+                SET title = ?, video_url = NULL, video_file = ?, description = ?, updated_at = NOW()
+                WHERE content_id = ? AND topic_id = ?
+            ");
+            $stmt->bind_param("sssii", $title, $video_file, $description, $content_id, $topic_id);
+        }
+        
         $stmt->execute();
         $stmt->close();
         
         echo json_encode([
             'success' => true,
             'message' => 'Video content updated successfully',
-            'content_id' => $content_id
+            'content_id' => $content_id,
+            'source' => $source,
+            'file_path' => $source === 'upload' ? $video_file : null
         ]);
     } else {
         // Check if any content already exists for this topic
@@ -138,13 +229,23 @@ try {
             $stmt->close();
         }
         
-        // Create new content
-        $stmt = $conn->prepare("
-            INSERT INTO topic_content 
-            (topic_id, content_type, title, video_url, description, position, created_at)
-            VALUES (?, 'video', ?, ?, ?, 0, NOW())
-        ");
-        $stmt->bind_param("isss", $topic_id, $title, $video_url, $description);
+        // Create new content based on source
+        if ($source === 'url') {
+            $stmt = $conn->prepare("
+                INSERT INTO topic_content 
+                (topic_id, content_type, title, video_url, description, position, created_at)
+                VALUES (?, 'video', ?, ?, ?, 0, NOW())
+            ");
+            $stmt->bind_param("isss", $topic_id, $title, $video_url, $description);
+        } else {
+            $stmt = $conn->prepare("
+                INSERT INTO topic_content 
+                (topic_id, content_type, title, video_file, description, position, created_at)
+                VALUES (?, 'video', ?, ?, ?, 0, NOW())
+            ");
+            $stmt->bind_param("isss", $topic_id, $title, $video_file, $description);
+        }
+        
         $stmt->execute();
         $new_content_id = $stmt->insert_id;
         $stmt->close();
@@ -152,7 +253,9 @@ try {
         echo json_encode([
             'success' => true,
             'message' => 'Video content created successfully',
-            'content_id' => $new_content_id
+            'content_id' => $new_content_id,
+            'source' => $source,
+            'file_path' => $source === 'upload' ? $video_file : null
         ]);
     }
     

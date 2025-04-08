@@ -1,3 +1,5 @@
+
+
 <?php
 require '../backend/session_start.php'; // Ensure session is started
 require '../backend/config.php'; // Ensure session is started
@@ -42,6 +44,7 @@ if (!$course) {
 $current_step = isset($course['creation_step']) ? intval($course['creation_step']) : 1;
 $max_step = 6; // Total number of steps in the wizard
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 

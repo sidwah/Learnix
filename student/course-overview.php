@@ -1386,7 +1386,7 @@ LIMIT 3";
 
             // Load preview content
             $.ajax({
-                url: '../ajax/get-preview-content.php',
+                url: '../ajax/preview/get-preview-content.php',
                 type: 'GET',
                 data: {
                     course_id: <?php echo $course_id; ?>,

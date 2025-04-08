@@ -1,4 +1,5 @@
 <?php
+// Path: ajax/preview/load_topic_content.php
 require '../../backend/session_start.php';
 
 // Check if user is signed in as instructor
@@ -150,19 +151,38 @@ switch ($content['content_type']) {
                 }
             }
         } else {
-            // If no video source in the table, use the video URL from content
-            $video_source = [
-                'source_url' => $content['video_url'],
-                'provider' => 'HTML5', // Default to HTML5
-                'duration_seconds' => 0
-            ];
-            
-            // Auto-detect provider based on URL
-            if (strpos($content['video_url'], 'youtube.com') !== false || 
-                strpos($content['video_url'], 'youtu.be') !== false) {
-                $video_source['provider'] = 'YouTube';
-            } elseif (strpos($content['video_url'], 'vimeo.com') !== false) {
-                $video_source['provider'] = 'Vimeo';
+            // If no video source in the table, determine source from content
+            if (!empty($content['video_url'])) {
+                // Use the video URL from content
+                $video_source = [
+                    'source_url' => $content['video_url'],
+                    'provider' => 'HTML5', // Default to HTML5
+                    'duration_seconds' => 0
+                ];
+                
+                // Auto-detect provider based on URL
+                if (strpos($content['video_url'], 'youtube.com') !== false || 
+                    strpos($content['video_url'], 'youtu.be') !== false) {
+                    $video_source['provider'] = 'YouTube';
+                } elseif (strpos($content['video_url'], 'vimeo.com') !== false) {
+                    $video_source['provider'] = 'Vimeo';
+                }
+            } 
+            elseif (!empty($content['video_file'])) {
+                // Use the uploaded video file
+                $video_source = [
+                    'source_url' => '../uploads/videos/' . $content['video_file'],
+                    'provider' => 'Uploaded', // Custom provider for uploaded files
+                    'duration_seconds' => 0
+                ];
+            }
+            else {
+                // No video source found
+                $video_source = [
+                    'source_url' => '',
+                    'provider' => 'None',
+                    'duration_seconds' => 0
+                ];
             }
         }
         $stmt->close();
@@ -252,7 +272,22 @@ switch ($content['content_type']) {
                     echo '<p>URL: ' . htmlspecialchars($source_url) . '</p>';
                     echo '</div>';
                 }
-            } else {
+            } 
+            elseif ($video_source['provider'] == 'Uploaded') {
+                // Uploaded video file - display using HTML5 video player
+                echo '<div class="mb-3">';
+                echo '<video controls class="w-100" style="max-height: 500px;">';
+                echo '<source src="' . htmlspecialchars($source_url) . '" type="video/mp4">';
+                echo 'Your browser does not support HTML5 video.';
+                echo '</video>';
+                echo '</div>';
+                
+                echo '<div class="alert alert-info mb-3">';
+                echo '<h5 class="alert-heading">Uploaded Video</h5>';
+                echo '<p class="mb-0">This is a video file that was uploaded directly to the platform.</p>';
+                echo '</div>';
+            }
+            else {
                 // Default HTML5 or other video provider
                 echo '<div class="alert alert-info">';
                 echo '<h5 class="alert-heading">Video Content</h5>';
@@ -276,7 +311,7 @@ switch ($content['content_type']) {
         } else {
             echo '<div class="alert alert-warning">';
             echo '<h5 class="alert-heading">No Video Source</h5>';
-            echo '<p>No video source is associated with this content. Please add a video URL.</p>';
+            echo '<p>No video source is associated with this content. Please add a video URL or upload a video file.</p>';
             echo '</div>';
         }
         
