@@ -120,7 +120,7 @@ $result = $stmt->get_result();
         table.dataTable>tbody>tr.child ul.dtr-details {
             display: none !important;
         }
-        
+
         /* Custom overlay styles */
         .custom-overlay {
             position: fixed;
@@ -383,7 +383,6 @@ $result = $stmt->get_result();
                         </div>
 
                         <script>
-                            
                             document.addEventListener('DOMContentLoaded', function() {
                                 const createButtons = document.querySelectorAll('#createNewCourseBtn, #createFirstCourseBtn');
 
@@ -432,9 +431,9 @@ $result = $stmt->get_result();
                                     alertDiv.style.zIndex = '9999';
                                     alertDiv.style.minWidth = '300px';
                                     alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                                    
+
                                     document.body.appendChild(alertDiv);
-                                    
+
                                     // Auto-dismiss after 5 seconds
                                     setTimeout(() => {
                                         if (alertDiv.parentNode) {
@@ -525,7 +524,7 @@ $result = $stmt->get_result();
                                         $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
                                     }
                                 });
-                                
+
                                 // Course deletion functionality
                                 let courseIdToDelete = null;
 
@@ -538,36 +537,38 @@ $result = $stmt->get_result();
 
                                 function deleteCourse(courseId) {
                                     showOverlay('Deleting course...');
-                                    
+
                                     fetch(`../ajax/courses/delete_course.php`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-Requested-With': 'XMLHttpRequest'
-                                        },
-                                        body: JSON.stringify({ course_id: courseId })
-                                    })
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        removeOverlay();
-                                        if (data.success) {
-                                            // Show success notification
-                                            showAlert('success', 'Course deleted successfully');
-                                            
-                                            // Remove the row from the DataTable
-                                            const table = $('#courses-datatable').DataTable();
-                                            table.row($(`tr[data-course-id="${courseId}"]`)).remove().draw();
-                                        } else {
-                                            showAlert('danger', data.message || 'Failed to delete course');
-                                        }
-                                    })
-                                    .catch(error => {
-                                        removeOverlay();
-                                        console.error('Error:', error);
-                                        showAlert('danger', 'An error occurred while deleting the course');
-                                    });
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-Requested-With': 'XMLHttpRequest'
+                                            },
+                                            body: JSON.stringify({
+                                                course_id: courseId
+                                            })
+                                        })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            removeOverlay();
+                                            if (data.success) {
+                                                // Show success notification
+                                                showAlert('success', 'Course deleted successfully');
+
+                                                // Remove the row from the DataTable
+                                                const table = $('#courses-datatable').DataTable();
+                                                table.row($(`tr[data-course-id="${courseId}"]`)).remove().draw();
+                                            } else {
+                                                showAlert('danger', data.message || 'Failed to delete course');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            removeOverlay();
+                                            console.error('Error:', error);
+                                            showAlert('danger', 'An error occurred while deleting the course');
+                                        });
                                 }
-                                
+
                                 // Attach event handlers for delete functionality
                                 $(document).on('click', '.delete-course', function(e) {
                                     e.preventDefault();
@@ -575,7 +576,7 @@ $result = $stmt->get_result();
                                     const courseTitle = $(this).data('course-title');
                                     showDeleteCourseModal(courseId, courseTitle);
                                 });
-                                
+
                                 document.getElementById('confirmDeleteCourse').addEventListener('click', function() {
                                     if (courseIdToDelete) {
                                         deleteCourse(courseIdToDelete);
@@ -987,4 +988,5 @@ $result = $stmt->get_result();
         });
     </script>
 </body>
+
 </html>
