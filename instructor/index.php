@@ -555,6 +555,8 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
         </div>
         <!-- END wrapper -->
 
+    <?php include '../includes/instructor-darkmode.php'; ?>
+
         <!-- bundle -->
         <script src="assets/js/vendor.min.js"></script>
         <script src="assets/js/app.min.js"></script>

@@ -21,7 +21,7 @@ $user_id = $_SESSION['user_id'];
 // Check if course_id is provided in the URL
 if (!isset($_GET['course_id']) || !is_numeric($_GET['course_id'])) {
     // Redirect to courses page if no valid ID is provided
-    header("Location: courses.php");
+    echo "<script>window.location.href ='courses.php'; </script>";
     exit();
 }
 
@@ -67,7 +67,7 @@ $result = $stmt->get_result();
 // Check if course exists and is published
 if ($result->num_rows === 0) {
     // Redirect to courses page if course not found
-    header("Location: courses.php");
+    echo "<script>window.location.href ='courses.php'; </script>";
     exit();
 }
 
@@ -822,5 +822,6 @@ foreach ($sections as $sec) {
         <i class="bi bi-chat-fill"></i>
     </button>
 </div>
+
 
 <?php include '../includes/student-footer.php'; ?>

@@ -363,6 +363,8 @@ $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';
     </div>
     <!-- END wrapper -->
 
+    <?php include '../includes/instructor-darkmode.php'; ?>
+
     <!-- Question Types Modal -->
     <div class="modal fade" id="questionTypesModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">

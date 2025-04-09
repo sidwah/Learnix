@@ -323,6 +323,9 @@ $has_students = $row['has_students'];
 
     </div>
     <!-- END wrapper -->
+     
+
+    <?php include '../includes/instructor-darkmode.php'; ?>
 
     <!-- bundle -->
     <script src="assets/js/vendor.min.js"></script>

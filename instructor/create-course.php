@@ -128,6 +128,8 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     </div>
     <!-- END wrapper -->
 
+    <?php include '../includes/instructor-darkmode.php'; ?>
+
 
     <!-- Include jQuery & TouchSpin (if not already included in your project) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>

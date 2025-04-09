@@ -364,6 +364,8 @@ $max_step = 6; // Total number of steps in the wizard
     </div>
     <!-- END wrapper -->
 
+    <?php include '../includes/instructor-darkmode.php'; ?>
+
     <!-- Show alert notification function -->
     <script>
         function showAlert(type, message) {

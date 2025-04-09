@@ -652,6 +652,8 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
     </div>
     <!-- END wrapper -->
 
+    <?php include '../includes/instructor-darkmode.php'; ?>
+
     <!-- Quiz Results Modal -->
     <div class="modal fade" id="quiz-results-modal" tabindex="-1" aria-labelledby="quizResultsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">

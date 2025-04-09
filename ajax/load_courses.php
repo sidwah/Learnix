@@ -37,7 +37,7 @@ $query = "SELECT c.*, i.user_id, u.first_name, u.last_name, u.profile_pic,
           LEFT JOIN course_ratings cr ON c.course_id = cr.course_id
           LEFT JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
           LEFT JOIN categories cat ON sub.category_id = cat.category_id
-          WHERE c.status = 'Published'";
+          WHERE c.status = 'Published' AND c.approval_status = 'Approved'";
 
 // Add filters
 if ($price_filter == 'free') {
