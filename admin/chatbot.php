@@ -1,4 +1,6 @@
-<?php 
+<?php
+// chatbot.php
+ 
 // Security and authentication check
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {

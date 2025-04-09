@@ -1,4 +1,5 @@
 <?php
+// admin-header.php
 require '../backend/session_start.php'; // Ensure session is started
 require '../backend/config.php'; // Ensure session is started
 
@@ -83,4 +84,161 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
 
 
+<!-- Dark Reader Library - A popular and simple dark mode solution -->
+<script src="https://cdn.jsdelivr.net/npm/darkreader@4.9.58/darkreader.min.js"></script>
+
+<!-- Simple Dark Mode Toggle Script -->
+<script>
+// Check for saved preference
+document.addEventListener('DOMContentLoaded', function() {
+    // Create toggle button
+    const headerNav = document.querySelector('.navbar-nav');
+    if (headerNav) {
+        const toggleBtn = document.createElement('li');
+        toggleBtn.className = 'nav-item me-2';
+        toggleBtn.innerHTML = `
+            <button id="darkModeToggle" class="btn btn-outline-primary btn-sm" title="Toggle Dark Mode">
+                <i class="bi-moon-stars"></i>
+                <span class="d-none d-md-inline-block ms-1">Dark Mode</span>
+            </button>
+        `;
+        headerNav.prepend(toggleBtn);
+        
+        // Apply saved preference
+        const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+        if (darkModeEnabled) {
+            enableDarkMode();
+        }
+        
+        // Add toggle listener
+        document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+    }
+});
+
+// Toggle dark mode function
+function toggleDarkMode() {
+    const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+    if (darkModeEnabled) {
+        disableDarkMode();
+    } else {
+        enableDarkMode();
+    }
+}
+
+// Enable dark mode
+function enableDarkMode() {
+    DarkReader.enable({
+        brightness: 100,
+        contrast: 90,
+        sepia: 10
+    });
+    localStorage.setItem('darkMode', 'true');
+    updateToggleButton(true);
+}
+
+// Disable dark mode
+function disableDarkMode() {
+    DarkReader.disable();
+    localStorage.setItem('darkMode', 'false');
+    updateToggleButton(false);
+}
+
+// Update button appearance
+function updateToggleButton(isDark) {
+    const btn = document.getElementById('darkModeToggle');
+    if (!btn) return;
+    
+    if (isDark) {
+        btn.innerHTML = `
+            <i class="bi-sun"></i>
+            <span class="d-none d-md-inline-block ms-1">Light Mode</span>
+        `;
+        btn.classList.add('active');
+    } else {
+        btn.innerHTML = `
+            <i class="bi-moon-stars"></i>
+            <span class="d-none d-md-inline-block ms-1">Dark Mode</span>
+        `;
+        btn.classList.remove('active');
+    }
+}
+</script>
+
+<script>
+  // Advanced DarkReader configuration for better styling
+// Add this to admin-header.php or create a separate JS file
+
+// This configuration provides more specific styling for the admin dashboard
+function configureDarkReader() {
+    DarkReader.setFetchMethod(window.fetch);
+    
+    // Custom dynamic theme
+    const options = {
+        brightness: 100,
+        contrast: 90,
+        sepia: 10,
+        
+        // Custom CSS to fix specific elements
+        css: `
+            /* Fix for tables */
+            .table-thead-bordered th {
+                border-color: #495057 !important;
+            }
+            
+            /* Fix for form elements */
+            .form-control, .form-select {
+                background-color: #2c3e50 !important;
+                color: #eee !important;
+            }
+            
+            /* Fix for modals */
+            .modal-content {
+                background-color: #1e2a36 !important;
+            }
+            
+            /* Fix for cards */
+            .card {
+                background-color: #1e2a36 !important;
+            }
+            
+            /* Fix for navbar */
+            .navbar-vertical.navbar-light {
+                background-color: #1e2a36 !important;
+            }
+        `,
+        
+        // Fix specific elements to always be light
+        ignoreInlineStyle: [
+            /* elements to ignore inline styles for */
+        ],
+        
+        // Custom fixes for specific elements
+        fixes: {
+            invert: [
+                /* elements to invert */
+                '.navbar-brand-logo', 
+                '.bi-box-arrow-right'
+            ],
+            
+            css: '',
+            
+            // Don't invert images
+            ignoreImageAnalysis: ['*'],
+            
+            // Don't apply filtering to certain elements
+            disableStyleSheetsProxy: true
+        }
+    };
+    
+    return options;
+}
+
+// When enabling dark mode, use the custom configuration
+function enableDarkMode() {
+    const options = configureDarkReader();
+    DarkReader.enable(options);
+    localStorage.setItem('darkMode', 'true');
+    updateToggleButton(true);
+}
+</script>
   

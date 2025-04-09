@@ -1,6 +1,9 @@
+<?php
+// admin-footer.php - Updated version with dark mode support
+?>
 <!-- ========== FOOTER SCRIPTS ========== -->
 <!-- JS Implementing Plugins -->
- <!-- Latest Tom Select JS from CDN -->
+<!-- Latest Tom Select JS from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <!-- <script src="../assets/node_modules/tom-select/dist/js/tom-select.complete.min.js"></script> -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -9,9 +12,10 @@
 <!-- JS Front -->
 <!-- <script src="https://cdn.jsdelivr.net/npm/tom-select@2.0.0/dist/js/tom-select.complete.min.js"></script> -->
 <script src="../assets/js/theme.min.js"></script>
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<!-- Dark Mode Script - Add this before other initialization scripts -->
+<script src="../assets/js/dark-mode.js"></script>
 
 <!-- JS Plugins Initialization -->
 <script>
@@ -32,19 +36,14 @@
             }
           });
         }
-
-// Ensure HSBsDropdownComponent is only initialized once
-if (typeof HSBsDropdownComponent !== 'undefined' && typeof window.HSBsDropdown === 'undefined') {
-    window.HSBsDropdown = new HSBsDropdownComponent();
-}
-
-
-
+        // Ensure HSBsDropdownComponent is only initialized once
+        if (typeof HSBsDropdownComponent !== 'undefined' && typeof window.HSBsDropdown === 'undefined') {
+          window.HSBsDropdown = new HSBsDropdownComponent();
+        }
         // INITIALIZATION OF HEADER
         if (document.querySelector('#header')) {
           new HSHeader('#header').init();
         }
-
         // INITIALIZATION OF NAV SCROLLER (with safety checks)
         const navScroller = document.querySelector('.js-nav-scroller');
         if (navScroller) {
@@ -53,11 +52,9 @@ if (typeof HSBsDropdownComponent !== 'undefined' && typeof window.HSBsDropdown =
             offset: 140
           });
         }
-
         // INITIALIZATION OF LISTJS COMPONENT
         if (typeof HSCore !== 'undefined' && HSCore.components.HSList) {
           const docsSearch = HSCore.components.HSList.init('#docsSearch');
-          
           // GET JSON FILE RESULTS
           if (docsSearch) {
             fetch('../assets/json/docs-search.json')
@@ -70,13 +67,11 @@ if (typeof HSBsDropdownComponent !== 'undefined' && typeof window.HSBsDropdown =
               .catch(error => console.error('Error loading search data:', error));
           }
         }
-
         // INITIALIZATION OF GO TO
         const goToEl = document.querySelector('.js-go-to');
         if (goToEl) {
           new HSGoTo(goToEl).init();
         }
-
       } catch (error) {
         console.error('Initialization error:', error);
       }
@@ -84,5 +79,6 @@ if (typeof HSBsDropdownComponent !== 'undefined' && typeof window.HSBsDropdown =
   })();
 </script>
 <!-- ========== END FOOTER SCRIPTS ========== -->
- </body>
+</body>
+
 </html>
