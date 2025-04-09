@@ -1,5 +1,5 @@
 <?php
-// topic-content.php
+// course-content.php
 ob_start();
 
 // Start session if not already started
@@ -379,7 +379,7 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     
     if ($remaining_topics > 0 && $next_topic_id) {
         // If there are more topics to complete in this section, go to the next topic
-        header("Location: topic-content.php?course_id=" . $course_id . "&topic=" . $next_topic_id);
+        header("Location: course-content.php?course_id=" . $course_id . "&topic=" . $next_topic_id);
     } else {
         // If all topics in this section are completed, go back to the course overview
         header("Location: learn.php?course_id=" . $course_id . "&section=" . $section_id);
@@ -441,7 +441,7 @@ $conn->close();
                                         <!-- Navigation items with proper wrapping -->
                                         <?php foreach ($section_topics as $st): ?>
                                             <a class="nav-link <?php echo ($st['is_current_topic']) ? 'active' : ''; ?>" 
-                                               href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $st['topic_id']; ?>">
+                                               href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $st['topic_id']; ?>">
                                                 <div class="d-flex">
                                                     <div class="flex-shrink-0 me-2">
                                                         <?php if ($st['completion_status'] === 'Completed'): ?>
@@ -907,7 +907,7 @@ $conn->close();
                     <!-- Navigation Controls -->
                     <div class="d-flex justify-content-between p-4 bg-light">
                         <?php if ($prev_topic_id): ?>
-                        <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $prev_topic_id; ?>" class="btn btn-outline-secondary">
+                        <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $prev_topic_id; ?>" class="btn btn-outline-secondary">
                             <i class="bi-chevron-left me-2"></i> Previous Lecture
                         </a>
                         <?php else: ?>
@@ -929,7 +929,7 @@ $conn->close();
                         <?php endif; ?>
 
                         <?php if ($next_topic_id): ?>
-                        <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $next_topic_id; ?>" class="btn btn-outline-secondary">
+                        <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $next_topic_id; ?>" class="btn btn-outline-secondary">
                             Next Lecture <i class="bi-chevron-right ms-2"></i>
                         </a>
                         <?php else: ?>

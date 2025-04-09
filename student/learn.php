@@ -721,7 +721,7 @@ foreach ($sections as $sec) {
                                             $link_available = (isset($item['is_previewable']) && $item['is_previewable'] || $item['completion_status'] !== 'Completed');
                                             $item_url = ($item['content_type'] === 'link' && !empty($item['external_url']))
                                                 ? htmlspecialchars($item['external_url'])
-                                                : "topic-content.php?course_id={$course_id}&topic={$item['topic_id']}";
+                                                : "course-content.php?course_id={$course_id}&topic={$item['topic_id']}";
                                         }
                                         ?>
 
@@ -750,7 +750,7 @@ foreach ($sections as $sec) {
                                                     <i class="bi bi-clipboard-check me-1"></i> Results
                                                 </a>
                                             <?php else: ?>
-                                                <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
                                                     class="btn btn-outline-success btn-sm">
                                                     <i class="bi bi-check-circle me-1"></i> Review
                                                 </a>
@@ -765,7 +765,7 @@ foreach ($sections as $sec) {
                                                     <i class="bi bi-play-fill me-1"></i> Resume
                                                 </a>
                                             <?php else: ?>
-                                                <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
                                                     class="btn btn-primary btn-sm">
                                                     <i class="bi bi-play-fill me-1"></i> Resume
                                                 </a>
@@ -778,7 +778,7 @@ foreach ($sections as $sec) {
                                                     <i class="bi bi-pencil-square me-1"></i> Take Quiz
                                                 </a>
                                             <?php else: ?>
-                                                <a href="topic-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
                                                     class="btn btn-outline-primary btn-sm">
                                                     <i class="bi bi-arrow-right me-1"></i> Start
                                                 </a>

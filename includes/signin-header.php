@@ -82,6 +82,46 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
+    <!-- Preload Dark Mode Check - MUST be first -->
+    <script>
+        // Immediately check if dark mode should be enabled
+        (function() {
+            // Check for saved preference
+            const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+            
+            if (darkModeEnabled) {
+                // Add a class to the HTML element immediately
+                document.documentElement.classList.add('dark-mode-preload');
+                
+                // Add inline styles to prevent flash of light mode
+                const style = document.createElement('style');
+                style.textContent = `
+                    .dark-mode-preload {
+                        background-color: #1e2a36 !important;
+                        color: #e9ecef !important;
+                    }
+                    .dark-mode-preload body,
+                    .dark-mode-preload .navbar,
+                    .dark-mode-preload .card,
+                    .dark-mode-preload .dropdown-menu,
+                    .dark-mode-preload .bg-white {
+                        background-color: #1e2a36 !important;
+                        color: #e9ecef !important;
+                    }
+                    .dark-mode-preload .navbar-toggler,
+                    .dark-mode-preload .form-control {
+                        background-color: #253545 !important;
+                        color: #e9ecef !important;
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                // Tell DarkReader to initialize immediately
+                window.loadDarkModeOnStart = true;
+            }
+        })();
+    </script>
+
     <!-- Title -->
     <title>Learnix | Learn Better, Grow Better</title>
 
@@ -97,7 +137,155 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
 
     <!-- CSS Learnix Template -->
     <link rel="stylesheet" href="../assets/css/theme.minc619.css?v=1.0">
-    
+
+    <!-- Dark Reader Library -->
+    <script src="https://cdn.jsdelivr.net/npm/darkreader@4.9.58/darkreader.min.js"></script>
+
+    <!-- Dark Mode Configuration and Toggle Script -->
+    <script>
+        // Dark Reader Configuration
+        function configureDarkReader() {
+            DarkReader.setFetchMethod(window.fetch);
+            
+            // Custom dynamic theme
+            const options = {
+                brightness: 100,
+                contrast: 90,
+                sepia: 10,
+                
+                // Custom CSS to fix specific elements
+                css: `
+                    /* Fix for dropdown menus */
+                    .dropdown-menu {
+                        background-color: #253545 !important;
+                        border-color: #495057 !important;
+                    }
+                    
+                    .dropdown-item:hover {
+                        background-color: rgba(13, 110, 253, 0.1) !important;
+                    }
+                    
+                    /* Fix for search input */
+                    .form-control {
+                        background-color: #2c3e50 !important;
+                        color: #eee !important;
+                        border-color: #495057 !important;
+                    }
+                    
+                    /* Fix for cards */
+                    .card {
+                        background-color: #253545 !important;
+                    }
+                    
+                    /* Fix for progress bar backgrounds */
+                    .progress {
+                        background-color: #343a40 !important;
+                    }
+                    
+                    /* Fix for course thumbnails */
+                    .navbar-dropdown-menu-media-title,
+                    .navbar-dropdown-menu-media-desc {
+                        color: #e9ecef !important;
+                    }
+                `,
+                
+                // Custom fixes for specific elements
+                fixes: {
+                    invert: [
+                        '.navbar-brand-logo', 
+                        '.avatar'
+                    ],
+                    
+                    css: '',
+                    
+                    // Don't invert images
+                    ignoreImageAnalysis: ['*'],
+                    
+                    // Don't apply filtering to certain elements
+                    disableStyleSheetsProxy: true
+                }
+            };
+            
+            return options;
+        }
+
+        // Apply dark mode if needed immediately
+        if (window.loadDarkModeOnStart) {
+            const options = configureDarkReader();
+            DarkReader.enable(options);
+        }
+
+        // DOM Content Loaded Event
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create toggle button
+            // For students, we'll add it to the navbar near the search
+            const navbarNav = document.querySelector('.navbar-nav');
+            if (navbarNav) {
+                const toggleLi = document.createElement('li');
+                toggleLi.className = 'nav-item ms-lg-auto me-lg-3';
+                toggleLi.innerHTML = `
+                    <a id="darkModeToggle" class="nav-link" href="javascript:;" title="Toggle Dark Mode">
+                        <i class="bi-moon-stars"></i>
+                        <span class="d-lg-none ms-1">Dark Mode</span>
+                    </a>
+                `;
+                navbarNav.appendChild(toggleLi);
+                
+                // Apply saved preference (button state)
+                const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+                updateToggleButton(darkModeEnabled);
+                
+                // Add toggle listener
+                document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+                
+                // Remove preload class if it exists
+                document.documentElement.classList.remove('dark-mode-preload');
+            }
+        });
+
+        // Toggle dark mode function
+        function toggleDarkMode() {
+            const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+            if (darkModeEnabled) {
+                disableDarkMode();
+            } else {
+                enableDarkMode();
+            }
+        }
+
+        // Enable dark mode
+        function enableDarkMode() {
+            const options = configureDarkReader();
+            DarkReader.enable(options);
+            localStorage.setItem('darkMode', 'true');
+            updateToggleButton(true);
+        }
+
+        // Disable dark mode
+        function disableDarkMode() {
+            DarkReader.disable();
+            localStorage.setItem('darkMode', 'false');
+            updateToggleButton(false);
+        }
+
+        // Update button appearance
+        function updateToggleButton(isDark) {
+            const btn = document.getElementById('darkModeToggle');
+            if (!btn) return;
+            
+            if (isDark) {
+                btn.innerHTML = `
+                    <i class="bi-sun"></i>
+                    <span class="d-lg-none ms-1">Light Mode</span>
+                `;
+            } else {
+                btn.innerHTML = `
+                    <i class="bi-moon-stars"></i>
+                    <span class="d-lg-none ms-1">Dark Mode</span>
+                `;
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -251,6 +439,8 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
                         </li>
                         <!-- End Search Form -->
 
+                        <!-- Dark Mode toggle will be added here by JavaScript -->
+                        
                         <!-- My Courses -->
                         <li class="hs-has-mega-menu nav-item" data-hs-mega-menu-item-options='{
                             "desktop": {
@@ -266,7 +456,7 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
                                     <!-- Enrolled Courses -->
                                     <?php foreach ($enrolled_courses as $key => $course): ?>
                                         <!-- Course -->
-                                        <a class="navbar-dropdown-menu-media-link" href="learn.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
+                                        <a class="navbar-dropdown-menu-media-link" href="course-materials.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
                                             <div class="d-flex">
                                                 <div class="flex-shrink-0">
                                                     <img class="avatar" style="height: auto; width: 60px; object-fit: cover;" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="Course Thumbnail">

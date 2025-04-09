@@ -50,7 +50,7 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     // User is already enrolled, redirect to learning page
     $_SESSION['info_message'] = "You are already enrolled in this course.";
-    header("Location: ../../student/learn.php?course_id=" . $course_id);
+    header("Location: ../../student/course-materials.php?course_id=" . $course_id);
     exit();
 }
 
@@ -87,7 +87,7 @@ if ($course['price'] == 0) {
         
         // Set success message and redirect
         $_SESSION['success_message'] = "You have successfully enrolled in this course!";
-        header("Location: ../../student/learn.php?course_id=" . $course_id);
+        header("Location: ../../student/course-materials.php?course_id=" . $course_id);
         exit();
     } else {
         // Error during enrollment

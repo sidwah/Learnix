@@ -779,7 +779,7 @@ function timeAgo($datetime)
                                                     <?php if ($is_quiz): ?>
                                                         <a class="d-flex" href="take_quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>">
                                                     <?php else: ?>
-                                                        <a class="d-flex" href="learn.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $item['topic_id']; ?>">
+                                                        <a class="d-flex" href="course-materials.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $item['topic_id']; ?>">
                                                     <?php endif; ?>
                                                 <?php else: ?>
                                                     <!-- For non-enrolled users viewing previewable content -->
@@ -819,7 +819,7 @@ function timeAgo($datetime)
                                                             <?php if ($is_quiz): ?>
                                                                 <a class="small" href="take_quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>">Take Quiz</a>
                                                             <?php else: ?>
-                                                                <a class="small" href="learn.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $item['topic_id']; ?>">View</a>
+                                                                <a class="small" href="course-materials.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $item['topic_id']; ?>">View</a>
                                                             <?php endif; ?>
                                                         <?php elseif (isset($item['is_previewable']) && $item['is_previewable'] == 1): ?>
                                                             <?php if ($is_quiz): ?>
@@ -1164,7 +1164,7 @@ function timeAgo($datetime)
                                 <?php if ($is_enrolled): ?>
                                     <!-- Already enrolled -->
                                     <div class="d-grid mb-2">
-                                        <a class="btn btn-success btn-transition" href="learn.php?course_id=<?php echo $course_id; ?>">
+                                        <a class="btn btn-success btn-transition" href="course-materials.php?course_id=<?php echo $course_id; ?>">
                                             <i class="bi-play-circle me-1"></i> Continue Learning
                                         </a>
                                     </div>

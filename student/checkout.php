@@ -42,7 +42,7 @@ $enrollment_result = $stmt->get_result();
 if ($enrollment_result->num_rows > 0) {
     // Already enrolled, redirect to learning page
     $_SESSION['info_message'] = "You are already enrolled in this course.";
-    header("Location: learn.php?course_id=" . $course_id);
+    header("Location: course-materials.php?course_id=" . $course_id);
     exit();
 }
 

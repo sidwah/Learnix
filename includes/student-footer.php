@@ -167,6 +167,7 @@
 <!-- YouTube -->
 <script src="https://www.youtube.com/iframe_api"></script>
 
+<!-- <script src="../assets/vendor/hs-video-player/dist/hs-video-player.min.js"></script> -->
 
 
   <!-- JS Plugins Init. -->
@@ -237,6 +238,22 @@
       // =======================================================
       new HsNavScroller('.js-nav-scroller')
 
+      // INITIALIZATION OF LIVE TOAST
+// =======================================================
+const liveToastElement = document.querySelector('#liveToast');
+if (liveToastElement) {
+  const liveToast = new bootstrap.Toast(liveToastElement);
+  
+  // Define the showToast function
+  function showToast(title, message) {
+    // Update the toast content
+    liveToastElement.querySelector('.toast-header h5').textContent = title;
+    liveToastElement.querySelector('.toast-body').textContent = message;
+    
+    // Show the toast
+    liveToast.show();
+  }
+}
       
 
       // INITIALIZATION OF SWIPER

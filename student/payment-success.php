@@ -75,7 +75,7 @@ $instructor_name = htmlspecialchars($course['first_name'] . ' ' . $course['last_
                         <p>You now have full access to this course. You can start learning immediately or access it anytime from your dashboard.</p>
                         
                         <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
-                            <a href="learn.php?course_id=<?php echo $course_id; ?>" class="btn btn-primary btn-lg px-4 gap-3">
+                            <a href="course-materials.php?course_id=<?php echo $course_id; ?>" class="btn btn-primary btn-lg px-4 gap-3">
                                 <i class="bi-play-circle me-2"></i> Start Learning
                             </a>
                             <a href="my-courses.php" class="btn btn-outline-secondary btn-lg px-4">

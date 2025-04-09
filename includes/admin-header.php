@@ -17,7 +17,6 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 <!DOCTYPE html>
 <html lang="en">
 
-
 <head>
   <!-- Required Meta Tags Always Come First -->
   <meta charset="utf-8">
@@ -25,6 +24,46 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
   <!-- Title -->
   <title>Admin | Learnix - Empowering Education</title>
+
+  <!-- Preload Dark Mode Check - MUST be first -->
+  <script>
+    // Immediately check if dark mode should be enabled
+    (function() {
+      // Check for saved preference
+      const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+      
+      if (darkModeEnabled) {
+        // Add a class to the HTML element immediately
+        document.documentElement.classList.add('dark-mode-preload');
+        
+        // Add inline styles to prevent flash of light mode
+        const style = document.createElement('style');
+        style.textContent = `
+          .dark-mode-preload {
+            background-color: #1e2a36 !important;
+            color: #e9ecef !important;
+          }
+          .dark-mode-preload body,
+          .dark-mode-preload .navbar,
+          .dark-mode-preload .card,
+          .dark-mode-preload .navbar-vertical,
+          .dark-mode-preload .bg-white {
+            background-color: #1e2a36 !important;
+            color: #e9ecef !important;
+          }
+          .dark-mode-preload .table,
+          .dark-mode-preload .form-control {
+            background-color: #253545 !important;
+            color: #e9ecef !important;
+          }
+        `;
+        document.head.appendChild(style);
+        
+        // Tell DarkReader to initialize immediately
+        window.loadDarkModeOnStart = true;
+      }
+    })();
+  </script>
 
   <!-- Favicon -->
   <link rel="shortcut icon" href="../favicon.ico">
@@ -39,8 +78,157 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
   <!-- CSS Front Template -->
   <link rel="stylesheet" href="../assets/css/theme.minc619.css?v=1.0">
   <link rel="stylesheet" href="../assets/css/docs.css">
-<!-- Latest Bootstrap 5 theme for Tom Select (CDN) -->
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+  <!-- Latest Bootstrap 5 theme for Tom Select (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+
+  <!-- Dark Reader Library -->
+  <script src="https://cdn.jsdelivr.net/npm/darkreader@4.9.58/darkreader.min.js"></script>
+
+  <!-- Dark Mode Configuration and Toggle Script -->
+  <script>
+    // Dark Reader Configuration
+    function configureDarkReader() {
+      DarkReader.setFetchMethod(window.fetch);
+      
+      // Custom dynamic theme
+      const options = {
+          brightness: 100,
+          contrast: 90,
+          sepia: 10,
+          
+          // Custom CSS to fix specific elements
+          css: `
+              /* Fix for tables */
+              .table-thead-bordered th {
+                  border-color: #495057 !important;
+              }
+              
+              /* Fix for form elements */
+              .form-control, .form-select {
+                  background-color: #2c3e50 !important;
+                  color: #eee !important;
+              }
+              
+              /* Fix for modals */
+              .modal-content {
+                  background-color: #1e2a36 !important;
+              }
+              
+              /* Fix for cards */
+              .card {
+                  background-color: #1e2a36 !important;
+              }
+              
+              /* Fix for navbar */
+              .navbar-vertical.navbar-light {
+                  background-color: #1e2a36 !important;
+              }
+          `,
+          
+          // Fix specific elements to always be light
+          ignoreInlineStyle: [
+              /* elements to ignore inline styles for */
+          ],
+          
+          // Custom fixes for specific elements
+          fixes: {
+              invert: [
+                  /* elements to invert */
+                  '.navbar-brand-logo', 
+                  '.bi-box-arrow-right'
+              ],
+              
+              css: '',
+              
+              // Don't invert images
+              ignoreImageAnalysis: ['*'],
+              
+              // Don't apply filtering to certain elements
+              disableStyleSheetsProxy: true
+          }
+      };
+      
+      return options;
+    }
+
+    // Apply dark mode if needed immediately
+    if (window.loadDarkModeOnStart) {
+      const options = configureDarkReader();
+      DarkReader.enable(options);
+    }
+
+    // DOM Content Loaded Event
+    document.addEventListener('DOMContentLoaded', function() {
+      // Create toggle button
+      const headerNav = document.querySelector('.navbar-nav');
+      if (headerNav) {
+          const toggleBtn = document.createElement('li');
+          toggleBtn.className = 'nav-item me-2';
+          toggleBtn.innerHTML = `
+              <button id="darkModeToggle" class="btn btn-outline-primary btn-sm" title="Toggle Dark Mode">
+                  <i class="bi-moon-stars"></i>
+                  <span class="d-none d-md-inline-block ms-1">Dark Mode</span>
+              </button>
+          `;
+          headerNav.prepend(toggleBtn);
+          
+          // Apply saved preference (button state)
+          const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+          updateToggleButton(darkModeEnabled);
+          
+          // Add toggle listener
+          document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+          
+          // Remove preload class if it exists
+          document.documentElement.classList.remove('dark-mode-preload');
+      }
+    });
+
+    // Toggle dark mode function
+    function toggleDarkMode() {
+        const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+        if (darkModeEnabled) {
+            disableDarkMode();
+        } else {
+            enableDarkMode();
+        }
+    }
+
+    // Enable dark mode
+    function enableDarkMode() {
+        const options = configureDarkReader();
+        DarkReader.enable(options);
+        localStorage.setItem('darkMode', 'true');
+        updateToggleButton(true);
+    }
+
+    // Disable dark mode
+    function disableDarkMode() {
+        DarkReader.disable();
+        localStorage.setItem('darkMode', 'false');
+        updateToggleButton(false);
+    }
+
+    // Update button appearance
+    function updateToggleButton(isDark) {
+        const btn = document.getElementById('darkModeToggle');
+        if (!btn) return;
+        
+        if (isDark) {
+            btn.innerHTML = `
+                <i class="bi-sun"></i>
+                
+            `;
+            btn.classList.add('active');
+        } else {
+            btn.innerHTML = `
+                <i class="bi-moon-stars"></i>
+                
+            `;
+            btn.classList.remove('active');
+        }
+    }
+  </script>
 </head>
 
 <body class="navbar-sidebar-aside-lg">
@@ -59,16 +247,13 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
           <div class="col-md px-lg-0">
             <div class="d-flex justify-content-between align-items-center px-lg-5 px-xl-10">
-
-
               <!-- Navbar -->
               <ul class="navbar-nav p-0">
-
+                <!-- Dark mode toggle will be added here by JavaScript -->
                 <li class="nav-item">
                   <a class="btn btn-primary btn-sm" href="../backend/signout.php">
                     <i class="bi-box-arrow-right me-1"></i> Sign Out
                   </a>
-
                 </li>
               </ul>
               <!-- End Navbar -->
@@ -81,164 +266,3 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     </div>
   </header>
   <!-- ========== END HEADER ========== -->
-
-
-
-<!-- Dark Reader Library - A popular and simple dark mode solution -->
-<script src="https://cdn.jsdelivr.net/npm/darkreader@4.9.58/darkreader.min.js"></script>
-
-<!-- Simple Dark Mode Toggle Script -->
-<script>
-// Check for saved preference
-document.addEventListener('DOMContentLoaded', function() {
-    // Create toggle button
-    const headerNav = document.querySelector('.navbar-nav');
-    if (headerNav) {
-        const toggleBtn = document.createElement('li');
-        toggleBtn.className = 'nav-item me-2';
-        toggleBtn.innerHTML = `
-            <button id="darkModeToggle" class="btn btn-outline-primary btn-sm" title="Toggle Dark Mode">
-                <i class="bi-moon-stars"></i>
-                <span class="d-none d-md-inline-block ms-1">Dark Mode</span>
-            </button>
-        `;
-        headerNav.prepend(toggleBtn);
-        
-        // Apply saved preference
-        const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
-        if (darkModeEnabled) {
-            enableDarkMode();
-        }
-        
-        // Add toggle listener
-        document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
-    }
-});
-
-// Toggle dark mode function
-function toggleDarkMode() {
-    const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
-    if (darkModeEnabled) {
-        disableDarkMode();
-    } else {
-        enableDarkMode();
-    }
-}
-
-// Enable dark mode
-function enableDarkMode() {
-    DarkReader.enable({
-        brightness: 100,
-        contrast: 90,
-        sepia: 10
-    });
-    localStorage.setItem('darkMode', 'true');
-    updateToggleButton(true);
-}
-
-// Disable dark mode
-function disableDarkMode() {
-    DarkReader.disable();
-    localStorage.setItem('darkMode', 'false');
-    updateToggleButton(false);
-}
-
-// Update button appearance
-function updateToggleButton(isDark) {
-    const btn = document.getElementById('darkModeToggle');
-    if (!btn) return;
-    
-    if (isDark) {
-        btn.innerHTML = `
-            <i class="bi-sun"></i>
-            <span class="d-none d-md-inline-block ms-1">Light Mode</span>
-        `;
-        btn.classList.add('active');
-    } else {
-        btn.innerHTML = `
-            <i class="bi-moon-stars"></i>
-            <span class="d-none d-md-inline-block ms-1">Dark Mode</span>
-        `;
-        btn.classList.remove('active');
-    }
-}
-</script>
-
-<script>
-  // Advanced DarkReader configuration for better styling
-// Add this to admin-header.php or create a separate JS file
-
-// This configuration provides more specific styling for the admin dashboard
-function configureDarkReader() {
-    DarkReader.setFetchMethod(window.fetch);
-    
-    // Custom dynamic theme
-    const options = {
-        brightness: 100,
-        contrast: 90,
-        sepia: 10,
-        
-        // Custom CSS to fix specific elements
-        css: `
-            /* Fix for tables */
-            .table-thead-bordered th {
-                border-color: #495057 !important;
-            }
-            
-            /* Fix for form elements */
-            .form-control, .form-select {
-                background-color: #2c3e50 !important;
-                color: #eee !important;
-            }
-            
-            /* Fix for modals */
-            .modal-content {
-                background-color: #1e2a36 !important;
-            }
-            
-            /* Fix for cards */
-            .card {
-                background-color: #1e2a36 !important;
-            }
-            
-            /* Fix for navbar */
-            .navbar-vertical.navbar-light {
-                background-color: #1e2a36 !important;
-            }
-        `,
-        
-        // Fix specific elements to always be light
-        ignoreInlineStyle: [
-            /* elements to ignore inline styles for */
-        ],
-        
-        // Custom fixes for specific elements
-        fixes: {
-            invert: [
-                /* elements to invert */
-                '.navbar-brand-logo', 
-                '.bi-box-arrow-right'
-            ],
-            
-            css: '',
-            
-            // Don't invert images
-            ignoreImageAnalysis: ['*'],
-            
-            // Don't apply filtering to certain elements
-            disableStyleSheetsProxy: true
-        }
-    };
-    
-    return options;
-}
-
-// When enabling dark mode, use the custom configuration
-function enableDarkMode() {
-    const options = configureDarkReader();
-    DarkReader.enable(options);
-    localStorage.setItem('darkMode', 'true');
-    updateToggleButton(true);
-}
-</script>
-  

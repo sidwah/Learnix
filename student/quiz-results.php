@@ -39,7 +39,7 @@ if (!$attempt_id) {
         $latest_attempt = $latest_attempt_result->fetch_assoc();
         $attempt_id = $latest_attempt['attempt_id'];
     } else {
-        header("Location: learn.php?course_id=$course_id&error=no_attempts");
+        header("Location: course-materials.php?course_id=$course_id&error=no_attempts");
         exit;
     }
 }
@@ -55,7 +55,7 @@ $quiz_stmt->execute();
 $quiz_result = $quiz_stmt->get_result();
 
 if ($quiz_result->num_rows == 0) {
-    header("Location: learn.php?course_id=$course_id&error=quiz_not_found");
+    header("Location: course-materials.php?course_id=$course_id&error=quiz_not_found");
     exit;
 }
 
@@ -69,7 +69,7 @@ $attempt_stmt->execute();
 $attempt_result = $attempt_stmt->get_result();
 
 if ($attempt_result->num_rows == 0) {
-    header("Location: learn.php?course_id=$course_id&error=attempt_not_found");
+    header("Location: course-materials.php?course_id=$course_id&error=attempt_not_found");
     exit;
 }
 
@@ -292,7 +292,7 @@ function formatTime($seconds) {
                     </div>
                     
                     <div class="d-flex justify-content-between align-items-center">
-                        <a href="learn.php?course_id=<?php echo $course_id; ?>" class="btn btn-outline-secondary">Back to Course</a>
+                        <a href="course-materials.php?course_id=<?php echo $course_id; ?>" class="btn btn-outline-secondary">Back to Course</a>
                         
                         <?php 
                         // Check if retakes are allowed

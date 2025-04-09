@@ -1,7 +1,7 @@
 <?php
 // Path: ajax/get-preview-content.php
-require '../backend/session_start.php';
-require_once '../backend/config.php';
+require '../../backend/session_start.php';
+require_once '../../backend/config.php';
 
 // Get parameters
 $course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : 0;

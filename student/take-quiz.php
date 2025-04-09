@@ -322,7 +322,7 @@ include '../includes/student-header.php';
                         <?php endforeach; ?>
 
                         <div class="d-flex justify-content-between align-items-center">
-                            <a href="learn.php?course_id=<?php echo $course_id; ?>" class="btn btn-outline-secondary">Back to Course</a>
+                            <a href="course-materials.php?course_id=<?php echo $course_id; ?>" class="btn btn-outline-secondary">Back to Course</a>
                             <button type="submit" name="submit_quiz" class="btn btn-primary">Submit Quiz</button>
                         </div>
                     </form>

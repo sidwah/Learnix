@@ -131,7 +131,7 @@
                       <img class="card-img-top" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="<?php echo htmlspecialchars($course['title']); ?>">
                       <div class="card-body">
                         <h5 class="card-title">
-                          <a class="text-dark" href="learn.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
+                          <a class="text-dark" href="course-materials.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
                             <?php echo htmlspecialchars($course['title']); ?>
                           </a>
                         </h5>
@@ -147,7 +147,7 @@
                         </div>
 
                         <!-- Continue Button -->
-                        <a href="learn.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>" class="btn btn-primary btn-sm w-100">Continue Learning</a>
+                        <a href="course-materials.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>" class="btn btn-primary btn-sm w-100">Continue Learning</a>
                       </div>
                     </div>
                   </div>
@@ -213,14 +213,14 @@
                     </div>
                     <div class="card-body">
                       <h5 class="card-title">
-                        <a class="text-dark" href="learn.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
+                        <a class="text-dark" href="course-materials.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
                           <?php echo htmlspecialchars($course['title']); ?>
                         </a>
                       </h5>
                       <p class="card-text small">Instructor: <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?></p>
                       <div class="d-grid gap-2">
                         <a href="certificates.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>" class="btn btn-soft-success btn-sm">View Certificate</a>
-                        <a href="learn.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>" class="btn btn-outline-secondary btn-sm">Review Course</a>
+                        <a href="course-materials.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>" class="btn btn-outline-secondary btn-sm">Review Course</a>
                       </div>
                     </div>
                   </div>

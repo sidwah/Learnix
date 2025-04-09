@@ -422,12 +422,12 @@
 
                                                         <div class="d-grid gap-2 ">
                                                             <?php if ($progress < 100) : ?>
-                                                                <a href="learn.php?course_id=<?= (int)$course['course_id'] ?>"
+                                                                <a href="course-materials.php?course_id=<?= (int)$course['course_id'] ?>"
                                                                     class="btn btn-primary btn-sm">
                                                                     Continue Learning
                                                                 </a>
                                                             <?php else : ?>
-                                                                <a href="learn.php?course_id=<?= (int)$course['course_id'] ?>"
+                                                                <a href="course-materials.php?course_id=<?= (int)$course['course_id'] ?>"
                                                                     class="btn btn-outline-primary btn-sm">
                                                                     Review Course
                                                                 </a>
@@ -668,7 +668,7 @@
                                 // Add page transitions
                                 document.addEventListener('click', function(e) {
                                     // Check if the clicked element is a course link
-                                    const courseLink = e.target.closest('a[href^="learn.php"], a[href^="course-overview.php"]');
+                                    const courseLink = e.target.closest('a[href^="course-materials.php"], a[href^="course-overview.php"]');
                                     if (courseLink) {
                                         e.preventDefault();
                                         const href = courseLink.getAttribute('href');
