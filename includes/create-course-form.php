@@ -50,7 +50,7 @@
             <li class="nav-item">
                 <a href="#step-5-settings" data-bs-toggle="tab" data-toggle="tab" class="nav-link rounded-0 pt-2 pb-2" data-step="5">
                     <!-- <div class="step-indicator">5</div> -->
-                    <i class="mdi mdi-currency-usd me-1"></i>
+                    ₵
                     <span class="d-none d-sm-inline">Pricing & Settings</span>
                 </a>
             </li>

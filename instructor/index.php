@@ -21,10 +21,10 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
 <head>
     <meta charset="utf-8" />
-    <title>Instructor | Learnix - Empowering Education</title>
+    <title>Instructor | Learnix - Create and Manage Courses</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="An intuitive instructor dashboard to manage courses, track student progress, and enhance the learning experience." name="description" />
-    <meta content="Learnix Development Team" name="author" />
+    <meta name="description" content="Intuitive dashboard for instructors to create, manage courses, track student progress, and engage learners effectively." />
+    <meta name="author" content="Learnix Team" />
     <!-- App favicon -->
     <link rel="shortcut icon" href="assets/images/favicon.ico">
 
@@ -478,7 +478,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                         <tr>
                                                             <td><?php echo htmlspecialchars($row['title']); ?></td>
                                                             <td><?php echo htmlspecialchars($row['subcategory']); ?></td>
-                                                            <td>$<?php echo number_format($row['price'], 2); ?></td>
+                                                            <td>₵<?php echo number_format($row['price'], 2); ?></td>
                                                             <td>
                                                                 <?php
                                                                 $status = $row['status'] ?? 'Draft'; // Default to 'Draft' if null

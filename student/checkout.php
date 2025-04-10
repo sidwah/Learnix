@@ -14,7 +14,7 @@ include '../includes/student-header.php';
 if (!isset($_SESSION['user_id'])) {
     // Save destination in session and redirect to login
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header("Location: login.php");
+    header("Location: index.php");
     exit();
 }
 
@@ -638,7 +638,7 @@ $review_count = 124; // Example count
                                     </label>
                                 </div> -->
                                 <button type="submit" class="btn checkout-btn btn-lg w-100 pulse-animation text-white" id="submit-button">
-    <i class="bi-lock-fill me-2"></i> Pay Securely $<?php echo $formatted_price; ?>
+    <i class="bi-lock-fill me-2"></i> Pay Securely ₵<?php echo $formatted_price; ?>
 </button>
                                 
                                 <div class="secure-badge">
@@ -706,11 +706,11 @@ $review_count = 124; // Example count
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>Original price</span>
-                                    <span class="text-decoration-line-through">$<?php echo number_format($course_price * 1.25, 2); ?></span>
+                                    <span class="text-decoration-line-through">₵<?php echo number_format($course_price * 1.25, 2); ?></span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>Course price</span>
-                                    <span>$<?php echo $formatted_price; ?></span>
+                                    <span>₵<?php echo $formatted_price; ?></span>
                                 </div>
                             </div>
                             
@@ -726,7 +726,7 @@ $review_count = 124; // Example count
                             
                             <div class="d-flex justify-content-between mb-4">
                                 <span class="h5 mb-0">Total</span>
-                                <span class="h5 mb-0 text-primary">$<?php echo $formatted_price; ?></span>
+                                <span class="h5 mb-0 text-primary">₵<?php echo $formatted_price; ?></span>
                             </div>
                             
                             <!-- What you get -->
@@ -836,7 +836,7 @@ $review_count = 124; // Example count
                     var errorElement = document.getElementById('card-errors');
                     errorElement.textContent = result.error.message;
                     document.getElementById('submit-button').disabled = false;
-                    document.getElementById('submit-button').innerHTML = '<i class="bi-lock-fill me-2"></i> Pay Securely $<?php echo $formatted_price; ?>';
+                    document.getElementById('submit-button').innerHTML = '<i class="bi-lock-fill me-2"></i> Pay Securely ₵<?php echo $formatted_price; ?>';
                 } else {
                     // Send the token to your server.
                     stripeTokenHandler(result.token);

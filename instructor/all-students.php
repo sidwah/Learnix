@@ -91,10 +91,11 @@ $has_students = $row['has_students'];
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>All Students | Learnix - Empowering Education</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="Manage all students enrolled in your courses" name="description" />
-    <meta content="Learnix Development Team" name="author" />
+    <title>Instructor Dashboard | Learnix - Create and Manage Courses</title>
+<meta name="description" content="Intuitive dashboard for instructors to create, manage courses, track student progress, and engage learners effectively." />
+<meta name="author" content="Learnix Team" />
+
     <!-- App favicon -->
     <link rel="shortcut icon" href="assets/images/favicon.ico">
 

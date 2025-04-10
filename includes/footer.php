@@ -16,12 +16,12 @@
                 <ul class="list-unstyled list-py-1">
                     <li>
                         <a class="link-sm link-light" href="#">
-                            <i class="bi-geo-alt-fill me-1"></i> Learnix, Knowledge City, LM 45678
+                            <i class="bi-geo-alt-fill me-1"></i> Learnix, East Legon, Accra, Ghana
                         </a>
                     </li>
                     <li>
                         <a class="link-sm link-light" href="tel:+233123456789">
-                            <i class="bi-telephone-inbound-fill me-1"></i> +233 (0) 123 456 789
+                            <i class="bi-telephone-inbound-fill me-1"></i> +233 25 779 9736
                         </a>
                     </li>
                 </ul>
@@ -64,7 +64,7 @@
                         <a class="link-sm link-light" href="privacy-policy.php">Privacy Policy</a>
                     </li>
                     <li>
-                        <a class="link-sm link-light" href="terms.php">Terms of Service</a>
+                        <a class="link-sm link-light" href="terms-and-conditions.php">Terms of Service</a>
                     </li>
                 </ul>
                 <!-- End List -->

@@ -200,7 +200,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
     <title>Student Progress | Learnix - Empowering Education</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="Track detailed student learning progress" name="description" />
-    <meta content="Learnix Development Team" name="author" />
+    <meta name="author" content="Learnix Team" />
     <!-- App favicon -->
     <link rel="shortcut icon" href="assets/images/favicon.ico">
 

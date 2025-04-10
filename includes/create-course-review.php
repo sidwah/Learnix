@@ -1148,14 +1148,14 @@ ${generateLearningOutcomesHTML(course.learning_outcomes)}
     <div class="col-md-6">
         <div class="card mb-4">
             <div class="card-header bg-light">
-                <h6 class="mb-0"><i class="mdi mdi-currency-usd me-1"></i> Pricing Information</h6>
+                <h6 class="mb-0">₵ Pricing Information</h6>
             </div>
             <div class="card-body">
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <strong>Price:</strong>
                     <div>
                         ${parseFloat(course.price) > 0 ? 
-                        `<span class="badge bg-primary px-3 py-2">$${parseFloat(course.price).toFixed(2)}</span>` : 
+                        `<span class="badge bg-primary px-3 py-2">₵${parseFloat(course.price).toFixed(2)}</span>` : 
                         '<span class="badge bg-success px-3 py-2">Free</span>'}
                     </div>
                 </div>
@@ -2095,7 +2095,7 @@ function previewCourse() {
                             <p>${data.short_description || 'No description'}</p>
                             <p><strong>Status:</strong> ${data.status || 'Draft'}</p>
                             <p><strong>Sections:</strong> ${data.sections?.length || 0}</p>
-                            <p><strong>Price:</strong> $${parseFloat(data.price || 0).toFixed(2)}</p>
+                            <p><strong>Price:</strong> ₵${parseFloat(data.price || 0).toFixed(2)}</p>
                         </div>
                     </div>
                 `;
@@ -2339,7 +2339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div class="mb-2">
                                 <strong>Price:</strong> 
-                                <span class="badge bg-primary">$${parseFloat(course.price || 0).toFixed(2)}</span>
+                                <span class="badge bg-primary">₵${parseFloat(course.price || 0).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>

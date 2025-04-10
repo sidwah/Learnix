@@ -278,7 +278,7 @@ function sendVerificationEmail($email, $firstName, $verificationCode) {
                 
                 <div class="email-footer">
                     <p>&copy; ' . date('Y') . ' Learnix. All rights reserved.</p>
-                    <p>Our address: 123 Education Lane, Learning City, ED 12345</p>
+                    <p>Our address: Learnix, East Legon, Accra, Ghana</p>
                     <div class="social-icons">
                         <a href="#">Twitter</a> | 
                         <a href="#">Facebook</a> | 

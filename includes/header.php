@@ -9,8 +9,14 @@
     name="viewport"
     content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
-  <!-- Title -->
-  <title>Learnix | Learn Better, Grow Better</title>
+<!-- Title -->
+<title>Learnix | Learn Better, Grow Better</title>
+
+<!-- Meta Tags -->
+<meta name="description" content="Welcome to Learnix – a smart learning platform for students and instructors. Explore courses, manage learning, and grow together." />
+<meta name="author" content="Learnix Team" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
 
   <!-- Favicon -->
   <link rel="shortcut icon" href="../favicon.ico" />

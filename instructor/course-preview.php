@@ -263,7 +263,7 @@ $page_title = "Preview: " . htmlspecialchars($course['title']);
                             <div class="mb-2">
                                 <h3 class="text-primary">
                                     <?php if ($course['price'] > 0): ?>
-                                        $<?php echo number_format($course['price'], 2); ?>
+                                        ₵<?php echo number_format($course['price'], 2); ?>
                                     <?php else: ?>
                                         Free
                                     <?php endif; ?>

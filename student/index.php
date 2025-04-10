@@ -497,7 +497,7 @@ HAVING AVG(cr.rating) >= 4
 
                     <?php if ($course['price'] > 0): ?>
                       <div class="mb-2">
-                        <span class="fw-bold text-primary">$<?php echo number_format($course['price'], 2); ?></span>
+                        <span class="fw-bold text-primary">₵<?php echo number_format($course['price'], 2); ?></span>
                       </div>
                     <?php else: ?>
                       <div class="mb-2">

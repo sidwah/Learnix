@@ -21,7 +21,7 @@
 
         <!-- Pricing Options -->
         <div class="setting-section mb-4">
-            <h6 class="section-title"><i class="mdi mdi-currency-usd me-1"></i> Pricing Options</h6>
+            <h6 class="section-title">₵ Pricing Options</h6>
             <div class="row mb-3">
                 <label class="col-md-3 col-form-label" for="pricingOptions">Pricing Model</label>
                 <div class="col-md-9">
@@ -38,12 +38,12 @@
                 <label class="col-md-3 col-form-label" for="coursePrice">Price</label>
                 <div class="col-md-9">
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">₵</span>
                         <input type="number" class="form-control" id="coursePrice" name="coursePrice" min="0.99" max="100" step="0.01" value="9.99" required>
                     </div>
-                    <div class="form-text text-muted">Set your course price between $0.99 and $100.00.</div>
+                    <div class="form-text text-muted">Set your course price between ₵0.99 and ₵100.00.</div>
                     <div class="invalid-feedback" id="priceError">
-                        Please enter a valid price between $0.99 and $100.00.
+                        Please enter a valid price between ₵0.99 and ₵100.00.
                     </div>
                 </div>
             </div>

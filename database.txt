@@ -1,0 +1,3500 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: localhost:8889
+-- Generation Time: Apr 09, 2025 at 11:07 PM
+-- Server version: 8.0.40
+-- PHP Version: 8.3.14
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `learnix_db`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_lockouts`
+--
+
+CREATE TABLE `admin_lockouts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `lockout_until` datetime NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_reset_attempts`
+--
+
+CREATE TABLE `admin_reset_attempts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `last_attempt` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_reset_codes`
+--
+
+CREATE TABLE `admin_reset_codes` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `code` varchar(6) NOT NULL,
+  `expiry_time` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_reset_lockouts`
+--
+
+CREATE TABLE `admin_reset_lockouts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `lockout_until` datetime NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_verification_attempts`
+--
+
+CREATE TABLE `admin_verification_attempts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `last_attempt` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_verification_codes`
+--
+
+CREATE TABLE `admin_verification_codes` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `code` varchar(6) NOT NULL,
+  `expiry_time` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `announcement_delivery_logs`
+--
+
+CREATE TABLE `announcement_delivery_logs` (
+  `delivery_id` int NOT NULL,
+  `announcement_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `delivery_channel` enum('Email','In-App','Push','SMS') NOT NULL,
+  `delivery_status` enum('Pending','Sent','Failed','Read') DEFAULT 'Pending',
+  `delivery_time` datetime DEFAULT NULL,
+  `error_details` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `assignments`
+--
+
+CREATE TABLE `assignments` (
+  `assignment_id` int NOT NULL,
+  `topic_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `max_points` int DEFAULT '100',
+  `due_days` int DEFAULT NULL,
+  `submission_type` enum('Text','File','Link','Multiple Files') DEFAULT 'Text',
+  `file_types_allowed` varchar(255) DEFAULT NULL,
+  `max_file_size_mb` int DEFAULT '10',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `assignment_submissions`
+--
+
+CREATE TABLE `assignment_submissions` (
+  `submission_id` int NOT NULL,
+  `assignment_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `submission_text` text,
+  `submission_files` json DEFAULT NULL,
+  `submission_link` varchar(255) DEFAULT NULL,
+  `submission_date` datetime NOT NULL,
+  `status` enum('Submitted','Under Review','Graded','Returned for Revision') DEFAULT 'Submitted',
+  `instructor_feedback` text,
+  `points_awarded` int DEFAULT NULL,
+  `graded_by` int DEFAULT NULL,
+  `graded_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `categories`
+--
+
+CREATE TABLE `categories` (
+  `category_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `certificates`
+--
+
+CREATE TABLE `certificates` (
+  `certificate_id` int NOT NULL,
+  `enrollment_id` int NOT NULL,
+  `issue_date` datetime NOT NULL,
+  `certificate_hash` varchar(64) NOT NULL,
+  `template_id` int DEFAULT '1',
+  `status` enum('Generated','Verified','Shared') NOT NULL DEFAULT 'Generated',
+  `download_count` int NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `certificate_templates`
+--
+
+CREATE TABLE `certificate_templates` (
+  `template_id` int NOT NULL,
+  `template_name` varchar(100) NOT NULL,
+  `filename` varchar(100) NOT NULL,
+  `description` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `chatbot_responses`
+--
+
+CREATE TABLE `chatbot_responses` (
+  `id` int NOT NULL,
+  `user_query` varchar(255) NOT NULL,
+  `bot_response` text NOT NULL,
+  `suggestions` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `content_bookmarks`
+--
+
+CREATE TABLE `content_bookmarks` (
+  `bookmark_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `topic_id` int NOT NULL,
+  `position` int DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `content_validation_logs`
+--
+
+CREATE TABLE `content_validation_logs` (
+  `log_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `validation_type` enum('Automatic','Manual') NOT NULL,
+  `validation_results` json NOT NULL,
+  `validation_date` datetime NOT NULL,
+  `validated_by` int DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `courses`
+--
+
+CREATE TABLE `courses` (
+  `course_id` int NOT NULL,
+  `instructor_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `short_description` varchar(255) DEFAULT NULL,
+  `full_description` text,
+  `subcategory_id` int NOT NULL,
+  `thumbnail` varchar(255) DEFAULT NULL,
+  `status` enum('Draft','Published') DEFAULT 'Draft',
+  `approval_status` enum('Pending','Approved','Rejected') DEFAULT 'Pending',
+  `price` decimal(10,2) DEFAULT '0.00',
+  `access_level` enum('Public','Restricted') DEFAULT 'Public',
+  `course_level` enum('Beginner','Intermediate','Advanced','All Levels') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT 'Beginner',
+  `certificate_enabled` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `creation_step` int DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_analytics`
+--
+
+CREATE TABLE `course_analytics` (
+  `analytics_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `total_students` int DEFAULT '0',
+  `active_students` int DEFAULT '0',
+  `completion_rate` decimal(5,2) DEFAULT '0.00',
+  `average_rating` decimal(3,2) DEFAULT '0.00',
+  `revenue_total` decimal(10,2) DEFAULT '0.00',
+  `revenue_month` decimal(10,2) DEFAULT '0.00',
+  `views_total` int DEFAULT '0',
+  `views_month` int DEFAULT '0',
+  `last_updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_announcements`
+--
+
+CREATE TABLE `course_announcements` (
+  `announcement_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `content` text NOT NULL,
+  `is_pinned` tinyint(1) DEFAULT '0',
+  `created_by` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `scheduled_at` datetime DEFAULT NULL,
+  `status` enum('Draft','Published','Scheduled','Archived') DEFAULT 'Published'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_detailed_descriptions`
+--
+
+CREATE TABLE `course_detailed_descriptions` (
+  `description_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `description_content` longtext,
+  `last_updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_learning_outcomes`
+--
+
+CREATE TABLE `course_learning_outcomes` (
+  `outcome_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `outcome_text` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_media`
+--
+
+CREATE TABLE `course_media` (
+  `media_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `media_type` enum('thumbnail','video','promotional','gallery') NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `display_order` int DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_payments`
+--
+
+CREATE TABLE `course_payments` (
+  `payment_id` int NOT NULL,
+  `enrollment_id` int NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `currency` varchar(3) NOT NULL DEFAULT 'USD',
+  `payment_date` datetime NOT NULL,
+  `payment_method` varchar(50) NOT NULL,
+  `transaction_id` varchar(255) DEFAULT NULL,
+  `status` enum('Pending','Completed','Failed','Refunded') NOT NULL DEFAULT 'Pending',
+  `refund_date` datetime DEFAULT NULL,
+  `refund_reason` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_prerequisites`
+--
+
+CREATE TABLE `course_prerequisites` (
+  `prerequisite_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `prerequisite_course_id` int NOT NULL,
+  `required_completion_percentage` decimal(5,2) DEFAULT '100.00',
+  `alternative_requirement_group` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_pricing_plans`
+--
+
+CREATE TABLE `course_pricing_plans` (
+  `plan_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `plan_name` varchar(100) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `currency` varchar(3) DEFAULT 'USD',
+  `billing_cycle` enum('One-time','Monthly','Quarterly','Yearly') DEFAULT 'One-time',
+  `trial_period_days` int DEFAULT '0',
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_ratings`
+--
+
+CREATE TABLE `course_ratings` (
+  `rating_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `rating` decimal(3,1) NOT NULL,
+  `review_text` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_requirements`
+--
+
+CREATE TABLE `course_requirements` (
+  `requirement_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `requirement_text` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_review_requests`
+--
+
+CREATE TABLE `course_review_requests` (
+  `request_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `requested_by` int NOT NULL,
+  `request_notes` text,
+  `status` enum('Pending','In Review','Approved','Rejected','Changes Requested') DEFAULT 'Pending',
+  `reviewer_id` int DEFAULT NULL,
+  `review_notes` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_sections`
+--
+
+CREATE TABLE `course_sections` (
+  `section_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `position` int DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_settings`
+--
+
+CREATE TABLE `course_settings` (
+  `setting_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `enrollment_limit` int DEFAULT NULL,
+  `enrollment_period_start` datetime DEFAULT NULL,
+  `enrollment_period_end` datetime DEFAULT NULL,
+  `visibility` enum('Public','Private','Password Protected','Coming Soon') DEFAULT 'Public',
+  `access_password` varchar(255) DEFAULT NULL,
+  `difficulty_level` enum('Beginner','Intermediate','Advanced','All Levels') DEFAULT 'All Levels',
+  `estimated_duration` varchar(50) DEFAULT NULL,
+  `last_updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_tag_mapping`
+--
+
+CREATE TABLE `course_tag_mapping` (
+  `course_id` int NOT NULL,
+  `tag_id` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+-----------------------------------------------------
+
+--
+-- Table structure for table `faqs`
+--
+
+CREATE TABLE `faqs` (
+  `id` int NOT NULL,
+  `category` varchar(100) NOT NULL,
+  `question` text NOT NULL,
+  `answer` text NOT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `grading_rubrics`
+--
+
+CREATE TABLE `grading_rubrics` (
+  `rubric_id` int NOT NULL,
+  `assignment_id` int NOT NULL,
+  `rubric_title` varchar(255) NOT NULL,
+  `rubric_criteria` json NOT NULL,
+  `created_by` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `growth_metrics`
+--
+
+CREATE TABLE `growth_metrics` (
+  `id` int NOT NULL,
+  `metric_type` enum('students','courses','revenue') NOT NULL,
+  `value` int NOT NULL,
+  `recorded_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructors`
+--
+
+CREATE TABLE `instructors` (
+  `instructor_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `bio` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `verification_status` enum('unverified','pending','verified') DEFAULT 'unverified'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_earnings`
+--
+
+CREATE TABLE `instructor_earnings` (
+  `earning_id` int NOT NULL,
+  `instructor_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `payment_id` int NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `instructor_share` decimal(10,2) NOT NULL,
+  `platform_fee` decimal(10,2) NOT NULL,
+  `status` enum('Pending','Available','Withdrawn','Refunded') NOT NULL DEFAULT 'Pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `available_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_experience`
+--
+
+CREATE TABLE `instructor_experience` (
+  `experience_id` int NOT NULL,
+  `instructor_id` int NOT NULL,
+  `job_title` varchar(255) NOT NULL,
+  `company_name` varchar(255) NOT NULL,
+  `years_worked` varchar(50) NOT NULL,
+  `job_description` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_lockouts`
+--
+
+CREATE TABLE `instructor_lockouts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `lockout_until` datetime NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_payment_methods`
+--
+
+CREATE TABLE `instructor_payment_methods` (
+  `method_id` int NOT NULL,
+  `instructor_id` int NOT NULL,
+  `provider` enum('Stripe','PayPal','Bank','Other') NOT NULL,
+  `is_default` tinyint(1) DEFAULT '0',
+  `last_four` varchar(4) DEFAULT NULL,
+  `card_type` varchar(20) DEFAULT NULL,
+  `expiry_date` varchar(7) DEFAULT NULL,
+  `account_name` varchar(100) DEFAULT NULL,
+  `status` enum('Active','Expired','Pending','Failed') DEFAULT 'Active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_payouts`
+--
+
+CREATE TABLE `instructor_payouts` (
+  `payout_id` int NOT NULL,
+  `instructor_id` int NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `currency` varchar(3) NOT NULL DEFAULT 'USD',
+  `payout_method` varchar(50) NOT NULL,
+  `transaction_id` varchar(255) DEFAULT NULL,
+  `requested_date` datetime NOT NULL,
+  `processed_date` datetime DEFAULT NULL,
+  `status` enum('Requested','Processing','Completed','Cancelled','Failed') NOT NULL DEFAULT 'Requested',
+  `notes` text,
+  `admin_notes` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_reset_attempts`
+--
+
+CREATE TABLE `instructor_reset_attempts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `last_attempt` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_reset_codes`
+--
+
+CREATE TABLE `instructor_reset_codes` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `code` varchar(6) NOT NULL,
+  `expiry_time` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_reset_lockouts`
+--
+
+CREATE TABLE `instructor_reset_lockouts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `lockout_until` datetime NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_social_links`
+--
+
+CREATE TABLE `instructor_social_links` (
+  `social_id` int NOT NULL,
+  `instructor_id` int NOT NULL,
+  `facebook` varchar(255) DEFAULT NULL,
+  `twitter` varchar(255) DEFAULT NULL,
+  `instagram` varchar(255) DEFAULT NULL,
+  `linkedin` varchar(255) DEFAULT NULL,
+  `github` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_verification_attempts`
+--
+
+CREATE TABLE `instructor_verification_attempts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `last_attempt` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+----------------------------------------------------
+
+--
+-- Table structure for table `instructor_verification_codes`
+--
+
+CREATE TABLE `instructor_verification_codes` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `code` varchar(6) NOT NULL,
+  `expiry_time` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_verification_documents`
+--
+
+CREATE TABLE `instructor_verification_documents` (
+  `document_id` int NOT NULL,
+  `verification_id` int NOT NULL,
+  `document_path` varchar(255) NOT NULL,
+  `uploaded_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `instructor_verification_requests`
+--
+
+CREATE TABLE `instructor_verification_requests` (
+  `verification_id` int NOT NULL,
+  `instructor_id` int NOT NULL,
+  `credentials` text NOT NULL,
+  `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `submitted_at` datetime NOT NULL,
+  `reviewed_at` datetime DEFAULT NULL,
+  `rejection_reason` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `issue_reports`
+--
+
+CREATE TABLE `issue_reports` (
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `issue_type` enum('Technical','Course','Account','Other') NOT NULL,
+  `description` text NOT NULL,
+  `file_path` varchar(255) DEFAULT NULL,
+  `status` enum('Pending','In Progress','Resolved') DEFAULT 'Pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-----------------------------------------------------
+
+--
+-- Table structure for table `login_attempts`
+--
+
+CREATE TABLE `login_attempts` (
+  `id` int NOT NULL,
+  `ip_address` varchar(45) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `success` tinyint(1) NOT NULL DEFAULT '0',
+  `attempt_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `password_resets`
+--
+
+CREATE TABLE `password_resets` (
+  `reset_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `reset_code` varchar(10) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used` tinyint(1) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `payments`
+--
+
+CREATE TABLE `payments` (
+  `payment_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `status` enum('pending','completed','failed') DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `prerequisite_override_requests`
+--
+
+CREATE TABLE `prerequisite_override_requests` (
+  `request_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `justification` text NOT NULL,
+  `status` enum('Pending','Approved','Rejected') DEFAULT 'Pending',
+  `reviewed_by` int DEFAULT NULL,
+  `review_notes` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `profile_section_updates`
+--
+
+CREATE TABLE `profile_section_updates` (
+  `id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `section` varchar(50) NOT NULL,
+  `last_updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `progress`
+--
+
+CREATE TABLE `progress` (
+  `progress_id` int NOT NULL,
+  `enrollment_id` int NOT NULL,
+  `topic_id` int NOT NULL,
+  `completion_status` enum('Not Started','In Progress','Completed') NOT NULL DEFAULT 'Not Started',
+  `completion_date` datetime DEFAULT NULL,
+  `time_spent` int DEFAULT '0' COMMENT 'Time spent in minutes',
+  `last_position` int DEFAULT '0' COMMENT 'Last position for video content (in seconds)',
+  `streak_days` int DEFAULT '0',
+  `achievement_points` int DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `question_banks`
+--
+
+CREATE TABLE `question_banks` (
+  `bank_id` int NOT NULL,
+  `instructor_id` int NOT NULL,
+  `bank_name` varchar(255) NOT NULL,
+  `description` text,
+  `is_public` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `question_bank_items`
+--
+
+CREATE TABLE `question_bank_items` (
+  `bank_item_id` int NOT NULL,
+  `bank_id` int NOT NULL,
+  `question_id` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quizzes`
+--
+
+CREATE TABLE `quizzes` (
+  `quiz_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `section_id` int DEFAULT NULL,
+  `title` varchar(255) NOT NULL,
+  `time_limit` int DEFAULT NULL,
+  `randomize_questions` tinyint(1) DEFAULT '0',
+  `pass_mark` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_achievements`
+--
+
+CREATE TABLE `quiz_achievements` (
+  `achievement_id` int NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `description` text,
+  `badge_image` varchar(255) DEFAULT NULL,
+  `criteria` json DEFAULT NULL COMMENT 'JSON defining achievement criteria',
+  `points` int DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_analytics`
+--
+
+CREATE TABLE `quiz_analytics` (
+  `quiz_analytics_id` int NOT NULL,
+  `quiz_id` int NOT NULL,
+  `total_attempts` int DEFAULT '0',
+  `completion_rate` decimal(5,2) DEFAULT '0.00',
+  `average_score` decimal(5,2) DEFAULT '0.00',
+  `average_time` decimal(10,2) DEFAULT '0.00' COMMENT 'Average time in seconds',
+  `pass_rate` decimal(5,2) DEFAULT '0.00',
+  `last_updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_answers`
+--
+
+CREATE TABLE `quiz_answers` (
+  `answer_id` int NOT NULL,
+  `question_id` int NOT NULL,
+  `answer_text` varchar(255) NOT NULL,
+  `is_correct` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `explanation` text COMMENT 'Why this answer is correct/incorrect',
+  `is_partially_correct` tinyint(1) DEFAULT '0',
+  `partial_points` decimal(5,2) DEFAULT '0.00',
+  `match_type` enum('exact','case_insensitive','pattern') DEFAULT 'exact',
+  `match_percentage` int DEFAULT '100'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_feedback`
+--
+
+CREATE TABLE `quiz_feedback` (
+  `feedback_id` int NOT NULL,
+  `attempt_id` int NOT NULL,
+  `rating` int DEFAULT NULL COMMENT 'Rating 1-5',
+  `comments` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_matching_pairs`
+--
+
+CREATE TABLE `quiz_matching_pairs` (
+  `pair_id` int NOT NULL,
+  `question_id` int NOT NULL,
+  `left_item` text NOT NULL,
+  `right_item` text NOT NULL,
+  `position` int DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_questions`
+--
+
+CREATE TABLE `quiz_questions` (
+  `question_id` int NOT NULL,
+  `quiz_id` int NOT NULL,
+  `question_text` text NOT NULL,
+  `question_type` enum('Multiple Choice','True/False','Short_Answer','Matching','Ordering','Essay','Fill in the Blanks','Drag and Drop') NOT NULL,
+  `points` int DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `explanation` text COMMENT 'Explanation shown after answering',
+  `difficulty` enum('Easy','Medium','Hard') DEFAULT 'Medium',
+  `image_path` varchar(255) DEFAULT NULL,
+  `question_order` int DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+-------------------------------------------------------
+
+--
+-- Table structure for table `quiz_question_analytics`
+--
+
+CREATE TABLE `quiz_question_analytics` (
+  `analytics_id` int NOT NULL,
+  `question_id` int NOT NULL,
+  `total_attempts` int DEFAULT '0',
+  `correct_responses` int DEFAULT '0',
+  `average_time` decimal(10,2) DEFAULT '0.00' COMMENT 'Average time in seconds',
+  `difficulty_score` decimal(5,2) DEFAULT '0.00' COMMENT '0-1 scale based on success rate',
+  `discrimination_index` decimal(5,2) DEFAULT '0.00' COMMENT 'How well it separates high/low performers',
+  `last_updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_question_pools`
+--
+
+CREATE TABLE `quiz_question_pools` (
+  `pool_id` int NOT NULL,
+  `quiz_id` int NOT NULL,
+  `bank_id` int NOT NULL,
+  `questions_to_select` int NOT NULL DEFAULT '1',
+  `difficulty_distribution` json DEFAULT NULL COMMENT 'JSON defining how many of each difficulty'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_question_tags`
+--
+
+CREATE TABLE `quiz_question_tags` (
+  `tag_id` int NOT NULL,
+  `tag_name` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_question_tag_mapping`
+--
+
+CREATE TABLE `quiz_question_tag_mapping` (
+  `question_id` int NOT NULL,
+  `tag_id` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_security_logs`
+--
+
+CREATE TABLE `quiz_security_logs` (
+  `log_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `quiz_id` int NOT NULL,
+  `event_type` enum('multiple_tabs','tab_switching','time_manipulation','script_detection','answer_extraction') NOT NULL,
+  `details` text,
+  `ip_address` varchar(45) NOT NULL,
+  `user_agent` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_sequence_items`
+--
+
+CREATE TABLE `quiz_sequence_items` (
+  `item_id` int NOT NULL,
+  `question_id` int NOT NULL,
+  `content` text NOT NULL,
+  `correct_position` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_sessions`
+--
+
+CREATE TABLE `quiz_sessions` (
+  `session_id` int NOT NULL,
+  `attempt_id` int NOT NULL,
+  `session_token` varchar(255) NOT NULL,
+  `client_ip` varchar(45) NOT NULL,
+  `user_agent` text NOT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_activity` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `section_quizzes`
+--
+
+CREATE TABLE `section_quizzes` (
+  `quiz_id` int NOT NULL,
+  `section_id` int NOT NULL,
+  `quiz_title` varchar(255) NOT NULL,
+  `description` text,
+  `randomize_questions` tinyint(1) NOT NULL DEFAULT '0',
+  `pass_mark` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `topic_id` int DEFAULT NULL,
+  `time_limit` int DEFAULT NULL COMMENT 'Time limit in minutes',
+  `attempts_allowed` int DEFAULT '1',
+  `show_correct_answers` tinyint(1) DEFAULT '0',
+  `shuffle_answers` tinyint(1) DEFAULT '0',
+  `is_required` tinyint(1) DEFAULT '1',
+  `instruction` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `section_topics`
+--
+
+CREATE TABLE `section_topics` (
+  `topic_id` int NOT NULL,
+  `section_id` int NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `position` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `is_previewable` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `shared_notes`
+--
+
+CREATE TABLE `shared_notes` (
+  `shared_note_id` int NOT NULL,
+  `note_id` int NOT NULL,
+  `group_id` int DEFAULT NULL,
+  `shared_by` int NOT NULL,
+  `shared_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_answer_selections`
+--
+
+CREATE TABLE `student_answer_selections` (
+  `selection_id` int NOT NULL,
+  `response_id` int NOT NULL,
+  `answer_id` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_learning_goals`
+--
+
+CREATE TABLE `student_learning_goals` (
+  `goal_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `goal_title` varchar(255) NOT NULL,
+  `description` text,
+  `target_date` date DEFAULT NULL,
+  `status` enum('Active','Completed','Abandoned') DEFAULT 'Active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_learning_sessions`
+--
+
+CREATE TABLE `student_learning_sessions` (
+  `session_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `topic_id` int DEFAULT NULL,
+  `start_time` datetime NOT NULL,
+  `end_time` datetime DEFAULT NULL,
+  `time_spent` int DEFAULT '0',
+  `device_type` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_matching_responses`
+--
+
+CREATE TABLE `student_matching_responses` (
+  `matching_response_id` int NOT NULL,
+  `response_id` int NOT NULL,
+  `pair_id` int NOT NULL,
+  `student_right_match` text NOT NULL COMMENT 'Student selected right side match',
+  `is_correct` tinyint(1) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_notes`
+--
+
+CREATE TABLE `student_notes` (
+  `note_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `topic_id` int NOT NULL,
+  `content` text NOT NULL,
+  `timestamp` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_preferences`
+--
+
+CREATE TABLE `student_preferences` (
+  `preference_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `learning_style` enum('Visual','Auditory','Reading','Kinesthetic') DEFAULT NULL,
+  `theme_preference` varchar(20) DEFAULT 'light',
+  `content_display` json DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_progress_snapshots`
+--
+
+CREATE TABLE `student_progress_snapshots` (
+  `snapshot_id` int NOT NULL,
+  `course_id` int NOT NULL,
+  `snapshot_date` date NOT NULL,
+  `enrollment_count` int DEFAULT '0',
+  `completion_data` json NOT NULL,
+  `engagement_metrics` json NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_question_responses`
+--
+
+CREATE TABLE `student_question_responses` (
+  `response_id` int NOT NULL,
+  `attempt_id` int NOT NULL,
+  `question_id` int NOT NULL,
+  `answer_text` text COMMENT 'For short answer and custom responses',
+  `is_correct` tinyint(1) DEFAULT '0',
+  `points_awarded` decimal(5,2) DEFAULT '0.00',
+  `response_time` int DEFAULT NULL COMMENT 'Time taken to answer in seconds',
+  `sequence_order` text COMMENT 'JSON array of sequence/matching answers'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_quiz_attempts`
+--
+
+CREATE TABLE `student_quiz_attempts` (
+  `attempt_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `quiz_id` int NOT NULL,
+  `start_time` datetime NOT NULL,
+  `end_time` datetime DEFAULT NULL,
+  `is_completed` tinyint(1) DEFAULT '0',
+  `score` decimal(5,2) DEFAULT '0.00',
+  `passed` tinyint(1) DEFAULT '0',
+  `time_spent` int DEFAULT '0' COMMENT 'Time spent in seconds',
+  `attempt_number` int DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_reset_attempts`
+--
+
+CREATE TABLE `student_reset_attempts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `last_attempt` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_reset_codes`
+--
+
+CREATE TABLE `student_reset_codes` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `code` varchar(5) NOT NULL,
+  `expiry_time` datetime NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_reset_lockouts`
+--
+
+CREATE TABLE `student_reset_lockouts` (
+  `id` int NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `lockout_until` datetime NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_sequence_responses`
+--
+
+CREATE TABLE `student_sequence_responses` (
+  `sequence_response_id` int NOT NULL,
+  `response_id` int NOT NULL,
+  `item_id` int NOT NULL,
+  `student_position` int NOT NULL,
+  `is_correct` tinyint(1) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `study_groups`
+--
+
+CREATE TABLE `study_groups` (
+  `group_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `course_id` int NOT NULL,
+  `description` text,
+  `created_by` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `study_group_members`
+--
+
+CREATE TABLE `study_group_members` (
+  `id` int NOT NULL,
+  `group_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `role` enum('Member','Moderator','Admin') DEFAULT 'Member',
+  `joined_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `subcategories`
+--
+
+CREATE TABLE `subcategories` (
+  `subcategory_id` int NOT NULL,
+  `category_id` int NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tags`
+--
+
+CREATE TABLE `tags` (
+  `tag_id` int NOT NULL,
+  `tag_name` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `topic_content`
+--
+
+CREATE TABLE `topic_content` (
+  `content_id` int NOT NULL,
+  `topic_id` int NOT NULL,
+  `content_type` enum('video','text','link','document') NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `content_text` text,
+  `video_url` varchar(500) DEFAULT NULL,
+  `video_file` varchar(255) DEFAULT NULL,
+  `external_url` varchar(700) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `file_path` varchar(500) DEFAULT NULL,
+  `description` text,
+  `position` int NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `topic_content_versions`
+--
+
+CREATE TABLE `topic_content_versions` (
+  `version_id` int NOT NULL,
+  `content_id` int NOT NULL,
+  `version_number` int NOT NULL,
+  `content_data` longtext,
+  `created_by` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `topic_resources`
+--
+
+CREATE TABLE `topic_resources` (
+  `resource_id` int NOT NULL,
+  `topic_id` int NOT NULL,
+  `resource_path` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Dumping data for table `users`
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_achievements`
+--
+
+CREATE TABLE `user_achievements` (
+  `user_achievement_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `achievement_id` int NOT NULL,
+  `earned_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_activity_logs`
+--
+
+CREATE TABLE `user_activity_logs` (
+  `log_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `activity_type` varchar(50) NOT NULL,
+  `activity_details` text,
+  `ip_address` varchar(45) NOT NULL,
+  `user_agent` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_notifications`
+--
+
+CREATE TABLE `user_notifications` (
+  `notification_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `type` varchar(50) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `related_id` int DEFAULT NULL,
+  `related_type` varchar(50) DEFAULT NULL,
+  `is_read` tinyint(1) DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_notification_preferences`
+--
+
+CREATE TABLE `user_notification_preferences` (
+  `preference_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `notification_type` varchar(50) NOT NULL,
+  `email_enabled` tinyint(1) DEFAULT '1',
+  `push_enabled` tinyint(1) DEFAULT '1',
+  `in_app_enabled` tinyint(1) DEFAULT '1',
+  `sms_enabled` tinyint(1) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_status_logs`
+--
+
+CREATE TABLE `user_status_logs` (
+  `log_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `changed_by` int NOT NULL,
+  `old_status` enum('active','suspended','banned') NOT NULL,
+  `new_status` enum('active','suspended','banned') NOT NULL,
+  `reason` text,
+  `change_date` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_verification`
+--
+
+CREATE TABLE `user_verification` (
+  `verification_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `token` varchar(5) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `verified` tinyint(1) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `verification_attempts`
+--
+
+CREATE TABLE `verification_attempts` (
+  `id` int NOT NULL,
+  `ip_address` varchar(45) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `attempt_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `video_sources`
+--
+
+CREATE TABLE `video_sources` (
+  `source_id` int NOT NULL,
+  `content_id` int NOT NULL,
+  `provider` enum('YouTube','Vimeo','Self-hosted','Other') NOT NULL,
+  `source_url` varchar(255) NOT NULL,
+  `is_downloadable` tinyint(1) DEFAULT '0',
+  `duration_seconds` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `admin_lockouts`
+--
+ALTER TABLE `admin_lockouts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `lockout_until` (`lockout_until`);
+
+--
+-- Indexes for table `admin_reset_attempts`
+--
+ALTER TABLE `admin_reset_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `last_attempt` (`last_attempt`);
+
+--
+-- Indexes for table `admin_reset_codes`
+--
+ALTER TABLE `admin_reset_codes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `email` (`email`),
+  ADD KEY `code` (`code`),
+  ADD KEY `expiry_time` (`expiry_time`);
+
+--
+-- Indexes for table `admin_reset_lockouts`
+--
+ALTER TABLE `admin_reset_lockouts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `lockout_until` (`lockout_until`);
+
+--
+-- Indexes for table `admin_verification_attempts`
+--
+ALTER TABLE `admin_verification_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `last_attempt` (`last_attempt`);
+
+--
+-- Indexes for table `admin_verification_codes`
+--
+ALTER TABLE `admin_verification_codes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `email` (`email`),
+  ADD KEY `code` (`code`),
+  ADD KEY `expiry_time` (`expiry_time`);
+
+--
+-- Indexes for table `announcement_delivery_logs`
+--
+ALTER TABLE `announcement_delivery_logs`
+  ADD PRIMARY KEY (`delivery_id`),
+  ADD KEY `announcement_id` (`announcement_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `assignments`
+--
+ALTER TABLE `assignments`
+  ADD PRIMARY KEY (`assignment_id`),
+  ADD KEY `topic_id` (`topic_id`);
+
+--
+-- Indexes for table `assignment_submissions`
+--
+ALTER TABLE `assignment_submissions`
+  ADD PRIMARY KEY (`submission_id`),
+  ADD KEY `assignment_id` (`assignment_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `categories`
+--
+ALTER TABLE `categories`
+  ADD PRIMARY KEY (`category_id`),
+  ADD UNIQUE KEY `slug` (`slug`);
+
+--
+-- Indexes for table `certificates`
+--
+ALTER TABLE `certificates`
+  ADD PRIMARY KEY (`certificate_id`),
+  ADD UNIQUE KEY `enrollment_id` (`enrollment_id`),
+  ADD UNIQUE KEY `certificate_hash` (`certificate_hash`),
+  ADD KEY `fk_certificate_template` (`template_id`);
+
+--
+-- Indexes for table `certificate_templates`
+--
+ALTER TABLE `certificate_templates`
+  ADD PRIMARY KEY (`template_id`);
+
+--
+-- Indexes for table `chatbot_responses`
+--
+ALTER TABLE `chatbot_responses`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `content_bookmarks`
+--
+ALTER TABLE `content_bookmarks`
+  ADD PRIMARY KEY (`bookmark_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `topic_id` (`topic_id`);
+
+--
+-- Indexes for table `content_validation_logs`
+--
+ALTER TABLE `content_validation_logs`
+  ADD PRIMARY KEY (`log_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `courses`
+--
+ALTER TABLE `courses`
+  ADD PRIMARY KEY (`course_id`),
+  ADD KEY `instructor_id` (`instructor_id`),
+  ADD KEY `idx_courses_instructor` (`instructor_id`);
+
+--
+-- Indexes for table `course_analytics`
+--
+ALTER TABLE `course_analytics`
+  ADD PRIMARY KEY (`analytics_id`),
+  ADD UNIQUE KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `course_announcements`
+--
+ALTER TABLE `course_announcements`
+  ADD PRIMARY KEY (`announcement_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `course_detailed_descriptions`
+--
+ALTER TABLE `course_detailed_descriptions`
+  ADD PRIMARY KEY (`description_id`),
+  ADD UNIQUE KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `course_learning_outcomes`
+--
+ALTER TABLE `course_learning_outcomes`
+  ADD PRIMARY KEY (`outcome_id`),
+  ADD KEY `idx_course_learning_outcomes_course` (`course_id`);
+
+--
+-- Indexes for table `course_media`
+--
+ALTER TABLE `course_media`
+  ADD PRIMARY KEY (`media_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `course_payments`
+--
+ALTER TABLE `course_payments`
+  ADD PRIMARY KEY (`payment_id`),
+  ADD KEY `enrollment_id` (`enrollment_id`),
+  ADD KEY `status` (`status`);
+
+--
+-- Indexes for table `course_prerequisites`
+--
+ALTER TABLE `course_prerequisites`
+  ADD PRIMARY KEY (`prerequisite_id`),
+  ADD UNIQUE KEY `course_prerequisite` (`course_id`,`prerequisite_course_id`),
+  ADD KEY `prerequisite_course_id` (`prerequisite_course_id`);
+
+--
+-- Indexes for table `course_pricing_plans`
+--
+ALTER TABLE `course_pricing_plans`
+  ADD PRIMARY KEY (`plan_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `course_ratings`
+--
+ALTER TABLE `course_ratings`
+  ADD PRIMARY KEY (`rating_id`),
+  ADD KEY `course_id` (`course_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `course_requirements`
+--
+ALTER TABLE `course_requirements`
+  ADD PRIMARY KEY (`requirement_id`),
+  ADD KEY `idx_course_requirements_course` (`course_id`);
+
+--
+-- Indexes for table `course_review_requests`
+--
+ALTER TABLE `course_review_requests`
+  ADD PRIMARY KEY (`request_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `course_sections`
+--
+ALTER TABLE `course_sections`
+  ADD PRIMARY KEY (`section_id`),
+  ADD KEY `course_id` (`course_id`),
+  ADD KEY `idx_course_sections_course` (`course_id`);
+
+--
+-- Indexes for table `course_settings`
+--
+ALTER TABLE `course_settings`
+  ADD PRIMARY KEY (`setting_id`),
+  ADD UNIQUE KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `course_tag_mapping`
+--
+ALTER TABLE `course_tag_mapping`
+  ADD PRIMARY KEY (`course_id`,`tag_id`),
+  ADD KEY `idx_course_tag_mapping_course` (`course_id`),
+  ADD KEY `idx_course_tag_mapping_tag` (`tag_id`);
+
+--
+-- Indexes for table `course_wishlist`
+--
+ALTER TABLE `course_wishlist`
+  ADD PRIMARY KEY (`wishlist_id`),
+  ADD UNIQUE KEY `user_course` (`user_id`,`course_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `curriculum_organization_history`
+--
+ALTER TABLE `curriculum_organization_history`
+  ADD PRIMARY KEY (`history_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `dashboard_preferences`
+--
+ALTER TABLE `dashboard_preferences`
+  ADD PRIMARY KEY (`preference_id`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `discount_codes`
+--
+ALTER TABLE `discount_codes`
+  ADD PRIMARY KEY (`code_id`),
+  ADD UNIQUE KEY `code` (`code`);
+
+--
+-- Indexes for table `discount_usage`
+--
+ALTER TABLE `discount_usage`
+  ADD PRIMARY KEY (`usage_id`),
+  ADD KEY `code_id` (`code_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `payment_id` (`payment_id`);
+
+--
+-- Indexes for table `enrollments`
+--
+ALTER TABLE `enrollments`
+  ADD PRIMARY KEY (`enrollment_id`),
+  ADD UNIQUE KEY `user_course` (`user_id`,`course_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `course_id` (`course_id`),
+  ADD KEY `status` (`status`),
+  ADD KEY `current_topic_id` (`current_topic_id`);
+
+--
+-- Indexes for table `faqs`
+--
+ALTER TABLE `faqs`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `grading_rubrics`
+--
+ALTER TABLE `grading_rubrics`
+  ADD PRIMARY KEY (`rubric_id`),
+  ADD KEY `assignment_id` (`assignment_id`);
+
+--
+-- Indexes for table `growth_metrics`
+--
+ALTER TABLE `growth_metrics`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `instructors`
+--
+ALTER TABLE `instructors`
+  ADD PRIMARY KEY (`instructor_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `idx_instructors_user` (`user_id`);
+
+--
+-- Indexes for table `instructor_earnings`
+--
+ALTER TABLE `instructor_earnings`
+  ADD PRIMARY KEY (`earning_id`),
+  ADD KEY `instructor_id` (`instructor_id`),
+  ADD KEY `course_id` (`course_id`),
+  ADD KEY `payment_id` (`payment_id`);
+
+--
+-- Indexes for table `instructor_experience`
+--
+ALTER TABLE `instructor_experience`
+  ADD PRIMARY KEY (`experience_id`);
+
+--
+-- Indexes for table `instructor_lockouts`
+--
+ALTER TABLE `instructor_lockouts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `lockout_until` (`lockout_until`);
+
+--
+-- Indexes for table `instructor_payment_methods`
+--
+ALTER TABLE `instructor_payment_methods`
+  ADD PRIMARY KEY (`method_id`),
+  ADD KEY `instructor_id` (`instructor_id`);
+
+--
+-- Indexes for table `instructor_payouts`
+--
+ALTER TABLE `instructor_payouts`
+  ADD PRIMARY KEY (`payout_id`),
+  ADD KEY `instructor_id` (`instructor_id`);
+
+--
+-- Indexes for table `instructor_reset_attempts`
+--
+ALTER TABLE `instructor_reset_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `last_attempt` (`last_attempt`);
+
+--
+-- Indexes for table `instructor_reset_codes`
+--
+ALTER TABLE `instructor_reset_codes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `email` (`email`),
+  ADD KEY `code` (`code`),
+  ADD KEY `expiry_time` (`expiry_time`);
+
+--
+-- Indexes for table `instructor_reset_lockouts`
+--
+ALTER TABLE `instructor_reset_lockouts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `lockout_until` (`lockout_until`);
+
+--
+-- Indexes for table `instructor_social_links`
+--
+ALTER TABLE `instructor_social_links`
+  ADD PRIMARY KEY (`social_id`);
+
+--
+-- Indexes for table `instructor_verification_attempts`
+--
+ALTER TABLE `instructor_verification_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `last_attempt` (`last_attempt`);
+
+--
+-- Indexes for table `instructor_verification_codes`
+--
+ALTER TABLE `instructor_verification_codes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `email` (`email`),
+  ADD KEY `code` (`code`),
+  ADD KEY `expiry_time` (`expiry_time`);
+
+--
+-- Indexes for table `instructor_verification_documents`
+--
+ALTER TABLE `instructor_verification_documents`
+  ADD PRIMARY KEY (`document_id`),
+  ADD KEY `verification_id` (`verification_id`);
+
+--
+-- Indexes for table `instructor_verification_requests`
+--
+ALTER TABLE `instructor_verification_requests`
+  ADD PRIMARY KEY (`verification_id`),
+  ADD KEY `instructor_id` (`instructor_id`);
+
+--
+-- Indexes for table `issue_reports`
+--
+ALTER TABLE `issue_reports`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `login_attempts`
+--
+ALTER TABLE `login_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `ip_address` (`ip_address`),
+  ADD KEY `email` (`email`),
+  ADD KEY `attempt_time` (`attempt_time`);
+
+--
+-- Indexes for table `password_resets`
+--
+ALTER TABLE `password_resets`
+  ADD PRIMARY KEY (`reset_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `payments`
+--
+ALTER TABLE `payments`
+  ADD PRIMARY KEY (`payment_id`);
+
+--
+-- Indexes for table `prerequisite_override_requests`
+--
+ALTER TABLE `prerequisite_override_requests`
+  ADD PRIMARY KEY (`request_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `profile_section_updates`
+--
+ALTER TABLE `profile_section_updates`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_section` (`user_id`,`section`);
+
+--
+-- Indexes for table `progress`
+--
+ALTER TABLE `progress`
+  ADD PRIMARY KEY (`progress_id`),
+  ADD UNIQUE KEY `enrollment_topic` (`enrollment_id`,`topic_id`),
+  ADD KEY `topic_id` (`topic_id`);
+
+--
+-- Indexes for table `question_banks`
+--
+ALTER TABLE `question_banks`
+  ADD PRIMARY KEY (`bank_id`),
+  ADD KEY `instructor_id` (`instructor_id`);
+
+--
+-- Indexes for table `question_bank_items`
+--
+ALTER TABLE `question_bank_items`
+  ADD PRIMARY KEY (`bank_item_id`),
+  ADD UNIQUE KEY `bank_id` (`bank_id`,`question_id`),
+  ADD KEY `idx_quiz_question_bank` (`question_id`);
+
+--
+-- Indexes for table `quizzes`
+--
+ALTER TABLE `quizzes`
+  ADD PRIMARY KEY (`quiz_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `quiz_achievements`
+--
+ALTER TABLE `quiz_achievements`
+  ADD PRIMARY KEY (`achievement_id`);
+
+--
+-- Indexes for table `quiz_analytics`
+--
+ALTER TABLE `quiz_analytics`
+  ADD PRIMARY KEY (`quiz_analytics_id`),
+  ADD UNIQUE KEY `quiz_id` (`quiz_id`);
+
+--
+-- Indexes for table `quiz_answers`
+--
+ALTER TABLE `quiz_answers`
+  ADD PRIMARY KEY (`answer_id`),
+  ADD KEY `question_id` (`question_id`);
+
+--
+-- Indexes for table `quiz_feedback`
+--
+ALTER TABLE `quiz_feedback`
+  ADD PRIMARY KEY (`feedback_id`),
+  ADD KEY `attempt_id` (`attempt_id`);
+
+--
+-- Indexes for table `quiz_matching_pairs`
+--
+ALTER TABLE `quiz_matching_pairs`
+  ADD PRIMARY KEY (`pair_id`),
+  ADD KEY `question_id` (`question_id`);
+
+--
+-- Indexes for table `quiz_questions`
+--
+ALTER TABLE `quiz_questions`
+  ADD PRIMARY KEY (`question_id`),
+  ADD KEY `quiz_id` (`quiz_id`),
+  ADD KEY `idx_quiz_questions_quiz_id` (`quiz_id`);
+
+--
+-- Indexes for table `quiz_question_analytics`
+--
+ALTER TABLE `quiz_question_analytics`
+  ADD PRIMARY KEY (`analytics_id`),
+  ADD UNIQUE KEY `question_id` (`question_id`);
+
+--
+-- Indexes for table `quiz_question_pools`
+--
+ALTER TABLE `quiz_question_pools`
+  ADD PRIMARY KEY (`pool_id`),
+  ADD KEY `quiz_id` (`quiz_id`),
+  ADD KEY `bank_id` (`bank_id`);
+
+--
+-- Indexes for table `quiz_question_tags`
+--
+ALTER TABLE `quiz_question_tags`
+  ADD PRIMARY KEY (`tag_id`);
+
+--
+-- Indexes for table `quiz_question_tag_mapping`
+--
+ALTER TABLE `quiz_question_tag_mapping`
+  ADD PRIMARY KEY (`question_id`,`tag_id`),
+  ADD KEY `tag_id` (`tag_id`);
+
+--
+-- Indexes for table `quiz_security_logs`
+--
+ALTER TABLE `quiz_security_logs`
+  ADD PRIMARY KEY (`log_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `quiz_id` (`quiz_id`);
+
+--
+-- Indexes for table `quiz_sequence_items`
+--
+ALTER TABLE `quiz_sequence_items`
+  ADD PRIMARY KEY (`item_id`),
+  ADD KEY `question_id` (`question_id`);
+
+--
+-- Indexes for table `quiz_sessions`
+--
+ALTER TABLE `quiz_sessions`
+  ADD PRIMARY KEY (`session_id`),
+  ADD UNIQUE KEY `session_token` (`session_token`),
+  ADD KEY `attempt_id` (`attempt_id`);
+
+--
+-- Indexes for table `section_quizzes`
+--
+ALTER TABLE `section_quizzes`
+  ADD PRIMARY KEY (`quiz_id`),
+  ADD KEY `idx_section_quizzes_section` (`section_id`),
+  ADD KEY `topic_id` (`topic_id`);
+
+--
+-- Indexes for table `section_topics`
+--
+ALTER TABLE `section_topics`
+  ADD PRIMARY KEY (`topic_id`),
+  ADD KEY `section_id` (`section_id`);
+
+--
+-- Indexes for table `shared_notes`
+--
+ALTER TABLE `shared_notes`
+  ADD PRIMARY KEY (`shared_note_id`),
+  ADD KEY `note_id` (`note_id`),
+  ADD KEY `group_id` (`group_id`),
+  ADD KEY `shared_by` (`shared_by`);
+
+--
+-- Indexes for table `student_answer_selections`
+--
+ALTER TABLE `student_answer_selections`
+  ADD PRIMARY KEY (`selection_id`),
+  ADD KEY `response_id` (`response_id`),
+  ADD KEY `answer_id` (`answer_id`);
+
+--
+-- Indexes for table `student_learning_goals`
+--
+ALTER TABLE `student_learning_goals`
+  ADD PRIMARY KEY (`goal_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `student_learning_sessions`
+--
+ALTER TABLE `student_learning_sessions`
+  ADD PRIMARY KEY (`session_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `course_id` (`course_id`),
+  ADD KEY `topic_id` (`topic_id`);
+
+--
+-- Indexes for table `student_matching_responses`
+--
+ALTER TABLE `student_matching_responses`
+  ADD PRIMARY KEY (`matching_response_id`),
+  ADD KEY `response_id` (`response_id`),
+  ADD KEY `pair_id` (`pair_id`);
+
+--
+-- Indexes for table `student_notes`
+--
+ALTER TABLE `student_notes`
+  ADD PRIMARY KEY (`note_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `topic_id` (`topic_id`);
+
+--
+-- Indexes for table `student_preferences`
+--
+ALTER TABLE `student_preferences`
+  ADD PRIMARY KEY (`preference_id`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `student_progress_snapshots`
+--
+ALTER TABLE `student_progress_snapshots`
+  ADD PRIMARY KEY (`snapshot_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `student_question_responses`
+--
+ALTER TABLE `student_question_responses`
+  ADD PRIMARY KEY (`response_id`),
+  ADD KEY `idx_attempt` (`attempt_id`),
+  ADD KEY `idx_student_responses_attempt` (`attempt_id`),
+  ADD KEY `idx_student_responses_question` (`question_id`);
+
+--
+-- Indexes for table `student_quiz_attempts`
+--
+ALTER TABLE `student_quiz_attempts`
+  ADD PRIMARY KEY (`attempt_id`),
+  ADD KEY `idx_user_quiz` (`user_id`,`quiz_id`),
+  ADD KEY `idx_student_attempts_user` (`user_id`),
+  ADD KEY `idx_student_attempts_quiz` (`quiz_id`);
+
+--
+-- Indexes for table `student_reset_attempts`
+--
+ALTER TABLE `student_reset_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `last_attempt` (`last_attempt`);
+
+--
+-- Indexes for table `student_reset_codes`
+--
+ALTER TABLE `student_reset_codes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `email` (`email`),
+  ADD KEY `code` (`code`),
+  ADD KEY `expiry_time` (`expiry_time`);
+
+--
+-- Indexes for table `student_reset_lockouts`
+--
+ALTER TABLE `student_reset_lockouts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `lockout_until` (`lockout_until`);
+
+--
+-- Indexes for table `student_sequence_responses`
+--
+ALTER TABLE `student_sequence_responses`
+  ADD PRIMARY KEY (`sequence_response_id`),
+  ADD KEY `response_id` (`response_id`),
+  ADD KEY `item_id` (`item_id`);
+
+--
+-- Indexes for table `study_groups`
+--
+ALTER TABLE `study_groups`
+  ADD PRIMARY KEY (`group_id`),
+  ADD KEY `course_id` (`course_id`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `study_group_members`
+--
+ALTER TABLE `study_group_members`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `group_user` (`group_id`,`user_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `subcategories`
+--
+ALTER TABLE `subcategories`
+  ADD PRIMARY KEY (`subcategory_id`);
+
+--
+-- Indexes for table `tags`
+--
+ALTER TABLE `tags`
+  ADD PRIMARY KEY (`tag_id`),
+  ADD UNIQUE KEY `tag_name` (`tag_name`);
+
+--
+-- Indexes for table `topic_content`
+--
+ALTER TABLE `topic_content`
+  ADD PRIMARY KEY (`content_id`),
+  ADD KEY `topic_id` (`topic_id`);
+
+--
+-- Indexes for table `topic_content_versions`
+--
+ALTER TABLE `topic_content_versions`
+  ADD PRIMARY KEY (`version_id`),
+  ADD KEY `content_id` (`content_id`);
+
+--
+-- Indexes for table `topic_resources`
+--
+ALTER TABLE `topic_resources`
+  ADD PRIMARY KEY (`resource_id`),
+  ADD KEY `topic_id` (`topic_id`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email` (`email`,`role`);
+
+--
+-- Indexes for table `user_achievements`
+--
+ALTER TABLE `user_achievements`
+  ADD PRIMARY KEY (`user_achievement_id`),
+  ADD UNIQUE KEY `user_id` (`user_id`,`achievement_id`),
+  ADD KEY `achievement_id` (`achievement_id`);
+
+--
+-- Indexes for table `user_activity_logs`
+--
+ALTER TABLE `user_activity_logs`
+  ADD PRIMARY KEY (`log_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `user_notifications`
+--
+ALTER TABLE `user_notifications`
+  ADD PRIMARY KEY (`notification_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `is_read` (`is_read`);
+
+--
+-- Indexes for table `user_notification_preferences`
+--
+ALTER TABLE `user_notification_preferences`
+  ADD PRIMARY KEY (`preference_id`),
+  ADD UNIQUE KEY `user_notification_type` (`user_id`,`notification_type`);
+
+--
+-- Indexes for table `user_status_logs`
+--
+ALTER TABLE `user_status_logs`
+  ADD PRIMARY KEY (`log_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `changed_by` (`changed_by`);
+
+--
+-- Indexes for table `user_verification`
+--
+ALTER TABLE `user_verification`
+  ADD PRIMARY KEY (`verification_id`),
+  ADD UNIQUE KEY `token` (`token`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `verification_attempts`
+--
+ALTER TABLE `verification_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `ip_address` (`ip_address`),
+  ADD KEY `email` (`email`),
+  ADD KEY `attempt_time` (`attempt_time`);
+
+--
+-- Indexes for table `video_sources`
+--
+ALTER TABLE `video_sources`
+  ADD PRIMARY KEY (`source_id`),
+  ADD KEY `content_id` (`content_id`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `admin_lockouts`
+--
+ALTER TABLE `admin_lockouts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `admin_reset_attempts`
+--
+ALTER TABLE `admin_reset_attempts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `admin_reset_codes`
+--
+ALTER TABLE `admin_reset_codes`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `admin_reset_lockouts`
+--
+ALTER TABLE `admin_reset_lockouts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `admin_verification_attempts`
+--
+ALTER TABLE `admin_verification_attempts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `admin_verification_codes`
+--
+ALTER TABLE `admin_verification_codes`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+
+--
+-- AUTO_INCREMENT for table `announcement_delivery_logs`
+--
+ALTER TABLE `announcement_delivery_logs`
+  MODIFY `delivery_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `assignments`
+--
+ALTER TABLE `assignments`
+  MODIFY `assignment_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `assignment_submissions`
+--
+ALTER TABLE `assignment_submissions`
+  MODIFY `submission_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `categories`
+--
+ALTER TABLE `categories`
+  MODIFY `category_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+
+--
+-- AUTO_INCREMENT for table `certificates`
+--
+ALTER TABLE `certificates`
+  MODIFY `certificate_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `certificate_templates`
+--
+ALTER TABLE `certificate_templates`
+  MODIFY `template_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `chatbot_responses`
+--
+ALTER TABLE `chatbot_responses`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=141;
+
+--
+-- AUTO_INCREMENT for table `content_bookmarks`
+--
+ALTER TABLE `content_bookmarks`
+  MODIFY `bookmark_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `content_validation_logs`
+--
+ALTER TABLE `content_validation_logs`
+  MODIFY `log_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+
+--
+-- AUTO_INCREMENT for table `courses`
+--
+ALTER TABLE `courses`
+  MODIFY `course_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=158;
+
+--
+-- AUTO_INCREMENT for table `course_analytics`
+--
+ALTER TABLE `course_analytics`
+  MODIFY `analytics_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_announcements`
+--
+ALTER TABLE `course_announcements`
+  MODIFY `announcement_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_detailed_descriptions`
+--
+ALTER TABLE `course_detailed_descriptions`
+  MODIFY `description_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_learning_outcomes`
+--
+ALTER TABLE `course_learning_outcomes`
+  MODIFY `outcome_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4713;
+
+--
+-- AUTO_INCREMENT for table `course_media`
+--
+ALTER TABLE `course_media`
+  MODIFY `media_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_payments`
+--
+ALTER TABLE `course_payments`
+  MODIFY `payment_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+
+--
+-- AUTO_INCREMENT for table `course_prerequisites`
+--
+ALTER TABLE `course_prerequisites`
+  MODIFY `prerequisite_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_pricing_plans`
+--
+ALTER TABLE `course_pricing_plans`
+  MODIFY `plan_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_ratings`
+--
+ALTER TABLE `course_ratings`
+  MODIFY `rating_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_requirements`
+--
+ALTER TABLE `course_requirements`
+  MODIFY `requirement_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=331;
+
+--
+-- AUTO_INCREMENT for table `course_review_requests`
+--
+ALTER TABLE `course_review_requests`
+  MODIFY `request_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `course_sections`
+--
+ALTER TABLE `course_sections`
+  MODIFY `section_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=278;
+
+--
+-- AUTO_INCREMENT for table `course_settings`
+--
+ALTER TABLE `course_settings`
+  MODIFY `setting_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `course_wishlist`
+--
+ALTER TABLE `course_wishlist`
+  MODIFY `wishlist_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `curriculum_organization_history`
+--
+ALTER TABLE `curriculum_organization_history`
+  MODIFY `history_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `dashboard_preferences`
+--
+ALTER TABLE `dashboard_preferences`
+  MODIFY `preference_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `discount_codes`
+--
+ALTER TABLE `discount_codes`
+  MODIFY `code_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `discount_usage`
+--
+ALTER TABLE `discount_usage`
+  MODIFY `usage_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `enrollments`
+--
+ALTER TABLE `enrollments`
+  MODIFY `enrollment_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+
+--
+-- AUTO_INCREMENT for table `faqs`
+--
+ALTER TABLE `faqs`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `grading_rubrics`
+--
+ALTER TABLE `grading_rubrics`
+  MODIFY `rubric_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `growth_metrics`
+--
+ALTER TABLE `growth_metrics`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `instructors`
+--
+ALTER TABLE `instructors`
+  MODIFY `instructor_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+
+--
+-- AUTO_INCREMENT for table `instructor_earnings`
+--
+ALTER TABLE `instructor_earnings`
+  MODIFY `earning_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `instructor_experience`
+--
+ALTER TABLE `instructor_experience`
+  MODIFY `experience_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `instructor_lockouts`
+--
+ALTER TABLE `instructor_lockouts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `instructor_payment_methods`
+--
+ALTER TABLE `instructor_payment_methods`
+  MODIFY `method_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `instructor_payouts`
+--
+ALTER TABLE `instructor_payouts`
+  MODIFY `payout_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `instructor_reset_attempts`
+--
+ALTER TABLE `instructor_reset_attempts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `instructor_reset_codes`
+--
+ALTER TABLE `instructor_reset_codes`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
+-- AUTO_INCREMENT for table `instructor_reset_lockouts`
+--
+ALTER TABLE `instructor_reset_lockouts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `instructor_social_links`
+--
+ALTER TABLE `instructor_social_links`
+  MODIFY `social_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `instructor_verification_attempts`
+--
+ALTER TABLE `instructor_verification_attempts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `instructor_verification_codes`
+--
+ALTER TABLE `instructor_verification_codes`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `instructor_verification_documents`
+--
+ALTER TABLE `instructor_verification_documents`
+  MODIFY `document_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `instructor_verification_requests`
+--
+ALTER TABLE `instructor_verification_requests`
+  MODIFY `verification_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `issue_reports`
+--
+ALTER TABLE `issue_reports`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `login_attempts`
+--
+ALTER TABLE `login_attempts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=140;
+
+--
+-- AUTO_INCREMENT for table `password_resets`
+--
+ALTER TABLE `password_resets`
+  MODIFY `reset_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+
+--
+-- AUTO_INCREMENT for table `payments`
+--
+ALTER TABLE `payments`
+  MODIFY `payment_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `prerequisite_override_requests`
+--
+ALTER TABLE `prerequisite_override_requests`
+  MODIFY `request_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `profile_section_updates`
+--
+ALTER TABLE `profile_section_updates`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+
+--
+-- AUTO_INCREMENT for table `progress`
+--
+ALTER TABLE `progress`
+  MODIFY `progress_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
+
+--
+-- AUTO_INCREMENT for table `question_banks`
+--
+ALTER TABLE `question_banks`
+  MODIFY `bank_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `question_bank_items`
+--
+ALTER TABLE `question_bank_items`
+  MODIFY `bank_item_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quizzes`
+--
+ALTER TABLE `quizzes`
+  MODIFY `quiz_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+
+--
+-- AUTO_INCREMENT for table `quiz_achievements`
+--
+ALTER TABLE `quiz_achievements`
+  MODIFY `achievement_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quiz_analytics`
+--
+ALTER TABLE `quiz_analytics`
+  MODIFY `quiz_analytics_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quiz_answers`
+--
+ALTER TABLE `quiz_answers`
+  MODIFY `answer_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=383;
+
+--
+-- AUTO_INCREMENT for table `quiz_feedback`
+--
+ALTER TABLE `quiz_feedback`
+  MODIFY `feedback_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quiz_matching_pairs`
+--
+ALTER TABLE `quiz_matching_pairs`
+  MODIFY `pair_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quiz_questions`
+--
+ALTER TABLE `quiz_questions`
+  MODIFY `question_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=110;
+
+--
+-- AUTO_INCREMENT for table `quiz_question_analytics`
+--
+ALTER TABLE `quiz_question_analytics`
+  MODIFY `analytics_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quiz_question_pools`
+--
+ALTER TABLE `quiz_question_pools`
+  MODIFY `pool_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quiz_question_tags`
+--
+ALTER TABLE `quiz_question_tags`
+  MODIFY `tag_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quiz_security_logs`
+--
+ALTER TABLE `quiz_security_logs`
+  MODIFY `log_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quiz_sequence_items`
+--
+ALTER TABLE `quiz_sequence_items`
+  MODIFY `item_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `quiz_sessions`
+--
+ALTER TABLE `quiz_sessions`
+  MODIFY `session_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `section_quizzes`
+--
+ALTER TABLE `section_quizzes`
+  MODIFY `quiz_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+
+--
+-- AUTO_INCREMENT for table `section_topics`
+--
+ALTER TABLE `section_topics`
+  MODIFY `topic_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
+
+--
+-- AUTO_INCREMENT for table `shared_notes`
+--
+ALTER TABLE `shared_notes`
+  MODIFY `shared_note_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_answer_selections`
+--
+ALTER TABLE `student_answer_selections`
+  MODIFY `selection_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+
+--
+-- AUTO_INCREMENT for table `student_learning_goals`
+--
+ALTER TABLE `student_learning_goals`
+  MODIFY `goal_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_learning_sessions`
+--
+ALTER TABLE `student_learning_sessions`
+  MODIFY `session_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_matching_responses`
+--
+ALTER TABLE `student_matching_responses`
+  MODIFY `matching_response_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_notes`
+--
+ALTER TABLE `student_notes`
+  MODIFY `note_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `student_preferences`
+--
+ALTER TABLE `student_preferences`
+  MODIFY `preference_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_progress_snapshots`
+--
+ALTER TABLE `student_progress_snapshots`
+  MODIFY `snapshot_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_question_responses`
+--
+ALTER TABLE `student_question_responses`
+  MODIFY `response_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+
+--
+-- AUTO_INCREMENT for table `student_quiz_attempts`
+--
+ALTER TABLE `student_quiz_attempts`
+  MODIFY `attempt_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `student_reset_attempts`
+--
+ALTER TABLE `student_reset_attempts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `student_reset_codes`
+--
+ALTER TABLE `student_reset_codes`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+
+--
+-- AUTO_INCREMENT for table `student_reset_lockouts`
+--
+ALTER TABLE `student_reset_lockouts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_sequence_responses`
+--
+ALTER TABLE `student_sequence_responses`
+  MODIFY `sequence_response_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `study_groups`
+--
+ALTER TABLE `study_groups`
+  MODIFY `group_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `study_group_members`
+--
+ALTER TABLE `study_group_members`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `subcategories`
+--
+ALTER TABLE `subcategories`
+  MODIFY `subcategory_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
+
+--
+-- AUTO_INCREMENT for table `tags`
+--
+ALTER TABLE `tags`
+  MODIFY `tag_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=892;
+
+--
+-- AUTO_INCREMENT for table `topic_content`
+--
+ALTER TABLE `topic_content`
+  MODIFY `content_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=187;
+
+--
+-- AUTO_INCREMENT for table `topic_content_versions`
+--
+ALTER TABLE `topic_content_versions`
+  MODIFY `version_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `topic_resources`
+--
+ALTER TABLE `topic_resources`
+  MODIFY `resource_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `user_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+
+--
+-- AUTO_INCREMENT for table `user_achievements`
+--
+ALTER TABLE `user_achievements`
+  MODIFY `user_achievement_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_activity_logs`
+--
+ALTER TABLE `user_activity_logs`
+  MODIFY `log_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `user_notifications`
+--
+ALTER TABLE `user_notifications`
+  MODIFY `notification_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_notification_preferences`
+--
+ALTER TABLE `user_notification_preferences`
+  MODIFY `preference_id` int NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `user_status_logs`
+--
+ALTER TABLE `user_status_logs`
+  MODIFY `log_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `user_verification`
+--
+ALTER TABLE `user_verification`
+  MODIFY `verification_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
+
+--
+-- AUTO_INCREMENT for table `verification_attempts`
+--
+ALTER TABLE `verification_attempts`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `video_sources`
+--
+ALTER TABLE `video_sources`
+  MODIFY `source_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `announcement_delivery_logs`
+--
+ALTER TABLE `announcement_delivery_logs`
+  ADD CONSTRAINT `announcement_delivery_logs_ibfk_1` FOREIGN KEY (`announcement_id`) REFERENCES `course_announcements` (`announcement_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `announcement_delivery_logs_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `assignments`
+--
+ALTER TABLE `assignments`
+  ADD CONSTRAINT `assignments_ibfk_1` FOREIGN KEY (`topic_id`) REFERENCES `section_topics` (`topic_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `assignment_submissions`
+--
+ALTER TABLE `assignment_submissions`
+  ADD CONSTRAINT `assignment_submissions_ibfk_1` FOREIGN KEY (`assignment_id`) REFERENCES `assignments` (`assignment_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `assignment_submissions_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `certificates`
+--
+ALTER TABLE `certificates`
+  ADD CONSTRAINT `certificates_ibfk_1` FOREIGN KEY (`enrollment_id`) REFERENCES `enrollments` (`enrollment_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_certificate_template` FOREIGN KEY (`template_id`) REFERENCES `certificate_templates` (`template_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `content_validation_logs`
+--
+ALTER TABLE `content_validation_logs`
+  ADD CONSTRAINT `content_validation_logs_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `courses`
+--
+ALTER TABLE `courses`
+  ADD CONSTRAINT `courses_ibfk_1` FOREIGN KEY (`instructor_id`) REFERENCES `instructors` (`instructor_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_analytics`
+--
+ALTER TABLE `course_analytics`
+  ADD CONSTRAINT `course_analytics_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_announcements`
+--
+ALTER TABLE `course_announcements`
+  ADD CONSTRAINT `course_announcements_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_detailed_descriptions`
+--
+ALTER TABLE `course_detailed_descriptions`
+  ADD CONSTRAINT `course_detailed_descriptions_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_learning_outcomes`
+--
+ALTER TABLE `course_learning_outcomes`
+  ADD CONSTRAINT `course_learning_outcomes_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_media`
+--
+ALTER TABLE `course_media`
+  ADD CONSTRAINT `course_media_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_payments`
+--
+ALTER TABLE `course_payments`
+  ADD CONSTRAINT `course_payments_ibfk_1` FOREIGN KEY (`enrollment_id`) REFERENCES `enrollments` (`enrollment_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_prerequisites`
+--
+ALTER TABLE `course_prerequisites`
+  ADD CONSTRAINT `course_prerequisites_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_prerequisites_ibfk_2` FOREIGN KEY (`prerequisite_course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_pricing_plans`
+--
+ALTER TABLE `course_pricing_plans`
+  ADD CONSTRAINT `course_pricing_plans_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_ratings`
+--
+ALTER TABLE `course_ratings`
+  ADD CONSTRAINT `course_ratings_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_ratings_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_requirements`
+--
+ALTER TABLE `course_requirements`
+  ADD CONSTRAINT `course_requirements_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_review_requests`
+--
+ALTER TABLE `course_review_requests`
+  ADD CONSTRAINT `course_review_requests_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_sections`
+--
+ALTER TABLE `course_sections`
+  ADD CONSTRAINT `course_sections_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_settings`
+--
+ALTER TABLE `course_settings`
+  ADD CONSTRAINT `course_settings_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_tag_mapping`
+--
+ALTER TABLE `course_tag_mapping`
+  ADD CONSTRAINT `course_tag_mapping_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_tag_mapping_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `tags` (`tag_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `curriculum_organization_history`
+--
+ALTER TABLE `curriculum_organization_history`
+  ADD CONSTRAINT `curriculum_organization_history_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `dashboard_preferences`
+--
+ALTER TABLE `dashboard_preferences`
+  ADD CONSTRAINT `dashboard_preferences_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `discount_usage`
+--
+ALTER TABLE `discount_usage`
+  ADD CONSTRAINT `discount_usage_ibfk_1` FOREIGN KEY (`code_id`) REFERENCES `discount_codes` (`code_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `discount_usage_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `discount_usage_ibfk_3` FOREIGN KEY (`payment_id`) REFERENCES `course_payments` (`payment_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `enrollments`
+--
+ALTER TABLE `enrollments`
+  ADD CONSTRAINT `enrollments_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `enrollments_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `enrollments_ibfk_3` FOREIGN KEY (`current_topic_id`) REFERENCES `section_topics` (`topic_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `grading_rubrics`
+--
+ALTER TABLE `grading_rubrics`
+  ADD CONSTRAINT `grading_rubrics_ibfk_1` FOREIGN KEY (`assignment_id`) REFERENCES `assignments` (`assignment_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `instructors`
+--
+ALTER TABLE `instructors`
+  ADD CONSTRAINT `instructors_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `instructor_earnings`
+--
+ALTER TABLE `instructor_earnings`
+  ADD CONSTRAINT `instructor_earnings_ibfk_1` FOREIGN KEY (`instructor_id`) REFERENCES `instructors` (`instructor_id`),
+  ADD CONSTRAINT `instructor_earnings_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`),
+  ADD CONSTRAINT `instructor_earnings_ibfk_3` FOREIGN KEY (`payment_id`) REFERENCES `course_payments` (`payment_id`);
+
+--
+-- Constraints for table `instructor_payment_methods`
+--
+ALTER TABLE `instructor_payment_methods`
+  ADD CONSTRAINT `instructor_payment_methods_ibfk_1` FOREIGN KEY (`instructor_id`) REFERENCES `instructors` (`instructor_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `instructor_payouts`
+--
+ALTER TABLE `instructor_payouts`
+  ADD CONSTRAINT `instructor_payouts_ibfk_1` FOREIGN KEY (`instructor_id`) REFERENCES `instructors` (`instructor_id`);
+
+--
+-- Constraints for table `instructor_verification_documents`
+--
+ALTER TABLE `instructor_verification_documents`
+  ADD CONSTRAINT `instructor_verification_documents_ibfk_1` FOREIGN KEY (`verification_id`) REFERENCES `instructor_verification_requests` (`verification_id`);
+
+--
+-- Constraints for table `instructor_verification_requests`
+--
+ALTER TABLE `instructor_verification_requests`
+  ADD CONSTRAINT `instructor_verification_requests_ibfk_1` FOREIGN KEY (`instructor_id`) REFERENCES `instructors` (`instructor_id`);
+
+--
+-- Constraints for table `password_resets`
+--
+ALTER TABLE `password_resets`
+  ADD CONSTRAINT `password_resets_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `prerequisite_override_requests`
+--
+ALTER TABLE `prerequisite_override_requests`
+  ADD CONSTRAINT `prerequisite_override_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `prerequisite_override_requests_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `progress`
+--
+ALTER TABLE `progress`
+  ADD CONSTRAINT `progress_ibfk_1` FOREIGN KEY (`enrollment_id`) REFERENCES `enrollments` (`enrollment_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `progress_ibfk_2` FOREIGN KEY (`topic_id`) REFERENCES `section_topics` (`topic_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `question_banks`
+--
+ALTER TABLE `question_banks`
+  ADD CONSTRAINT `question_banks_ibfk_1` FOREIGN KEY (`instructor_id`) REFERENCES `instructors` (`instructor_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `question_bank_items`
+--
+ALTER TABLE `question_bank_items`
+  ADD CONSTRAINT `question_bank_items_ibfk_1` FOREIGN KEY (`bank_id`) REFERENCES `question_banks` (`bank_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `question_bank_items_ibfk_2` FOREIGN KEY (`question_id`) REFERENCES `quiz_questions` (`question_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quizzes`
+--
+ALTER TABLE `quizzes`
+  ADD CONSTRAINT `quizzes_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_analytics`
+--
+ALTER TABLE `quiz_analytics`
+  ADD CONSTRAINT `quiz_analytics_ibfk_1` FOREIGN KEY (`quiz_id`) REFERENCES `section_quizzes` (`quiz_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_answers`
+--
+ALTER TABLE `quiz_answers`
+  ADD CONSTRAINT `quiz_answers_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `quiz_questions` (`question_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_feedback`
+--
+ALTER TABLE `quiz_feedback`
+  ADD CONSTRAINT `quiz_feedback_ibfk_1` FOREIGN KEY (`attempt_id`) REFERENCES `student_quiz_attempts` (`attempt_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_matching_pairs`
+--
+ALTER TABLE `quiz_matching_pairs`
+  ADD CONSTRAINT `quiz_matching_pairs_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `quiz_questions` (`question_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_questions`
+--
+ALTER TABLE `quiz_questions`
+  ADD CONSTRAINT `quiz_questions_ibfk_1` FOREIGN KEY (`quiz_id`) REFERENCES `quizzes` (`quiz_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_question_analytics`
+--
+ALTER TABLE `quiz_question_analytics`
+  ADD CONSTRAINT `quiz_question_analytics_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `quiz_questions` (`question_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_question_pools`
+--
+ALTER TABLE `quiz_question_pools`
+  ADD CONSTRAINT `quiz_question_pools_ibfk_1` FOREIGN KEY (`quiz_id`) REFERENCES `section_quizzes` (`quiz_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `quiz_question_pools_ibfk_2` FOREIGN KEY (`bank_id`) REFERENCES `question_banks` (`bank_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_question_tag_mapping`
+--
+ALTER TABLE `quiz_question_tag_mapping`
+  ADD CONSTRAINT `quiz_question_tag_mapping_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `quiz_questions` (`question_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `quiz_question_tag_mapping_ibfk_2` FOREIGN KEY (`tag_id`) REFERENCES `quiz_question_tags` (`tag_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_security_logs`
+--
+ALTER TABLE `quiz_security_logs`
+  ADD CONSTRAINT `quiz_security_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `quiz_security_logs_ibfk_2` FOREIGN KEY (`quiz_id`) REFERENCES `section_quizzes` (`quiz_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_sequence_items`
+--
+ALTER TABLE `quiz_sequence_items`
+  ADD CONSTRAINT `quiz_sequence_items_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `quiz_questions` (`question_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `quiz_sessions`
+--
+ALTER TABLE `quiz_sessions`
+  ADD CONSTRAINT `quiz_sessions_ibfk_1` FOREIGN KEY (`attempt_id`) REFERENCES `student_quiz_attempts` (`attempt_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `section_quizzes`
+--
+ALTER TABLE `section_quizzes`
+  ADD CONSTRAINT `fk_course_quizzes_section` FOREIGN KEY (`section_id`) REFERENCES `course_sections` (`section_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `section_quizzes_ibfk_1` FOREIGN KEY (`section_id`) REFERENCES `course_sections` (`section_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `section_quizzes_ibfk_2` FOREIGN KEY (`topic_id`) REFERENCES `section_topics` (`topic_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `section_topics`
+--
+ALTER TABLE `section_topics`
+  ADD CONSTRAINT `section_topics_ibfk_1` FOREIGN KEY (`section_id`) REFERENCES `course_sections` (`section_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_answer_selections`
+--
+ALTER TABLE `student_answer_selections`
+  ADD CONSTRAINT `student_answer_selections_ibfk_1` FOREIGN KEY (`response_id`) REFERENCES `student_question_responses` (`response_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `student_answer_selections_ibfk_2` FOREIGN KEY (`answer_id`) REFERENCES `quiz_answers` (`answer_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_matching_responses`
+--
+ALTER TABLE `student_matching_responses`
+  ADD CONSTRAINT `student_matching_responses_ibfk_1` FOREIGN KEY (`response_id`) REFERENCES `student_question_responses` (`response_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `student_matching_responses_ibfk_2` FOREIGN KEY (`pair_id`) REFERENCES `quiz_matching_pairs` (`pair_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_progress_snapshots`
+--
+ALTER TABLE `student_progress_snapshots`
+  ADD CONSTRAINT `student_progress_snapshots_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_question_responses`
+--
+ALTER TABLE `student_question_responses`
+  ADD CONSTRAINT `student_question_responses_ibfk_1` FOREIGN KEY (`attempt_id`) REFERENCES `student_quiz_attempts` (`attempt_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `student_question_responses_ibfk_2` FOREIGN KEY (`question_id`) REFERENCES `quiz_questions` (`question_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_quiz_attempts`
+--
+ALTER TABLE `student_quiz_attempts`
+  ADD CONSTRAINT `student_quiz_attempts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `student_quiz_attempts_ibfk_2` FOREIGN KEY (`quiz_id`) REFERENCES `section_quizzes` (`quiz_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_sequence_responses`
+--
+ALTER TABLE `student_sequence_responses`
+  ADD CONSTRAINT `student_sequence_responses_ibfk_1` FOREIGN KEY (`response_id`) REFERENCES `student_question_responses` (`response_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `student_sequence_responses_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `quiz_sequence_items` (`item_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `topic_content`
+--
+ALTER TABLE `topic_content`
+  ADD CONSTRAINT `topic_content_ibfk_1` FOREIGN KEY (`topic_id`) REFERENCES `section_topics` (`topic_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `topic_content_versions`
+--
+ALTER TABLE `topic_content_versions`
+  ADD CONSTRAINT `topic_content_versions_ibfk_1` FOREIGN KEY (`content_id`) REFERENCES `topic_content` (`content_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `topic_resources`
+--
+ALTER TABLE `topic_resources`
+  ADD CONSTRAINT `topic_resources_ibfk_1` FOREIGN KEY (`topic_id`) REFERENCES `section_topics` (`topic_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_achievements`
+--
+ALTER TABLE `user_achievements`
+  ADD CONSTRAINT `user_achievements_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_achievements_ibfk_2` FOREIGN KEY (`achievement_id`) REFERENCES `quiz_achievements` (`achievement_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_activity_logs`
+--
+ALTER TABLE `user_activity_logs`
+  ADD CONSTRAINT `user_activity_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_notification_preferences`
+--
+ALTER TABLE `user_notification_preferences`
+  ADD CONSTRAINT `user_notification_preferences_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_status_logs`
+--
+ALTER TABLE `user_status_logs`
+  ADD CONSTRAINT `user_status_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_status_logs_ibfk_2` FOREIGN KEY (`changed_by`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_verification`
+--
+ALTER TABLE `user_verification`
+  ADD CONSTRAINT `user_verification_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `video_sources`
+--
+ALTER TABLE `video_sources`
+  ADD CONSTRAINT `video_sources_ibfk_1` FOREIGN KEY (`content_id`) REFERENCES `topic_content` (`content_id`) ON DELETE CASCADE;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

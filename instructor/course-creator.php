@@ -53,7 +53,7 @@ $max_step = 6; // Total number of steps in the wizard
     <title>Create Course | Learnix - Empowering Education</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="Create and manage your course content, curriculum, and assessments." name="description" />
-    <meta content="Learnix Development Team" name="author" />
+    <meta name="author" content="Learnix Team" />
     <!-- App favicon -->
     <link rel="shortcut icon" href="assets/images/favicon.ico">
 

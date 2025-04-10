@@ -19,7 +19,7 @@
         <div class="mb-7">
             <h4>Introduction</h4>
 
-            <p>Thank you for choosing Learnix. Our products and services ("Services") are provided by Learnix Team, a platform dedicated to enhancing learning experiences for students and educators. Learnix is located at 123 Learning Avenue, Knowledge City, LM 45678.</p>
+            <p>Thank you for choosing Learnix. Our products and services ("Services") are provided by Learnix Team, a platform dedicated to enhancing learning experiences for students and educators. Learnix is located at East Legon, Accra, Ghana, LM 45678.</p>
 
             <p>By using our Services, you agree to these terms. Please read them carefully.</p>
 

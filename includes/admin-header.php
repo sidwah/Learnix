@@ -22,8 +22,9 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-  <!-- Title -->
   <title>Admin | Learnix - Empowering Education</title>
+<meta name="description" content="Admin panel for managing users, courses, instructors, and platform settings on Learnix." />
+<meta name="author" content="Learnix Team" />
 
   <!-- Preload Dark Mode Check - MUST be first -->
   <script>

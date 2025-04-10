@@ -126,7 +126,7 @@ if ($result && $result->num_rows > 0) {
         // Format price
         $price = (float)$course['price'];
         if ($price > 0) {
-            $priceHtml = '<h3 class="card-title text-primary">$' . number_format($price, 2) . '</h3>';
+            $priceHtml = '<h3 class="card-title text-primary">₵' . number_format($price, 2) . '</h3>';
         } else {
             $priceHtml = '<h3 class="card-title text-success">Free</h3>';
         }

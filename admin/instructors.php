@@ -283,7 +283,7 @@
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <h6 class="card-subtitle">Revenue</h6>
-                                                    <h4 class="mb-0" id="modalRevenue">$0</h4>
+                                                    <h4 class="mb-0" id="modalRevenue">₵0</h4>
                                                 </div>
                                                 <i class="bi-currency-dollar fs-1 text-info"></i>
                                             </div>
@@ -725,7 +725,7 @@
                         // Set summary cards data
                         document.getElementById("modalCourseCount").textContent = instructor.courses;
                         document.getElementById("modalStudentCount").textContent = instructor.students;
-                        document.getElementById("modalRevenue").textContent = `$${instructor.revenue.toLocaleString()}`;
+                        document.getElementById("modalRevenue").textContent = `₵${instructor.revenue.toLocaleString()}`;
 
                         // Set profile tab data
                         document.getElementById("modalFullName").textContent = instructor.name;
@@ -790,7 +790,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>$${course.price}</td>
+                                    <td>₵${course.price}</td>
                                     <td>
                                         <span class="badge bg-${course.status === 'published' ? 'success' : 'secondary'}">
                                             ${course.status === 'published' ? 'Published' : 'Draft'}

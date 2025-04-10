@@ -496,7 +496,7 @@ if (isset($_GET['username'])) {
                                                                 </div>
 
                                                                 <div class="col-5 text-end">
-                                                                    <h5 class="text-primary mb-0">$<?php echo number_format($course['price'], 2); ?></h5>
+                                                                    <h5 class="text-primary mb-0">₵<?php echo number_format($course['price'], 2); ?></h5>
                                                                 </div>
                                                             </div>
                                                         </div>

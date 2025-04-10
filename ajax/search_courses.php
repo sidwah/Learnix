@@ -58,7 +58,7 @@ try {
             if ($row['price'] == 0 || $row['price'] == 0.00) {
                 $row['formatted_price'] = 'Free';
             } else {
-                $row['formatted_price'] = '$' . number_format($row['price'], 2);
+                $row['formatted_price'] = '₵' . number_format($row['price'], 2);
             }
             
             // Format rating

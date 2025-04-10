@@ -31,14 +31,14 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <label for="coursePrice" class="form-label">Price (USD) <span class="text-danger">*</span></label>
+                    <label for="coursePrice" class="form-label">Price (GHS) <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text">$</span>
+                        <span class="input-group-text">&#8373;</span>
                         <input type="number" step="0.01" min="0" class="form-control" id="coursePrice" name="price" 
                                value="<?php echo htmlspecialchars($price); ?>" required>
                     </div>
                     <small class="form-text text-muted">
-                        Set to 0 for a free course. Minimum price is $0.99 for paid courses.
+                        Set to 0 for a free course. Minimum price is ₵0.99 for paid courses.
                     </small>
                 </div>
                 
@@ -166,7 +166,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                 max: 999.99,
                 step: 0.01,
                 decimals: 2,
-                prefix: '$'
+                prefix: '&#8373;'
             });
         }
         
@@ -211,7 +211,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
         
         // If price is greater than 0 but less than 0.99, show error
         if (price > 0 && price < 0.99) {
-            showAlert('danger', 'Minimum price for paid courses is $0.99.');
+            showAlert('danger', 'Minimum price for paid courses is ₵0.99.');
             return false;
         }
         

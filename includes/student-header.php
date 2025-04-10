@@ -122,8 +122,9 @@ while ($course = $enrolled_courses_result->fetch_assoc()) {
         })();
     </script>
 
-    <!-- Title -->
-    <title>Learnix | Learn Better, Grow Better</title>
+<title>Student | Learnix - Learn Better, Grow Better</title>
+<meta name="description" content="Access your courses, track progress, and achieve your learning goals on Learnix." />
+<meta name="author" content="Learnix Team" />
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="../favicon.ico" />
