@@ -28,6 +28,45 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
         <!-- App favicon -->
         <link rel="shortcut icon" href="assets/images/favicon.ico">
 
+         <!-- CRITICAL: Add this script before any CSS loads to prevent flash -->
+    <script>
+    // This script prevents the flash by applying the theme immediately
+    (function() {
+        // Try to get saved settings
+        var savedSettings = localStorage.getItem('hyperAppSettings');
+        
+        if (savedSettings) {
+            try {
+                var settings = JSON.parse(savedSettings);
+                
+                // Apply critical theme settings before page renders
+                if (settings.isDarkMode) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.body.setAttribute('data-layout-color', 'dark');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.body.setAttribute('data-layout-color', 'light');
+                }
+                
+                // Apply other layout attributes
+                if (settings.layoutMode) {
+                    document.body.setAttribute('data-layout-mode', settings.layoutMode);
+                }
+                
+                if (settings.leftbarTheme) {
+                    document.body.setAttribute('data-leftbar-theme', settings.leftbarTheme);
+                }
+                
+                if (settings.leftbarCompactMode) {
+                    document.body.setAttribute('data-leftbar-compact-mode', settings.leftbarCompactMode);
+                }
+            } catch (e) {
+                console.error('Error applying early theme settings:', e);
+            }
+        }
+    })();
+    </script>
+
         <!-- third party css -->
         <link href="assets/css/vendor/jquery-jvectormap-1.2.2.css" rel="stylesheet" type="text/css" />
         <!-- third party css end -->

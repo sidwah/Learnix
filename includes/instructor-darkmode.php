@@ -1,4 +1,6 @@
-    <!-- Right Sidebar -->
+
+
+<!-- Right Sidebar -->
     <div class="end-bar">
 
         <div class="rightbar-title">
@@ -87,12 +89,72 @@
 
     <div class="rightbar-overlay"></div>
     <!-- /End-bar -->
-    <script>
-       // Save settings to localStorage when changed
+  
+<!-- Add this script to the <head> of your HTML -->
+<script>
+// This script prevents the flash by applying the theme immediately
+(function() {
+    // Try to get saved settings
+    var savedSettings = localStorage.getItem('hyperAppSettings');
+    
+    if (savedSettings) {
+        try {
+            var settings = JSON.parse(savedSettings);
+            
+            // Apply critical theme settings before page renders
+            if (settings.isDarkMode) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.body.setAttribute('data-layout-color', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                document.body.setAttribute('data-layout-color', 'light');
+            }
+            
+            // Apply other layout attributes
+            if (settings.layoutMode) {
+                document.body.setAttribute('data-layout-mode', settings.layoutMode);
+            }
+            
+            if (settings.leftbarTheme) {
+                document.body.setAttribute('data-leftbar-theme', settings.leftbarTheme);
+            }
+            
+            if (settings.leftbarCompactMode) {
+                document.body.setAttribute('data-leftbar-compact-mode', settings.leftbarCompactMode);
+            }
+        } catch (e) {
+            console.error('Error applying early theme settings:', e);
+        }
+    }
+})();
+</script>
+
+<style>
+/* Add CSS to prevent transition during initial page load */
+body.no-transition,
+body.no-transition * {
+    transition: none !important;
+}
+
+/* Add a CSS class to handle the theme transition smoothly after initial load */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+</style>
+
+<script>
+// The rest of your existing settings script
 document.addEventListener('DOMContentLoaded', function() {
+    // Add no-transition class to prevent animations during load
+    document.body.classList.add('no-transition');
+    
     // Load saved settings on page load after a slight delay to ensure DOM is ready
     setTimeout(function() {
         loadSavedSettings();
+        // Remove the class after settings are applied
+        setTimeout(function() {
+            document.body.classList.remove('no-transition');
+        }, 50);
     }, 100);
     
     // Add event listeners for setting changes
@@ -243,5 +305,4 @@ function clearSettings() {
     localStorage.removeItem('hyperAppSettings');
     console.log('Settings cleared');
 }
-    </script>
-
+</script>
