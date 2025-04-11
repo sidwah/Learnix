@@ -531,7 +531,7 @@ $category_names_json = json_encode($category_names);
 $category_values_json = json_encode($category_values);
 $category_percentages_json = json_encode($category_percentages);
 ?>
-
+<!-- earnings.php --> 
 <!DOCTYPE html>
 <html lang="en">
 
