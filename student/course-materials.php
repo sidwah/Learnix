@@ -695,15 +695,15 @@ foreach ($sections as $sec) {
                                         $content_type = $item['content_type'] ?? 'Topic';
                                         $time_limit = $item['time_limit'] ?? 10;
 
-                                        // For quizzes, we use a different URL
-                                        if ($is_quiz) {
-                                            $item_url = "take-quiz.php?course_id={$course_id}&quiz_id={$item['quiz_id']}";
-                                        } else {
-                                            $link_available = (isset($item['is_previewable']) && $item['is_previewable'] || $item['completion_status'] !== 'Completed');
-                                            $item_url = ($item['content_type'] === 'link' && !empty($item['external_url']))
-                                                ? htmlspecialchars($item['external_url'])
-                                                : "course-content.php?course_id={$course_id}&topic={$item['topic_id']}";
-                                        }
+                                        // Both quizzes and regular content go to course-content.php, but with different parameters
+if ($is_quiz) {
+    $item_url = "course-content.php?course_id={$course_id}&quiz_id={$item['quiz_id']}";
+} else {
+    $link_available = (isset($item['is_previewable']) && $item['is_previewable'] || $item['completion_status'] !== 'Completed');
+    $item_url = ($item['content_type'] === 'link' && !empty($item['external_url']))
+        ? htmlspecialchars($item['external_url'])
+        : "course-content.php?course_id={$course_id}&topic={$item['topic_id']}";
+}
                                         ?>
 
                                         <h6 class="mb-0">
@@ -742,9 +742,9 @@ foreach ($sections as $sec) {
                                             <!-- For the current item that's not completed -->
                                             <?php if ($is_quiz): ?>
                                                 <a href="take-quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
-                                                    class="btn btn-primary btn-sm">
-                                                    <i class="bi bi-play-fill me-1"></i> Resume
-                                                </a>
+    class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-pencil-square me-1"></i> Take Quiz
+</a>
                                             <?php else: ?>
                                                 <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
                                                     class="btn btn-primary btn-sm">
@@ -754,10 +754,10 @@ foreach ($sections as $sec) {
                                         <?php else: ?>
                                             <!-- For other uncompleted items -->
                                             <?php if ($is_quiz): ?>
-                                                <a href="take-quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
-                                                    class="btn btn-outline-primary btn-sm">
-                                                    <i class="bi bi-pencil-square me-1"></i> Take Quiz
-                                                </a>
+                                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
+    class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-pencil-square me-1"></i> Take Quiz
+</a>
                                             <?php else: ?>
                                                 <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
                                                     class="btn btn-outline-primary btn-sm">
