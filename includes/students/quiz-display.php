@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Coursera-Style Quiz Display Component
  * 
@@ -100,9 +101,48 @@ if ($attemptCount > 0) {
     $stmt->close();
 }
 
+// Check when the next attempt is available (if there's a cooldown period)
+$nextAttemptAvailable = null;
+$cooldownActive = false;
+$cooldownTimeRemaining = null;
+
+if ($attemptCount > 0) {
+    $stmt = $conn->prepare("
+        SELECT next_attempt_available
+        FROM student_quiz_attempts
+        WHERE user_id = ? AND quiz_id = ?
+        ORDER BY attempt_id DESC
+        LIMIT 1
+    ");
+    $stmt->bind_param("ii", $_SESSION['user_id'], $quizId);
+    $stmt->execute();
+    $cooldownResult = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($cooldownResult && $cooldownResult['next_attempt_available']) {
+        $nextAttemptAvailable = new DateTime($cooldownResult['next_attempt_available']);
+        $currentTime = new DateTime();
+
+        if ($currentTime < $nextAttemptAvailable) {
+            $cooldownActive = true;
+            $interval = $currentTime->diff($nextAttemptAvailable);
+
+            // Format the cooldown time remaining
+            if ($interval->days > 0) {
+                $cooldownTimeRemaining = $interval->format('%a days, %h hours, %i minutes');
+            } else if ($interval->h > 0) {
+                $cooldownTimeRemaining = $interval->format('%h hours, %i minutes');
+            } else {
+                $cooldownTimeRemaining = $interval->format('%i minutes, %s seconds');
+            }
+        }
+    }
+}
+
 // Determine if student can take the quiz
-$canTakeQuiz = ($quiz['attempts_allowed'] > $attemptCount || $quiz['attempts_allowed'] == 0) && (!$quiz['is_required'] || !$hasPassed);
+$canTakeQuiz = ($quiz['attempts_allowed'] > $attemptCount || $quiz['attempts_allowed'] == 0) && !$cooldownActive;
 $attemptsRemaining = $quiz['attempts_allowed'] == 0 ? 'Unlimited' : ($quiz['attempts_allowed'] - $attemptCount);
+
 
 // Process quiz state
 $quizState = 'intro';
@@ -110,7 +150,8 @@ if ($activeSession && !$activeSession['is_completed']) {
     $quizState = 'resume';
 } elseif (isset($_GET['attempt_id']) && isset($_GET['view']) && $_GET['view'] == 'results') {
     $quizState = 'results';
-} elseif (!$canTakeQuiz && $attemptCount > 0) {
+} elseif ((!$canTakeQuiz && $attemptCount > 0) || $cooldownActive) {
+    // Either cooldown is active or all attempts used up
     $quizState = 'completed';
 }
 ?>
@@ -224,9 +265,17 @@ if ($activeSession && !$activeSession['is_completed']) {
     }
 
     @keyframes blink {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+
+        100% {
+            opacity: 1;
+        }
     }
 
     .quiz-content {
@@ -325,7 +374,7 @@ if ($activeSession && !$activeSession['is_completed']) {
         background-color: #e7f0ff;
         color: #0046be;
     }
-    
+
     /* Result-specific styles */
     .quiz-result-summary {
         background-color: #f8f9fa;
@@ -333,7 +382,7 @@ if ($activeSession && !$activeSession['is_completed']) {
         padding: 1.25rem;
         margin-bottom: 1.5rem;
     }
-    
+
     .quiz-result-chart {
         height: 100%;
         display: flex;
@@ -341,27 +390,27 @@ if ($activeSession && !$activeSession['is_completed']) {
         justify-content: center;
         align-items: center;
     }
-    
+
     .chart-container {
         width: 150px;
         height: 150px;
     }
-    
+
     .quiz-attempts-table {
         font-size: 0.875rem;
     }
-    
+
     .quiz-attempts-table th {
         font-weight: 500;
     }
-    
+
     /* Progress tracking dots */
     .progress-dots {
         display: flex;
         justify-content: center;
         margin: 1rem 0;
     }
-    
+
     .progress-dot {
         width: 10px;
         height: 10px;
@@ -370,12 +419,12 @@ if ($activeSession && !$activeSession['is_completed']) {
         margin: 0 5px;
         transition: all 0.2s;
     }
-    
+
     .progress-dot.active {
         background-color: #0056D2;
         transform: scale(1.2);
     }
-    
+
     .progress-dot.completed {
         background-color: #198754;
     }
@@ -423,7 +472,7 @@ if ($activeSession && !$activeSession['is_completed']) {
                         <div class="quiz-card mb-3">
                             <div class="quiz-card-body">
                                 <h5 class="card-title mb-3">Your Progress</h5>
-                                <p class="mb-2">Highest Score: 
+                                <p class="mb-2">Highest Score:
                                     <strong class="<?php echo ($hasPassed ? 'text-success' : 'text-danger'); ?>">
                                         <?php echo number_format($highestScore, 1); ?>%
                                     </strong>
@@ -439,7 +488,7 @@ if ($activeSession && !$activeSession['is_completed']) {
                                         </span>
                                     <?php endif; ?>
                                 </p>
-                                
+
                                 <?php if ($attemptCount > 0 && $canTakeQuiz): ?>
                                     <p class="mb-0 small text-muted">
                                         You have <?php echo $attemptsRemaining; ?> attempt(s) remaining
@@ -453,6 +502,19 @@ if ($activeSession && !$activeSession['is_completed']) {
                         <button type="button" class="btn btn-coursera start-quiz-btn w-100">
                             <i class="bi bi-play-circle me-2"></i> Start Quiz
                         </button>
+                    <?php elseif ($cooldownActive): ?>
+                        <div class="alert alert-warning mb-0">
+                            <i class="bi bi-hourglass-split me-2"></i>
+                            <strong>Cooldown Period Active</strong>
+                            <div class="mt-2">
+                                <p class="mb-1">You can attempt this quiz again in:</p>
+                                <div class="d-flex justify-content-center">
+                                    <div class="cooldown-timer text-center fs-5 fw-bold" data-available-time="<?php echo $nextAttemptAvailable->format('c'); ?>">
+                                        <?php echo $cooldownTimeRemaining; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     <?php else: ?>
                         <div class="alert alert-info mb-0">
                             <i class="bi bi-info-circle me-2"></i>
@@ -482,9 +544,9 @@ if ($activeSession && !$activeSession['is_completed']) {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php 
+                                <?php
                                 $attemptNumber = $attemptCount;
-                                foreach ($allAttempts as $attempt): 
+                                foreach ($allAttempts as $attempt):
                                     $duration = '';
                                     if ($attempt['time_spent']) {
                                         $minutes = floor($attempt['time_spent'] / 60);
@@ -507,10 +569,11 @@ if ($activeSession && !$activeSession['is_completed']) {
                                         </td>
                                         <td><?php echo $duration; ?></td>
                                         <td>
-                                            <a href="?course_id=<?php echo $_GET['course_id']; ?>&<?php echo isset($_GET['topic']) ? 'topic=' . $_GET['topic'] : 'quiz_id=' . $quizId; ?>&attempt_id=<?php echo $attempt['attempt_id']; ?>&view=results"
-                                                class="btn btn-sm btn-outline-primary">
+                                            <button type="button"
+                                                class="btn btn-sm btn-outline-primary view-results-btn"
+                                                data-attempt-id="<?php echo $attempt['attempt_id']; ?>">
                                                 View Results
-                                            </a>
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -545,6 +608,20 @@ if ($activeSession && !$activeSession['is_completed']) {
                                 <i class="bi bi-exclamation-circle me-2"></i>
                                 Your time for this attempt has expired. The system will automatically submit your attempt.
                             </div>
+
+                            <!-- Add auto-submit form -->
+                            <form id="autoSubmitForm" method="post" action="../ajax/students/submit-quiz.php">
+                                <input type="hidden" name="attempt_id" value="<?php echo $activeSession['attempt_id']; ?>">
+                                <input type="hidden" name="is_time_expired" value="1">
+                            </form>
+
+                            <script>
+                                // Auto-submit the quiz after 3 seconds
+                                setTimeout(function() {
+                                    document.getElementById('autoSubmitForm').submit();
+                                }, 3000);
+                            </script>
+
                         <?php else:
                             $remainingMinutes = floor($remainingSeconds / 60);
                             $remainingSecondsDisplay = $remainingSeconds % 60;
@@ -580,27 +657,29 @@ if ($activeSession && !$activeSession['is_completed']) {
         </div>
     <?php else: ?>
         <!-- Quiz Completed Section -->
-        <div class="quiz-intro">
-            <div class="quiz-card">
-                <div class="quiz-card-header">
-                    <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title']); ?></h3>
-                </div>
-                <div class="quiz-card-body">
-                    <div class="alert alert-<?php echo $hasPassed ? 'success' : 'warning'; ?> mb-4">
-                        <i class="bi bi-<?php echo $hasPassed ? 'check-circle' : 'exclamation-circle'; ?> me-2"></i>
-                        <?php if ($hasPassed): ?>
-                            <strong>Congratulations!</strong> You have successfully passed this quiz with a score of <?php echo number_format($highestScore, 1); ?>%.
-                        <?php else: ?>
-                            You have used all available attempts for this quiz. Your highest score was <?php echo number_format($highestScore, 1); ?>%.
-                        <?php endif; ?>
+<div class="quiz-intro">
+    <div class="quiz-card">
+        <div class="quiz-card-header">
+            <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title']); ?></h3>
+        </div>
+        <div class="quiz-card-body">
+            <div class="alert alert-<?php echo $hasPassed ? 'success' : 'warning'; ?> mb-4">
+                <i class="bi bi-<?php echo $hasPassed ? 'check-circle' : 'exclamation-circle'; ?> me-2"></i>
+                <?php if ($hasPassed): ?>
+                    <strong>Congratulations!</strong> You have successfully passed this quiz with a score of <?php echo number_format($highestScore, 1); ?>%.
+                <?php elseif ($cooldownActive): ?>
+                    You're in the cooldown period for this quiz. Your highest score was <?php echo number_format($highestScore, 1); ?>%.
+                    <div class="mt-2">
+                        <p class="mb-1">You can attempt again in: <span class="cooldown-timer fw-bold" data-available-time="<?php echo $nextAttemptAvailable->format('c'); ?>"><?php echo $cooldownTimeRemaining; ?></span></p>
                     </div>
+                <?php elseif ($quiz['attempts_allowed'] > 0 && $attemptCount >= $quiz['attempts_allowed']): ?>
+                    You have used all available attempts for this quiz. Your highest score was <?php echo number_format($highestScore, 1); ?>%.
+                <?php else: ?>
+                    Your highest score was <?php echo number_format($highestScore, 1); ?>%. You can try this quiz again when the cooldown period ends.
+                <?php endif; ?>
+            </div>
 
                     <div class="d-flex gap-3 mt-4">
-                        <a href="?course_id=<?php echo $_GET['course_id']; ?>&<?php echo isset($_GET['topic']) ? 'topic=' . $_GET['topic'] : (isset($quiz['topic_id']) ? 'topic=' . $quiz['topic_id'] : ''); ?>&attempt_id=<?php echo $lastAttemptId; ?>&view=results"
-                            class="btn btn-coursera">
-                            <i class="bi bi-bar-chart me-2"></i> View Latest Results
-                        </a>
-
                         <a href="?course_id=<?php echo $_GET['course_id']; ?>&section=<?php echo $_GET['section'] ?? ''; ?>"
                             class="btn btn-coursera-outline">
                             <i class="bi bi-arrow-left me-2"></i> Back to Course
@@ -608,7 +687,7 @@ if ($activeSession && !$activeSession['is_completed']) {
                     </div>
                 </div>
             </div>
-            
+
             <?php if ($attemptCount > 0): ?>
                 <div class="mt-4">
                     <h5 class="mb-3">Attempt History</h5>
@@ -625,9 +704,9 @@ if ($activeSession && !$activeSession['is_completed']) {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php 
+                                <?php
                                 $attemptNumber = $attemptCount;
-                                foreach ($allAttempts as $attempt): 
+                                foreach ($allAttempts as $attempt):
                                     $duration = '';
                                     if ($attempt['time_spent']) {
                                         $minutes = floor($attempt['time_spent'] / 60);
@@ -650,10 +729,11 @@ if ($activeSession && !$activeSession['is_completed']) {
                                         </td>
                                         <td><?php echo $duration; ?></td>
                                         <td>
-                                            <a href="?course_id=<?php echo $_GET['course_id']; ?>&<?php echo isset($_GET['topic']) ? 'topic=' . $_GET['topic'] : 'quiz_id=' . $quizId; ?>&attempt_id=<?php echo $attempt['attempt_id']; ?>&view=results"
-                                                class="btn btn-sm btn-outline-primary">
+                                            <button type="button"
+                                                class="btn btn-sm btn-outline-primary view-results-btn"
+                                                data-attempt-id="<?php echo $attempt['attempt_id']; ?>">
                                                 View Results
-                                            </a>
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -852,6 +932,7 @@ if ($activeSession && !$activeSession['is_completed']) {
         }
 
         // Resume Quiz button
+        // Resume Quiz button
         if (resumeQuizBtn) {
             resumeQuizBtn.addEventListener('click', function() {
                 // Show loading overlay
@@ -863,7 +944,12 @@ if ($activeSession && !$activeSession['is_completed']) {
 
                 // AJAX request to get quiz data
                 fetch(`../ajax/students/resume-quiz-session.php?session_id=${sessionId}&attempt_id=${attemptId}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Server responded with status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             // Load quiz interface
@@ -871,6 +957,32 @@ if ($activeSession && !$activeSession['is_completed']) {
 
                             // Dispatch event that quiz has resumed
                             document.dispatchEvent(new Event('quizResumed'));
+                        } else if (data.time_expired) {
+                            // Time has expired, submit the quiz
+                            showOverlay('Time expired. Submitting your quiz...');
+
+                            fetch('../ajax/students/submit-quiz.php', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    },
+                                    body: `attempt_id=${attemptId}&is_time_expired=1`
+                                })
+                                .then(response => response.json())
+                                .then(submitData => {
+                                    if (submitData.success) {
+                                        // Redirect to results
+                                        window.location.href = `?course_id=${getUrlParameter('course_id')}&section=${getUrlParameter('section')}&attempt_id=${attemptId}&view=results`;
+                                    } else {
+                                        removeOverlay();
+                                        showAlert('danger', submitData.message || 'Failed to submit quiz. Please try again.');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error submitting expired quiz:', error);
+                                    removeOverlay();
+                                    showAlert('danger', 'An error occurred while submitting the quiz. Please try again.');
+                                });
                         } else {
                             removeOverlay();
                             showAlert('danger', data.message || 'Failed to resume quiz. Please try again.');
@@ -884,42 +996,55 @@ if ($activeSession && !$activeSession['is_completed']) {
             });
         }
 
+        // Helper function to get URL parameters (if not already defined)
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name) || '';
+        }
+
+
         // Abandon Quiz button
         if (abandonQuizBtn) {
             abandonQuizBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to abandon this quiz attempt? This action cannot be undone.')) {
+                if (confirm('Are you sure you want to forfeit this quiz attempt? Your current answers will be submitted and this will count as an attempt.')) {
                     // Show loading overlay
-                    showOverlay('Abandoning quiz...');
+                    showOverlay('Submitting your current answers...');
 
                     // Get session information
                     const sessionId = this.getAttribute('data-session-id');
                     const attemptId = this.getAttribute('data-attempt-id');
 
-                    // AJAX request to abandon the quiz
-                    fetch('../ajax/students/abandon-quiz-session.php', {
+                    // AJAX request to submit the quiz with current answers
+                    fetch('../ajax/students/submit-quiz.php', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
                             },
-                            body: `session_id=${sessionId}&attempt_id=${attemptId}`
+                            body: `attempt_id=${attemptId}&is_forfeit=1`
                         })
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                // Reload the page to show the intro screen
-                                window.location.reload();
+                                // Reload the page to show results
+                                window.location.href = `?course_id=${getUrlParameter('course_id')}&section=${getUrlParameter('section')}&attempt_id=${attemptId}&view=results`;
                             } else {
                                 removeOverlay();
-                                showAlert('danger', data.message || 'Failed to abandon quiz. Please try again.');
+                                showAlert('danger', data.message || 'Failed to submit quiz. Please try again.');
                             }
                         })
                         .catch(error => {
-                            console.error('Error abandoning quiz:', error);
+                            console.error('Error submitting quiz:', error);
                             removeOverlay();
-                            showAlert('danger', 'An error occurred while abandoning the quiz. Please try again.');
+                            showAlert('danger', 'An error occurred while submitting the quiz. Please try again.');
                         });
                 }
             });
+        }
+
+        // Helper function to get URL parameters
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name) || '';
         }
 
         // Exit Quiz button
@@ -1037,6 +1162,7 @@ if ($activeSession && !$activeSession['is_completed']) {
         }
 
         // Function to load the quiz interface
+        // Function to load the quiz interface
         function loadQuizInterface(data) {
             // Set attempt ID on the slide container
             quizSlideContainer.setAttribute('data-attempt-id', data.attempt_id);
@@ -1045,10 +1171,8 @@ if ($activeSession && !$activeSession['is_completed']) {
             document.body.style.overflow = 'hidden'; // Prevent scrolling of background
             quizSlideContainer.classList.add('active');
 
-            // Initialize timer if applicable
-            if (data.end_time) {
-                initializeTimer(data.end_time);
-            }
+            // Initialize timer - pass end_time if it exists, otherwise null for count-up timer
+            initializeTimer(data.end_time || null);
 
             // Load all questions
             loadAllQuestions(data.attempt_id);
@@ -1058,37 +1182,104 @@ if ($activeSession && !$activeSession['is_completed']) {
         }
 
         // Function to initialize the timer
+        // Function to initialize the timer
         function initializeTimer(endTime) {
-            // Calculate the time remaining
-            const endTimeDate = new Date(endTime);
-            let remainingTime = endTimeDate - new Date();
+            // Clear any existing timer
+            if (window.timerInterval) {
+                clearInterval(window.timerInterval);
+            }
 
-            // Update the timer display initially
-            updateTimerDisplay(remainingTime);
+            let isCountDown = !!endTime;
+            let startTime = new Date();
 
-            // Update the timer every second
-            const timerInterval = setInterval(function() {
-                remainingTime -= 1000; // Decrease by one second
+            // Get the attempt ID to fetch elapsed time for resumed quizzes
+            const attemptId = quizSlideContainer.getAttribute('data-attempt-id');
 
-                if (remainingTime <= 0) {
-                    // Time's up
-                    clearInterval(timerInterval);
-                    quizTimerDisplay.textContent = '00:00';
-                    quizTimerDisplay.classList.add('danger');
+            // If we have an end time (timed quiz), calculate the remaining time
+            if (isCountDown) {
+                const endTimeDate = new Date(endTime);
+                const remainingTime = endTimeDate - startTime;
 
-                    // Auto-submit the quiz
-                    document.getElementById('confirmSubmitQuiz').click();
-                    return;
-                }
+                // Update timer display immediately with the correct remaining time
+                updateTimerDisplay(remainingTime, isCountDown);
 
-                updateTimerDisplay(remainingTime);
-            }, 1000);
+                // Update timer every second
+                const timerInterval = setInterval(function() {
+                    const currentTime = new Date();
+                    const remainingTime = endTimeDate - currentTime;
+
+                    if (remainingTime <= 0) {
+                        // Time's up
+                        clearInterval(timerInterval);
+                        quizTimerDisplay.textContent = '00:00';
+                        quizTimerDisplay.classList.add('danger');
+
+                        // Auto-submit the quiz
+                        document.getElementById('confirmSubmitQuiz').click();
+                        return;
+                    }
+
+                    updateTimerDisplay(remainingTime, isCountDown);
+                }, 1000);
+
+                // Store interval in window to clear it if needed
+                window.timerInterval = timerInterval;
+            }
+            // For count-up timer (untimed quiz)
+            else {
+                // Fetch elapsed time for this attempt
+                fetch(`../ajax/students/get-elapsed-time.php?attempt_id=${attemptId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Start from the elapsed time (in seconds) rather than zero
+                            let timerStartValue = data.elapsed_seconds * 1000;
+
+                            // Update timer display immediately
+                            updateTimerDisplay(timerStartValue, false);
+
+                            // Update timer every second
+                            const timerInterval = setInterval(function() {
+                                timerStartValue += 1000; // Increase by one second
+                                updateTimerDisplay(timerStartValue, false);
+                            }, 1000);
+
+                            // Store interval in window to clear it if needed
+                            window.timerInterval = timerInterval;
+                        } else {
+                            console.error('Error fetching elapsed time:', data.message);
+                            // Fallback to starting from zero
+                            let timerStartValue = 0;
+                            updateTimerDisplay(timerStartValue, false);
+
+                            const timerInterval = setInterval(function() {
+                                timerStartValue += 1000;
+                                updateTimerDisplay(timerStartValue, false);
+                            }, 1000);
+
+                            window.timerInterval = timerInterval;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching elapsed time:', error);
+                        // Fallback to starting from zero
+                        let timerStartValue = 0;
+                        updateTimerDisplay(timerStartValue, false);
+
+                        const timerInterval = setInterval(function() {
+                            timerStartValue += 1000;
+                            updateTimerDisplay(timerStartValue, false);
+                        }, 1000);
+
+                        window.timerInterval = timerInterval;
+                    });
+            }
 
             // Function to update timer display
-            function updateTimerDisplay(time) {
-                const hours = Math.floor(time / (1000 * 60 * 60));
-                const minutes = Math.floor((time % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((time % (1000 * 60)) / 1000);
+            function updateTimerDisplay(time, isCountingDown) {
+                const hours = Math.floor(Math.abs(time) / (1000 * 60 * 60));
+                const minutes = Math.floor((Math.abs(time) % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((Math.abs(time) % (1000 * 60)) / 1000);
 
                 // Format with leading zeros
                 const formattedHours = hours.toString().padStart(2, '0');
@@ -1102,21 +1293,40 @@ if ($activeSession && !$activeSession['is_completed']) {
                     quizTimerDisplay.textContent = `${formattedMinutes}:${formattedSeconds}`;
                 }
 
-                // Warning colors
+                // Warning colors (only for countdown)
                 quizTimerDisplay.classList.remove('warning', 'danger');
-                if (time < 60000) { // Less than 1 minute
-                    quizTimerDisplay.classList.add('danger');
-                } else if (time < 300000) { // Less than 5 minutes
-                    quizTimerDisplay.classList.add('warning');
+                if (isCountingDown) {
+                    // Update timer icon and add classes for warning colors
+                    document.querySelector('.quiz-timer i').className = 'bi bi-clock-history me-2';
+
+                    if (time < 60000) { // Less than 1 minute
+                        quizTimerDisplay.classList.add('danger');
+                    } else if (time < 300000) { // Less than 5 minutes
+                        quizTimerDisplay.classList.add('warning');
+                    }
+                } else {
+                    // Change icon for count-up timer
+                    document.querySelector('.quiz-timer i').className = 'bi bi-stopwatch me-2';
                 }
             }
+        }
+        // Function to update the questions progress counter
+        function updateQuestionsProgress() {
+            const questionsProgress = document.getElementById('questionsProgress');
+            if (!questionsProgress) return;
 
-            // Store interval in window to clear it if needed
-            window.timerInterval = timerInterval;
+            const totalQuestions = quizContent.querySelectorAll('.quiz-question').length;
+            const answeredQuestions = quizContent.querySelectorAll('.quiz-question.answered').length;
+
+            questionsProgress.textContent = `${answeredQuestions}/${totalQuestions} Questions Answered`;
+            questionsProgress.classList.remove('d-none');
         }
 
         // Function to initialize question-specific functionality
         function initializeQuestionFunctionality(attemptId) {
+
+            updateQuestionsProgress();
+
             // Add event listeners for answer selection
             const questionForms = quizContent.querySelectorAll('.quiz-question form');
 
@@ -1201,6 +1411,9 @@ if ($activeSession && !$activeSession['is_completed']) {
                     if (data.success) {
                         // Update question status
                         form.closest('.quiz-question').classList.add('answered');
+
+                        // Update progress counter
+                        updateQuestionsProgress();
                     } else {
                         console.error('Error saving response:', data.message);
                     }
@@ -1290,9 +1503,83 @@ if ($activeSession && !$activeSession['is_completed']) {
             });
         }
 
+        // Handle View Results buttons in attempt history
+        const viewResultsButtons = document.querySelectorAll('.view-results-btn');
+        if (viewResultsButtons.length > 0) {
+            viewResultsButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Get attempt ID
+                    const attemptId = this.getAttribute('data-attempt-id');
+                    if (!attemptId) {
+                        showAlert('danger', 'Error: Could not find attempt information.');
+                        return;
+                    }
+
+                    // Show the slide container
+                    document.body.style.overflow = 'hidden'; // Prevent scrolling of background
+                    quizSlideContainer.classList.add('active');
+                    quizSlideContainer.setAttribute('data-attempt-id', attemptId);
+
+                    // Update header for results mode
+                    document.querySelector('.quiz-timer').innerHTML = `
+                <div>
+                    <h4 class="mb-0">Quiz Results</h4>
+                </div>
+                <div>
+                    <span class="badge bg-primary">Loading...</span>
+                </div>
+            `;
+
+                    // Change footer buttons
+                    const quizFooter = document.querySelector('.quiz-footer');
+                    if (quizFooter) {
+                        quizFooter.innerHTML = `
+                    <button id="returnToCourseBtn" class="btn btn-coursera-outline">
+                        <i class="bi bi-x-circle me-2"></i> Close Results
+                    </button>
+                    <div>
+                        <button id="reviewQuestionsBtn" class="btn btn-coursera">
+                            <i class="bi bi-search me-2"></i> Review All Questions
+                        </button>
+                    </div>
+                `;
+
+                        // Add event listeners to new buttons
+                        document.getElementById('returnToCourseBtn').addEventListener('click', function() {
+                            quizSlideContainer.classList.remove('active');
+                            document.body.style.overflow = '';
+                        });
+
+                        document.getElementById('reviewQuestionsBtn').addEventListener('click', function() {
+                            // Scroll to top to review all questions
+                            quizContent.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                            });
+                        });
+                    }
+
+                    // Load the results
+                    loadQuizResults(attemptId);
+                });
+            });
+        }
+
         // Function to submit quiz to server
         function submitQuizToServer(attemptId) {
             console.log(`Submitting quiz, attempt ID: ${attemptId}`);
+
+            // Show loading overlay in the quiz content area
+            quizContent.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Calculating results...</span>
+            </div>
+            <p class="mt-3">Calculating your results...</p>
+        </div>
+    `;
 
             // AJAX request to submit the quiz
             fetch('../ajax/students/submit-quiz.php', {
@@ -1316,17 +1603,11 @@ if ($activeSession && !$activeSession['is_completed']) {
                         console.log("Parsed response:", data);
 
                         if (data.success) {
-                            // Redirect to results page
-                            const courseId = new URLSearchParams(window.location.search).get('course_id');
-                            const topicId = new URLSearchParams(window.location.search).get('topic');
-
-                            console.log(`Quiz submitted successfully. Redirecting to results: course_id=${courseId}, topic=${topicId}, attempt_id=${attemptId}`);
+                            // Instead of redirecting, load results directly
+                            loadQuizResults(attemptId);
 
                             // Dispatch event for quiz completion
                             document.dispatchEvent(new Event('quizCompleted'));
-
-                            // Redirect to results page
-                            window.location.href = `?course_id=${courseId}&topic=${topicId}&attempt_id=${attemptId}&view=results`;
                         } else {
                             console.error("Quiz submission failed:", data.message);
                             removeOverlay();
@@ -1343,6 +1624,305 @@ if ($activeSession && !$activeSession['is_completed']) {
                     removeOverlay();
                     showAlert('danger', 'An error occurred while submitting the quiz. Please try again.');
                 });
+        }
+        // Function to load and display quiz results
+        function loadQuizResults(attemptId) {
+            console.log(`Loading quiz results for attempt ID: ${attemptId}`);
+
+            // Update the quiz UI to indicate loading
+            quizContent.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading results...</span>
+            </div>
+            <p class="mt-3">Loading your quiz results...</p>
+        </div>
+    `;
+
+            // Update header/footer for results mode
+            document.querySelector('.quiz-timer').innerHTML = `
+        <div>
+            <h4 class="mb-0">Quiz Results</h4>
+        </div>
+        <div>
+            <span class="badge bg-primary">Attempt completed</span>
+        </div>
+    `;
+
+            // Change footer buttons
+            const quizFooter = document.querySelector('.quiz-footer');
+            if (quizFooter) {
+                quizFooter.innerHTML = `
+            <button id="returnToCourseBtn" class="btn btn-coursera-outline">
+                <i class="bi bi-arrow-left me-2"></i> Return to Course
+            </button>
+            <div>
+                <button id="reviewQuestionsBtn" class="btn btn-coursera">
+                    <i class="bi bi-search me-2"></i> Review All Questions
+                </button>
+            </div>
+        `;
+
+                // Add event listeners to new buttons
+                document.getElementById('returnToCourseBtn').addEventListener('click', function() {
+                    quizSlideContainer.classList.remove('active');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 300);
+                });
+
+                document.getElementById('reviewQuestionsBtn').addEventListener('click', function() {
+                    // Scroll to top to review all questions
+                    quizContent.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+
+            // Fetch results data
+            fetch(`../ajax/students/get-quiz-results.php?attempt_id=${attemptId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        displayQuizResults(data.results);
+                    } else {
+                        console.error("Error loading quiz results:", data.message);
+                        quizContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        Failed to load quiz results: ${data.message}
+                    </div>
+                `;
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching quiz results:", error);
+                    quizContent.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    An error occurred while loading your results. Please try refreshing the page.
+                </div>
+            `;
+                });
+        }
+
+        function loadAllQuestions(attemptId) {
+            // AJAX request to get all questions
+            fetch(`../ajax/students/get-all-quiz-questions.php?attempt_id=${attemptId}`)
+                .then(response => response.text())
+                .then(html => {
+                    quizContent.innerHTML = html;
+
+                    // Initialize question-specific functionality
+                    initializeQuestionFunctionality(attemptId);
+
+                    // NEW CODE: Check which questions are already answered in this attempt
+                    fetch(`../ajax/students/get-answered-questions.php?attempt_id=${attemptId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.answered_questions) {
+                                // Mark questions as answered
+                                data.answered_questions.forEach(questionId => {
+                                    const questionElem = quizContent.querySelector(`.quiz-question[data-question-id="${questionId}"]`);
+                                    if (questionElem) {
+                                        questionElem.classList.add('answered');
+                                    }
+                                });
+
+                                // Update progress counter after marking questions
+                                updateQuestionsProgress();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching answered questions:', error);
+                        });
+
+                    // Remove loading overlay
+                    removeOverlay();
+                })
+                .catch(error => {
+                    console.error('Error loading questions:', error);
+                    quizContent.innerHTML = '<div class="alert alert-danger">Failed to load quiz questions. Please try again.</div>';
+                    removeOverlay();
+                });
+        }
+        // Function to display quiz results in the quiz UI
+        function displayQuizResults(results) {
+            // Create results content
+            let resultsHTML = `
+        <div class="quiz-title-header">
+            <h3>${results.quiz_title || 'Quiz Results'}</h3>
+        </div>
+        
+        <div class="quiz-result-summary mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="quiz-result-chart">
+                        <div class="chart-container">
+                            <div class="d-flex align-items-center justify-content-center h-100">
+                                <div class="text-center">
+                                    <h2 class="display-4 fw-bold ${results.passed ? 'text-success' : 'text-danger'}">
+                                        ${Math.round(results.score_percentage)}%
+                                    </h2>
+                                    <p class="mb-0">${results.passed ? 'Passed' : 'Failed'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <div class="h5 mb-0">${results.correct_count}/${results.total_questions}</div>
+                                <div class="small text-muted">Correct Answers</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <div class="h5 mb-0">${formatTime(results.time_taken)}</div>
+                                <div class="small text-muted">Time Taken</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <div class="h5 mb-0">${results.pass_mark}%</div>
+                                <div class="small text-muted">Pass Mark</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+            // Add questions with feedback
+            resultsHTML += `<h4 class="mb-3">Review Questions</h4>`;
+
+            results.questions.forEach((question, index) => {
+                const questionNumber = index + 1;
+                const isCorrect = question.is_correct;
+
+                resultsHTML += `
+            <div class="quiz-question ${isCorrect ? 'border-success' : 'border-danger'}" data-question-id="${question.id}">
+                <div class="quiz-question-header">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="badge ${isCorrect ? 'bg-success' : 'bg-danger'} me-2">${questionNumber}</div>
+                        <h5 class="mb-0">
+                            ${question.question_text}
+                            <span class="badge ${isCorrect ? 'bg-success' : 'bg-danger'} ms-2">
+                                ${isCorrect ? 'Correct' : 'Incorrect'}
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="text-muted small">
+                        ${question.question_type}
+                    </div>
+                </div>
+
+                <div class="quiz-question-body">
+        `;
+
+                // Display answers based on question type
+                if (question.question_type === 'Multiple Choice' || question.question_type === 'True/False') {
+                    resultsHTML += `<div class="quiz-options">`;
+
+                    question.answers.forEach(answer => {
+                        const isUserAnswer = answer.id == question.user_answer_id;
+                        const isCorrectAnswer = answer.is_correct;
+
+                        let optionClass = '';
+                        let iconHTML = '';
+
+                        if (isUserAnswer && isCorrectAnswer) {
+                            // User selected the correct answer
+                            optionClass = 'border-success bg-success bg-opacity-10';
+                            iconHTML = '<i class="bi bi-check-circle-fill text-success ms-2"></i>';
+                        } else if (isUserAnswer && !isCorrectAnswer) {
+                            // User selected the wrong answer
+                            optionClass = 'border-danger bg-danger bg-opacity-10';
+                            iconHTML = '<i class="bi bi-x-circle-fill text-danger ms-2"></i>';
+                        } else if (!isUserAnswer && isCorrectAnswer) {
+                            // The correct answer that user didn't select
+                            optionClass = 'border-success bg-success bg-opacity-10';
+                            iconHTML = '<i class="bi bi-check-circle text-success ms-2"></i>';
+                        }
+
+                        resultsHTML += `
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" 
+                               ${isUserAnswer ? 'checked' : ''} disabled>
+                        <label class="form-check-label p-2 ${optionClass} d-block rounded">
+                            ${answer.answer_text} ${iconHTML}
+                        </label>
+                    </div>
+                `;
+                    });
+
+                    resultsHTML += `</div>`;
+                } else if (question.question_type === 'Short_Answer' || question.question_type === 'Essay' || question.question_type === 'Fill in the Blanks') {
+                    // Show the user's answer
+                    const userAnswer = question.user_answer || 'No answer provided';
+
+                    // For short answer questions, also show the correct answer
+                    let correctAnswer = '';
+                    if (question.question_type === 'Short_Answer' || question.question_type === 'Fill in the Blanks') {
+                        const correctAnswers = question.answers.filter(a => a.is_correct).map(a => a.answer_text);
+                        if (correctAnswers.length > 0) {
+                            correctAnswer = `
+                        <div class="mt-3">
+                            <div class="fw-bold text-success">Correct Answer:</div>
+                            <div class="p-2 border border-success rounded bg-success bg-opacity-10">
+                                ${correctAnswers.join(' or ')}
+                            </div>
+                        </div>
+                    `;
+                        }
+                    }
+
+                    resultsHTML += `
+                <div class="mb-3">
+                    <div class="fw-bold">Your Answer:</div>
+                    <div class="p-2 border ${isCorrect ? 'border-success' : 'border-danger'} rounded 
+                                ${isCorrect ? 'bg-success' : 'bg-danger'} bg-opacity-10">
+                        ${userAnswer}
+                    </div>
+                    ${correctAnswer}
+                </div>
+            `;
+                }
+
+                // Add explanation if available
+                if (question.explanation) {
+                    resultsHTML += `
+                <div class="mt-3 p-3 bg-light border-start border-4 border-info">
+                    <div class="fw-bold mb-1">Explanation:</div>
+                    <div>${question.explanation}</div>
+                </div>
+            `;
+                }
+
+                resultsHTML += `
+                </div>
+            </div>
+        `;
+            });
+
+            // Display the results in the quiz content area
+            quizContent.innerHTML = resultsHTML;
+        }
+
+        // Helper function to format time in MM:SS format
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
         }
 
         // Direct submission function
@@ -1399,6 +1979,50 @@ if ($activeSession && !$activeSession['is_completed']) {
                     console.error('Error loading quiz results:', error);
                     quizResults.innerHTML = '<div class="alert alert-danger">Failed to load quiz results. Please try again.</div>';
                 });
+        }
+
+
+        // Cooldown Timer
+        const cooldownTimers = document.querySelectorAll('.cooldown-timer');
+        if (cooldownTimers.length > 0) {
+            cooldownTimers.forEach(timer => {
+                const availableTime = new Date(timer.getAttribute('data-available-time'));
+
+                const updateCooldownTimer = () => {
+                    const now = new Date();
+                    const diff = availableTime - now;
+
+                    if (diff <= 0) {
+                        // Cooldown is over, refresh the page
+                        window.location.reload();
+                        return;
+                    }
+
+                    // Calculate remaining time
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    // Format time string
+                    let timeString = '';
+                    if (hours > 0) {
+                        timeString = `${hours}h ${minutes}m ${seconds}s`;
+                    } else if (minutes > 0) {
+                        timeString = `${minutes}m ${seconds}s`;
+                    } else {
+                        timeString = `${seconds}s`;
+                    }
+
+                    // Update the timer display
+                    timer.textContent = timeString;
+                };
+
+                // Initial update
+                updateCooldownTimer();
+
+                // Set interval to update every second
+                setInterval(updateCooldownTimer, 1000);
+            });
         }
 
         // Utility functions
@@ -1512,20 +2136,26 @@ if ($activeSession && !$activeSession['is_completed']) {
 
                     console.log(`DIRECT HANDLER: Found attempt ID ${attemptId}, proceeding with submission`);
 
-                    // Show a simple loading message
-                    const loaderDiv = document.createElement('div');
-                    loaderDiv.style.position = 'fixed';
-                    loaderDiv.style.top = '0';
-                    loaderDiv.style.left = '0';
-                    loaderDiv.style.width = '100%';
-                    loaderDiv.style.height = '100%';
-                    loaderDiv.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                    loaderDiv.style.display = 'flex';
-                    loaderDiv.style.justifyContent = 'center';
-                    loaderDiv.style.alignItems = 'center';
-                    loaderDiv.style.zIndex = '10000';
-                    loaderDiv.innerHTML = '<div style="background: white; padding: 20px; border-radius: 5px;"><p>Submitting quiz...</p></div>';
-                    document.body.appendChild(loaderDiv);
+                    // Show loading overlay in the quiz content area
+                    const quizContent = document.getElementById('quizContent');
+                    quizContent.innerHTML = `
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Calculating results...</span>
+                            </div>
+                            <p class="mt-3">Calculating your results...</p>
+                        </div>
+                    `;
+
+                    // Update header for results mode
+                    document.querySelector('.quiz-timer').innerHTML = `
+                        <div>
+                            <h4 class="mb-0">Quiz Results</h4>
+                        </div>
+                        <div>
+                            <span class="badge bg-primary">Calculating...</span>
+                        </div>
+                    `;
 
                     // Submit directly to the server
                     fetch('../ajax/students/submit-quiz.php', {
@@ -1547,30 +2177,37 @@ if ($activeSession && !$activeSession['is_completed']) {
                                 console.log("DIRECT HANDLER: Parsed response:", data);
 
                                 if (data.success) {
-                                    // Redirect to results page
-                                    const courseId = new URLSearchParams(window.location.search).get('course_id');
-                                    const topicId = new URLSearchParams(window.location.search).get('topic');
-
-                                    const redirectUrl = `?course_id=${courseId}&topic=${topicId}&attempt_id=${attemptId}&view=results`;
-                                    console.log(`DIRECT HANDLER: Redirecting to: ${redirectUrl}`);
-
-                                    // Force redirect
-                                    window.location.href = redirectUrl;
+                                    // Instead of redirecting, load results directly
+                                    console.log("DIRECT HANDLER: Loading quiz results in-place");
+                                    loadQuizResults(attemptId);
                                 } else {
                                     // Show error
-                                    loaderDiv.remove();
-                                    alert(`Error: ${data.message || 'Failed to submit quiz. Please try again.'}`);
+                                    console.error("DIRECT HANDLER: Quiz submission failed:", data.message);
+                                    quizContent.innerHTML = `
+                                        <div class="alert alert-danger">
+                                            <i class="bi bi-exclamation-circle me-2"></i>
+                                            Failed to submit quiz: ${data.message || 'Unknown error'}
+                                        </div>
+                                    `;
                                 }
                             } catch (e) {
                                 console.error("DIRECT HANDLER: Error parsing response:", e);
-                                loaderDiv.remove();
-                                alert("Error: The server response was invalid. Please try again.");
+                                quizContent.innerHTML = `
+                                    <div class="alert alert-danger">
+                                        <i class="bi bi-exclamation-circle me-2"></i>
+                                        An error occurred while processing the server response. Please try again.
+                                    </div>
+                                `;
                             }
                         })
                         .catch(error => {
                             console.error("DIRECT HANDLER: Fetch error:", error);
-                            loaderDiv.remove();
-                            alert("Error: Could not connect to the server. Please check your connection and try again.");
+                            quizContent.innerHTML = `
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-circle me-2"></i>
+                                    Could not connect to the server. Please check your connection and try again.
+                                </div>
+                            `;
                         });
                 }
             };

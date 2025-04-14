@@ -1,4 +1,4 @@
-<?php include '../includes/signin-header.php'; ?>
+<?php include '../includes/student-header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
  
 <main id="content" role="main">
@@ -131,7 +131,7 @@
                       <img class="card-img-top" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="<?php echo htmlspecialchars($course['title']); ?>">
                       <div class="card-body">
                         <h5 class="card-title">
-                          <a class="text-dark" href="course-materials.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
+                          <a class="text-dark" href="course-materials.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>">
                             <?php echo htmlspecialchars($course['title']); ?>
                           </a>
                         </h5>
@@ -213,7 +213,7 @@
                     </div>
                     <div class="card-body">
                       <h5 class="card-title">
-                        <a class="text-dark" href="course-materials.php?id=<?php echo htmlspecialchars($course['course_id']); ?>">
+                        <a class="text-dark" href="course-materials.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>">
                           <?php echo htmlspecialchars($course['title']); ?>
                         </a>
                       </h5>

@@ -25,8 +25,150 @@ if (!isset($_GET['course_id']) || !is_numeric($_GET['course_id'])) {
     exit();
 }
 
-// Get course ID from URL
-$course_id = intval($_GET['course_id']);
+// Add this near the top of the script
+$course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : 0;
+
+// Access control for topics and quizzes
+// Temporarily disable access control
+$allow_access = true;
+
+// Get topic or quiz ID from the URL
+$topic_id = isset($_GET['topic']) ? intval($_GET['topic']) : 0;
+$quiz_id = isset($_GET['quiz_id']) ? intval($_GET['quiz_id']) : 0;
+
+
+// Get section information
+$current_section_position = 0;
+$current_item_position = 0;
+if ($topic_id > 0) {
+    // For topics, check access
+    $topic_query = "SELECT cs.position as section_position, st.position as item_position, cs.course_id
+                   FROM section_topics st
+                   JOIN course_sections cs ON st.section_id = cs.section_id
+                   WHERE st.topic_id = ?";
+    $topic_stmt = $conn->prepare($topic_query);
+    $topic_stmt->bind_param("i", $topic_id);
+    $topic_stmt->execute();
+    $topic_result = $topic_stmt->get_result();
+    
+    if ($topic_result->num_rows > 0) {
+        $topic_info = $topic_result->fetch_assoc();
+        $current_section_position = $topic_info['section_position'];
+        $current_item_position = $topic_info['item_position'];
+        $course_id = $topic_info['course_id']; // Make sure we have course_id
+        
+        // Check if this is the first topic
+        $is_first_topic = false;
+        if ($current_section_position == 1 && $current_item_position == 1) {
+            $is_first_topic = true;
+            $allow_access = true;
+        }
+        
+        // Check completion status of this topic
+        $topic_status_query = "SELECT completion_status 
+                              FROM progress 
+                              WHERE topic_id = ? AND enrollment_id = ?";
+        $topic_status_stmt = $conn->prepare($topic_status_query);
+        $topic_status_stmt->bind_param("ii", $topic_id, $enrollment_id);
+        $topic_status_stmt->execute();
+        $topic_status_result = $topic_status_stmt->get_result();
+        
+        if ($topic_status_result->num_rows > 0) {
+            $status = $topic_status_result->fetch_assoc()['completion_status'];
+            if ($status == 'Completed' || $status == 'In Progress') {
+                $allow_access = true;
+            }
+        }
+        
+        if (!$allow_access && !$is_first_topic) {
+            // MODIFIED: Check if the IMMEDIATE previous topic in section is completed
+            if ($current_item_position > 1) {
+                $prev_topic_query = "SELECT st.topic_id, p.completion_status
+                                    FROM section_topics st
+                                    LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                                    JOIN course_sections cs ON st.section_id = cs.section_id
+                                    WHERE cs.course_id = ? 
+                                    AND cs.position = ? 
+                                    AND st.position = ? - 1";
+                $prev_topic_stmt = $conn->prepare($prev_topic_query);
+                $prev_topic_stmt->bind_param("iiii", $enrollment_id, $course_id, $current_section_position, $current_item_position);
+                $prev_topic_stmt->execute();
+                $prev_topic_result = $prev_topic_stmt->get_result();
+                
+                if ($prev_topic_result->num_rows > 0) {
+                    $prev_topic_data = $prev_topic_result->fetch_assoc();
+                    if ($prev_topic_data['completion_status'] == 'Completed') {
+                        $allow_access = true;
+                    } else {
+                        $redirect_message = "Please complete the previous topic before accessing this one.";
+                    }
+                } else {
+                    // If no previous topic found, allow access
+                    $allow_access = true;
+                }
+            }
+            
+            // For topics in later sections, check if the last topic in previous section is completed
+            if (!$allow_access && $current_section_position > 1) {
+                $last_topic_prev_section_query = "SELECT st.topic_id, p.completion_status
+                                                FROM section_topics st
+                                                LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                                                JOIN course_sections cs ON st.section_id = cs.section_id
+                                                WHERE cs.course_id = ? 
+                                                AND cs.position = ? - 1
+                                                ORDER BY st.position DESC
+                                                LIMIT 1";
+                $last_topic_stmt = $conn->prepare($last_topic_prev_section_query);
+                $last_topic_stmt->bind_param("iii", $enrollment_id, $course_id, $current_section_position);
+                $last_topic_stmt->execute();
+                $last_topic_result = $last_topic_stmt->get_result();
+                
+                if ($last_topic_result->num_rows > 0) {
+                    $last_topic_data = $last_topic_result->fetch_assoc();
+                    if ($last_topic_data['completion_status'] == 'Completed') {
+                        $allow_access = true;
+                    } else {
+                        $redirect_message = "Please complete the last topic of the previous section first.";
+                    }
+                } else {
+                    // If no last topic found in previous section, allow access
+                    $allow_access = true;
+                }
+            }
+        }
+    }
+}else if ($quiz_id > 0) {
+    // CHANGED: For quizzes, just get basic info but don't restrict access
+    $quiz_query = "SELECT cs.position as section_position, cs.section_id, cs.course_id
+                  FROM section_quizzes sq
+                  JOIN course_sections cs ON sq.section_id = cs.section_id
+                  WHERE sq.quiz_id = ?";
+    $quiz_stmt = $conn->prepare($quiz_query);
+    $quiz_stmt->bind_param("i", $quiz_id);
+    $quiz_stmt->execute();
+    $quiz_result = $quiz_stmt->get_result();
+    
+    if ($quiz_result->num_rows > 0) {
+        $quiz_info = $quiz_result->fetch_assoc();
+        $current_section_position = $quiz_info['section_position'];
+        $quiz_section_id = $quiz_info['section_id'];
+        $course_id = $quiz_info['course_id']; // Make sure we have course_id
+        
+        // CHANGED: No need to check access further, as we're allowing all access
+        $allow_access = true;
+    }
+}
+
+// If access is not allowed, redirect back to course materials with a message
+if (!$allow_access) {
+    // Store the message in a session variable
+    $_SESSION['access_denied_message'] = $redirect_message ?: "You need to complete previous content before accessing this.";
+    
+    // Redirect back to course materials
+    header("Location: course-materials.php?course_id=" . $course_id);
+    exit();
+}
+
 
 // Check if either topic or quiz_id is provided
 if (isset($_GET['topic']) && is_numeric($_GET['topic'])) {
@@ -333,21 +475,37 @@ $update_stmt->bind_param("ii", $topic_id, $enrollment_id);
 $update_stmt->execute();
 
 // Calculate section progress for the progress bar
+// Calculate section progress for the progress bar
 $section_progress_query = "SELECT 
                           COUNT(DISTINCT CASE WHEN p.completion_status = 'Completed' THEN st.topic_id END) as completed_topics,
-                          COUNT(DISTINCT st.topic_id) as total_topics
+                          COUNT(DISTINCT st.topic_id) as total_topics,
+                          (SELECT COUNT(DISTINCT sq.quiz_id) 
+                           FROM section_quizzes sq 
+                           WHERE sq.section_id = ?) as total_quizzes,
+                          (SELECT COUNT(DISTINCT sq.quiz_id) 
+                           FROM section_quizzes sq 
+                           LEFT JOIN (
+                               SELECT quiz_id, MAX(is_completed) as is_completed
+                               FROM student_quiz_attempts
+                               WHERE user_id = ?
+                               GROUP BY quiz_id
+                           ) sqa ON sq.quiz_id = sqa.quiz_id
+                           WHERE sq.section_id = ? AND sqa.is_completed = 1) as completed_quizzes
                           FROM section_topics st
                           LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
                           WHERE st.section_id = ?";
 $stmt = $conn->prepare($section_progress_query);
-$stmt->bind_param("ii", $enrollment_id, $section_id);
+$stmt->bind_param("iiiii", $section_id, $user_id, $section_id, $enrollment_id, $section_id);
 $stmt->execute();
 $section_progress_result = $stmt->get_result();
 $section_progress = $section_progress_result->fetch_assoc();
 
 $section_percentage = 0;
-if ($section_progress['total_topics'] > 0) {
-    $section_percentage = round(($section_progress['completed_topics'] / $section_progress['total_topics']) * 100);
+$total_items = $section_progress['total_topics'] + $section_progress['total_quizzes'];
+$completed_items = $section_progress['completed_topics'] + $section_progress['completed_quizzes'];
+
+if ($total_items > 0) {
+    $section_percentage = round(($completed_items / $total_items) * 100);
 }
 
 // Calculate course progress for the progress bar
@@ -735,6 +893,45 @@ function getLinkDisplay($topic)
         box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
         transform: translateY(-2px);
     }
+
+    /* Result-specific styles */
+.border-success {
+    border-color: #198754 !important;
+}
+
+.border-danger {
+    border-color: #dc3545 !important;
+}
+
+.bg-opacity-10 {
+    --bs-bg-opacity: 0.1;
+}
+
+.quiz-question.border-success {
+    border-left-width: 4px;
+}
+
+.quiz-question.border-danger {
+    border-left-width: 4px;
+}
+
+.quiz-result-summary {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-container {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+}
+
+/* For review mode */
+.review-answers .form-check-label {
+    transition: all 0.2s ease;
+}
 </style>
 
 <!-- Toast -->

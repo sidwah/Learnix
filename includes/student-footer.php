@@ -1,138 +1,53 @@
 
 <!-- ========== FOOTER ========== -->
-  <footer class="bg-dark">
-    <div class="container pb-1 pb-lg-5">
-      <div class="row content-space-t-2">
-        <div class="col-lg-3 mb-7 mb-lg-0">
-          <!-- Logo -->
-          <div class="mb-5">
-            <a class="navbar-brand" href="index.php" aria-label="Space">
-              <img class="navbar-brand-logo" src="../assets/svg/logos/logo-white.svg" alt="Image Description">
-            </a>
-          </div>
-          <!-- End Logo -->
-
-          <!-- List -->
-          <ul class="list-unstyled list-py-1">
-            <li><a class="link-sm link-secondary" href="#"><i class="bi-geo-alt-fill me-1"></i> Dimension College, Ghana</a></li>
-            <li><a class="link-sm link-secondary" href="tel:1-062-109-9222"><i class="bi-telephone-inbound-fill me-1"></i> +1 (23) 109-9222</a></li>
-          </ul>
-          <!-- End List -->
-
-        </div>
-        <!-- End Col -->
-
-        <div class="col-sm mb-7 mb-sm-0">
-          <h5 class="text-white mb-3">Company</h5>
-
-          <!-- List -->
-          <ul class="list-unstyled list-py-1 mb-0">
-            <li><a class="link-sm link-secondary" href="#">About</a></li>
-            <li><a class="link-sm link-secondary" href="#">Careers <span class="badge bg-warning text-dark rounded-pill ms-1">We're hiring</span></a></li>
-            <li><a class="link-sm link-secondary" href="#">Blog</a></li>
-            <li><a class="link-sm link-secondary" href="#">Customers <i class="bi-box-arrow-up-right small ms-1"></i></a></li>
-            <li><a class="link-sm link-secondary" href="#">Hire us</a></li>
-          </ul>
-          <!-- End List -->
-        </div>
-        <!-- End Col -->
-
-
-        <div class="col-sm mb-7 mb-sm-0">
-          <h5 class="text-white mb-3">Resources</h5>
-
-          <!-- List -->
-          <ul class="list-unstyled list-py-1 mb-5">
-            <li><a class="link-sm link-secondary" href="#"><i class="bi-question-circle-fill me-1"></i> Help</a></li>
-            <li><a class="link-sm link-secondary" href="#"><i class="bi-person-circle me-1"></i> Your Account</a></li>
-          </ul>
-          <!-- End List -->
-        </div>
-        <!-- End Col -->
-
-        <div class="col-sm mb-7 mb-sm-0">
-            <h5 class="text-white mb-3">Legal</h5>
-            <!-- List -->
-            <ul class="list-unstyled list-py-1 mb-0">
-              <li>
-                <a class="link-sm link-secondary" href="privacy-policy.php">Privacy Policy</a>
-              </li>
-              <li>
-                <a class="link-sm link-secondary" href="terms.php">Terms of Service</a>
-              </li>
-            </ul>
-            <!-- End List -->
-          </div>
-          <!-- End Col -->
-      </div>
-      <!-- End Row -->
-
-      <div class="border-top my-7"></div>
-
-      <div class="row mb-7">
-        <div class="col-sm mb-3 mb-sm-0">
-          <!-- Socials -->
-          <ul class="list-inline list-separator mb-0">
-            <li class="list-inline-item">
-              <a class="text-body" href="privacy-policy.php">Privacy &amp; Policy</a>
-            </li>
-            <li class="list-inline-item">
-              <a class="text-body" href="Terms.php">Terms</a>
-            </li>
-          </ul>
-          <!-- End Socials -->
-        </div>
-
-        <div class="col-sm-auto">
-          <!-- Socials -->
-          <ul class="list-inline mb-0">
-            <li class="list-inline-item">
-              <a class="btn btn-soft-secondary btn-xs btn-icon" href="#">
-                <i class="bi-facebook"></i>
-              </a>
-            </li>
-
-            <li class="list-inline-item">
-              <a class="btn btn-soft-secondary btn-xs btn-icon" href="#">
-                <i class="bi-google"></i>
-              </a>
-            </li>
-
-            <li class="list-inline-item">
-              <a class="btn btn-soft-secondary btn-xs btn-icon" href="#">
-                <i class="bi-twitter"></i>
-              </a>
-            </li>
-
-            <li class="list-inline-item">
-              <a class="btn btn-soft-secondary btn-xs btn-icon" href="#">
-                <i class="bi-github"></i>
-              </a>
-            </li>
-
-          </ul>
-          <!-- End Socials -->
-        </div>
-      </div>
-
+<footer class="container-fluid bg-light mt-5 py-4">
+  <div class="container">
+    <div class="row justify-content-between align-items-center">
+      
       <!-- Copyright -->
-      <div class="w-md-85 text-lg-center mx-lg-auto">
-        <p class="text-muted small">  &copy; Learnix. <span id="currentYear"></span> All rights
-        reserved.</p>
+      <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+        <p class="text-muted small mb-0">
+          &copy; Learnix <span id="currentYear"></span>. All rights reserved.
+        </p>
       </div>
       <!-- End Copyright -->
 
-      
-      <script>
-          // Get the current year
-          const currentYear = new Date().getFullYear();
-          // Set the text content of the element with ID 'currentYear'
-          document.getElementById("currentYear").textContent = currentYear;
-        </script>
-        <!-- End Copyright -->
+      <!-- Socials -->
+      <div class="col-md-6 text-center text-md-end">
+        <ul class="list-inline mb-0">
+          <li class="list-inline-item">
+            <a class="btn btn-outline-secondary btn-sm btn-icon rounded-circle" href="#">
+              <i class="bi bi-facebook"></i>
+            </a>
+          </li>
+          <li class="list-inline-item">
+            <a class="btn btn-outline-secondary btn-sm btn-icon rounded-circle" href="#">
+              <i class="bi bi-google"></i>
+            </a>
+          </li>
+          <li class="list-inline-item">
+            <a class="btn btn-outline-secondary btn-sm btn-icon rounded-circle" href="#">
+              <i class="bi bi-twitter"></i>
+            </a>
+          </li>
+          <li class="list-inline-item">
+            <a class="btn btn-outline-secondary btn-sm btn-icon rounded-circle" href="#">
+              <i class="bi bi-github"></i>
+            </a>
+          </li>
+        </ul>
+      </div>
+      <!-- End Socials -->
+
     </div>
-  </footer>
-  <!-- ========== END FOOTER ========== -->
+  </div>
+
+  <script>
+    // Get the current year
+    document.getElementById("currentYear").textContent = new Date().getFullYear();
+  </script>
+</footer>
+<!-- ========== END FOOTER ========== -->
 
 <!-- Go To -->
 <a class="js-go-to go-to position-fixed" href="javascript:;" style="visibility: hidden;" data-hs-go-to-options='{

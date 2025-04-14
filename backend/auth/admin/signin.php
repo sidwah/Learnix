@@ -39,9 +39,119 @@ function sendVerificationEmail($email, $verificationCode) {
         // Email content
         $mail->isHTML(true);
         $mail->Subject = 'Your Learnix Admin Verification Code';
-        $mail->Body = "<p>Your verification code is: <strong>$verificationCode</strong></p>
-        <p>Please enter this code in the verification form to complete your sign-in.</p>
-        <p>This code will expire in 10 minutes.</p>";
+        $mail->isHTML(true);
+        $mail->Body = "
+        <!DOCTYPE html>
+        <html lang='en'>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>Learnix Verification</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    margin: 0;
+                    padding: 0;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                .header {
+                    background-color: #4a6cf7;
+                    padding: 20px;
+                    text-align: center;
+                    border-radius: 8px 8px 0 0;
+                }
+                .header h1 {
+                    color: white;
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .content {
+                    background-color: #ffffff;
+                    padding: 30px;
+                    border-left: 1px solid #e6e6e6;
+                    border-right: 1px solid #e6e6e6;
+                }
+                .verification-code {
+                    background-color: #f7f9fc;
+                    border: 1px solid #e6e6e6;
+                    border-radius: 6px;
+                    font-size: 32px;
+                    font-weight: bold;
+                    letter-spacing: 5px;
+                    color: #333;
+                    padding: 15px;
+                    margin: 20px 0;
+                    text-align: center;
+                }
+                .info {
+                    margin-bottom: 20px;
+                    font-size: 16px;
+                }
+                .expire-warning {
+                    color: #f44336;
+                    font-size: 14px;
+                    font-style: italic;
+                }
+                .footer {
+                    background-color: #f7f9fc;
+                    padding: 15px;
+                    text-align: center;
+                    font-size: 12px;
+                    color: #666;
+                    border-radius: 0 0 8px 8px;
+                    border: 1px solid #e6e6e6;
+                    border-top: none;
+                }
+                .logo {
+                    max-width: 120px;
+                    margin-bottom: 10px;
+                }
+                .button {
+                    display: inline-block;
+                    background-color: #4a6cf7;
+                    color: white;
+                    text-decoration: none;
+                    padding: 12px 25px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>LEARNIX</h1>
+                </div>
+                <div class='content'>
+                    <p class='info'>Hello Admin,</p>
+                    <p class='info'>You've requested to sign in to your Learnix Admin account. For security purposes, please verify your identity by entering the code below:</p>
+                    
+                    <div class='verification-code'>$verificationCode</div>
+                    
+                    <p class='info'>Please enter this code in the verification form to complete your sign-in process.</p>
+                    
+                    <p class='expire-warning'>This verification code will expire in 10 minutes.</p>
+                    
+                    <p class='info'>If you did not request this code, please disregard this email or contact our support team immediately if you believe your account has been compromised.</p>
+                </div>
+                <div class='footer'>
+                    <p>&copy; " . date('Y') . " Learnix Learning Platform. All rights reserved.</p>
+                    <p>This is an automated message, please do not reply to this email.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        ";
+        
+        // Set plain text version for non-HTML mail clients
+        $mail->AltBody = "Your verification code is: $verificationCode\n\nPlease enter this code in the verification form to complete your sign-in.\n\nThis code will expire in 10 minutes.";
 
         $mail->send();
         return true;

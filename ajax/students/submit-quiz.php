@@ -3,6 +3,7 @@
  * Submit Quiz AJAX Handler
  * 
  * Finalizes a quiz attempt and calculates the final score.
+ * Handles normal submission, forfeited attempts, and time-expired submissions.
  * 
  * @package Learnix
  * @subpackage AJAX
@@ -26,6 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Get POST data
 $attemptId = isset($_POST['attempt_id']) ? intval($_POST['attempt_id']) : 0;
+$isForfeit = isset($_POST['is_forfeit']) && $_POST['is_forfeit'] == 1;
+$isTimeExpired = isset($_POST['is_time_expired']) && $_POST['is_time_expired'] == 1;
 
 if (!$attemptId) {
     echo json_encode(['success' => false, 'message' => 'Missing required parameters.']);
@@ -36,6 +39,24 @@ if (!$attemptId) {
 $conn->begin_transaction();
 
 try {
+    // First, check if 'notes' column exists
+    $notesColumnExists = false;
+    $checkColumnResult = $conn->query("SHOW COLUMNS FROM student_quiz_attempts LIKE 'notes'");
+    if ($checkColumnResult && $checkColumnResult->num_rows > 0) {
+        $notesColumnExists = true;
+    }
+    
+    // If it doesn't exist, try to add it
+    if (!$notesColumnExists) {
+        try {
+            $conn->query("ALTER TABLE student_quiz_attempts ADD COLUMN notes TEXT NULL");
+            $notesColumnExists = true;
+        } catch (Exception $e) {
+            // Log the error but continue without using notes
+            error_log("Failed to add notes column: " . $e->getMessage());
+        }
+    }
+
     // Verify attempt belongs to current user and is active
     $stmt = $conn->prepare("
         SELECT a.*, q.pass_mark
@@ -96,13 +117,23 @@ try {
     // Determine if passed based on pass mark
     $passed = $score >= $attempt['pass_mark'];
 
-    // Update the attempt record
-    $stmt = $conn->prepare("
-        UPDATE student_quiz_attempts
-        SET is_completed = 1, end_time = NOW(), score = ?, passed = ?, time_spent = ?
-        WHERE attempt_id = ?
-    ");
-    $stmt->bind_param("diii", $score, $passed, $timeSpent, $attemptId);
+    // Update the attempt record - with or without notes depending on column existence
+    if ($notesColumnExists && ($isForfeit || $isTimeExpired)) {
+        $notes = $isForfeit ? "Quiz forfeited by student" : "Quiz auto-submitted due to time expiration";
+        $stmt = $conn->prepare("
+            UPDATE student_quiz_attempts
+            SET is_completed = 1, end_time = NOW(), score = ?, passed = ?, time_spent = ?, notes = ?
+            WHERE attempt_id = ?
+        ");
+        $stmt->bind_param("diiis", $score, $passed, $timeSpent, $notes, $attemptId);
+    } else {
+        $stmt = $conn->prepare("
+            UPDATE student_quiz_attempts
+            SET is_completed = 1, end_time = NOW(), score = ?, passed = ?, time_spent = ?
+            WHERE attempt_id = ?
+        ");
+        $stmt->bind_param("diii", $score, $passed, $timeSpent, $attemptId);
+    }
     $stmt->execute();
     $stmt->close();
 
@@ -181,15 +212,39 @@ try {
         }
     }
 
+    // Set the next attempt available time (12 hour cooldown)
+$nextAttemptTime = new DateTime();
+$nextAttemptTime->add(new DateInterval('PT12H')); // 12 hours
+$nextAttemptAvailable = $nextAttemptTime->format('Y-m-d H:i:s');
+
+$stmt = $conn->prepare("
+    UPDATE student_quiz_attempts
+    SET next_attempt_available = ?
+    WHERE attempt_id = ?
+");
+$stmt->bind_param("si", $nextAttemptAvailable, $attemptId);
+$stmt->execute();
+$stmt->close();
+
+
     // Commit transaction
     $conn->commit();
+
+    // Build response message based on submission type
+    $message = 'Quiz submitted successfully.';
+    if ($isForfeit) {
+        $message = 'Quiz forfeited and submitted successfully.';
+    } elseif ($isTimeExpired) {
+        $message = 'Quiz time expired. Your answers have been submitted.';
+    }
 
     // Return success
     echo json_encode([
         'success' => true,
         'score' => $score,
         'passed' => $passed,
-        'message' => 'Quiz submitted successfully.'
+        'message' => $message,
+        'submission_type' => $isForfeit ? 'forfeit' : ($isTimeExpired ? 'time_expired' : 'normal')
     ]);
 
 } catch (Exception $e) {

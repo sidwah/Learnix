@@ -212,24 +212,36 @@ if ($current_section_id) {
 }
 
 // Calculate overall course progress
+// Calculate overall course progress - Updated to include quizzes
 $progress_query = "SELECT 
                     COUNT(DISTINCT CASE WHEN p.completion_status = 'Completed' THEN st.topic_id END) as completed_topics,
-                    COUNT(DISTINCT st.topic_id) as total_topics
+                    COUNT(DISTINCT st.topic_id) as total_topics,
+                    COUNT(DISTINCT CASE WHEN sqa.is_completed = 1 THEN sq.quiz_id END) as completed_quizzes,
+                    COUNT(DISTINCT sq.quiz_id) as total_quizzes
                    FROM course_sections cs
                    JOIN section_topics st ON cs.section_id = st.section_id
                    LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                   LEFT JOIN section_quizzes sq ON cs.section_id = sq.section_id
+                   LEFT JOIN (
+                       SELECT quiz_id, MAX(is_completed) as is_completed 
+                       FROM student_quiz_attempts 
+                       WHERE user_id = ? 
+                       GROUP BY quiz_id
+                   ) sqa ON sq.quiz_id = sqa.quiz_id
                    WHERE cs.course_id = ?";
 $stmt = $conn->prepare($progress_query);
-$stmt->bind_param("ii", $enrollment_id, $course_id);
+$stmt->bind_param("iii", $enrollment_id, $user_id, $course_id);
 $stmt->execute();
 $progress_result = $stmt->get_result();
 $progress = $progress_result->fetch_assoc();
 
 $completed_percentage = 0;
-if ($progress['total_topics'] > 0) {
-    $completed_percentage = round(($progress['completed_topics'] / $progress['total_topics']) * 100);
-}
+$total_items = ($progress['total_topics'] + $progress['total_quizzes']);
+$completed_items = ($progress['completed_topics'] + $progress['completed_quizzes']);
 
+if ($total_items > 0) {
+    $completed_percentage = round(($completed_items / $total_items) * 100);
+}
 
 // Add these queries to your existing script, before rendering the HTML
 
@@ -437,11 +449,35 @@ foreach ($sections as $sec) {
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
+                            <!-- In the sidebar of course-materials.php -->
                             <li class="list-group-item border-0 py-3">
                                 <a href="grades.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark d-flex justify-content-between align-items-center">
                                     <span><i class="bi bi-award me-2 text-warning"></i> Grades</span>
-                                    <!-- Add a badge for grades (example) -->
-                                    <span class="badge bg-light text-dark">2 Graded</span>
+                                    <?php
+                                    // Get count of graded quizzes
+                                    $graded_count_query = "SELECT 
+                              COUNT(DISTINCT sq.quiz_id) as total_quizzes,
+                              COUNT(DISTINCT CASE WHEN sqa.is_completed = 1 THEN sq.quiz_id END) as graded_quizzes
+                            FROM section_quizzes sq 
+                            JOIN course_sections cs ON sq.section_id = cs.section_id
+                            LEFT JOIN student_quiz_attempts sqa ON sq.quiz_id = sqa.quiz_id AND sqa.user_id = ?
+                            WHERE cs.course_id = ?";
+                                    $grade_stmt = $conn->prepare($graded_count_query);
+                                    $grade_stmt->bind_param("ii", $user_id, $course_id);
+                                    $grade_stmt->execute();
+                                    $grade_result = $grade_stmt->get_result();
+                                    $grade_counts = $grade_result->fetch_assoc();
+
+                                    $graded_count = $grade_counts['graded_quizzes'];
+                                    $total_quizzes = $grade_counts['total_quizzes'];
+
+                                    if ($total_quizzes > 0) {
+                                        $badge_class = ($graded_count < $total_quizzes) ? "bg-primary" : "bg-success";
+                                        echo "<span class=\"badge {$badge_class}\">{$graded_count}/{$total_quizzes} Graded</span>";
+                                    } else {
+                                        echo "<span class=\"badge bg-light text-dark\">No Quizzes</span>";
+                                    }
+                                    ?>
                                 </a>
                             </li>
                             <li class="list-group-item border-0 py-3">
@@ -608,6 +644,15 @@ foreach ($sections as $sec) {
                     </div>
                 </div>
 
+                <!-- Access Denied Message Display -->
+                <?php if (isset($_SESSION['access_denied_message'])): ?>
+                    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <?php echo $_SESSION['access_denied_message']; ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <?php unset($_SESSION['access_denied_message']); ?>
+                <?php endif; ?>
 
                 <!-- Assessment Items -->
                 <div class="card border-0 shadow-sm mb-4">
@@ -696,14 +741,14 @@ foreach ($sections as $sec) {
                                         $time_limit = $item['time_limit'] ?? 10;
 
                                         // Both quizzes and regular content go to course-content.php, but with different parameters
-if ($is_quiz) {
-    $item_url = "course-content.php?course_id={$course_id}&quiz_id={$item['quiz_id']}";
-} else {
-    $link_available = (isset($item['is_previewable']) && $item['is_previewable'] || $item['completion_status'] !== 'Completed');
-    $item_url = ($item['content_type'] === 'link' && !empty($item['external_url']))
-        ? htmlspecialchars($item['external_url'])
-        : "course-content.php?course_id={$course_id}&topic={$item['topic_id']}";
-}
+                                        if ($is_quiz) {
+                                            $item_url = "course-content.php?course_id={$course_id}&quiz_id={$item['quiz_id']}";
+                                        } else {
+                                            $link_available = (isset($item['is_previewable']) && $item['is_previewable'] || $item['completion_status'] !== 'Completed');
+                                            $item_url = ($item['content_type'] === 'link' && !empty($item['external_url']))
+                                                ? htmlspecialchars($item['external_url'])
+                                                : "course-content.php?course_id={$course_id}&topic={$item['topic_id']}";
+                                        }
                                         ?>
 
                                         <h6 class="mb-0">
@@ -721,14 +766,214 @@ if ($is_quiz) {
                                             <?php echo ucfirst($content_type); ?> • <?php echo $time_limit; ?> min
                                         </p>
                                     </div>
-
                                     <div class="ms-2">
+                                        <?php
+                                        // Get the first topic ID in the course sequence
+                                        $first_topic_query = "SELECT st.topic_id 
+                          FROM section_topics st
+                          JOIN course_sections cs ON st.section_id = cs.section_id
+                          WHERE cs.course_id = ?
+                          ORDER BY cs.position, st.position
+                          LIMIT 1";
+
+                                        $first_stmt = $conn->prepare($first_topic_query);
+                                        $first_stmt->bind_param("i", $course_id);
+                                        $first_stmt->execute();
+                                        $first_result = $first_stmt->get_result();
+                                        $first_topic_id = $first_result->fetch_assoc()['topic_id'] ?? 0;
+
+                                        // Get the section and position info for this item
+                                        $current_section_position = 0;
+                                        $current_item_position = 0;
+
+                                        if ($is_quiz && isset($item['quiz_id'])) {
+                                            // For quizzes, get the section position
+                                            $item_section_query = "SELECT cs.position as section_position
+                              FROM section_quizzes sq
+                              JOIN course_sections cs ON sq.section_id = cs.section_id
+                              WHERE sq.quiz_id = ?";
+                                            $item_stmt = $conn->prepare($item_section_query);
+                                            $item_stmt->bind_param("i", $item['quiz_id']);
+                                            $item_stmt->execute();
+                                            $item_result = $item_stmt->get_result();
+                                            if ($item_result->num_rows > 0) {
+                                                $item_info = $item_result->fetch_assoc();
+                                                $current_section_position = $item_info['section_position'];
+                                                $current_item_position = 999; // Position quizzes after topics in the section
+                                            }
+                                        } else if (!$is_quiz && isset($item['topic_id'])) {
+                                            // For topics, get the section position
+                                            $item_section_query = "SELECT cs.position as section_position, st.position as item_position
+                              FROM section_topics st
+                              JOIN course_sections cs ON st.section_id = cs.section_id
+                              WHERE st.topic_id = ?";
+                                            $item_stmt = $conn->prepare($item_section_query);
+                                            $item_stmt->bind_param("i", $item['topic_id']);
+                                            $item_stmt->execute();
+                                            $item_result = $item_stmt->get_result();
+                                            if ($item_result->num_rows > 0) {
+                                                $item_info = $item_result->fetch_assoc();
+                                                $current_section_position = $item_info['section_position'];
+                                                $current_item_position = $item_info['item_position'];
+                                            }
+                                        }
+
+                                        // For quizzes: check if all previous topics in this section are completed
+                                        $all_previous_topics_completed = true;
+                                        if ($is_quiz) {
+                                            $prev_topics_query = "SELECT COUNT(st.topic_id) as total_topics, 
+                                    COUNT(CASE WHEN p.completion_status = 'Completed' THEN 1 END) as completed_topics
+                             FROM section_topics st
+                             LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                             JOIN course_sections cs ON st.section_id = cs.section_id
+                             WHERE cs.course_id = ? AND cs.position = ?";
+                                            $prev_topics_stmt = $conn->prepare($prev_topics_query);
+                                            $prev_topics_stmt->bind_param("iii", $enrollment_id, $course_id, $current_section_position);
+                                            $prev_topics_stmt->execute();
+                                            $prev_topics_result = $prev_topics_stmt->get_result();
+                                            if ($prev_topics_result->num_rows > 0) {
+                                                $topics_info = $prev_topics_result->fetch_assoc();
+                                                $all_previous_topics_completed = ($topics_info['completed_topics'] == $topics_info['total_topics'] && $topics_info['total_topics'] > 0);
+                                            }
+                                        }
+
+                                        // For topics in later sections: check if all previous sections are completed properly
+                                        $previous_sections_completed = true;
+                                        $has_previous_quizzes = false;
+
+                                        if (!$is_quiz && $current_section_position > 1) {
+                                            // First, check if previous sections have quizzes
+                                            $has_quizzes_query = "SELECT COUNT(sq.quiz_id) as quiz_count
+                             FROM section_quizzes sq
+                             JOIN course_sections cs ON sq.section_id = cs.section_id
+                             WHERE cs.course_id = ? AND cs.position < ?";
+                                            $has_quizzes_stmt = $conn->prepare($has_quizzes_query);
+                                            $has_quizzes_stmt->bind_param("ii", $course_id, $current_section_position);
+                                            $has_quizzes_stmt->execute();
+                                            $has_quizzes_result = $has_quizzes_stmt->get_result();
+                                            $quiz_count = $has_quizzes_result->fetch_assoc()['quiz_count'];
+                                            $has_previous_quizzes = ($quiz_count > 0);
+
+                                            if ($has_previous_quizzes) {
+                                                // If there are quizzes, check if they are passed
+                                                $prev_quizzes_query = "SELECT COUNT(sq.quiz_id) as total_quizzes,
+                                        COUNT(CASE WHEN sqa.passed = 1 THEN 1 END) as passed_quizzes
+                                  FROM section_quizzes sq
+                                  JOIN course_sections cs ON sq.section_id = cs.section_id
+                                  LEFT JOIN (
+                                      SELECT quiz_id, MAX(passed) as passed 
+                                      FROM student_quiz_attempts 
+                                      WHERE user_id = ? 
+                                      GROUP BY quiz_id
+                                  ) sqa ON sq.quiz_id = sqa.quiz_id
+                                  WHERE cs.course_id = ? AND cs.position < ?";
+                                                $prev_quizzes_stmt = $conn->prepare($prev_quizzes_query);
+                                                $prev_quizzes_stmt->bind_param("iii", $user_id, $course_id, $current_section_position);
+                                                $prev_quizzes_stmt->execute();
+                                                $prev_quizzes_result = $prev_quizzes_stmt->get_result();
+                                                if ($prev_quizzes_result->num_rows > 0) {
+                                                    $quizzes_info = $prev_quizzes_result->fetch_assoc();
+                                                    $previous_sections_completed = ($quizzes_info['passed_quizzes'] == $quizzes_info['total_quizzes'] && $quizzes_info['total_quizzes'] > 0);
+                                                }
+                                            } else {
+                                                // If there are no quizzes, check if all topics in previous sections are completed
+                                                $prev_sections_topics_query = "SELECT COUNT(st.topic_id) as total_topics,
+                                          COUNT(CASE WHEN p.completion_status = 'Completed' THEN 1 END) as completed_topics
+                                        FROM section_topics st
+                                        LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                                        JOIN course_sections cs ON st.section_id = cs.section_id
+                                        WHERE cs.course_id = ? AND cs.position < ?";
+                                                $prev_sections_topics_stmt = $conn->prepare($prev_sections_topics_query);
+                                                $prev_sections_topics_stmt->bind_param("iii", $enrollment_id, $course_id, $current_section_position);
+                                                $prev_sections_topics_stmt->execute();
+                                                $prev_sections_topics_result = $prev_sections_topics_stmt->get_result();
+                                                if ($prev_sections_topics_result->num_rows > 0) {
+                                                    $prev_sections_topics_info = $prev_sections_topics_result->fetch_assoc();
+                                                    $previous_sections_completed = ($prev_sections_topics_info['completed_topics'] == $prev_sections_topics_info['total_topics'] && $prev_sections_topics_info['total_topics'] > 0);
+                                                }
+                                            }
+                                        }
+
+                                        // For topics within a section: check if all previous topics in this section are completed
+                                        $all_previous_section_topics_completed = true;
+                                        if (!$is_quiz && $current_item_position > 1) {
+                                            $prev_section_topics_query = "SELECT COUNT(st.topic_id) as total_topics, 
+                                           COUNT(CASE WHEN p.completion_status = 'Completed' THEN 1 END) as completed_topics
+                                    FROM section_topics st
+                                    LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                                    JOIN course_sections cs ON st.section_id = cs.section_id
+                                    WHERE cs.course_id = ? AND cs.position = ? AND st.position < ?";
+                                            $prev_section_topics_stmt = $conn->prepare($prev_section_topics_query);
+                                            $prev_section_topics_stmt->bind_param("iiii", $enrollment_id, $course_id, $current_section_position, $current_item_position);
+                                            $prev_section_topics_stmt->execute();
+                                            $prev_section_topics_result = $prev_section_topics_stmt->get_result();
+                                            if ($prev_section_topics_result->num_rows > 0) {
+                                                $section_topics_info = $prev_section_topics_result->fetch_assoc();
+                                                $all_previous_section_topics_completed = ($section_topics_info['completed_topics'] == $section_topics_info['total_topics'] && $section_topics_info['total_topics'] > 0);
+                                            }
+                                        }
+
+                                        // Get the next uncompleted topic in the course sequence
+                                        $next_topic_query = "SELECT st.topic_id 
+                         FROM section_topics st
+                         JOIN course_sections cs ON st.section_id = cs.section_id
+                         LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                         WHERE cs.course_id = ? 
+                         AND (p.completion_status IS NULL OR p.completion_status != 'Completed')
+                         ORDER BY cs.position, st.position
+                         LIMIT 1";
+
+                                        $next_stmt = $conn->prepare($next_topic_query);
+                                        $next_stmt->bind_param("ii", $enrollment_id, $course_id);
+                                        $next_stmt->execute();
+                                        $next_result = $next_stmt->get_result();
+                                        $next_topic_id = $next_result->fetch_assoc()['topic_id'] ?? 0;
+
+                                        // Check if this item has been started but not completed
+                                        $is_in_progress = false;
+                                        if ($is_quiz && isset($item['start_time']) && empty($item['end_time'])) {
+                                            $is_in_progress = true;
+                                        } else if (!$is_quiz && $item['completion_status'] === 'In Progress') {
+                                            $is_in_progress = true;
+                                        }
+
+                                        // Check if this is the very first topic of the course
+                                        $is_first_topic = (!$is_quiz && isset($item['topic_id']) && $item['topic_id'] == $first_topic_id);
+
+                                        // Determine if this item is accessible based on the course sequence
+                                        $is_accessible = true;
+                                        $is_next_item = false;
+
+                                        if ($is_quiz) {
+                                            // Quizzes are accessible if all previous topics in this section are completed
+                                            $is_accessible = $all_previous_topics_completed;
+                                        } else {
+                                            // First topic is always accessible
+                                            if ($is_first_topic) {
+                                                $is_accessible = true;
+                                            }
+                                            // Topics in section 1 are accessible if previous topics in same section are completed
+                                            else if ($current_section_position == 1) {
+                                                $is_accessible = $all_previous_section_topics_completed;
+                                            }
+                                            // Topics in later sections depend on previous sections being completed
+                                            else {
+                                                $is_accessible = $previous_sections_completed && $all_previous_section_topics_completed;
+                                            }
+                                        }
+
+                                        // Determine if this is the next item in sequence
+                                        if (!$is_quiz && isset($item['topic_id']) && $item['topic_id'] == $next_topic_id && $is_accessible) {
+                                            $is_next_item = true;
+                                        }
+                                        ?>
+
                                         <?php if ($item['completion_status'] === 'Completed'): ?>
                                             <!-- For completed items -->
                                             <?php if ($is_quiz): ?>
-                                                <a href="quiz-results.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
+                                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
                                                     class="btn btn-outline-success btn-sm">
-                                                    <i class="bi bi-clipboard-check me-1"></i> Results
+                                                    <i class="bi bi-clipboard-check me-1"></i> Review
                                                 </a>
                                             <?php else: ?>
                                                 <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
@@ -736,33 +981,77 @@ if ($is_quiz) {
                                                     <i class="bi bi-check-circle me-1"></i> Review
                                                 </a>
                                             <?php endif; ?>
-                                        <?php elseif (($is_quiz && isset($item['quiz_id']) && isset($current_quiz_id) && $item['quiz_id'] == $current_quiz_id) ||
-                                            (!$is_quiz && isset($item['topic_id']) && isset($current_topic_id) && $item['topic_id'] == $current_topic_id)
-                                        ): ?>
-                                            <!-- For the current item that's not completed -->
+                                        <?php elseif ($is_in_progress && $is_accessible): ?>
+                                            <!-- For items that are in progress and accessible -->
                                             <?php if ($is_quiz): ?>
-                                                <a href="take-quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
-    class="btn btn-outline-primary btn-sm">
-    <i class="bi bi-pencil-square me-1"></i> Take Quiz
-</a>
+                                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
+                                                    class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-arrow-clockwise me-1"></i> Continue
+                                                </a>
                                             <?php else: ?>
                                                 <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
                                                     class="btn btn-primary btn-sm">
                                                     <i class="bi bi-play-fill me-1"></i> Resume
                                                 </a>
                                             <?php endif; ?>
+                                        <?php elseif ($is_first_topic && $item['completion_status'] === 'Not Started'): ?>
+                                            <!-- Special case for the very first topic of the course -->
+                                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                class="btn btn-primary btn-sm">
+                                                <i class="bi bi-play-fill me-1"></i> Start
+                                            </a>
+                                        <?php elseif ($is_next_item): ?>
+                                            <!-- For the next uncompleted item in the sequence -->
+                                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-arrow-right me-1"></i> Next
+                                            </a>
+                                        <?php elseif ($is_quiz && $is_accessible && $item['completion_status'] !== 'Completed'): ?>
+                                            <!-- For quizzes that are accessible but not completed -->
+                                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
+                                                class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-pencil-square me-1"></i> Take Quiz
+                                            </a>
+                                        <?php elseif ($is_accessible && $item['completion_status'] !== 'Completed'): ?>
+                                            <!-- For accessible topics that are not completed -->
+                                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-play-fill me-1"></i> Start
+                                            </a>
                                         <?php else: ?>
-                                            <!-- For other uncompleted items -->
+                                            <!-- For inaccessible items -->
                                             <?php if ($is_quiz): ?>
-                                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
-    class="btn btn-outline-primary btn-sm">
-    <i class="bi bi-pencil-square me-1"></i> Take Quiz
-</a>
+                                                <?php if (!$all_previous_topics_completed): ?>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                                                        <i class="bi bi-lock me-1"></i> Complete Topics First
+                                                    </button>
+                                                <?php else: ?>
+                                                    <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>"
+                                                        class="btn btn-outline-secondary btn-sm">
+                                                        <i class="bi bi-eye me-1"></i> View
+                                                    </a>
+                                                <?php endif; ?>
                                             <?php else: ?>
-                                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
-                                                    class="btn btn-outline-primary btn-sm">
-                                                    <i class="bi bi-arrow-right me-1"></i> Start
-                                                </a>
+                                                <?php if (!$previous_sections_completed): ?>
+                                                    <?php if ($has_previous_quizzes): ?>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                                                            <i class="bi bi-lock me-1"></i> Pass Previous Quiz
+                                                        </button>
+                                                    <?php else: ?>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                                                            <i class="bi bi-lock me-1"></i> Complete Previous Section
+                                                        </button>
+                                                    <?php endif; ?>
+                                                <?php elseif (!$all_previous_section_topics_completed): ?>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                                                        <i class="bi bi-lock me-1"></i> Complete Previous Topics
+                                                    </button>
+                                                <?php else: ?>
+                                                    <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $item['topic_id']; ?>"
+                                                        class="btn btn-outline-secondary btn-sm">
+                                                        <i class="bi bi-eye me-1"></i> View
+                                                    </a>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
@@ -773,6 +1062,7 @@ if ($is_quiz) {
 
                     </div>
                 </div>
+
 
                 <!-- Course Wrap Up Section -->
                 <div class="card border-0 shadow-sm">

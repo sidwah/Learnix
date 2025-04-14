@@ -18,15 +18,21 @@ if (!isLoggedIn() || $_SESSION['role'] !== 'student') {
     exit;
 }
 
-// Verify AJAX request
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+// Allow both GET and POST methods
+$isGet = ($_SERVER['REQUEST_METHOD'] === 'GET');
+$isPost = ($_SERVER['REQUEST_METHOD'] === 'POST');
+
+if (!$isGet && !$isPost) {
     echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
     exit;
 }
 
-// Get POST data
-$sessionId = isset($_POST['session_id']) ? intval($_POST['session_id']) : 0;
-$attemptId = isset($_POST['attempt_id']) ? intval($_POST['attempt_id']) : 0;
+// Get request data (from either GET or POST)
+$sessionId = $isGet ? (isset($_GET['session_id']) ? intval($_GET['session_id']) : 0) : 
+                     (isset($_POST['session_id']) ? intval($_POST['session_id']) : 0);
+                     
+$attemptId = $isGet ? (isset($_GET['attempt_id']) ? intval($_GET['attempt_id']) : 0) : 
+                     (isset($_POST['attempt_id']) ? intval($_POST['attempt_id']) : 0);
 
 if (!$sessionId || !$attemptId) {
     echo json_encode(['success' => false, 'message' => 'Missing required parameters.']);
@@ -36,7 +42,7 @@ if (!$sessionId || !$attemptId) {
 try {
     // Get session data
     $stmt = $conn->prepare("
-        SELECT s.*, a.quiz_id, a.start_time, a.end_time, a.is_completed, q.time_limit
+        SELECT s.*, a.quiz_id, a.start_time, a.end_time, a.is_completed, q.time_limit, q.quiz_title
         FROM quiz_sessions s
         JOIN student_quiz_attempts a ON s.attempt_id = a.attempt_id
         JOIN section_quizzes q ON a.quiz_id = q.quiz_id
@@ -44,7 +50,8 @@ try {
     ");
     $stmt->bind_param("iii", $sessionId, $attemptId, $_SESSION['user_id']);
     $stmt->execute();
-    $session = $stmt->get_result()->fetch_assoc();
+    $result = $stmt->get_result();
+    $session = $result->fetch_assoc();
     $stmt->close();
 
     if (!$session) {
@@ -73,60 +80,53 @@ try {
     $stmt->execute();
     $stmt->close();
 
-    // Parse session data
-    $sessionData = json_decode($session['session_data'], true) ?: [
-        'question_order' => [],
-        'current_question' => 0,
-        'answers' => []
-    ];
-
-    // Calculate remaining time for timed quizzes
-    $remainingTime = null;
-    if ($session['end_time']) {
-        $endTime = new DateTime($session['end_time']);
-        $now = new DateTime();
+    // Check if time has expired for timed quizzes
+    if ($session['time_limit']) {
+        $startTime = new DateTime($session['start_time']);
+        $currentTime = new DateTime();
+        $elapsedSeconds = $currentTime->getTimestamp() - $startTime->getTimestamp();
+        $totalSeconds = $session['time_limit'] * 60;
+        $remainingSeconds = $totalSeconds - $elapsedSeconds;
         
-        if ($now > $endTime) {
-            // Time is up - submit quiz automatically
-            require_once 'submit-quiz.php';
+        if ($remainingSeconds <= 0) {
+            // Time has expired
+            echo json_encode([
+                'success' => false, 
+                'time_expired' => true,
+                'attempt_id' => $attemptId,
+                'message' => 'Quiz time has expired.'
+            ]);
             exit;
         }
         
-        $remainingTime = $endTime->getTimestamp() - $now->getTimestamp();
+        // Calculate end time for the timer
+        $endTimeObj = clone $startTime;
+        $endTimeObj->add(new DateInterval('PT' . $totalSeconds . 'S'));
+        $endTime = $endTimeObj->format('Y-m-d H:i:s');
+    } else {
+        $endTime = null;
     }
 
-    // Get all questions
-    $questions = [];
-    $stmt = $conn->prepare("
-        SELECT q.question_id, q.question_text, q.question_type, q.points
-        FROM quiz_questions q
-        WHERE q.quiz_id = ?
-        ORDER BY FIELD(q.question_id, " . implode(',', $sessionData['question_order']) . ")
-    ");
-    $stmt->bind_param("i", $session['quiz_id']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $answered = isset($sessionData['answers'][$row['question_id']]);
-        $questions[] = [
-            'question_id' => $row['question_id'],
-            'question_type' => $row['question_type'],
-            'points' => $row['points'],
-            'answered' => $answered
+    // Parse session data if available
+    $sessionData = isset($session['session_data']) ? json_decode($session['session_data'], true) : null;
+    if (!$sessionData) {
+        $sessionData = [
+            'question_order' => [],
+            'current_question' => 0,
+            'answers' => []
         ];
     }
-    $stmt->close();
 
-    // Return success response
+    // Return success response with minimal data for initial resume
     echo json_encode([
         'success' => true,
         'attempt_id' => $attemptId,
+        'quiz_id' => $session['quiz_id'],
+        'quiz_title' => $session['quiz_title'],
         'session_id' => $sessionId,
-        'questions' => $questions,
-        'current_question' => $sessionData['current_question'],
-        'answers' => $sessionData['answers'],
-        'remaining_time' => $remainingTime,
-        'end_time' => $session['end_time'],
+        'session_token' => $session['session_token'],
+        'time_limit' => $session['time_limit'],
+        'end_time' => $endTime,
         'message' => 'Quiz session resumed successfully.'
     ]);
 

@@ -1,6 +1,6 @@
 
 
-<?php include '../includes/signin-header.php'; ?>
+<?php include '../includes/student-header.php'; ?>
 
 
 <!-- ========== MAIN CONTENT ========== -->
