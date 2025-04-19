@@ -365,6 +365,41 @@ foreach ($sections as $sec) {
 ?>
 
 <!-- Rest of the HTML remains the same as the previous implementation -->
+<?php
+// Include helper functions
+require_once '../includes/helpers/course-progress-helpers.php';
+
+// Get course completion requirements
+$requirements = checkCourseCompletionRequirements($user_id, $course_id, $enrollment_id, $conn);
+$all_requirements_met = $requirements['all_requirements_met'];
+$all_topics_completed = $requirements['topics_status']['all_completed'];
+$quiz_requirements = $requirements['quiz_status'];
+$all_quizzes_passed = $quiz_requirements['all_passed'];
+
+// Check if course has certificate enabled
+$certificate_query = "SELECT certificate_enabled FROM courses WHERE course_id = ?";
+$stmt = $conn->prepare($certificate_query);
+$stmt->bind_param("i", $course_id);
+$stmt->execute();
+$certificate_result = $stmt->get_result();
+$certificate_data = $certificate_result->fetch_assoc();
+$certificate_enabled = $certificate_data['certificate_enabled'] == 1;
+
+// Check if user already has a certificate
+$has_certificate = false;
+if ($certificate_enabled) {
+    $certificate_check_query = "SELECT c.certificate_id 
+                             FROM certificates c
+                             JOIN enrollments e ON c.enrollment_id = e.enrollment_id
+                             WHERE e.user_id = ? AND e.course_id = ?";
+    $stmt = $conn->prepare($certificate_check_query);
+    $stmt->bind_param("ii", $user_id, $course_id);
+    $stmt->execute();
+    $certificate_check_result = $stmt->get_result();
+    $has_certificate = $certificate_check_result->num_rows > 0;
+}
+?>
+
 
 
 <!-- Main Content -->
@@ -388,6 +423,7 @@ foreach ($sections as $sec) {
         <!-- End Row -->
     </div>
     <!-- End Breadcrumb -->
+  
     <div class="container py-5">
         <div class="row">
             <!-- Left Sidebar -->
@@ -586,6 +622,58 @@ foreach ($sections as $sec) {
 
             <!-- Main Content -->
             <div class="col-lg-8">
+            <?php
+    // Get quiz completion status if not already done
+    if (!isset($quiz_requirements)) {
+        require_once '../includes/helpers/course-progress-helpers.php';
+        $quiz_requirements = checkQuizzesCompleted($user_id, $course_id, $conn);
+    }
+
+    // If there are failed quizzes and course is almost complete
+    if (!$quiz_requirements['all_passed'] && $completed_percentage >= 90) {
+        $failedQuizCount = count($quiz_requirements['failed_quizzes']);
+    ?>
+        <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="bi-exclamation-triangle fs-2 me-3"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h5>Almost There!</h5>
+                    <p>
+                        You're making great progress, but you still need to pass
+                        <?php echo $failedQuizCount; ?> quiz<?php echo $failedQuizCount > 1 ? 'zes' : ''; ?>
+                        to complete this course and earn your certificate.
+                    </p>
+
+                    <?php if ($failedQuizCount <= 3): ?>
+                        <div class="mt-2">
+                            <p class="mb-2">Quizzes to complete:</p>
+                            <ul class="mb-0">
+                                <?php foreach ($quiz_requirements['failed_quizzes'] as $quiz): ?>
+                                    <li>
+                                        <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>">
+                                            <?php echo htmlspecialchars($quiz['quiz_title']); ?>
+                                        </a>
+                                        <small class="text-muted">(Section: <?php echo htmlspecialchars($quiz['section_title']); ?>)</small>
+
+                                        <?php if ($quiz['highest_score'] > 0): ?>
+                                            <span class="badge bg-danger ms-2">Score: <?php echo $quiz['highest_score']; ?>% (Required: <?php echo $quiz['pass_mark']; ?>%)</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary ms-2">Not attempted</span>
+                                        <?php endif; ?>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php
+    }
+    ?>
                 <!-- Assessment Items -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white">
@@ -593,13 +681,13 @@ foreach ($sections as $sec) {
                             <span class="me-2">
                                 <i class="bi bi-caret-down-fill"></i>
                             </span>
-                            <h5 class="mb-0 fw-bold">Final Module Assessment</h5>
+                            <h5 class=" fw-bold">Final Module Assessment</h5>
                         </button>
                     </div>
                     <div class="collapse show" id="endOfCourseCollapse">
                         <div class="card-body">
                             <!-- Progress Stats -->
-                            <div class="d-flex flex-wrap mb-4 text-muted small">
+                            <div class="d-flex flex-wrap text-muted small">
                                 <?php if ($video_count > 0): ?>
                                     <div class="me-4">
                                         <i class="bi bi-camera-video me-1"></i>
@@ -623,7 +711,103 @@ foreach ($sections as $sec) {
                             </div>
 
                             <!-- Description -->
-                            <p>In the final module, you'll synthesize the skills you gained from the course to create a practical project. After completing the individual units in this module, you will be able to take the final assessment and reflect on your learning journey.</p>
+                            <!-- <p>In the final module, you'll synthesize the skills you gained from the course to create a practical project. After completing the individual units in this module, you will be able to take the final assessment and reflect on your learning journey.</p> -->
+                            <!-- Add this card component to show course completion requirements -->
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header">
+                                    <h5 class="card-header-title">Course Completion Requirements</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>Progress</h6>
+                                            <ul class="list-group list-group-flush mb-4">
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <i class="bi bi-book me-2"></i> Complete All Topics
+                                                        <div class="text-muted small"><?php echo $requirements['topics_status']['completed_topics']; ?> of <?php echo $requirements['topics_status']['total_topics']; ?> topics</div>
+                                                    </div>
+                                                    <?php if ($all_topics_completed): ?>
+                                                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-secondary rounded-pill"><?php echo round(($requirements['topics_status']['completed_topics'] / $requirements['topics_status']['total_topics']) * 100); ?>%</span>
+                                                    <?php endif; ?>
+                                                </li>
+
+                                                <?php if ($quiz_requirements['total_quizzes'] > 0): ?>
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="bi bi-question-circle me-2"></i> Pass All Quizzes
+                                                            <div class="text-muted small"><?php echo $quiz_requirements['passed_quizzes']; ?> of <?php echo $quiz_requirements['total_quizzes']; ?> quizzes</div>
+                                                        </div>
+                                                        <?php if ($all_quizzes_passed): ?>
+                                                            <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-secondary rounded-pill"><?php echo round(($quiz_requirements['passed_quizzes'] / $quiz_requirements['total_quizzes']) * 100); ?>%</span>
+                                                        <?php endif; ?>
+                                                    </li>
+                                                <?php endif; ?>
+                                            </ul>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <h6>Achievements</h6>
+                                            <ul class="list-group list-group-flush">
+                                                <?php if ($certificate_enabled): ?>
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="bi bi-award me-2"></i> Certificate
+                                                            <?php if ($has_certificate): ?>
+                                                                <div class="text-muted small">Certificate earned</div>
+                                                            <?php elseif ($all_requirements_met): ?>
+                                                                <div class="text-muted small">Ready to be awarded</div>
+                                                            <?php else: ?>
+                                                                <div class="text-muted small">Complete all requirements</div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <?php if ($has_certificate): ?>
+                                                            <a href="my-certifications.php" class="btn btn-sm btn-primary">View</a>
+                                                        <?php elseif ($all_requirements_met): ?>
+                                                            <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-warning rounded-pill"><i class="bi bi-clock"></i></span>
+                                                        <?php endif; ?>
+                                                    </li>
+                                                <?php endif; ?>
+
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <i class="bi bi-trophy me-2"></i> Course Badge
+                                                        <?php if ($all_requirements_met): ?>
+                                                            <div class="text-muted small">Badge earned</div>
+                                                        <?php else: ?>
+                                                            <div class="text-muted small">Complete all requirements</div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <?php if ($all_requirements_met): ?>
+                                                        <a href="my-badges.php" class="btn btn-sm btn-primary">View</a>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-warning rounded-pill"><i class="bi bi-clock"></i></span>
+                                                    <?php endif; ?>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <?php if (!$all_requirements_met): ?>
+                                        <div class="alert alert-info mt-3 mb-0">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            <?php if (!$all_topics_completed && !$all_quizzes_passed): ?>
+                                                Complete all topics and pass all quizzes to earn your certificate and badge.
+                                            <?php elseif (!$all_topics_completed): ?>
+                                                Complete all topics to earn your certificate and badge.
+                                            <?php elseif (!$all_quizzes_passed): ?>
+                                                Pass all quizzes to earn your certificate and badge.
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
 
                             <!-- Learning Objectives -->
                             <div class="mb-3">

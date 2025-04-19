@@ -50,20 +50,20 @@ if ($topic_id > 0) {
     $topic_stmt->bind_param("i", $topic_id);
     $topic_stmt->execute();
     $topic_result = $topic_stmt->get_result();
-    
+
     if ($topic_result->num_rows > 0) {
         $topic_info = $topic_result->fetch_assoc();
         $current_section_position = $topic_info['section_position'];
         $current_item_position = $topic_info['item_position'];
         $course_id = $topic_info['course_id']; // Make sure we have course_id
-        
+
         // Check if this is the first topic
         $is_first_topic = false;
         if ($current_section_position == 1 && $current_item_position == 1) {
             $is_first_topic = true;
             $allow_access = true;
         }
-        
+
         // Check completion status of this topic
         $topic_status_query = "SELECT completion_status 
                               FROM progress 
@@ -72,14 +72,14 @@ if ($topic_id > 0) {
         $topic_status_stmt->bind_param("ii", $topic_id, $enrollment_id);
         $topic_status_stmt->execute();
         $topic_status_result = $topic_status_stmt->get_result();
-        
+
         if ($topic_status_result->num_rows > 0) {
             $status = $topic_status_result->fetch_assoc()['completion_status'];
             if ($status == 'Completed' || $status == 'In Progress') {
                 $allow_access = true;
             }
         }
-        
+
         if (!$allow_access && !$is_first_topic) {
             // MODIFIED: Check if the IMMEDIATE previous topic in section is completed
             if ($current_item_position > 1) {
@@ -94,7 +94,7 @@ if ($topic_id > 0) {
                 $prev_topic_stmt->bind_param("iiii", $enrollment_id, $course_id, $current_section_position, $current_item_position);
                 $prev_topic_stmt->execute();
                 $prev_topic_result = $prev_topic_stmt->get_result();
-                
+
                 if ($prev_topic_result->num_rows > 0) {
                     $prev_topic_data = $prev_topic_result->fetch_assoc();
                     if ($prev_topic_data['completion_status'] == 'Completed') {
@@ -107,7 +107,7 @@ if ($topic_id > 0) {
                     $allow_access = true;
                 }
             }
-            
+
             // For topics in later sections, check if the last topic in previous section is completed
             if (!$allow_access && $current_section_position > 1) {
                 $last_topic_prev_section_query = "SELECT st.topic_id, p.completion_status
@@ -122,7 +122,7 @@ if ($topic_id > 0) {
                 $last_topic_stmt->bind_param("iii", $enrollment_id, $course_id, $current_section_position);
                 $last_topic_stmt->execute();
                 $last_topic_result = $last_topic_stmt->get_result();
-                
+
                 if ($last_topic_result->num_rows > 0) {
                     $last_topic_data = $last_topic_result->fetch_assoc();
                     if ($last_topic_data['completion_status'] == 'Completed') {
@@ -137,7 +137,7 @@ if ($topic_id > 0) {
             }
         }
     }
-}else if ($quiz_id > 0) {
+} else if ($quiz_id > 0) {
     // CHANGED: For quizzes, just get basic info but don't restrict access
     $quiz_query = "SELECT cs.position as section_position, cs.section_id, cs.course_id
                   FROM section_quizzes sq
@@ -147,13 +147,13 @@ if ($topic_id > 0) {
     $quiz_stmt->bind_param("i", $quiz_id);
     $quiz_stmt->execute();
     $quiz_result = $quiz_stmt->get_result();
-    
+
     if ($quiz_result->num_rows > 0) {
         $quiz_info = $quiz_result->fetch_assoc();
         $current_section_position = $quiz_info['section_position'];
         $quiz_section_id = $quiz_info['section_id'];
         $course_id = $quiz_info['course_id']; // Make sure we have course_id
-        
+
         // CHANGED: No need to check access further, as we're allowing all access
         $allow_access = true;
     }
@@ -163,7 +163,7 @@ if ($topic_id > 0) {
 if (!$allow_access) {
     // Store the message in a session variable
     $_SESSION['access_denied_message'] = $redirect_message ?: "You need to complete previous content before accessing this.";
-    
+
     // Redirect back to course materials
     header("Location: course-materials.php?course_id=" . $course_id);
     exit();
@@ -662,10 +662,11 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     $stmt->bind_param("di", $completed_percentage, $enrollment_id);
     $stmt->execute();
 
-// Check if course is now 100% complete
-if ($completed_percentage >= 100) {
-    // Check if all quizzes have been passed
-    $quiz_check_query = "SELECT 
+    // Check if course is now 100% complete
+    // Check if course is now 100% complete
+    if ($completed_percentage >= 100) {
+        // Check if all quizzes have been passed
+        $quiz_check_query = "SELECT 
                         COUNT(sq.quiz_id) as total_quizzes,
                         COUNT(CASE WHEN sqa.score >= sq.pass_mark THEN 1 END) as passed_quizzes
                        FROM section_quizzes sq
@@ -677,62 +678,62 @@ if ($completed_percentage >= 100) {
                            GROUP BY quiz_id
                        ) sqa ON sq.quiz_id = sqa.quiz_id
                        WHERE cs.course_id = ?";
-    $stmt = $conn->prepare($quiz_check_query);
-    $stmt->bind_param("ii", $user_id, $course_id);
-    $stmt->execute();
-    $quiz_result = $stmt->get_result();
-    $quiz_data = $quiz_result->fetch_assoc();
-    
-    $all_requirements_met = true;
-    
-    // Check if all quizzes were passed
-    if ($quiz_data['total_quizzes'] > 0 && $quiz_data['passed_quizzes'] < $quiz_data['total_quizzes']) {
-        $all_requirements_met = false;
+        $stmt = $conn->prepare($quiz_check_query);
+        $stmt->bind_param("ii", $user_id, $course_id);
+        $stmt->execute();
+        $quiz_result = $stmt->get_result();
+        $quiz_data = $quiz_result->fetch_assoc();
+
+        $all_requirements_met = true;
+
+        // Check if all quizzes were passed
+        if ($quiz_data['total_quizzes'] > 0 && $quiz_data['passed_quizzes'] < $quiz_data['total_quizzes']) {
+            $all_requirements_met = false;
+        }
+
+        // Check if there are any other completion requirements (e.g., assignments)
+        // You can add additional checks here for other requirements
+
+        // Only proceed with certificate and badge if all requirements are met
+        if ($all_requirements_met) {
+            // Include certificate and badge handlers
+            require_once '../backend/certificates/CertificateHandler.php';
+            require_once '../backend/badges/BadgeHandler.php';
+
+            // Generate certificate
+            $certificateHandler = new CertificateHandler();
+            $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
+
+            // Award course completion badge
+            $badgeHandler = new BadgeHandler();
+            $badgeResult = $badgeHandler->awardCourseBadge($user_id, $course_id);
+
+            // Store results for notification
+            $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
+            $_SESSION['badge_awarded'] = $badgeResult['success'] ?? false;
+            $_SESSION['completion_notification'] = true;
+        } else {
+            // Store a notification that course is not fully complete
+            $_SESSION['incomplete_requirements'] = true;
+            $_SESSION['quizzes_remaining'] = $quiz_data['total_quizzes'] - $quiz_data['passed_quizzes'];
+        }
     }
-    
-    // Check if there are any other completion requirements (e.g., assignments)
-    // You can add additional checks here for other requirements
-    
-    // Only proceed with certificate and badge if all requirements are met
-    if ($all_requirements_met) {
-        // Include certificate and badge handlers
-        require_once '../backend/certificates/CertificateHandler.php';
-        require_once '../backend/badges/BadgeHandler.php';
-        
-        // Generate certificate
-        $certificateHandler = new CertificateHandler();
-        $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
-        
-        // Award course completion badge
+
+
+    // Check if section is now completed
+    if ($remaining_topics == 0) {
+        // Include badge handler if not already included
+        if (!class_exists('BadgeHandler')) {
+            require_once '../backend/badges/BadgeHandler.php';
+        }
+
+        // Award section completion badge
         $badgeHandler = new BadgeHandler();
-        $badgeResult = $badgeHandler->awardCourseBadge($user_id, $course_id);
-        
-        // Store results for notification
-        $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
-        $_SESSION['badge_awarded'] = $badgeResult['success'] ?? false;
-        $_SESSION['completion_notification'] = true;
-    } else {
-        // Store a notification that course is not fully complete
-        $_SESSION['incomplete_requirements'] = true;
-        $_SESSION['quizzes_remaining'] = $quiz_data['total_quizzes'] - $quiz_data['passed_quizzes'];
-    }
-}
+        $sectionBadgeResult = $badgeHandler->awardSectionBadge($user_id, $course_id, $section_id);
 
-
-// Check if section is now completed
-if ($remaining_topics == 0) {
-    // Include badge handler if not already included
-    if (!class_exists('BadgeHandler')) {
-        require_once '../backend/badges/BadgeHandler.php';
+        // Store result for notification
+        $_SESSION['section_badge_awarded'] = $sectionBadgeResult['success'] ?? false;
     }
-    
-    // Award section completion badge
-    $badgeHandler = new BadgeHandler();
-    $sectionBadgeResult = $badgeHandler->awardSectionBadge($user_id, $course_id, $section_id);
-    
-    // Store result for notification
-    $_SESSION['section_badge_awarded'] = $sectionBadgeResult['success'] ?? false;
-}
     // Check if this section has any more uncompleted topics
     $remaining_topics_query = "SELECT COUNT(*) as remaining_count
                               FROM section_topics st
@@ -994,43 +995,43 @@ function getLinkDisplay($topic)
     }
 
     /* Result-specific styles */
-.border-success {
-    border-color: #198754 !important;
-}
+    .border-success {
+        border-color: #198754 !important;
+    }
 
-.border-danger {
-    border-color: #dc3545 !important;
-}
+    .border-danger {
+        border-color: #dc3545 !important;
+    }
 
-.bg-opacity-10 {
-    --bs-bg-opacity: 0.1;
-}
+    .bg-opacity-10 {
+        --bs-bg-opacity: 0.1;
+    }
 
-.quiz-question.border-success {
-    border-left-width: 4px;
-}
+    .quiz-question.border-success {
+        border-left-width: 4px;
+    }
 
-.quiz-question.border-danger {
-    border-left-width: 4px;
-}
+    .quiz-question.border-danger {
+        border-left-width: 4px;
+    }
 
-.quiz-result-summary {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
+    .quiz-result-summary {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
 
-.chart-container {
-    width: 150px;
-    height: 150px;
-    margin: 0 auto;
-}
+    .chart-container {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+    }
 
-/* For review mode */
-.review-answers .form-check-label {
-    transition: all 0.2s ease;
-}
+    /* For review mode */
+    .review-answers .form-check-label {
+        transition: all 0.2s ease;
+    }
 </style>
 
 <!-- Toast -->
@@ -1055,11 +1056,9 @@ function getLinkDisplay($topic)
 </div>
 <!-- End Toast -->
 
-<?php
-// Add this to the existing toast notification section (around line 1360) to handle incomplete requirements notification
 
-// Add condition for incomplete requirements notification
-if (isset($_SESSION['incomplete_requirements']) && $_SESSION['incomplete_requirements']): ?>
+<!-- // Add condition for incomplete requirements notification -->
+<?php if (isset($_SESSION['incomplete_requirements']) && $_SESSION['incomplete_requirements']): ?>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Get the toast element
@@ -1102,7 +1101,7 @@ if (isset($_SESSION['incomplete_requirements']) && $_SESSION['incomplete_require
         </div>
     </div>
     <!-- End Breadcrumb -->
-     
+
 
     <!-- Content -->
     <div class="container content-space-t-1 content-space-b-lg-1">
@@ -1215,26 +1214,29 @@ if (isset($_SESSION['incomplete_requirements']) && $_SESSION['incomplete_require
                             </li>
                         </ul>
                     </div>
-                    // Get the course requirements
-$quiz_requirements_query = "SELECT 
-                          COUNT(sq.quiz_id) as total_quizzes,
-                          COUNT(CASE WHEN sqa.score >= sq.pass_mark THEN 1 END) as passed_quizzes
-                          FROM section_quizzes sq
-                          JOIN course_sections cs ON sq.section_id = cs.section_id
-                          LEFT JOIN (
-                              SELECT quiz_id, MAX(score) as score, MAX(passed) as passed
-                              FROM student_quiz_attempts
-                              WHERE user_id = ?
-                              GROUP BY quiz_id
-                          ) sqa ON sq.quiz_id = sqa.quiz_id
-                          WHERE cs.course_id = ?";
+
+                    
+                    <?php
+// Get the course requirements
+$quiz_requirements_query = "SELECT
+                         COUNT(sq.quiz_id) as total_quizzes,
+                         COUNT(CASE WHEN sqa.score >= sq.pass_mark THEN 1 END) as passed_quizzes
+                         FROM section_quizzes sq
+                         JOIN course_sections cs ON sq.section_id = cs.section_id
+                         LEFT JOIN (
+                             SELECT quiz_id, MAX(score) as score, MAX(passed) as passed
+                             FROM student_quiz_attempts
+                             WHERE user_id = ?
+                             GROUP BY quiz_id
+                         ) sqa ON sq.quiz_id = sqa.quiz_id
+                         WHERE cs.course_id = ?";
 $stmt = $conn->prepare($quiz_requirements_query);
 $stmt->bind_param("ii", $user_id, $course_id);
 $stmt->execute();
 $quiz_requirements_result = $stmt->get_result();
 $quiz_requirements = $quiz_requirements_result->fetch_assoc();
 
-$topics_requirements_query = "SELECT 
+$topics_requirements_query = "SELECT
                            COUNT(DISTINCT st.topic_id) as total_topics,
                            COUNT(DISTINCT CASE WHEN p.completion_status = 'Completed' THEN st.topic_id END) as completed_topics
                            FROM course_sections cs
@@ -1267,22 +1269,22 @@ $all_requirements_met = $all_topics_completed && $all_quizzes_passed;
                 <span class="badge bg-secondary"><?php echo $topics_requirements['completed_topics']; ?>/<?php echo $topics_requirements['total_topics']; ?></span>
             <?php endif; ?>
         </li>
-        
+
         <?php if ($quiz_requirements['total_quizzes'] > 0): ?>
-        <li class="nav-item d-flex justify-content-between align-items-center">
-            <span>Pass All Quizzes</span>
-            <?php if ($all_quizzes_passed): ?>
-                <i class="bi bi-check-circle-fill text-success"></i>
-            <?php else: ?>
-                <span class="badge bg-secondary"><?php echo $quiz_requirements['passed_quizzes']; ?>/<?php echo $quiz_requirements['total_quizzes']; ?></span>
-            <?php endif; ?>
-        </li>
+            <li class="nav-item d-flex justify-content-between align-items-center">
+                <span>Pass All Quizzes</span>
+                <?php if ($all_quizzes_passed): ?>
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                <?php else: ?>
+                    <span class="badge bg-secondary"><?php echo $quiz_requirements['passed_quizzes']; ?>/<?php echo $quiz_requirements['total_quizzes']; ?></span>
+                <?php endif; ?>
+            </li>
         <?php endif; ?>
-        
+
         <!-- Add more requirements here if needed -->
-        
+
         <li class="nav-item my-1 my-lg-2"></li>
-        
+
         <li class="nav-item">
             <span class="nav-subtitle">Certification Status</span>
         </li>
@@ -1296,7 +1298,6 @@ $all_requirements_met = $all_topics_completed && $all_quizzes_passed;
         </li>
     </ul>
 </div>
-
 
 
                     <a class="link-sm link-secondary" href="#">
@@ -1318,273 +1319,273 @@ $all_requirements_met = $all_topics_completed && $all_quizzes_passed;
                     </div>
 
                     <!-- Dynamic Content Display -->
-<div class="content-container mb-5">
-    <?php if (isset($_GET['quiz_id'])): ?>
-        <!-- QUIZ DISPLAY - No tabs, just the quiz -->
-        <div class="quiz-cont">
-            <?php
-            // Fetch the quiz details
-            $fetch_quiz = "SELECT * FROM section_quizzes WHERE quiz_id = ?";
-            $stmt = $conn->prepare($fetch_quiz);
-            $stmt->bind_param("i", $_GET['quiz_id']);
-            $stmt->execute();
-            $quiz_result = $stmt->get_result();
-
-            if ($quiz_result->num_rows > 0) {
-                $quiz = $quiz_result->fetch_assoc();
-
-                // Set required variables for the quiz display component
-                $_SESSION['enrollment_id'] = $enrollment_id;
-                $quizId = $quiz['quiz_id'];
-                $topicContent = $quiz;
-
-                // Include the quiz display component
-                include '../includes/students/quiz-display.php';
-            } else {
-                echo '<div class="alert alert-danger">Quiz not found</div>';
-            }
-            ?>
-        </div>
-    <?php else: ?>
-        <!-- REGULAR CONTENT DISPLAY -->
-        <?php echo getContentDisplay($topic, $video_source, $content_type); ?>
-        
-        <!-- Nav Scroller for tabs - Only shown for regular content -->
-        <div class="js-nav-scroller hs-nav-scroller-horizontal">
-            <span class="hs-nav-scroller-arrow-prev" style="display: none;">
-                <a class="hs-nav-scroller-arrow-link" href="javascript:;">
-                    <i class="bi-chevron-left"></i>
-                </a>
-            </span>
-
-            <span class="hs-nav-scroller-arrow-next" style="display: none;">
-                <a class="hs-nav-scroller-arrow-link" href="javascript:;">
-                    <i class="bi-chevron-right"></i>
-                </a>
-            </span>
-
-            <!-- Nav -->
-            <ul class="nav nav-segment nav-fill mb-7" id="featuresTab" role="tablist">
-                <?php if (!empty($topic['description'])): ?>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link active" href="#description" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" role="tab" aria-controls="description" aria-selected="true" style="min-width: 7rem;">Description</a>
-                    </li>
-                <?php endif; ?>
-
-                <!-- Notes tab (always show) -->
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link <?php echo empty($topic['description']) ? 'active' : ''; ?>"
-                        href="#notes" id="notes-tab" data-bs-toggle="tab"
-                        data-bs-target="#notes" role="tab"
-                        aria-controls="notes"
-                        aria-selected="<?php echo empty($topic['description']) ? 'true' : 'false'; ?>"
-                        style="min-width: 7rem;">
-                        Notes
-                        <?php if ($notes_exist): ?>
-                            <i class="bi-check-circle-fill text-success ms-1 small"></i>
-                        <?php endif; ?>
-                    </a>
-                </li>
-
-                <?php if (!empty($resources)): ?>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link" href="#resources" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources" role="tab" aria-controls="resources" aria-selected="false" style="min-width: 7rem;">Resources</a>
-                    </li>
-                <?php endif; ?>
-
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" href="#discussion" id="discussion-tab" data-bs-toggle="tab" data-bs-target="#discussion" role="tab" aria-controls="discussion" aria-selected="false" style="min-width: 7rem;">Discussion</a>
-                </li>
-            </ul>
-            <!-- End Nav -->
-        </div>
-        <!-- End Nav Scroller -->
-
-        <!-- Tab Content - Only for regular content -->
-        <div class="tab-content" id="pills-tabContent">
-            <?php if (!empty($topic['description'])): ?>
-                <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
-                    <h5><?php echo htmlspecialchars($topic['content_title']); ?></h5>
-                    <div class="content-description">
-                        <?php echo $topic['description']; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <!-- Notes Tab -->
-            <div class="tab-pane fade <?php echo empty($topic['description']) ? 'show active' : ''; ?>" id="notes" role="tabpanel" aria-labelledby="notes-tab">
-                <div class="row mb-4">
-                    <div class="col">
-                        <h5><i class="bi-journal-text me-2"></i>My Notes</h5>
-                        <p class="text-muted">Take notes for this topic that will be saved for your future reference.</p>
-                    </div>
-                    <div class="col-auto">
-                        <div class="btn-group">
-                            <button id="saveNotes" class="btn btn-primary">
-                                <i class="bi-save me-2"></i>Save Notes
-                            </button>
-                            <button id="printNotes" class="btn btn-outline-secondary">
-                                <i class="bi-printer me-2"></i>Print
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group mb-3">
-                    <textarea id="personalNotes" class="form-control" style="min-height: 200px" placeholder="Start typing your notes here..."><?php echo htmlspecialchars($notes_content); ?></textarea>
-                </div>
-
-                <?php if ($notes_exist): ?>
-                    <div class="text-muted small">
-                        Last updated: <?php echo date('F j, Y, g:i a', strtotime($notes_updated)); ?>
-                    </div>
-                <?php endif; ?>
-
-                <div id="notesStatus" class="mt-2" style="display: none;"></div>
-            </div>
-
-            <?php if (!empty($resources)): ?>
-                <div class="tab-pane fade" id="resources" role="tabpanel" aria-labelledby="resources-tab">
-                    <h4 class="mb-3">Additional Resources</h4>
-                    <div class="list-group">
-                        <div class="row g-3">
-                            <?php foreach ($resources as $resource): ?>
+                    <div class="content-container mb-5">
+                        <?php if (isset($_GET['quiz_id'])): ?>
+                            <!-- QUIZ DISPLAY - No tabs, just the quiz -->
+                            <div class="quiz-cont">
                                 <?php
-                                $resource_path = $resource['resource_path'];
-                                $resource_name = basename($resource_path);
-                                $resource_ext = strtolower(pathinfo($resource_path, PATHINFO_EXTENSION));
+                                // Fetch the quiz details
+                                $fetch_quiz = "SELECT * FROM section_quizzes WHERE quiz_id = ?";
+                                $stmt = $conn->prepare($fetch_quiz);
+                                $stmt->bind_param("i", $_GET['quiz_id']);
+                                $stmt->execute();
+                                $quiz_result = $stmt->get_result();
 
-                                // Determine icon based on file extension
-                                $icon_class = 'bi-file-earmark';
-                                if (in_array($resource_ext, ['pdf'])) {
-                                    $icon_class = 'bi-file-earmark-pdf';
-                                } elseif (in_array($resource_ext, ['doc', 'docx'])) {
-                                    $icon_class = 'bi-file-earmark-word';
-                                } elseif (in_array($resource_ext, ['xls', 'xlsx'])) {
-                                    $icon_class = 'bi-file-earmark-excel';
-                                } elseif (in_array($resource_ext, ['ppt', 'pptx'])) {
-                                    $icon_class = 'bi-file-earmark-ppt';
-                                } elseif (in_array($resource_ext, ['jpg', 'jpeg', 'png', 'gif'])) {
-                                    $icon_class = 'bi-file-earmark-image';
-                                } elseif (in_array($resource_ext, ['zip', 'rar'])) {
-                                    $icon_class = 'bi-file-earmark-zip';
+                                if ($quiz_result->num_rows > 0) {
+                                    $quiz = $quiz_result->fetch_assoc();
+
+                                    // Set required variables for the quiz display component
+                                    $_SESSION['enrollment_id'] = $enrollment_id;
+                                    $quizId = $quiz['quiz_id'];
+                                    $topicContent = $quiz;
+
+                                    // Include the quiz display component
+                                    include '../includes/students/quiz-display.php';
+                                } else {
+                                    echo '<div class="alert alert-danger">Quiz not found</div>';
                                 }
                                 ?>
-                                <div class="col-md-6">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <div class="d-flex align-items-center">
-                                                <div class="flex-shrink-0">
-                                                    <i class="<?php echo $icon_class; ?> fs-2 text-primary"></i>
-                                                </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <h6 class="card-title mb-0"><?php echo htmlspecialchars($resource_name); ?></h6>
-                                                    <p class="card-text small text-muted"><?php echo strtoupper($resource_ext); ?> file</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="card-footer bg-transparent border-top-0">
-                                            <a href="<?php echo '../' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
-                                                <i class="bi-download me-2"></i> Download
-                                            </a>
+                            </div>
+                        <?php else: ?>
+                            <!-- REGULAR CONTENT DISPLAY -->
+                            <?php echo getContentDisplay($topic, $video_source, $content_type); ?>
+
+                            <!-- Nav Scroller for tabs - Only shown for regular content -->
+                            <div class="js-nav-scroller hs-nav-scroller-horizontal">
+                                <span class="hs-nav-scroller-arrow-prev" style="display: none;">
+                                    <a class="hs-nav-scroller-arrow-link" href="javascript:;">
+                                        <i class="bi-chevron-left"></i>
+                                    </a>
+                                </span>
+
+                                <span class="hs-nav-scroller-arrow-next" style="display: none;">
+                                    <a class="hs-nav-scroller-arrow-link" href="javascript:;">
+                                        <i class="bi-chevron-right"></i>
+                                    </a>
+                                </span>
+
+                                <!-- Nav -->
+                                <ul class="nav nav-segment nav-fill mb-7" id="featuresTab" role="tablist">
+                                    <?php if (!empty($topic['description'])): ?>
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link active" href="#description" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" role="tab" aria-controls="description" aria-selected="true" style="min-width: 7rem;">Description</a>
+                                        </li>
+                                    <?php endif; ?>
+
+                                    <!-- Notes tab (always show) -->
+                                    <li class="nav-item" role="presentation">
+                                        <a class="nav-link <?php echo empty($topic['description']) ? 'active' : ''; ?>"
+                                            href="#notes" id="notes-tab" data-bs-toggle="tab"
+                                            data-bs-target="#notes" role="tab"
+                                            aria-controls="notes"
+                                            aria-selected="<?php echo empty($topic['description']) ? 'true' : 'false'; ?>"
+                                            style="min-width: 7rem;">
+                                            Notes
+                                            <?php if ($notes_exist): ?>
+                                                <i class="bi-check-circle-fill text-success ms-1 small"></i>
+                                            <?php endif; ?>
+                                        </a>
+                                    </li>
+
+                                    <?php if (!empty($resources)): ?>
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link" href="#resources" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources" role="tab" aria-controls="resources" aria-selected="false" style="min-width: 7rem;">Resources</a>
+                                        </li>
+                                    <?php endif; ?>
+
+                                    <li class="nav-item" role="presentation">
+                                        <a class="nav-link" href="#discussion" id="discussion-tab" data-bs-toggle="tab" data-bs-target="#discussion" role="tab" aria-controls="discussion" aria-selected="false" style="min-width: 7rem;">Discussion</a>
+                                    </li>
+                                </ul>
+                                <!-- End Nav -->
+                            </div>
+                            <!-- End Nav Scroller -->
+
+                            <!-- Tab Content - Only for regular content -->
+                            <div class="tab-content" id="pills-tabContent">
+                                <?php if (!empty($topic['description'])): ?>
+                                    <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+                                        <h5><?php echo htmlspecialchars($topic['content_title']); ?></h5>
+                                        <div class="content-description">
+                                            <?php echo $topic['description']; ?>
                                         </div>
                                     </div>
+                                <?php endif; ?>
+
+                                <!-- Notes Tab -->
+                                <div class="tab-pane fade <?php echo empty($topic['description']) ? 'show active' : ''; ?>" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+                                    <div class="row mb-4">
+                                        <div class="col">
+                                            <h5><i class="bi-journal-text me-2"></i>My Notes</h5>
+                                            <p class="text-muted">Take notes for this topic that will be saved for your future reference.</p>
+                                        </div>
+                                        <div class="col-auto">
+                                            <div class="btn-group">
+                                                <button id="saveNotes" class="btn btn-primary">
+                                                    <i class="bi-save me-2"></i>Save Notes
+                                                </button>
+                                                <button id="printNotes" class="btn btn-outline-secondary">
+                                                    <i class="bi-printer me-2"></i>Print
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <textarea id="personalNotes" class="form-control" style="min-height: 200px" placeholder="Start typing your notes here..."><?php echo htmlspecialchars($notes_content); ?></textarea>
+                                    </div>
+
+                                    <?php if ($notes_exist): ?>
+                                        <div class="text-muted small">
+                                            Last updated: <?php echo date('F j, Y, g:i a', strtotime($notes_updated)); ?>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div id="notesStatus" class="mt-2" style="display: none;"></div>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
+
+                                <?php if (!empty($resources)): ?>
+                                    <div class="tab-pane fade" id="resources" role="tabpanel" aria-labelledby="resources-tab">
+                                        <h4 class="mb-3">Additional Resources</h4>
+                                        <div class="list-group">
+                                            <div class="row g-3">
+                                                <?php foreach ($resources as $resource): ?>
+                                                    <?php
+                                                    $resource_path = $resource['resource_path'];
+                                                    $resource_name = basename($resource_path);
+                                                    $resource_ext = strtolower(pathinfo($resource_path, PATHINFO_EXTENSION));
+
+                                                    // Determine icon based on file extension
+                                                    $icon_class = 'bi-file-earmark';
+                                                    if (in_array($resource_ext, ['pdf'])) {
+                                                        $icon_class = 'bi-file-earmark-pdf';
+                                                    } elseif (in_array($resource_ext, ['doc', 'docx'])) {
+                                                        $icon_class = 'bi-file-earmark-word';
+                                                    } elseif (in_array($resource_ext, ['xls', 'xlsx'])) {
+                                                        $icon_class = 'bi-file-earmark-excel';
+                                                    } elseif (in_array($resource_ext, ['ppt', 'pptx'])) {
+                                                        $icon_class = 'bi-file-earmark-ppt';
+                                                    } elseif (in_array($resource_ext, ['jpg', 'jpeg', 'png', 'gif'])) {
+                                                        $icon_class = 'bi-file-earmark-image';
+                                                    } elseif (in_array($resource_ext, ['zip', 'rar'])) {
+                                                        $icon_class = 'bi-file-earmark-zip';
+                                                    }
+                                                    ?>
+                                                    <div class="col-md-6">
+                                                        <div class="card h-100">
+                                                            <div class="card-body">
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="flex-shrink-0">
+                                                                        <i class="<?php echo $icon_class; ?> fs-2 text-primary"></i>
+                                                                    </div>
+                                                                    <div class="flex-grow-1 ms-3">
+                                                                        <h6 class="card-title mb-0"><?php echo htmlspecialchars($resource_name); ?></h6>
+                                                                        <p class="card-text small text-muted"><?php echo strtoupper($resource_ext); ?> file</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="card-footer bg-transparent border-top-0">
+                                                                <a href="<?php echo '../' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
+                                                                    <i class="bi-download me-2"></i> Download
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="tab-pane fade" id="discussion" role="tabpanel" aria-labelledby="discussion-tab">
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <h5><i class="bi-chat-left-text me-2"></i>Discussion</h5>
+                                        <div class="d-flex gap-2">
+                                            <button id="newDiscussionBtn" class="btn btn-sm btn-primary">
+                                                <i class="bi-plus-circle me-1"></i> New Discussion
+                                            </button>
+                                            <button id="filterDiscussionsBtn" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi-funnel me-1"></i> Filter
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-4 bg-light rounded mb-4 text-center">
+                                        <div class="mb-3">
+                                            <i class="bi-chat-square-text fs-1 text-primary"></i>
+                                        </div>
+                                        <h5>No discussions yet</h5>
+                                        <p class="text-muted">Be the first to start a discussion about this topic.</p>
+                                        <button class="btn btn-primary">
+                                            <i class="bi-plus-circle me-2"></i>Start a Discussion
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Tab Content -->
+                        <?php endif; ?>
                     </div>
-                </div>
-            <?php endif; ?>
 
-            <div class="tab-pane fade" id="discussion" role="tabpanel" aria-labelledby="discussion-tab">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5><i class="bi-chat-left-text me-2"></i>Discussion</h5>
-                    <div class="d-flex gap-2">
-                        <button id="newDiscussionBtn" class="btn btn-sm btn-primary">
-                            <i class="bi-plus-circle me-1"></i> New Discussion
-                        </button>
-                        <button id="filterDiscussionsBtn" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi-funnel me-1"></i> Filter
-                        </button>
+
+
+                    <?php
+                    // Modify the Navigation Controls section to be conditional based on content type
+                    // This should be placed after the previous code block
+                    ?>
+
+                    <!-- Navigation Controls - Show differently for quizzes vs regular content -->
+                    <div class="d-flex justify-content-between align-items-center border-top pt-4 mt-4">
+                        <?php if (isset($_GET['quiz_id'])): ?>
+                            <!-- Quiz Navigation Controls -->
+                            <a href="course-materials.php?course_id=<?php echo $course_id; ?>&section=<?php echo $section_id; ?>"
+                                class="btn btn-outline-primary">
+                                <i class="bi-arrow-left me-1"></i> Back to Course Materials
+                            </a>
+
+                            <div>
+                                <!-- Quiz progress will be shown here by the quiz-display.php component -->
+                            </div>
+
+                            <!-- No "Next" button during quiz -->
+                        <?php else: ?>
+                            <!-- Regular Content Navigation Controls -->
+                            <?php if ($prev_topic_id): ?>
+                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $prev_topic_id; ?>"
+                                    class="btn btn-soft-primary">
+                                    <i class="bi-chevron-left me-1"></i> Previous Lesson
+                                </a>
+                            <?php else: ?>
+                                <button class="btn btn-soft-secondary" disabled>
+                                    <i class="bi-chevron-left me-1"></i> Previous Lesson
+                                </button>
+                            <?php endif; ?>
+
+                            <!-- Mark as completed form - only for regular content -->
+                            <?php if ($completion_status !== 'Completed'): ?>
+                                <form method="post">
+                                    <input type="hidden" name="mark_completed" value="1">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi-check-circle me-1"></i> Mark as Completed
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <button class="btn btn-success" disabled>
+                                    <i class="bi-check-circle me-1"></i> Completed
+                                </button>
+                            <?php endif; ?>
+
+                            <?php if ($next_topic_id): ?>
+                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $next_topic_id; ?>"
+                                    class="btn btn-soft-primary">
+                                    Next Lesson <i class="bi-chevron-right ms-1"></i>
+                                </a>
+                            <?php else: ?>
+                                <button class="btn btn-soft-secondary" disabled>
+                                    Next Lesson <i class="bi-chevron-right ms-1"></i>
+                                </button>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </div>
-                </div>
-
-                <div class="p-4 bg-light rounded mb-4 text-center">
-                    <div class="mb-3">
-                        <i class="bi-chat-square-text fs-1 text-primary"></i>
-                    </div>
-                    <h5>No discussions yet</h5>
-                    <p class="text-muted">Be the first to start a discussion about this topic.</p>
-                    <button class="btn btn-primary">
-                        <i class="bi-plus-circle me-2"></i>Start a Discussion
-                    </button>
-                </div>
-            </div>
-        </div>
-        <!-- End Tab Content -->
-    <?php endif; ?>
-</div>
-
-
-
-<?php
-// Modify the Navigation Controls section to be conditional based on content type
-// This should be placed after the previous code block
-?>
-
-<!-- Navigation Controls - Show differently for quizzes vs regular content -->
-<div class="d-flex justify-content-between align-items-center border-top pt-4 mt-4">
-    <?php if (isset($_GET['quiz_id'])): ?>
-        <!-- Quiz Navigation Controls -->
-        <a href="course-materials.php?course_id=<?php echo $course_id; ?>&section=<?php echo $section_id; ?>" 
-            class="btn btn-outline-primary">
-            <i class="bi-arrow-left me-1"></i> Back to Course Materials
-        </a>
-        
-        <div>
-            <!-- Quiz progress will be shown here by the quiz-display.php component -->
-        </div>
-        
-        <!-- No "Next" button during quiz -->
-    <?php else: ?>
-        <!-- Regular Content Navigation Controls -->
-        <?php if ($prev_topic_id): ?>
-            <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $prev_topic_id; ?>"
-                class="btn btn-soft-primary">
-                <i class="bi-chevron-left me-1"></i> Previous Lesson
-            </a>
-        <?php else: ?>
-            <button class="btn btn-soft-secondary" disabled>
-                <i class="bi-chevron-left me-1"></i> Previous Lesson
-            </button>
-        <?php endif; ?>
-
-        <!-- Mark as completed form - only for regular content -->
-        <?php if ($completion_status !== 'Completed'): ?>
-            <form method="post">
-                <input type="hidden" name="mark_completed" value="1">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi-check-circle me-1"></i> Mark as Completed
-                </button>
-            </form>
-        <?php else: ?>
-            <button class="btn btn-success" disabled>
-                <i class="bi-check-circle me-1"></i> Completed
-            </button>
-        <?php endif; ?>
-
-        <?php if ($next_topic_id): ?>
-            <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $next_topic_id; ?>"
-                class="btn btn-soft-primary">
-                Next Lesson <i class="bi-chevron-right ms-1"></i>
-            </a>
-        <?php else: ?>
-            <button class="btn btn-soft-secondary" disabled>
-                Next Lesson <i class="bi-chevron-right ms-1"></i>
-            </button>
-        <?php endif; ?>
-    <?php endif; ?>
-</div>
 
 
                 </div>
@@ -1596,58 +1597,58 @@ $all_requirements_met = $all_topics_completed && $all_quizzes_passed;
     <!-- End Content -->
 
     <!-- Add this inside the toast HTML -->
-<?php if (isset($_SESSION['completion_notification']) && $_SESSION['completion_notification']): ?>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get the toast element
-        const toast = document.getElementById('liveToast');
-        const toastHeader = toast.querySelector('.toast-header h5');
-        const toastBody = toast.querySelector('.toast-body');
-        
-        <?php if (isset($_SESSION['certificate_generated']) && $_SESSION['certificate_generated']): ?>
-            // Show certificate notification
-            toastHeader.textContent = "Congratulations!";
-            toastBody.innerHTML = "You've earned a certificate for completing this course! <a href='my-certifications.php'>View your certificates</a>";
-            
-            // Show the toast
-            const bsToast = new bootstrap.Toast(toast);
-            bsToast.show();
-        <?php endif; ?>
-        
-        <?php if (isset($_SESSION['badge_awarded']) && $_SESSION['badge_awarded']): ?>
-            // Show badge notification after small delay
-            setTimeout(function() {
-                toastHeader.textContent = "Badge Earned!";
-                toastBody.innerHTML = "You've earned a course completion badge! <a href='my-badges.php'>View your badges</a>";
-                
-                // Show the toast
-                const bsToast = new bootstrap.Toast(toast);
-                bsToast.show();
-            }, 3000); // 3 second delay after certificate notification
-        <?php endif; ?>
-        
-        <?php if (isset($_SESSION['section_badge_awarded']) && $_SESSION['section_badge_awarded']): ?>
-            // Show section badge notification
-            setTimeout(function() {
-                toastHeader.textContent = "Section Badge Earned!";
-                toastBody.innerHTML = "You've earned a section completion badge! <a href='my-badges.php'>View your badges</a>";
-                
-                // Show the toast
-                const bsToast = new bootstrap.Toast(toast);
-                bsToast.show();
-            }, 1500);
-        <?php endif; ?>
-    });
-    </script>
-    
-    <?php 
-    // Clear notifications after displaying them
-    unset($_SESSION['completion_notification']);
-    unset($_SESSION['certificate_generated']);
-    unset($_SESSION['badge_awarded']);
-    unset($_SESSION['section_badge_awarded']);
-    ?>
-<?php endif; ?>
+    <?php if (isset($_SESSION['completion_notification']) && $_SESSION['completion_notification']): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get the toast element
+                const toast = document.getElementById('liveToast');
+                const toastHeader = toast.querySelector('.toast-header h5');
+                const toastBody = toast.querySelector('.toast-body');
+
+                <?php if (isset($_SESSION['certificate_generated']) && $_SESSION['certificate_generated']): ?>
+                    // Show certificate notification
+                    toastHeader.textContent = "Congratulations!";
+                    toastBody.innerHTML = "You've earned a certificate for completing this course! <a href='my-certifications.php'>View your certificates</a>";
+
+                    // Show the toast
+                    const bsToast = new bootstrap.Toast(toast);
+                    bsToast.show();
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['badge_awarded']) && $_SESSION['badge_awarded']): ?>
+                    // Show badge notification after small delay
+                    setTimeout(function() {
+                        toastHeader.textContent = "Badge Earned!";
+                        toastBody.innerHTML = "You've earned a course completion badge! <a href='my-badges.php'>View your badges</a>";
+
+                        // Show the toast
+                        const bsToast = new bootstrap.Toast(toast);
+                        bsToast.show();
+                    }, 3000); // 3 second delay after certificate notification
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['section_badge_awarded']) && $_SESSION['section_badge_awarded']): ?>
+                    // Show section badge notification
+                    setTimeout(function() {
+                        toastHeader.textContent = "Section Badge Earned!";
+                        toastBody.innerHTML = "You've earned a section completion badge! <a href='my-badges.php'>View your badges</a>";
+
+                        // Show the toast
+                        const bsToast = new bootstrap.Toast(toast);
+                        bsToast.show();
+                    }, 1500);
+                <?php endif; ?>
+            });
+        </script>
+
+        <?php
+        // Clear notifications after displaying them
+        unset($_SESSION['completion_notification']);
+        unset($_SESSION['certificate_generated']);
+        unset($_SESSION['badge_awarded']);
+        unset($_SESSION['section_badge_awarded']);
+        ?>
+    <?php endif; ?>
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 <?php
@@ -1657,120 +1658,120 @@ $all_requirements_met = $all_topics_completed && $all_quizzes_passed;
 // Replace the JavaScript code that's causing the error with this:
 ?>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Notes functionality
-    const saveNotesBtn = document.getElementById('saveNotes');
-    const personalNotes = document.getElementById('personalNotes');
-    const notesStatus = document.getElementById('notesStatus');
-    const notesTab = document.getElementById('notes-tab');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Notes functionality
+        const saveNotesBtn = document.getElementById('saveNotes');
+        const personalNotes = document.getElementById('personalNotes');
+        const notesStatus = document.getElementById('notesStatus');
+        const notesTab = document.getElementById('notes-tab');
 
-    // Check if we're in a quiz context
-    const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
-    
-    // Only initialize these events for regular content, not quizzes
-    if (saveNotesBtn && personalNotes && !isQuiz) {
-        // Auto-save timer
-        let autoSaveTimer;
+        // Check if we're in a quiz context
+        const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
 
-        // Event for typing in notes
-        personalNotes.addEventListener('input', function() {
-            // Clear previous auto-save timer
-            clearTimeout(autoSaveTimer);
+        // Only initialize these events for regular content, not quizzes
+        if (saveNotesBtn && personalNotes && !isQuiz) {
+            // Auto-save timer
+            let autoSaveTimer;
 
-            // Set new auto-save timer (save after 2 seconds of inactivity)
-            autoSaveTimer = setTimeout(function() {
-                saveNotes(true); // true = auto-save
-            }, 2000);
-        });
+            // Event for typing in notes
+            personalNotes.addEventListener('input', function() {
+                // Clear previous auto-save timer
+                clearTimeout(autoSaveTimer);
 
-        // Save notes button click
-        saveNotesBtn.addEventListener('click', function() {
-            saveNotes(false); // false = manual save
-        });
+                // Set new auto-save timer (save after 2 seconds of inactivity)
+                autoSaveTimer = setTimeout(function() {
+                    saveNotes(true); // true = auto-save
+                }, 2000);
+            });
 
-        // Function to save notes
-        function saveNotes(isAutoSave) {
-            const notesContent = personalNotes.value.trim();
-            // Use proper conditional to set topicId only if it exists
-            const topicId = <?php echo !empty($topic_id) ? $topic_id : 'null'; ?>;
-            const videoPosition = 0; // Get current video position if needed
+            // Save notes button click
+            saveNotesBtn.addEventListener('click', function() {
+                saveNotes(false); // false = manual save
+            });
 
-            // Don't save if empty (unless clearing notes) or if topicId is null
-            if ((!notesContent && isAutoSave) || topicId === null) {
-                return;
-            }
+            // Function to save notes
+            function saveNotes(isAutoSave) {
+                const notesContent = personalNotes.value.trim();
+                // Use proper conditional to set topicId only if it exists
+                const topicId = <?php echo !empty($topic_id) ? $topic_id : 'null'; ?>;
+                const videoPosition = 0; // Get current video position if needed
 
-            // Show saving indicator
-            if (!isAutoSave) {
-                saveNotesBtn.disabled = true;
-                saveNotesBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
-            }
+                // Don't save if empty (unless clearing notes) or if topicId is null
+                if ((!notesContent && isAutoSave) || topicId === null) {
+                    return;
+                }
 
-            // Send to server
-            fetch('../ajax/students/save-notes.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `topic_id=${topicId}&note_content=${encodeURIComponent(notesContent)}&timestamp=${videoPosition}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update status
-                        notesStatus.innerHTML = isAutoSave ?
-                            '<div class="alert alert-info alert-dismissible fade show py-1 px-3" role="alert"><small>Notes auto-saved <i class="bi-check-circle ms-1"></i></small><button type="button" class="btn-close btn-close-sm p-1" data-bs-dismiss="alert" aria-label="Close"></button></div>' :
-                            '<div class="alert alert-success alert-dismissible fade show" role="alert">Notes saved successfully <i class="bi-check-circle ms-1"></i><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-                        notesStatus.style.display = 'block';
+                // Show saving indicator
+                if (!isAutoSave) {
+                    saveNotesBtn.disabled = true;
+                    saveNotesBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+                }
 
-                        // Add check icon to tab if not already there
-                        if (!notesTab.querySelector('.bi-check-circle-fill')) {
-                            notesTab.innerHTML += ' <i class="bi-check-circle-fill text-success ms-1 small"></i>';
+                // Send to server
+                fetch('../ajax/students/save-notes.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `topic_id=${topicId}&note_content=${encodeURIComponent(notesContent)}&timestamp=${videoPosition}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update status
+                            notesStatus.innerHTML = isAutoSave ?
+                                '<div class="alert alert-info alert-dismissible fade show py-1 px-3" role="alert"><small>Notes auto-saved <i class="bi-check-circle ms-1"></i></small><button type="button" class="btn-close btn-close-sm p-1" data-bs-dismiss="alert" aria-label="Close"></button></div>' :
+                                '<div class="alert alert-success alert-dismissible fade show" role="alert">Notes saved successfully <i class="bi-check-circle ms-1"></i><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                            notesStatus.style.display = 'block';
+
+                            // Add check icon to tab if not already there
+                            if (!notesTab.querySelector('.bi-check-circle-fill')) {
+                                notesTab.innerHTML += ' <i class="bi-check-circle-fill text-success ms-1 small"></i>';
+                            }
+
+                            // Auto-hide auto-save message
+                            if (isAutoSave) {
+                                setTimeout(() => {
+                                    const alert = notesStatus.querySelector('.alert');
+                                    if (alert) {
+                                        alert.classList.remove('show');
+                                        setTimeout(() => {
+                                            notesStatus.style.display = 'none';
+                                        }, 300);
+                                    }
+                                }, 3000);
+                            }
+                        } else {
+                            // Show error
+                            notesStatus.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">Error saving notes: ${data.message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                            notesStatus.style.display = 'block';
                         }
-
-                        // Auto-hide auto-save message
-                        if (isAutoSave) {
-                            setTimeout(() => {
-                                const alert = notesStatus.querySelector('.alert');
-                                if (alert) {
-                                    alert.classList.remove('show');
-                                    setTimeout(() => {
-                                        notesStatus.style.display = 'none';
-                                    }, 300);
-                                }
-                            }, 3000);
-                        }
-                    } else {
-                        // Show error
-                        notesStatus.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">Error saving notes: ${data.message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                    })
+                    .catch(error => {
+                        console.error('Error saving notes:', error);
+                        notesStatus.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Error saving notes. Please try again.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
                         notesStatus.style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error saving notes:', error);
-                    notesStatus.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Error saving notes. Please try again.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-                    notesStatus.style.display = 'block';
-                })
-                .finally(() => {
-                    // Reset button state for manual save
-                    if (!isAutoSave) {
-                        saveNotesBtn.disabled = false;
-                        saveNotesBtn.innerHTML = '<i class="bi-save me-2"></i>Save Notes';
-                    }
-                });
+                    })
+                    .finally(() => {
+                        // Reset button state for manual save
+                        if (!isAutoSave) {
+                            saveNotesBtn.disabled = false;
+                            saveNotesBtn.innerHTML = '<i class="bi-save me-2"></i>Save Notes';
+                        }
+                    });
+            }
         }
-    }
 
-    // Print notes button
-    const printNotesBtn = document.getElementById('printNotes');
-    if (printNotesBtn && personalNotes && !isQuiz) {
-        printNotesBtn.addEventListener('click', function() {
-            const notesContent = personalNotes.value;
-            const topicTitle = '<?php echo isset($topic["content_title"]) ? addslashes(htmlspecialchars($topic["content_title"])) : ""; ?>';
-            const courseName = '<?php echo isset($course_title) ? addslashes(htmlspecialchars($course_title)) : ""; ?>';
+        // Print notes button
+        const printNotesBtn = document.getElementById('printNotes');
+        if (printNotesBtn && personalNotes && !isQuiz) {
+            printNotesBtn.addEventListener('click', function() {
+                const notesContent = personalNotes.value;
+                const topicTitle = '<?php echo isset($topic["content_title"]) ? addslashes(htmlspecialchars($topic["content_title"])) : ""; ?>';
+                const courseName = '<?php echo isset($course_title) ? addslashes(htmlspecialchars($course_title)) : ""; ?>';
 
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
                 <html>
                 <head>
                     <title>My Notes: ${topicTitle}</title>
@@ -1833,10 +1834,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 </body>
                 </html>
             `);
-            printWindow.document.close();
-        });
-    }
-});
+                printWindow.document.close();
+            });
+        }
+    });
 </script>
 
 <?php
@@ -1844,341 +1845,207 @@ document.addEventListener('DOMContentLoaded', function() {
 // This should be added near the other JavaScript code
 ?>
 <script>
-// Quiz-specific JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if we're in a quiz context
-    const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
-    
-    if (isQuiz) {
-        // Find the quiz container
-        const quizContainer = document.querySelector('.quiz-cont');
-        
-        // Listen for quiz start event
-        document.addEventListener('quizStarted', function() {
-            // Hide navigation when quiz starts
-            const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
-            if (navigationControls) {
-                navigationControls.style.display = 'none';
-            }
-            
-            // You could also hide the sidebar if needed
-            const sidebar = document.querySelector('.col-md-4.col-lg-3');
-            if (sidebar) {
-                sidebar.style.display = 'none';
-            }
-            
-            // Make the content column full width
-            const contentColumn = document.querySelector('.col-md-8.col-lg-9');
-            if (contentColumn) {
-                contentColumn.classList.remove('col-md-8', 'col-lg-9');
-                contentColumn.classList.add('col-12');
-            }
-        });
-        
-        // Listen for quiz completion
-        document.addEventListener('quizCompleted', function(event) {
-            // Show navigation when quiz completes
-            const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
-            if (navigationControls) {
-                navigationControls.style.display = 'flex';
-            }
-            
-            // Show the sidebar again
-            const sidebar = document.querySelector('.col-md-4.col-lg-3');
-            if (sidebar) {
-                sidebar.style.display = 'block';
-            }
-            
-            // Restore original column width
-            const contentColumn = document.querySelector('.col-12');
-            if (contentColumn) {
-                contentColumn.classList.remove('col-12');
-                contentColumn.classList.add('col-md-8', 'col-lg-9');
-            }
-            
-            // Update quiz completion status in sidebar
-            const quizItem = document.querySelector(`.nav-link[href*="quiz_id=<?php echo isset($_GET['quiz_id']) ? $_GET['quiz_id'] : ''; ?>"]`);
-            if (quizItem && quizItem.nextElementSibling) {
-                quizItem.nextElementSibling.className = 'bi bi-check-circle-fill text-success ms-2 flex-shrink-0 mt-1';
-            }
-        });
-    }
-});
+    // Quiz-specific JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if we're in a quiz context
+        const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
+
+        if (isQuiz) {
+            // Find the quiz container
+            const quizContainer = document.querySelector('.quiz-cont');
+
+            // Listen for quiz start event
+            document.addEventListener('quizStarted', function() {
+                // Hide navigation when quiz starts
+                const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
+                if (navigationControls) {
+                    navigationControls.style.display = 'none';
+                }
+
+                // You could also hide the sidebar if needed
+                const sidebar = document.querySelector('.col-md-4.col-lg-3');
+                if (sidebar) {
+                    sidebar.style.display = 'none';
+                }
+
+                // Make the content column full width
+                const contentColumn = document.querySelector('.col-md-8.col-lg-9');
+                if (contentColumn) {
+                    contentColumn.classList.remove('col-md-8', 'col-lg-9');
+                    contentColumn.classList.add('col-12');
+                }
+            });
+
+            // Listen for quiz completion
+            document.addEventListener('quizCompleted', function(event) {
+                // Show navigation when quiz completes
+                const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
+                if (navigationControls) {
+                    navigationControls.style.display = 'flex';
+                }
+
+                // Show the sidebar again
+                const sidebar = document.querySelector('.col-md-4.col-lg-3');
+                if (sidebar) {
+                    sidebar.style.display = 'block';
+                }
+
+                // Restore original column width
+                const contentColumn = document.querySelector('.col-12');
+                if (contentColumn) {
+                    contentColumn.classList.remove('col-12');
+                    contentColumn.classList.add('col-md-8', 'col-lg-9');
+                }
+
+                // Update quiz completion status in sidebar
+                const quizItem = document.querySelector(`.nav-link[href*="quiz_id=<?php echo isset($_GET['quiz_id']) ? $_GET['quiz_id'] : ''; ?>"]`);
+                if (quizItem && quizItem.nextElementSibling) {
+                    quizItem.nextElementSibling.className = 'bi bi-check-circle-fill text-success ms-2 flex-shrink-0 mt-1';
+                }
+            });
+        }
+    });
 </script>
 <!-- // Add this JavaScript before the closing body tag -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Document ready: Initializing enhanced video player');
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Document ready: Initializing enhanced video player');
 
-    // Check if we're in a quiz context
-    const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
-    
-    // Only run video tracking code if we're not in a quiz
-    if (!isQuiz) {
-        // Video tracking - only initialize these variables if not in quiz mode
-        const videoElements = document.querySelectorAll('video');
-        const courseId = <?php echo $course_id; ?>;
-        const topicId = <?php echo !empty($topic_id) ? $topic_id : 'null'; ?>;
-        const enrollmentId = <?php echo $enrollment_id; ?>;
-        const lastPosition = <?php echo $last_position ?? 0; ?>;
+        // Check if we're in a quiz context
+        const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
 
-        // Only proceed if we have a valid topicId
-        if (topicId !== null && videoElements.length > 0) {
-            // Video completion threshold (consider video watched at 95%)
-            const COMPLETION_THRESHOLD = 0.95;
+        // Only run video tracking code if we're not in a quiz
+        if (!isQuiz) {
+            // Video tracking - only initialize these variables if not in quiz mode
+            const videoElements = document.querySelectorAll('video');
+            const courseId = <?php echo $course_id; ?>;
+            const topicId = <?php echo !empty($topic_id) ? $topic_id : 'null'; ?>;
+            const enrollmentId = <?php echo $enrollment_id; ?>;
+            const lastPosition = <?php echo $last_position ?? 0; ?>;
 
-            // Function to mark topic as completed via AJAX
-            function markAsCompleted() {
-                console.log('Marking topic as completed');
+            // Only proceed if we have a valid topicId
+            if (topicId !== null && videoElements.length > 0) {
+                // Video completion threshold (consider video watched at 95%)
+                const COMPLETION_THRESHOLD = 0.95;
 
-                // Show a small notification to the user
-                function showToast(title, message) {
-                    // Get the existing toast element
-                    const toast = document.getElementById('liveToast');
+                // Function to mark topic as completed via AJAX
+                function markAsCompleted() {
+                    console.log('Marking topic as completed');
 
-                    // Update the toast content
-                    toast.querySelector('.toast-header h5').textContent = title;
-                    toast.querySelector('.toast-body').textContent = message;
+                    // Show a small notification to the user
+                    function showToast(title, message) {
+                        // Get the existing toast element
+                        const toast = document.getElementById('liveToast');
 
-                    // Show the toast
-                    toast.classList.remove('hide');
-                    toast.classList.add('show');
+                        // Update the toast content
+                        toast.querySelector('.toast-header h5').textContent = title;
+                        toast.querySelector('.toast-body').textContent = message;
 
-                    // Hide the toast after 5 seconds
-                    setTimeout(() => {
-                        toast.classList.remove('show');
-                        toast.classList.add('hide');
-                    }, 5000);
-                }
+                        // Show the toast
+                        toast.classList.remove('hide');
+                        toast.classList.add('show');
 
-                // Call this function when you want to show the notification
-                showToast("Topic Completed", "This topic has been marked as completed!");
-
-                // Send AJAX request to mark as completed
-                fetch('../ajax/students/mark-topic-completed.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Topic marked as completed:', data);
-
-                        // Update UI to reflect completed status
-                        const completeButton = document.querySelector('form[method="post"] button[type="submit"]');
-                        if (completeButton) {
-                            const completedButton = document.createElement('button');
-                            completedButton.className = 'btn btn-success';
-                            completedButton.disabled = true;
-                            completedButton.innerHTML = '<i class="bi-check-circle me-1"></i> Completed';
-
-                            // Replace the form with the completed button
-                            completeButton.closest('form').replaceWith(completedButton);
-
-                            // Update sidebar icon for this topic
-                            const sidebarItem = document.querySelector('.nav-link.active');
-                            if (sidebarItem) {
-                                const sidebarIcon = sidebarItem.nextElementSibling;
-                                if (sidebarIcon && sidebarIcon.classList.contains('bi')) {
-                                    sidebarIcon.className = 'bi bi-check-circle-fill text-success ms-2 flex-shrink-0 mt-1';
-                                }
-                            }
-
-                            // Update progress bars
-                            updateProgressBars();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error marking topic as completed:', error);
-                    });
-            }
-
-            // Update progress bars after completion
-            function updateProgressBars() {
-                // Calculate new percentages (simulating completion of one more item)
-                const sectionProgressBar = document.querySelector('.nav-item:nth-of-type(2) .progress-bar');
-                const courseProgressBar = document.querySelector('.nav-item:nth-of-type(4) .progress-bar');
-
-                if (sectionProgressBar) {
-                    const sectionPercentageElem = document.querySelector('.nav-item:nth-of-type(2) .text-muted');
-                    let currentPercentage = parseInt(sectionPercentageElem.textContent);
-                    const sectionTopicsCount = <?php echo isset($section_progress['total_topics']) ? $section_progress['total_topics'] : 0; ?>;
-                    const completedTopics = <?php echo isset($section_progress['completed_topics']) ? $section_progress['completed_topics'] : 0; ?>;
-                    
-                    if (sectionTopicsCount > 0) {
-                        const newPercentage = Math.min(Math.ceil((completedTopics + 1) / sectionTopicsCount * 100), 100);
-                        sectionPercentageElem.textContent = newPercentage + '%';
-                        sectionProgressBar.style.width = newPercentage + '%';
-                    }
-                }
-
-                if (courseProgressBar) {
-                    const coursePercentageElem = document.querySelector('.nav-item:nth-of-type(4) .text-muted');
-                    let currentPercentage = parseInt(coursePercentageElem.textContent);
-                    const courseTopicsCount = <?php echo isset($course_progress['total_topics']) ? $course_progress['total_topics'] : 0; ?>;
-                    const completedTopics = <?php echo isset($course_progress['completed_topics']) ? $course_progress['completed_topics'] : 0; ?>;
-                    
-                    if (courseTopicsCount > 0) {
-                        const newPercentage = Math.min(Math.ceil((completedTopics + 1) / courseTopicsCount * 100), 100);
-                        coursePercentageElem.textContent = newPercentage + '%';
-                        courseProgressBar.style.width = newPercentage + '%';
-                    }
-                }
-            }
-
-            // Handle HTML5 video
-            if (videoElements.length > 0) {
-                const mainVideo = videoElements[0];
-                console.log('HTML5 video player found');
-
-                // Create poster image container for replay screen
-                const videoContainer = mainVideo.closest('.ratio-16x9');
-                if (videoContainer) {
-                    const posterContainer = document.createElement('div');
-                    posterContainer.className = 'video-poster-container position-absolute top-0 start-0 w-100 h-100 d-none';
-                    posterContainer.style.backgroundColor = '#000';
-                    posterContainer.style.zIndex = '2';
-
-                    // Add poster image (if available) or use a default
-                    const posterImage = document.createElement('img');
-                    posterImage.className = 'w-100 h-100 object-fit-contain opacity-50';
-                    posterImage.src = mainVideo.poster || '../uploads/video-poster.jpg';
-                    posterImage.alt = 'Video thumbnail';
-
-                    // Add replay button
-                    const replayButton = document.createElement('button');
-                    replayButton.className = 'btn btn-primary btn-lg position-absolute top-50 start-50 translate-middle';
-                    replayButton.innerHTML = '<i class="bi-arrow-repeat me-2"></i>Replay Video';
-                    replayButton.addEventListener('click', function() {
-                        posterContainer.classList.add('d-none');
-                        mainVideo.currentTime = 0;
-                        mainVideo.play().catch(e => console.error('Replay failed:', e));
-                    });
-
-                    // Add to container
-                    posterContainer.appendChild(posterImage);
-                    posterContainer.appendChild(replayButton);
-                    videoContainer.appendChild(posterContainer);
-                    videoContainer.style.position = 'relative';
-                }
-
-                // Set the video to the last position if available
-                if (lastPosition > 0) {
-                    mainVideo.addEventListener('loadedmetadata', function() {
-                        // Only seek if the last position is within the video duration
-                        if (lastPosition < mainVideo.duration) {
-                            mainVideo.currentTime = lastPosition;
-                            console.log('Set video position to:', lastPosition);
-                        }
-                    });
-                }
-
-                // Track video progress
-                let lastTrackedTime = 0;
-                const TRACK_INTERVAL = 10; // Track every 10 seconds
-                let videoCompleted = false;
-
-                mainVideo.addEventListener('timeupdate', function() {
-                    const currentTime = Math.floor(mainVideo.currentTime);
-                    const completionPercentage = mainVideo.currentTime / mainVideo.duration;
-
-                    // Only track every TRACK_INTERVAL seconds to reduce server load
-                    if (currentTime - lastTrackedTime >= TRACK_INTERVAL) {
-                        lastTrackedTime = currentTime;
-                        trackVideoProgress(currentTime);
+                        // Hide the toast after 5 seconds
+                        setTimeout(() => {
+                            toast.classList.remove('show');
+                            toast.classList.add('hide');
+                        }, 5000);
                     }
 
-                    // Mark as completed if reached threshold and not already completed
-                    if (completionPercentage >= COMPLETION_THRESHOLD && !videoCompleted) {
-                        videoCompleted = true;
-                        markAsCompleted();
-                    }
-                });
+                    // Call this function when you want to show the notification
+                    showToast("Topic Completed", "This topic has been marked as completed!");
 
-                // Handle video ended
-                mainVideo.addEventListener('ended', function() {
-                    console.log('Video ended');
-
-                    // Show replay screen
-                    const posterContainer = document.querySelector('.video-poster-container');
-                    if (posterContainer) {
-                        posterContainer.classList.remove('d-none');
-                    }
-
-                    // If not already marked as completed, mark it now
-                    if (!videoCompleted) {
-                        markAsCompleted();
-                    }
-                });
-
-                // Track video progress
-                function trackVideoProgress(position) {
-                    // Use fetch API to send the progress to the server
-                    fetch('../ajax/students/track-video-progress.php', {
+                    // Send AJAX request to mark as completed
+                    fetch('../ajax/students/mark-topic-completed.php', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded',
                             },
-                            body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId + '&position=' + position
+                            body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId
                         })
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Progress tracked', data);
+                            console.log('Topic marked as completed:', data);
+
+                            // Update UI to reflect completed status
+                            const completeButton = document.querySelector('form[method="post"] button[type="submit"]');
+                            if (completeButton) {
+                                const completedButton = document.createElement('button');
+                                completedButton.className = 'btn btn-success';
+                                completedButton.disabled = true;
+                                completedButton.innerHTML = '<i class="bi-check-circle me-1"></i> Completed';
+
+                                // Replace the form with the completed button
+                                completeButton.closest('form').replaceWith(completedButton);
+
+                                // Update sidebar icon for this topic
+                                const sidebarItem = document.querySelector('.nav-link.active');
+                                if (sidebarItem) {
+                                    const sidebarIcon = sidebarItem.nextElementSibling;
+                                    if (sidebarIcon && sidebarIcon.classList.contains('bi')) {
+                                        sidebarIcon.className = 'bi bi-check-circle-fill text-success ms-2 flex-shrink-0 mt-1';
+                                    }
+                                }
+
+                                // Update progress bars
+                                updateProgressBars();
+                            }
                         })
                         .catch(error => {
-                            console.error('Error tracking progress:', error);
+                            console.error('Error marking topic as completed:', error);
                         });
                 }
-            }
 
-            // YouTube API integration
-            const youtubeIframes = document.querySelectorAll('iframe[src*="youtube.com"]');
-            let ytPlayer = null;
+                // Update progress bars after completion
+                function updateProgressBars() {
+                    // Calculate new percentages (simulating completion of one more item)
+                    const sectionProgressBar = document.querySelector('.nav-item:nth-of-type(2) .progress-bar');
+                    const courseProgressBar = document.querySelector('.nav-item:nth-of-type(4) .progress-bar');
 
-            if (youtubeIframes.length > 0) {
-                console.log('YouTube player found, loading YouTube API');
-                // Load YouTube API
-                const tag = document.createElement('script');
-                tag.src = "https://www.youtube.com/iframe_api";
-                const firstScriptTag = document.getElementsByTagName('script')[0];
-                firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+                    if (sectionProgressBar) {
+                        const sectionPercentageElem = document.querySelector('.nav-item:nth-of-type(2) .text-muted');
+                        let currentPercentage = parseInt(sectionPercentageElem.textContent);
+                        const sectionTopicsCount = <?php echo isset($section_progress['total_topics']) ? $section_progress['total_topics'] : 0; ?>;
+                        const completedTopics = <?php echo isset($section_progress['completed_topics']) ? $section_progress['completed_topics'] : 0; ?>;
 
-                // Initialize YouTube players when API is ready
-                window.onYouTubeIframeAPIReady = function() {
-                    console.log('YouTube API ready');
-                    youtubeIframes.forEach((iframe, index) => {
-                        // Get the original iframe src
-                        const originalSrc = iframe.src;
-
-                        // Extract video ID
-                        const videoIdMatch = originalSrc.match(/embed\/([^?]+)/);
-                        const videoId = videoIdMatch ? videoIdMatch[1] : null;
-
-                        if (!videoId) {
-                            console.error('Could not extract YouTube video ID');
-                            return;
+                        if (sectionTopicsCount > 0) {
+                            const newPercentage = Math.min(Math.ceil((completedTopics + 1) / sectionTopicsCount * 100), 100);
+                            sectionPercentageElem.textContent = newPercentage + '%';
+                            sectionProgressBar.style.width = newPercentage + '%';
                         }
+                    }
 
-                        // Replace the iframe with a div for the API to use
-                        const playerId = 'youtube-player-' + index;
-                        const playerDiv = document.createElement('div');
-                        playerDiv.id = playerId;
+                    if (courseProgressBar) {
+                        const coursePercentageElem = document.querySelector('.nav-item:nth-of-type(4) .text-muted');
+                        let currentPercentage = parseInt(coursePercentageElem.textContent);
+                        const courseTopicsCount = <?php echo isset($course_progress['total_topics']) ? $course_progress['total_topics'] : 0; ?>;
+                        const completedTopics = <?php echo isset($course_progress['completed_topics']) ? $course_progress['completed_topics'] : 0; ?>;
 
-                        iframe.parentNode.replaceChild(playerDiv, iframe);
+                        if (courseTopicsCount > 0) {
+                            const newPercentage = Math.min(Math.ceil((completedTopics + 1) / courseTopicsCount * 100), 100);
+                            coursePercentageElem.textContent = newPercentage + '%';
+                            courseProgressBar.style.width = newPercentage + '%';
+                        }
+                    }
+                }
 
-                        // Create poster container for replay
-                        const playerContainer = playerDiv.parentNode;
+                // Handle HTML5 video
+                if (videoElements.length > 0) {
+                    const mainVideo = videoElements[0];
+                    console.log('HTML5 video player found');
+
+                    // Create poster image container for replay screen
+                    const videoContainer = mainVideo.closest('.ratio-16x9');
+                    if (videoContainer) {
                         const posterContainer = document.createElement('div');
                         posterContainer.className = 'video-poster-container position-absolute top-0 start-0 w-100 h-100 d-none';
                         posterContainer.style.backgroundColor = '#000';
                         posterContainer.style.zIndex = '2';
 
-                        // Add poster image
+                        // Add poster image (if available) or use a default
                         const posterImage = document.createElement('img');
                         posterImage.className = 'w-100 h-100 object-fit-contain opacity-50';
-                        posterImage.src = "https://img.youtube.com/vi/" + videoId + "/maxresdefault.jpg";
+                        posterImage.src = mainVideo.poster || '../uploads/video-poster.jpg';
                         posterImage.alt = 'Video thumbnail';
 
                         // Add replay button
@@ -2187,226 +2054,361 @@ document.addEventListener('DOMContentLoaded', function() {
                         replayButton.innerHTML = '<i class="bi-arrow-repeat me-2"></i>Replay Video';
                         replayButton.addEventListener('click', function() {
                             posterContainer.classList.add('d-none');
-                            // Restart video
-                            ytPlayer.seekTo(0);
-                            ytPlayer.playVideo();
+                            mainVideo.currentTime = 0;
+                            mainVideo.play().catch(e => console.error('Replay failed:', e));
                         });
 
                         // Add to container
                         posterContainer.appendChild(posterImage);
                         posterContainer.appendChild(replayButton);
+                        videoContainer.appendChild(posterContainer);
+                        videoContainer.style.position = 'relative';
+                    }
 
-                        // Make sure container has position relative
-                        if (playerContainer.style.position !== 'relative') {
-                            playerContainer.style.position = 'relative';
-                        }
-                        playerContainer.appendChild(posterContainer);
-
-                        // Create YouTube player
-                        ytPlayer = new YT.Player(playerId, {
-                            videoId: videoId,
-                            playerVars: {
-                                'rel': 0, // Don't show related videos
-                                'showinfo': 0, // Hide video info
-                                'modestbranding': 1, // Hide YouTube logo
-                                'fs': 1, // Show fullscreen button
-                                'start': lastPosition // Start from last position
-                            },
-                            events: {
-                                'onStateChange': function(event) {
-                                    // Track when video is paused or ended
-                                    if (event.data == YT.PlayerState.PAUSED) {
-                                        const currentTime = Math.floor(event.target.getCurrentTime());
-                                        trackVideoProgress(currentTime);
-                                    } else if (event.data == YT.PlayerState.ENDED) {
-                                        console.log('YouTube video ended');
-
-                                        // Show replay screen
-                                        posterContainer.classList.remove('d-none');
-
-                                        // Mark as completed
-                                        markAsCompleted();
-                                    }
-
-                                    // Check if video is near completion
-                                    if (event.data == YT.PlayerState.PLAYING) {
-                                        // Start checking progress
-                                        const checkProgress = setInterval(function() {
-                                            if (!ytPlayer) {
-                                                clearInterval(checkProgress);
-                                                return;
-                                            }
-
-                                            const duration = ytPlayer.getDuration();
-                                            const currentTime = ytPlayer.getCurrentTime();
-                                            const completionPercentage = currentTime / duration;
-
-                                            // If we're at or past the threshold, mark as completed
-                                            if (completionPercentage >= COMPLETION_THRESHOLD) {
-                                                markAsCompleted();
-                                                clearInterval(checkProgress);
-                                            }
-
-                                            // Stop checking if video isn't playing
-                                            if (ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
-                                                clearInterval(checkProgress);
-                                            }
-                                        }, 5000); // Check every 5 seconds
-                                    }
-                                }
+                    // Set the video to the last position if available
+                    if (lastPosition > 0) {
+                        mainVideo.addEventListener('loadedmetadata', function() {
+                            // Only seek if the last position is within the video duration
+                            if (lastPosition < mainVideo.duration) {
+                                mainVideo.currentTime = lastPosition;
+                                console.log('Set video position to:', lastPosition);
                             }
                         });
+                    }
 
-                        // Track video progress
-                        function trackVideoProgress(position) {
-                            fetch('../ajax/students/track-video-progress.php', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded',
-                                    },
-                                    body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId + '&position=' + position
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    console.log('YouTube progress tracked', data);
-                                })
-                                .catch(error => {
-                                    console.error('Error tracking YouTube progress:', error);
-                                });
+                    // Track video progress
+                    let lastTrackedTime = 0;
+                    const TRACK_INTERVAL = 10; // Track every 10 seconds
+                    let videoCompleted = false;
+
+                    mainVideo.addEventListener('timeupdate', function() {
+                        const currentTime = Math.floor(mainVideo.currentTime);
+                        const completionPercentage = mainVideo.currentTime / mainVideo.duration;
+
+                        // Only track every TRACK_INTERVAL seconds to reduce server load
+                        if (currentTime - lastTrackedTime >= TRACK_INTERVAL) {
+                            lastTrackedTime = currentTime;
+                            trackVideoProgress(currentTime);
+                        }
+
+                        // Mark as completed if reached threshold and not already completed
+                        if (completionPercentage >= COMPLETION_THRESHOLD && !videoCompleted) {
+                            videoCompleted = true;
+                            markAsCompleted();
                         }
                     });
-                };
-            }
 
-            // Vimeo API integration
-            const vimeoIframes = document.querySelectorAll('iframe[src*="vimeo.com"]');
-            let vimeoPlayer = null;
+                    // Handle video ended
+                    mainVideo.addEventListener('ended', function() {
+                        console.log('Video ended');
 
-            if (vimeoIframes.length > 0) {
-                console.log('Vimeo player found, loading Vimeo API');
-                // Load Vimeo API
-                const vimeoScript = document.createElement('script');
-                vimeoScript.src = "https://player.vimeo.com/api/player.js";
-                document.body.appendChild(vimeoScript);
-
-                vimeoScript.onload = function() {
-                    vimeoIframes.forEach((iframe) => {
-                        // Create container for replay screen
-                        const playerContainer = iframe.parentNode;
-                        const posterContainer = document.createElement('div');
-                        posterContainer.className = 'video-poster-container position-absolute top-0 start-0 w-100 h-100 d-none';
-                        posterContainer.style.backgroundColor = '#000';
-                        posterContainer.style.zIndex = '2';
-
-                        // We'll add the poster image after getting it from the Vimeo API
-
-                        // Add replay button
-                        const replayButton = document.createElement('button');
-                        replayButton.className = 'btn btn-primary btn-lg position-absolute top-50 start-50 translate-middle';
-                        replayButton.innerHTML = '<i class="bi-arrow-repeat me-2"></i>Replay Video';
-                        replayButton.addEventListener('click', function() {
-                            posterContainer.classList.add('d-none');
-                            // Restart video
-                            vimeoPlayer.setCurrentTime(0);
-                            vimeoPlayer.play();
-                        });
-
-                        // Add to container
-                        posterContainer.appendChild(replayButton);
-
-                        // Make sure container has position relative
-                        if (playerContainer.style.position !== 'relative') {
-                            playerContainer.style.position = 'relative';
-                        }
-                        playerContainer.appendChild(posterContainer);
-
-                        // Initialize Vimeo player
-                        vimeoPlayer = new Vimeo.Player(iframe, {
-                            dnt: true // Do not track
-                        });
-
-                        // Get video metadata for poster image
-                        vimeoPlayer.getVideoTitle().then(function(title) {
-                            // Get the video thumbnail
-                            vimeoPlayer.getVideoThumbnails().then(function(thumbnails) {
-                                if (thumbnails && thumbnails.length > 0) {
-                                    // Add poster image
-                                    const posterImage = document.createElement('img');
-                                    posterImage.className = 'w-100 h-100 object-fit-contain opacity-50';
-                                    posterImage.src = thumbnails[0].url;
-                                    posterImage.alt = title || 'Video thumbnail';
-                                    posterContainer.insertBefore(posterImage, replayButton);
-                                }
-                            }).catch(function(error) {
-                                console.error('Error getting Vimeo thumbnail:', error);
-                            });
-                        }).catch(function(error) {
-                            console.error('Error getting Vimeo title:', error);
-                        });
-
-                        // Set initial position
-                        if (lastPosition > 0) {
-                            vimeoPlayer.setCurrentTime(lastPosition);
-                        }
-
-                        // Completed flag
-                        let videoCompleted = false;
-
-                        // Track timeupdate
-                        let lastVimeoTrackedTime = 0;
-                        vimeoPlayer.on('timeupdate', function(data) {
-                            const currentTime = Math.floor(data.seconds);
-
-                            // Track every 10 seconds
-                            if (currentTime - lastVimeoTrackedTime >= 10) {
-                                lastVimeoTrackedTime = currentTime;
-                                trackVideoProgress(currentTime);
-                            }
-
-                            // Check completion
-                            const completionPercentage = data.seconds / data.duration;
-                            if (completionPercentage >= COMPLETION_THRESHOLD && !videoCompleted) {
-                                videoCompleted = true;
-                                markAsCompleted();
-                            }
-                        });
-
-                        // Handle end of video
-                        vimeoPlayer.on('ended', function() {
-                            console.log('Vimeo video ended');
-
-                            // Show replay screen
+                        // Show replay screen
+                        const posterContainer = document.querySelector('.video-poster-container');
+                        if (posterContainer) {
                             posterContainer.classList.remove('d-none');
+                        }
 
-                            // Mark as completed if not already done
-                            if (!videoCompleted) {
-                                markAsCompleted();
-                            }
-                        });
-
-                        // Track video progress
-                        function trackVideoProgress(position) {
-                            fetch('../ajax/students/track-video-progress.php', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded',
-                                    },
-                                    body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId + '&position=' + position
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    console.log('Vimeo progress tracked', data);
-                                })
-                                .catch(error => {
-                                    console.error('Error tracking Vimeo progress:', error);
-                                });
+                        // If not already marked as completed, mark it now
+                        if (!videoCompleted) {
+                            markAsCompleted();
                         }
                     });
-                };
+
+                    // Track video progress
+                    function trackVideoProgress(position) {
+                        // Use fetch API to send the progress to the server
+                        fetch('../ajax/students/track-video-progress.php', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId + '&position=' + position
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('Progress tracked', data);
+                            })
+                            .catch(error => {
+                                console.error('Error tracking progress:', error);
+                            });
+                    }
+                }
+
+                // YouTube API integration
+                const youtubeIframes = document.querySelectorAll('iframe[src*="youtube.com"]');
+                let ytPlayer = null;
+
+                if (youtubeIframes.length > 0) {
+                    console.log('YouTube player found, loading YouTube API');
+                    // Load YouTube API
+                    const tag = document.createElement('script');
+                    tag.src = "https://www.youtube.com/iframe_api";
+                    const firstScriptTag = document.getElementsByTagName('script')[0];
+                    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+                    // Initialize YouTube players when API is ready
+                    window.onYouTubeIframeAPIReady = function() {
+                        console.log('YouTube API ready');
+                        youtubeIframes.forEach((iframe, index) => {
+                            // Get the original iframe src
+                            const originalSrc = iframe.src;
+
+                            // Extract video ID
+                            const videoIdMatch = originalSrc.match(/embed\/([^?]+)/);
+                            const videoId = videoIdMatch ? videoIdMatch[1] : null;
+
+                            if (!videoId) {
+                                console.error('Could not extract YouTube video ID');
+                                return;
+                            }
+
+                            // Replace the iframe with a div for the API to use
+                            const playerId = 'youtube-player-' + index;
+                            const playerDiv = document.createElement('div');
+                            playerDiv.id = playerId;
+
+                            iframe.parentNode.replaceChild(playerDiv, iframe);
+
+                            // Create poster container for replay
+                            const playerContainer = playerDiv.parentNode;
+                            const posterContainer = document.createElement('div');
+                            posterContainer.className = 'video-poster-container position-absolute top-0 start-0 w-100 h-100 d-none';
+                            posterContainer.style.backgroundColor = '#000';
+                            posterContainer.style.zIndex = '2';
+
+                            // Add poster image
+                            const posterImage = document.createElement('img');
+                            posterImage.className = 'w-100 h-100 object-fit-contain opacity-50';
+                            posterImage.src = "https://img.youtube.com/vi/" + videoId + "/maxresdefault.jpg";
+                            posterImage.alt = 'Video thumbnail';
+
+                            // Add replay button
+                            const replayButton = document.createElement('button');
+                            replayButton.className = 'btn btn-primary btn-lg position-absolute top-50 start-50 translate-middle';
+                            replayButton.innerHTML = '<i class="bi-arrow-repeat me-2"></i>Replay Video';
+                            replayButton.addEventListener('click', function() {
+                                posterContainer.classList.add('d-none');
+                                // Restart video
+                                ytPlayer.seekTo(0);
+                                ytPlayer.playVideo();
+                            });
+
+                            // Add to container
+                            posterContainer.appendChild(posterImage);
+                            posterContainer.appendChild(replayButton);
+
+                            // Make sure container has position relative
+                            if (playerContainer.style.position !== 'relative') {
+                                playerContainer.style.position = 'relative';
+                            }
+                            playerContainer.appendChild(posterContainer);
+
+                            // Create YouTube player
+                            ytPlayer = new YT.Player(playerId, {
+                                videoId: videoId,
+                                playerVars: {
+                                    'rel': 0, // Don't show related videos
+                                    'showinfo': 0, // Hide video info
+                                    'modestbranding': 1, // Hide YouTube logo
+                                    'fs': 1, // Show fullscreen button
+                                    'start': lastPosition // Start from last position
+                                },
+                                events: {
+                                    'onStateChange': function(event) {
+                                        // Track when video is paused or ended
+                                        if (event.data == YT.PlayerState.PAUSED) {
+                                            const currentTime = Math.floor(event.target.getCurrentTime());
+                                            trackVideoProgress(currentTime);
+                                        } else if (event.data == YT.PlayerState.ENDED) {
+                                            console.log('YouTube video ended');
+
+                                            // Show replay screen
+                                            posterContainer.classList.remove('d-none');
+
+                                            // Mark as completed
+                                            markAsCompleted();
+                                        }
+
+                                        // Check if video is near completion
+                                        if (event.data == YT.PlayerState.PLAYING) {
+                                            // Start checking progress
+                                            const checkProgress = setInterval(function() {
+                                                if (!ytPlayer) {
+                                                    clearInterval(checkProgress);
+                                                    return;
+                                                }
+
+                                                const duration = ytPlayer.getDuration();
+                                                const currentTime = ytPlayer.getCurrentTime();
+                                                const completionPercentage = currentTime / duration;
+
+                                                // If we're at or past the threshold, mark as completed
+                                                if (completionPercentage >= COMPLETION_THRESHOLD) {
+                                                    markAsCompleted();
+                                                    clearInterval(checkProgress);
+                                                }
+
+                                                // Stop checking if video isn't playing
+                                                if (ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+                                                    clearInterval(checkProgress);
+                                                }
+                                            }, 5000); // Check every 5 seconds
+                                        }
+                                    }
+                                }
+                            });
+
+                            // Track video progress
+                            function trackVideoProgress(position) {
+                                fetch('../ajax/students/track-video-progress.php', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded',
+                                        },
+                                        body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId + '&position=' + position
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        console.log('YouTube progress tracked', data);
+                                    })
+                                    .catch(error => {
+                                        console.error('Error tracking YouTube progress:', error);
+                                    });
+                            }
+                        });
+                    };
+                }
+
+                // Vimeo API integration
+                const vimeoIframes = document.querySelectorAll('iframe[src*="vimeo.com"]');
+                let vimeoPlayer = null;
+
+                if (vimeoIframes.length > 0) {
+                    console.log('Vimeo player found, loading Vimeo API');
+                    // Load Vimeo API
+                    const vimeoScript = document.createElement('script');
+                    vimeoScript.src = "https://player.vimeo.com/api/player.js";
+                    document.body.appendChild(vimeoScript);
+
+                    vimeoScript.onload = function() {
+                        vimeoIframes.forEach((iframe) => {
+                            // Create container for replay screen
+                            const playerContainer = iframe.parentNode;
+                            const posterContainer = document.createElement('div');
+                            posterContainer.className = 'video-poster-container position-absolute top-0 start-0 w-100 h-100 d-none';
+                            posterContainer.style.backgroundColor = '#000';
+                            posterContainer.style.zIndex = '2';
+
+                            // We'll add the poster image after getting it from the Vimeo API
+
+                            // Add replay button
+                            const replayButton = document.createElement('button');
+                            replayButton.className = 'btn btn-primary btn-lg position-absolute top-50 start-50 translate-middle';
+                            replayButton.innerHTML = '<i class="bi-arrow-repeat me-2"></i>Replay Video';
+                            replayButton.addEventListener('click', function() {
+                                posterContainer.classList.add('d-none');
+                                // Restart video
+                                vimeoPlayer.setCurrentTime(0);
+                                vimeoPlayer.play();
+                            });
+
+                            // Add to container
+                            posterContainer.appendChild(replayButton);
+
+                            // Make sure container has position relative
+                            if (playerContainer.style.position !== 'relative') {
+                                playerContainer.style.position = 'relative';
+                            }
+                            playerContainer.appendChild(posterContainer);
+
+                            // Initialize Vimeo player
+                            vimeoPlayer = new Vimeo.Player(iframe, {
+                                dnt: true // Do not track
+                            });
+
+                            // Get video metadata for poster image
+                            vimeoPlayer.getVideoTitle().then(function(title) {
+                                // Get the video thumbnail
+                                vimeoPlayer.getVideoThumbnails().then(function(thumbnails) {
+                                    if (thumbnails && thumbnails.length > 0) {
+                                        // Add poster image
+                                        const posterImage = document.createElement('img');
+                                        posterImage.className = 'w-100 h-100 object-fit-contain opacity-50';
+                                        posterImage.src = thumbnails[0].url;
+                                        posterImage.alt = title || 'Video thumbnail';
+                                        posterContainer.insertBefore(posterImage, replayButton);
+                                    }
+                                }).catch(function(error) {
+                                    console.error('Error getting Vimeo thumbnail:', error);
+                                });
+                            }).catch(function(error) {
+                                console.error('Error getting Vimeo title:', error);
+                            });
+
+                            // Set initial position
+                            if (lastPosition > 0) {
+                                vimeoPlayer.setCurrentTime(lastPosition);
+                            }
+
+                            // Completed flag
+                            let videoCompleted = false;
+
+                            // Track timeupdate
+                            let lastVimeoTrackedTime = 0;
+                            vimeoPlayer.on('timeupdate', function(data) {
+                                const currentTime = Math.floor(data.seconds);
+
+                                // Track every 10 seconds
+                                if (currentTime - lastVimeoTrackedTime >= 10) {
+                                    lastVimeoTrackedTime = currentTime;
+                                    trackVideoProgress(currentTime);
+                                }
+
+                                // Check completion
+                                const completionPercentage = data.seconds / data.duration;
+                                if (completionPercentage >= COMPLETION_THRESHOLD && !videoCompleted) {
+                                    videoCompleted = true;
+                                    markAsCompleted();
+                                }
+                            });
+
+                            // Handle end of video
+                            vimeoPlayer.on('ended', function() {
+                                console.log('Vimeo video ended');
+
+                                // Show replay screen
+                                posterContainer.classList.remove('d-none');
+
+                                // Mark as completed if not already done
+                                if (!videoCompleted) {
+                                    markAsCompleted();
+                                }
+                            });
+
+                            // Track video progress
+                            function trackVideoProgress(position) {
+                                fetch('../ajax/students/track-video-progress.php', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded',
+                                        },
+                                        body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId + '&position=' + position
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        console.log('Vimeo progress tracked', data);
+                                    })
+                                    .catch(error => {
+                                        console.error('Error tracking Vimeo progress:', error);
+                                    });
+                            }
+                        });
+                    };
+                }
             }
         }
-    }
-});</script>
+    });
+</script>
 
 <script src="../assets/js/fixed-quiz-submission.js"></script>
 
