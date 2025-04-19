@@ -12,7 +12,7 @@ session_start();
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Not logged in, redirect to login page
-    header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+    header('Location: index.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
     exit;
 }
 
@@ -64,17 +64,51 @@ if ($certificate['user_id'] != $userId) {
     }
 }
 
-// Construct file path using certificate hash for uniqueness
-$certificateHash = $certificate['certificate_hash'];
+// Try multiple approaches to find the certificate file
+$possiblePaths = [];
+$certificateDir = __DIR__ . "/uploads/certificates/";
+$courseId = $certificate['course_id'];
 $username = strtolower(preg_replace('/[^a-z0-9]/', '_', $certificate['student_name']));
-$filename = "certificate_{$username}_{$certificateId}.pdf";
-// In download-certificate.php, use a path relative to the document root:
-    $filePath = __DIR__ . "/uploads/certificates/{$filename}";
-// Check if file exists
-if (!file_exists($filePath)) {
-    // Certificate PDF doesn't exist - this should not happen normally
-    // But we could regenerate it here or show an error
-    die("Certificate file not found. Please contact support.");
+$userId = $certificate['user_id'];
+
+// Add all possible filename patterns based on your existing files
+$possiblePaths[] = "{$certificateDir}certificate_{$username}_{$courseId}_*.pdf";
+$possiblePaths[] = "{$certificateDir}certificate_{$userId}_{$username}_{$courseId}_*.pdf";
+$possiblePaths[] = "{$certificateDir}certificate_{$username}_{$userId}_{$courseId}_*.pdf";
+
+// Try direct certificate_id match
+$possiblePaths[] = "{$certificateDir}certificate_*_{$certificateId}.pdf";
+$possiblePaths[] = "{$certificateDir}certificate_*_{$certificateId}_*.pdf";
+
+$filePath = null;
+
+// Try each pattern with glob to find matching files
+foreach ($possiblePaths as $pattern) {
+    $matches = glob($pattern);
+    if (!empty($matches)) {
+        // Use the most recent file if multiple matches exist
+        usort($matches, function($a, $b) {
+            return filemtime($b) - filemtime($a);
+        });
+        $filePath = $matches[0];
+        break;
+    }
+}
+
+// Last resort: Look for any certificate files related to this user
+if (!$filePath) {
+    $lastResortPattern = "{$certificateDir}certificate_*{$username}*_{$courseId}_*.pdf";
+    $matches = glob($lastResortPattern);
+    if (!empty($matches)) {
+        $filePath = $matches[0];
+    }
+}
+
+// If still no file found, give a detailed error
+if (!$filePath) {
+    die("Certificate file not found. Patterns tried:<br>" . 
+        implode("<br>", $possiblePaths) . 
+        "<br><br>Please contact support with this information.");
 }
 
 // Increment download count
@@ -82,8 +116,8 @@ $certificateRepo->incrementDownloadCount($certificateId);
 
 // Set headers for file download
 header('Content-Type: application/pdf');
-header('Content-Disposition: attachment; filename="' . $filename . '"');
-header('Content-Length: ' . filesize($filePath));
+$downloadFilename = "Certificate_" . preg_replace('/[^a-zA-Z0-9_\-]/', '_', $certificate['course_title']) . ".pdf";
+header('Content-Disposition: attachment; filename="' . $downloadFilename . '"');header('Content-Length: ' . filesize($filePath));
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');

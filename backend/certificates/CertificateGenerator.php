@@ -30,7 +30,7 @@ private $templatePath = __DIR__ . '/../../templates/certificates/certificate.htm
     /**
      * Path to favicon
      */
-    private $faviconPath = 'assets/img/favicon/favicon.ico';
+    private $faviconPath = '../assets/img/favicon/favicon.ico';
     
     /**
      * Directory to store generated certificates
