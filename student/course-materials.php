@@ -1,5 +1,5 @@
 <?php
-// course-materials.php
+// student/course-materials.php
 // ob_start();
 
 // Start session if not already started

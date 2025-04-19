@@ -196,7 +196,7 @@ function sendResetEmail($email, $verificationCode) {
             <p>You can now login to your Learnix account using your new password.</p>
             
             <div style="text-align: center;">
-                <a href="https://learnix.com/login" class="login-button">Login to Your Account</a>
+                <a href="http://localhost:8888/Learnix/login" class="login-button">Login to Your Account</a>
             </div>
             
             <div class="security-alert">

@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Completion Certificate</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Dancing+Script:wght@700&family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600&display=swap');
+        
+        :root {
+            --primary-color: #0056D2; /* Coursera blue */
+            --accent-color: #2A73CC;
+            --gold-color: #F2C94C;
+            --dark-text: #2D3B45;
+            --light-text: #586871;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .certificate-container {
+            width: 1000px;
+            max-width: 100%;
+            position: relative;
+        }
+        
+        .certificate {
+            background-color: #fff;
+            padding: 50px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            position: relative;
+            border: 15px solid transparent;
+            background-image: 
+                linear-gradient(white, white), 
+                repeating-linear-gradient(45deg, var(--primary-color) 0, var(--primary-color) 10px, var(--accent-color) 10px, var(--accent-color) 20px);
+            background-clip: padding-box, border-box;
+            background-origin: padding-box, border-box;
+            text-align: center;
+            border-radius: 5px;
+        }
+        
+        .logo {
+            position: absolute;
+            top: 30px;
+            left: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 100%;
+        }
+        
+        .qr-code {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            width: 70px;
+            height: 70px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 3px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .certificate-header {
+            margin-top: 40px;
+            margin-bottom: 30px;
+        }
+        
+        .certificate-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+        
+        .certificate-subtitle {
+            font-size: 18px;
+            color: var(--light-text);
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px auto;
+            width: 80%;
+        }
+        
+        .divider .line {
+            flex-grow: 1;
+            height: 1px;
+            background-color: var(--accent-color);
+        }
+        
+        .divider .diamond {
+            margin: 0 15px;
+            width: 10px;
+            height: 10px;
+            background-color: var(--accent-color);
+            transform: rotate(45deg);
+        }
+        
+        .recipient-name {
+            font-family: 'Dancing Script', cursive;
+            font-size: 48px;
+            color: var(--dark-text);
+            margin-bottom: 25px;
+            margin-top: 25px;
+        }
+        
+        .certificate-text {
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            color: var(--light-text);
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .course-details {
+            background-color: rgba(0, 86, 210, 0.05);
+            padding: 20px 30px;
+            border-radius: 5px;
+            margin: 30px auto;
+            max-width: 80%;
+        }
+        
+        .course-name {
+            font-weight: 600;
+            font-size: 24px;
+            color: var(--dark-text);
+            margin-bottom: 10px;
+        }
+        
+        .course-info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--light-text);
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: 500;
+            color: var(--dark-text);
+        }
+        
+        .certificate-issuer {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 50px;
+        }
+        
+        .signature-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .signature {
+            font-family: 'Dancing Script', cursive;
+            font-size: 30px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .signature-line {
+            width: 200px;
+            height: 1px;
+            background-color: #888;
+        }
+        
+        .signature-title {
+            margin-top: 5px;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        .certificate-seal {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            width: 120px;
+            height: 120px;
+        }
+        
+        .seal-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--gold-color) 0%, #E5B93D 70%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .seal-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            animation: rotate 25s linear infinite;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .seal-inner {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+        
+        .verification {
+            margin-top: 40px;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        .verification-code {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 5px 10px;
+            border-radius: 3px;
+            color: var(--dark-text);
+        }
+        
+        .certificate-date {
+            margin-top: 30px;
+            font-style: italic;
+            color: var(--light-text);
+        }
+
+        .badge {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            width: 120px;
+            height: 120px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 5px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: white;
+            font-weight: bold;
+            transform: rotate(15deg);
+            z-index: 10;
+        }
+
+        .badge-text {
+            text-align: center;
+            font-size: 16px;
+            line-height: 1.2;
+        }
+
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .skill-tag {
+            background-color: rgba(0, 86, 210, 0.1);
+            color: var(--primary-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .edit-controls {
+            margin-top: 30px;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .control-section {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .control-section h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+
+        input, textarea, select {
+            padding: 12px;
+            font-family: 'Montserrat', sans-serif;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 86, 210, 0.2);
+        }
+
+        .skills-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .skills-input {
+            flex-grow: 1;
+        }
+
+        .add-skill-btn {
+            padding: 12px 15px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #0046B0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .print-button {
+            background-color: #2E7D32;
+        }
+
+        .print-button:hover {
+            background-color: #1B5E20;
+        }
+
+        .download-button {
+            background-color: #F57C00;
+        }
+
+        .download-button:hover {
+            background-color: #EF6C00;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+            top: 0;
+            animation: confetti 5s ease-in-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes confetti {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px)) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @media print {
+            body {
+                background-color: white;
+            }
+            .certificate-container {
+                width: 100%;
+                box-shadow: none;
+            }
+            .edit-controls, .action-buttons {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate-container">
+        <div class="certificate" id="certificate">
+            <div class="badge">
+                <div class="badge-text">TOP PERFORMER</div>
+            </div>
+            
+            <div class="logo">
+                <svg width="150" height="40" viewBox="0 0 300 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M44 14C26.3 14 12 28.3 12 46C12 63.7 26.3 78 44 78C61.7 78 76 63.7 76 46C76 28.3 61.7 14 44 14ZM44 68C31.9 68 22 58.1 22 46C22 33.9 31.9 24 44 24C56.1 24 66 33.9 66 46C66 58.1 56.1 68 44 68Z" fill="#0056D2"/>
+                    <path d="M100 27H90V65H129V55H100V27Z" fill="#0056D2"/>
+                    <path d="M142 27H132V65H142V27Z" fill="#0056D2"/>
+                    <path d="M193 42C193 33.2 186.8 27 178 27H155V65H165V51H178C186.8 51 193 44.8 193 36V42ZM183 37C183 39.2 181.2 41 179 41H165V33H179C181.2 33 183 34.8 183 37Z" fill="#0056D2"/>
+                    <path d="M243 55H214V49H240V39H214V33H243V23H204V65H243V55Z" fill="#0056D2"/>
+                    <path d="M288 65L271 45L288 27H276L259 45L276 65H288Z" fill="#0056D2"/>
+                </svg>
+            </div>
+            
+            <div class="qr-code">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="80" height="80" fill="white"/>
+                    <rect x="15" y="15" width="5" height="5" fill="black"/>
+                    <rect x="20" y="15" width="5" height="5" fill="black"/>
+                    <rect x="25" y="15" width="5" height="5" fill="black"/>
+                    <rect x="30" y="15" width="5" height="5" fill="black"/>
+                    <rect x="35" y="15" width="5" height="5" fill="black"/>
+                    <rect x="40" y="15" width="5" height="5" fill="black"/>
+                    <rect x="45" y="15" width="5" height="5" fill="black"/>
+                    <rect x="15" y="20" width="5" height="5" fill="black"/>
+                    <rect x="45" y="20" width="5" height="5" fill="black"/>
+                    <rect x="15" y="25" width="5" height="5" fill="black"/>
+                    <rect x="25" y="25" width="5" height="5" fill="black"/>
+                    <rect x="30" y="25" width="5" height="5" fill="black"/>
+                    <rect x="35" y="25" width="5" height="5" fill="black"/>
+                    <rect x="45" y="25" width="5" height="5" fill="black"/>
+                    <rect x="15" y="30" width="5" height="5" fill="black"/>
+                    <rect x="25" y="30" width="5" height="5" fill="black"/>
+                    <rect x="35" y="30" width="5" height="5" fill="black"/>
+                    <rect x="45" y="30" width="5" height="5" fill="black"/>
+                    <rect x="15" y="35" width="5" height="5" fill="black"/>
+                    <rect x="25" y="35" width="5" height="5" fill="black"/>
+                    <rect x="35" y="35" width="5" height="5" fill="black"/>
+                    <rect x="45" y="35" width="5" height="5" fill="black"/>
+                    <rect x="15" y="40" width="5" height="5" fill="black"/>
+                    <rect x="45" y="40" width="5" height="5" fill="black"/>
+                    <rect x="15" y="45" width="5" height="5" fill="black"/>
+                    <rect x="20" y="45" width="5" height="5" fill="black"/>
+                    <rect x="25" y="45" width="5" height="5" fill="black"/>
+                    <rect x="30" y="45" width="5" height="5" fill="black"/>
+                    <rect x="35" y="45" width="5" height="5" fill="black"/>
+                    <rect x="40" y="45" width="5" height="5" fill="black"/>
+                    <rect x="45" y="45" width="5" height="5" fill="black"/>
+                    <rect x="55" y="15" width="5" height="5" fill="black"/>
+                    <rect x="60" y="15" width="5" height="5" fill="black"/>
+                    <rect x="55" y="20" width="5" height="5" fill="black"/>
+                    <rect x="55" y="25" width="5" height="5" fill="black"/>
+                    <rect x="55" y="30" width="5" height="5" fill="black"/>
+                    <rect x="60" y="30" width="5" height="5" fill="black"/>
+                    <rect x="55" y="35" width="5" height="5" fill="black"/>
+                    <rect x="55" y="40" width="5" height="5" fill="black"/>
+                    <rect x="55" y="45" width="5" height="5" fill="black"/>
+                    <rect x="15" y="55" width="5" height="5" fill="black"/>
+                    <rect x="20" y="55" width="5" height="5" fill="black"/>
+                    <rect x="25" y="55" width="5" height="5" fill="black"/>
+                    <rect x="35" y="55" width="5" height="5" fill="black"/>
+                    <rect x="40" y="55" width="5" height="5" fill="black"/>
+                    <rect x="45" y="55" width="5" height="5" fill="black"/>
+                    <rect x="20" y="60" width="5" height="5" fill="black"/>
+                    <rect x="30" y="60" width="5" height="5" fill="black"/>
+                    <rect x="40" y="60" width="5" height="5" fill="black"/>
+                    <rect x="60" y="60" width="5" height="5" fill="black"/>
+                </svg>
+            </div>
+            
+            <div class="certificate-header">
+                <h1 class="certificate-title">Certificate of Completion</h1>
+                <h2 class="certificate-subtitle">This is to certify that</h2>
+            </div>
+            
+            <div class="divider">
+                <div class="line"></div>
+                <div class="diamond"></div>
+                <div class="line"></div>
+            </div>
+            
+            <h1 class="recipient-name" id="recipient">John Doe</h1>
+            
+            <div class="certificate-text" id="achievement-text">
+                has successfully completed all requirements and demonstrated exceptional proficiency in the following course offered on our learning platform.
+            </div>
+            
+            <div class="course-details">
+                <div class="course-name" id="course-name">Machine Learning Foundations: A Case Study Approach</div>
+                
+                <div class="course-info">
+                    <div class="info-item">
+                        <div class="info-label">Instructor</div>
+                        <div class="info-value" id="instructor">Dr. Emily Johnson</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Duration</div>
+                        <div class="info-value" id="duration">8 weeks</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Grade</div>
+                        <div class="info-value" id="grade">95%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="skills-section">
+                <h3 style="color: var(--light-text); font-size: 16px; font-weight: 500;">SKILLS ACQUIRED</h3>
+                <div class="skills-list" id="skills-list">
+                    <div class="skill-tag">Python Programming</div>
+                    <div class="skill-tag">Data Analysis</div>
+                    <div class="skill-tag">Machine Learning</div>
+                    <div class="skill-tag">Neural Networks</div>
+                    <div class="skill-tag">Data Visualization</div>
+                </div>
+            </div>
+            
+            <div class="verification">
+                Verify this certificate at <span class="verification-code">learn.platform.com/verify/ABC123XYZ</span>
+            </div>
+            
+            <div class="certificate-date" id="cert-date">April 16, 2025</div>
+            
+            <div class="certificate-issuer">
+                <div class="signature-container">
+                    <div class="signature">William Johnson</div>
+                    <div class="signature-line"></div>
+                    <div class="signature-title">Course Instructor</div>
+                </div>
+                
+                <div class="signature-container">
+                    <div class="signature">Elizabeth Taylor</div>
+                    <div class="signature-line"></div>
+                    <div class="signature-title">Program Director</div>
+                </div>
+            </div>
+            
+            <div class="certificate-seal">
+                <div class="seal-circle">
+                    <div class="seal-text">★ VERIFIED CERTIFICATE ★ OFFICIAL CREDENTIAL ★</div>
+                    <div class="seal-inner">VCE</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="edit-controls">
+            <div class="control-section">
+                <h3>Recipient Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name-input">Recipient Name</label>
+                        <input type="text" id="name-input" value="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="date-input">Date of Completion</label>
+                        <input type="text" id="date-input" value="April 16, 2025">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="text-input">Achievement Description</label>
+                    <textarea id="text-input" rows="3">has successfully completed all requirements and demonstrated exceptional proficiency in the following course offered on our learning platform.</textarea>
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <h3>Course Details</h3>
+                <div class="form-group">
+                    <label for="course-input">Course Name</label>
+                    <input type="text" id="course-input" value="Machine Learning Foundations: A Case Study Approach">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="instructor-input">Instructor</label>
+                        <input type="text" id="instructor-input" value="Dr. Emily Johnson">
+                    </div>
+                    <div class="form-group">
+                        <label for="duration-input">Duration</label>
+                        <input type="text" id="duration-input" value="8 weeks">
+                    </div>
+                    <div class="form-group">
+                        <label for="grade-input">Grade</label>
+                        <input type="text" id="grade-input" value="95%">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <h3>Skills Acquired</h3>
+                <div class="skills-input-container">
+                    <div class="form-group skills-input">
+                        <input type="text" id="skill-input" placeholder="Add a skill...">
+                    </div>
+                    <button class="add-skill-btn" onclick="addSkill()">Add</button>
+                </div>
+                <div id="skills-preview" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+            
+            <div class="control-section">
+                <h3>Certificate Type</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="badge-select">Badge Type</label>
+                        <select id="badge-select" onchange="updateBadge()">
+                            <option value="TOP PERFORMER">Top Performer</option>
+                            <option value="DISTINCTION">Distinction</option>
+                            <option value="HONORS">With Honors</option>
+                            <option value="CERTIFIED">Certified</option>
+                            <option value="none">No Badge</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="theme-select">Color Theme</label>
+                        <select id="theme-select" onchange="updateTheme()">
+                            <option value="blue">Coursera Blue</option>
+                            <option value="green">Professional Green</option>
+                            <option value="purple">Academic Purple</option>
+                            <option value="red">Corporate Red</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="updateCertificate()">Update Certificate</button>
+            
+            <div class="action-buttons">
+                <button class="print-button" onclick="printCertificate()">Print Certificate</button>
+                <button class="download-button" onclick="downloadAsPDF()">Download as PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize skills from the default skills in HTML
+        let skills = ["Python Programming", "Data Analysis", "Machine Learning", "Neural Networks", "Data Visualization"];
+        
+        // Update skills preview on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSkillsPreview();
+        });
+        
+        function addSkill() {
+            const skillInput = document.getElementById('skill-input');
+            const skillValue = skillInput.value.trim();
+            
+            if (skillValue && !skills.includes(skillValue)) {
+                skills.push(skillValue);
+                updateSkillsPreview();
+                skillInput.value = '';
+                
+                // Also update the certificate if we're adding skills
+                updateSkillsList();
+            }
+        }
+        
+        function removeSkill(skill) {
+            skills = skills.filter(s => s !== skill);
+            updateSkillsPreview();
+            updateSkillsList();
+        }
+        
+        function updateSkillsPreview() {
+            const preview = document.getElementById('skills-preview');
+            preview.innerHTML = '';
+            
+            skills.forEach(skill => {
+                const tag = document.createElement('div');
+                tag.className = 'skill-tag';
+                tag.style.position = 'relative';
+                tag.style.paddingRight = '25px';
+                
+                const text = document.createTextNode(skill);
+                tag.appendChild(text);
+                
+                const removeBtn = document.createElement('span');
+                removeBtn.innerHTML = '×';
+                removeBtn.style.position = 'absolute';
+                removeBtn.style.right = '8px';
+                removeBtn.style.top = '50%';
+                removeBtn.style.transform = 'translateY(-50%)';
+                removeBtn.style.cursor = 'pointer';
+                removeBtn.style.fontWeight = 'bold';
+                removeBtn.onclick = function() { removeSkill(skill); };
+                
+                tag.appendChild(removeBtn);
+                preview.appendChild(tag);
+            });
+        }
+        
+        function updateSkillsList() {
+            const skillsList = document.getElementById('skills-list');
+            skillsList.innerHTML = '';
+            
+            skills.forEach(skill => {
+                const tag = document.createElement('div');
+                tag.className = 'skill-tag';
+                tag.textContent = skill;
+                skillsList.appendChild(tag);
+            });
+        }
+        
+        function updateBadge() {
+            const badgeValue = document.getElementById('badge-select').value;
+            const badge = document.querySelector('.badge');
+            
+            if (badgeValue === 'none') {
+                badge.style.display = 'none';
+            } else {
+                badge.style.display = 'flex';
+                document.querySelector('.badge-text').textContent = badgeValue;
+            }
+        }
+        
+        function updateTheme() {
+            const theme = document.getElementById('theme-select').value;
+            const root = document.documentElement;
+            
+            switch(theme) {
+                case 'green':
+                    root.style.setProperty('--primary-color', '#2E7D32');
+                    root.style.setProperty('--accent-color', '#388E3C');
+                    break;
+                case 'purple':
+                    root.style.setProperty('--primary-color', '#6A1B9A');
+                    root.style.setProperty('--accent-color', '#8E24AA');
+                    break;
+                case 'red':
+                root.style.setProperty('--primary-color', '#C62828');
+    root.style.setProperty('--accent-color', '#D32F2F');
+    break;
+default:
+    root.style.setProperty('--primary-color', '#0056D2');
+    root.style.setProperty('--accent-color', '#2A73CC');
+}
+}
+
+function updateCertificate() {
+    // Update recipient information
+    document.getElementById('recipient').textContent = document.getElementById('name-input').value;
+    document.getElementById('achievement-text').textContent = document.getElementById('text-input').value;
+    document.getElementById('cert-date').textContent = document.getElementById('date-input').value;
+    
+    // Update course details
+    document.getElementById('course-name').textContent = document.getElementById('course-input').value;
+    document.getElementById('instructor').textContent = document.getElementById('instructor-input').value;
+    document.getElementById('duration').textContent = document.getElementById('duration-input').value;
+    document.getElementById('grade').textContent = document.getElementById('grade-input').value;
+    
+    // Update skills - already handled by updateSkillsList
+    updateSkillsList();
+    
+    // Show celebration animation
+    createConfetti();
+}
+
+function createConfetti() {
+    const colors = ['#0056D2', '#2A73CC', '#F2C94C', '#5E97F6', '#C5CAE9'];
+    const confettiCount = 100;
+    
+    for (let i = 0; i < confettiCount; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.width = Math.random() * 10 + 5 + 'px';
+            confetti.style.height = Math.random() * 10 + 5 + 'px';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+            
+            document.body.appendChild(confetti);
+            
+            // Remove confetti after animation completes
+            setTimeout(() => {
+                confetti.remove();
+            }, 5000);
+        }, i * 20);
+    }
+}
+
+function printCertificate() {
+    window.print();
+}
+
+function downloadAsPDF() {
+    // Alert for demonstration purposes
+    alert("In a production environment, this would convert the certificate to PDF using a library like html2pdf.js");
+    
+    // Create a visual feedback for the user
+    const downloadBtn = document.querySelector('.download-button');
+    const originalText = downloadBtn.textContent;
+    downloadBtn.textContent = "Preparing Download...";
+    
+    setTimeout(() => {
+        downloadBtn.textContent = originalText;
+    }, 2000);
+}
+
+// Initialize with random verification code
+document.addEventListener('DOMContentLoaded', function() {
+    const verificationElement = document.querySelector('.verification-code');
+    const randomCode = generateRandomCode(12);
+    verificationElement.textContent = `learn.platform.com/verify/${randomCode}`;
+});
+
+function generateRandomCode(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
+</script>
+</body>
+</html>

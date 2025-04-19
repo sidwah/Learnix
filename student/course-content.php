@@ -1,5 +1,5 @@
 <?php
-// course-content.php
+// student/course-content.php
 ob_start();
 
 // Start session if not already started
@@ -634,6 +634,39 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     $stmt->bind_param("di", $completed_percentage, $enrollment_id);
     $stmt->execute();
 
+    // Check if course is now 100% complete
+if ($completed_percentage >= 100) {
+    // Include certificate and badge handlers
+    require_once '../backend/certificates/CertificateHandler.php';
+    require_once '../backend/badges/BadgeHandler.php';
+    
+    // Generate certificate
+    $certificateHandler = new CertificateHandler();
+    $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
+    
+    // Award course completion badge
+    $badgeHandler = new BadgeHandler();
+    $badgeResult = $badgeHandler->awardCourseBadge($user_id, $course_id);
+    
+    // Store results for notification
+    $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
+    $_SESSION['badge_awarded'] = $badgeResult['success'] ?? false;
+    $_SESSION['completion_notification'] = true;
+}
+// Check if section is now completed
+if ($remaining_topics == 0) {
+    // Include badge handler if not already included
+    if (!class_exists('BadgeHandler')) {
+        require_once '../backend/badges/BadgeHandler.php';
+    }
+    
+    // Award section completion badge
+    $badgeHandler = new BadgeHandler();
+    $sectionBadgeResult = $badgeHandler->awardSectionBadge($user_id, $course_id, $section_id);
+    
+    // Store result for notification
+    $_SESSION['section_badge_awarded'] = $sectionBadgeResult['success'] ?? false;
+}
     // Check if this section has any more uncompleted topics
     $remaining_topics_query = "SELECT COUNT(*) as remaining_count
                               FROM section_topics st
@@ -1384,6 +1417,60 @@ function getLinkDisplay($topic)
         <!-- End Row -->
     </div>
     <!-- End Content -->
+
+    <!-- Add this inside the toast HTML -->
+<?php if (isset($_SESSION['completion_notification']) && $_SESSION['completion_notification']): ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the toast element
+        const toast = document.getElementById('liveToast');
+        const toastHeader = toast.querySelector('.toast-header h5');
+        const toastBody = toast.querySelector('.toast-body');
+        
+        <?php if (isset($_SESSION['certificate_generated']) && $_SESSION['certificate_generated']): ?>
+            // Show certificate notification
+            toastHeader.textContent = "Congratulations!";
+            toastBody.innerHTML = "You've earned a certificate for completing this course! <a href='my-certifications.php'>View your certificates</a>";
+            
+            // Show the toast
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['badge_awarded']) && $_SESSION['badge_awarded']): ?>
+            // Show badge notification after small delay
+            setTimeout(function() {
+                toastHeader.textContent = "Badge Earned!";
+                toastBody.innerHTML = "You've earned a course completion badge! <a href='my-badges.php'>View your badges</a>";
+                
+                // Show the toast
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+            }, 3000); // 3 second delay after certificate notification
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['section_badge_awarded']) && $_SESSION['section_badge_awarded']): ?>
+            // Show section badge notification
+            setTimeout(function() {
+                toastHeader.textContent = "Section Badge Earned!";
+                toastBody.innerHTML = "You've earned a section completion badge! <a href='my-badges.php'>View your badges</a>";
+                
+                // Show the toast
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+            }, 1500);
+        <?php endif; ?>
+    });
+    </script>
+    
+    <?php 
+    // Clear notifications after displaying them
+    unset($_SESSION['completion_notification']);
+    unset($_SESSION['certificate_generated']);
+    unset($_SESSION['badge_awarded']);
+    unset($_SESSION['section_badge_awarded']);
+    ?>
+<?php endif; ?>
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 <?php

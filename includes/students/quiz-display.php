@@ -140,9 +140,9 @@ if ($attemptCount > 0) {
 }
 
 // Determine if student can take the quiz
-$canTakeQuiz = ($quiz['attempts_allowed'] > $attemptCount || $quiz['attempts_allowed'] == 0) && !$cooldownActive;
-$attemptsRemaining = $quiz['attempts_allowed'] == 0 ? 'Unlimited' : ($quiz['attempts_allowed'] - $attemptCount);
-
+// Determine if student can take the quiz - only check cooldown
+$canTakeQuiz = !$cooldownActive;
+$attemptsRemaining = $quiz['attempts_allowed'] == 0 ? 'Unlimited' : max(1, $quiz['attempts_allowed'] - $attemptCount);
 
 // Process quiz state
 $quizState = 'intro';
@@ -150,8 +150,8 @@ if ($activeSession && !$activeSession['is_completed']) {
     $quizState = 'resume';
 } elseif (isset($_GET['attempt_id']) && isset($_GET['view']) && $_GET['view'] == 'results') {
     $quizState = 'results';
-} elseif ((!$canTakeQuiz && $attemptCount > 0) || $cooldownActive) {
-    // Either cooldown is active or all attempts used up
+} elseif ($cooldownActive) {
+    // Only show completed state when cooldown is active
     $quizState = 'completed';
 }
 ?>
@@ -489,11 +489,13 @@ if ($activeSession && !$activeSession['is_completed']) {
                                     <?php endif; ?>
                                 </p>
 
-                                <?php if ($attemptCount > 0 && $canTakeQuiz): ?>
-                                    <p class="mb-0 small text-muted">
-                                        You have <?php echo $attemptsRemaining; ?> attempt(s) remaining
-                                    </p>
-                                <?php endif; ?>
+                                <p class="mb-0 small text-muted">
+    <?php if ($cooldownActive): ?>
+        Quiz available after cooldown
+    <?php else: ?>
+        You can retake this quiz
+    <?php endif; ?>
+</p>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -665,18 +667,14 @@ if ($activeSession && !$activeSession['is_completed']) {
         <div class="quiz-card-body">
             <div class="alert alert-<?php echo $hasPassed ? 'success' : 'warning'; ?> mb-4">
                 <i class="bi bi-<?php echo $hasPassed ? 'check-circle' : 'exclamation-circle'; ?> me-2"></i>
-                <?php if ($hasPassed): ?>
-                    <strong>Congratulations!</strong> You have successfully passed this quiz with a score of <?php echo number_format($highestScore, 1); ?>%.
-                <?php elseif ($cooldownActive): ?>
-                    You're in the cooldown period for this quiz. Your highest score was <?php echo number_format($highestScore, 1); ?>%.
-                    <div class="mt-2">
-                        <p class="mb-1">You can attempt again in: <span class="cooldown-timer fw-bold" data-available-time="<?php echo $nextAttemptAvailable->format('c'); ?>"><?php echo $cooldownTimeRemaining; ?></span></p>
-                    </div>
-                <?php elseif ($quiz['attempts_allowed'] > 0 && $attemptCount >= $quiz['attempts_allowed']): ?>
-                    You have used all available attempts for this quiz. Your highest score was <?php echo number_format($highestScore, 1); ?>%.
-                <?php else: ?>
-                    Your highest score was <?php echo number_format($highestScore, 1); ?>%. You can try this quiz again when the cooldown period ends.
-                <?php endif; ?>
+                <?php if ($cooldownActive): ?>
+    <strong>Cooldown Period Active</strong>. Your highest score was <?php echo number_format($highestScore, 1); ?>%.
+    <div class="mt-2">
+        <p class="mb-1">You can attempt this quiz again in: <span class="cooldown-timer fw-bold" data-available-time="<?php echo $nextAttemptAvailable->format('c'); ?>"><?php echo $cooldownTimeRemaining; ?></span></p>
+    </div>
+<?php else: ?>
+    Your highest score was <?php echo number_format($highestScore, 1); ?>%. You can attempt this quiz again.
+<?php endif; ?>
             </div>
 
                     <div class="d-flex gap-3 mt-4">

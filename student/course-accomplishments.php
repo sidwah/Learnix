@@ -82,7 +82,7 @@
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a class="nav-link" href="student-certifications.php">
+                      <a class="nav-link" href="my-certifications.php">
                         <i class="bi-award nav-icon"></i> Certifications
                       </a>
                     </li>

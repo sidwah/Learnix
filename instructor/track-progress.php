@@ -172,15 +172,19 @@ function formatDate($dateString) {
 }
 
 // Format time duration
-function formatDuration($minutes) {
-    if (!$minutes) return '0 min';
+function formatDuration($seconds) {
+    if (!$seconds) return '0 sec';
     
-    if ($minutes < 60) {
-        return $minutes . ' min';
+    if ($seconds < 60) {
+        return $seconds . ' sec';
+    } else if ($seconds < 3600) {
+        $minutes = floor($seconds / 60);
+        $secs = $seconds % 60;
+        return $minutes . 'm ' . $secs . 's';
     } else {
-        $hours = floor($minutes / 60);
-        $min = $minutes % 60;
-        return $hours . 'h ' . $min . 'm';
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        return $hours . 'h ' . $minutes . 'm';
     }
 }
 
@@ -740,6 +744,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
 
     <!-- Loading overlay -->
     <script>
+        
         // Show Loading Overlay
         function showOverlay(message = null) {
             // Remove any existing overlay
@@ -890,87 +895,112 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
             <?php endif; ?>
             
             // View quiz results button click
-            $('.view-results').on('click', function() {
-                const quizId = $(this).data('quiz-id');
-                const quizTitle = $(this).data('quiz-title');
-                const studentId = $(this).data('student-id');
+           // View quiz results button click
+$('.view-results').on('click', function() {
+    const quizId = $(this).data('quiz-id');
+    const quizTitle = $(this).data('quiz-title');
+    const studentId = $(this).data('student-id');
+    
+    
+    // Reset modal
+    $('#quiz-results-loading').removeClass('d-none');
+    $('#quiz-results-content').addClass('d-none');
+    $('#quiz-results-error').addClass('d-none');
+    
+    // Set quiz title in modal
+    $('#modal-quiz-title').text(quizTitle);
+    
+    // Load real quiz data via AJAX
+    $.ajax({
+        url: '../ajax/instructors/get-quiz-details.php',
+        method: 'GET',
+        data: { quiz_id: quizId, student_id: studentId },
+        dataType: 'json',
+        success: function(data) {
+            if (data.success) {
+                // Fill in real data
+                $('#modal-course-title').text(data.course_title);
+                $('#modal-highest-score').text(data.highest_score + '%');
+                $('#modal-avg-score').text(data.avg_score + '%');
+                $('#modal-attempts').text(data.attempts);
                 
-                // Reset modal
-                $('#quiz-results-loading').removeClass('d-none');
-                $('#quiz-results-content').addClass('d-none');
-                $('#quiz-results-error').addClass('d-none');
+                // Format time using the same function as PHP side
+                function formatDuration(seconds) {
+                    if (!seconds) return '0 sec';
+                    
+                    if (seconds < 60) {
+                        return seconds + ' sec';
+                    } else if (seconds < 3600) {
+                        const minutes = Math.floor(seconds / 60);
+                        const secs = seconds % 60;
+                        return minutes + 'm ' + secs + 's';
+                    } else {
+                        const hours = Math.floor(seconds / 3600);
+                        const minutes = Math.floor((seconds % 3600) / 60);
+                        return hours + 'h ' + minutes + 'm';
+                    }
+                }
                 
-                // Set quiz title in modal
-                $('#modal-quiz-title').text(quizTitle);
+                // Render attempts table
+                let attemptsHtml = '';
+                data.attempts_list.forEach(attempt => {
+                    attemptsHtml += `
+                        <tr>
+                            <td>${attempt.attempt_number}</td>
+                            <td>${attempt.formatted_date}</td>
+                            <td>${attempt.score}%</td>
+                            <td>${formatDuration(attempt.time_spent)}</td>
+                            <td><span class="badge bg-${attempt.status === 'Passed' ? 'success' : 'danger'}">${attempt.status}</span></td>
+                        </tr>
+                    `;
+                });
+                $('#quiz-attempts-tbody').html(attemptsHtml);
                 
-                // Simulate loading quiz results
-                setTimeout(function() {
-                    // In a real implementation, you would fetch this data from an AJAX endpoint
-                    const mockAttempts = [
-                        { attempt_number: 3, date: '<?php echo date('Y-m-d H:i:s', strtotime('-2 days')); ?>', score: 92.5, time_spent: 15, status: 'Passed' },
-                        { attempt_number: 2, date: '<?php echo date('Y-m-d H:i:s', strtotime('-5 days')); ?>', score: 78.0, time_spent: 12, status: 'Passed' },
-                        { attempt_number: 1, date: '<?php echo date('Y-m-d H:i:s', strtotime('-7 days')); ?>', score: 65.0, time_spent: 20, status: 'Failed' }
-                    ];
-                    
-                    const mockQuestions = [
-                        { question: 'What is the capital of France?', type: 'Multiple Choice', correct: 3, incorrect: 0, success_rate: 100 },
-                        { question: 'Name two programming languages.', type: 'Short Answer', correct: 2, incorrect: 1, success_rate: 67 },
-                        { question: 'Explain the difference between HTML and CSS.', type: 'Essay', correct: 1, incorrect: 2, success_rate: 33 },
-                        { question: 'Match the following terms with their definitions.', type: 'Matching', correct: 2, incorrect: 1, success_rate: 67 }
-                    ];
-                    
-                    // Fill in mock data
-                    $('#modal-course-title').text('Web Development Fundamentals');
-                    $('#modal-highest-score').text('92.5%');
-                    $('#modal-avg-score').text('78.5%');
-                    $('#modal-attempts').text('3');
-                    
-                    // Render attempts table
-                    let attemptsHtml = '';
-                    mockAttempts.forEach(attempt => {
-                        attemptsHtml += `
-                            <tr>
-                                <td>${attempt.attempt_number}</td>
-                                <td>${new Date(attempt.date).toLocaleString()}</td>
-                                <td>${attempt.score}%</td>
-                                <td>${attempt.time_spent} min</td>
-                                <td><span class="badge bg-${attempt.status === 'Passed' ? 'success' : 'danger'}">${attempt.status}</span></td>
-                            </tr>
-                        `;
-                    });
-                    $('#quiz-attempts-tbody').html(attemptsHtml);
-                    
-                    // Render questions table
-                    let questionsHtml = '';
-                    mockQuestions.forEach(question => {
-                        questionsHtml += `
-                            <tr>
-                                <td>${question.question}</td>
-                                <td>${question.type}</td>
-                                <td>${question.correct}</td>
-                                <td>${question.incorrect}</td>
-                                <td>
-                                    <div class="progress" style="height: 5px;">
-                                        <div class="progress-bar bg-${question.success_rate < 50 ? 'danger' : (question.success_rate < 75 ? 'warning' : 'success')}" 
-                                             role="progressbar" 
-                                             style="width: ${question.success_rate}%;"
-                                             aria-valuenow="${question.success_rate}"
-                                             aria-valuemin="0" 
-                                             aria-valuemax="100"></div>
-                                    </div>
-                                    <small class="mt-1 d-block text-center">${question.success_rate}%</small>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    $('#questions-tbody').html(questionsHtml);
-                    
-                    // Show content
-                    $('#quiz-results-loading').addClass('d-none');
-                    $('#quiz-results-content').removeClass('d-none');
-                }, 1000);
-            });
-            
+                // Render questions table
+                let questionsHtml = '';
+                data.questions.forEach(question => {
+                    questionsHtml += `
+                        <tr>
+                            <td>${question.question_text}</td>
+                            <td>${question.question_type}</td>
+                            <td>${question.correct_responses}</td>
+                            <td>${question.incorrect_responses}</td>
+                            <td>
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar bg-${question.success_rate < 50 ? 'danger' : (question.success_rate < 75 ? 'warning' : 'success')}" 
+                                         role="progressbar" 
+                                         style="width: ${question.success_rate}%;"
+                                         aria-valuenow="${question.success_rate}"
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100"></div>
+                                </div>
+                                <small class="mt-1 d-block text-center">${question.success_rate}%</small>
+                            </td>
+                        </tr>
+                    `;
+                });
+                $('#questions-tbody').html(questionsHtml);
+                
+                // Show content
+                $('#quiz-results-loading').addClass('d-none');
+                $('#quiz-results-content').removeClass('d-none');
+            } else {
+                // Show error
+                $('#quiz-results-loading').addClass('d-none');
+                $('#quiz-results-error').removeClass('d-none');
+                $('#quiz-results-error').text('Error: ' + data.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            // Show error
+            $('#quiz-results-loading').addClass('d-none');
+            $('#quiz-results-error').removeClass('d-none');
+            $('#quiz-results-error').text('Error loading quiz data. Please try again.');
+            console.error('AJAX Error:', status, error);
+        }
+    });
+});
+
             // Export modal results
             $('#export-modal-results').on('click', function() {
                 showAlert('success', 'Quiz results exported successfully!');

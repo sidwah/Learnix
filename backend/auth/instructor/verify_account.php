@@ -250,7 +250,7 @@ function sendWelcomeEmail($email, $firstName) {
                 <p>Thank you for joining Learnix as an instructor. Your account has been successfully verified and you can now start creating and publishing courses.</p>
                 
                 <div class="button-container">
-                    <a href="https://learnix.com/instructor/dashboard" class="button">Go to Your Dashboard</a>
+                    <a href="http://localhost:8888/Learnix/instructor/dashboard" class="button">Go to Your Dashboard</a>
                 </div>
                 
                 <div class="next-steps">
