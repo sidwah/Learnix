@@ -508,24 +508,52 @@ if ($total_items > 0) {
     $section_percentage = round(($completed_items / $total_items) * 100);
 }
 
-// Calculate course progress for the progress bar
+// Calculate course progress for the progress bar - now including quizzes
 $course_progress_query = "SELECT 
                          COUNT(DISTINCT CASE WHEN p.completion_status = 'Completed' THEN st.topic_id END) as completed_topics,
-                         COUNT(DISTINCT st.topic_id) as total_topics
+                         COUNT(DISTINCT st.topic_id) as total_topics,
+                         (SELECT COUNT(DISTINCT sq.quiz_id) 
+                          FROM section_quizzes sq 
+                          JOIN course_sections cs2 ON sq.section_id = cs2.section_id
+                          WHERE cs2.course_id = ?) as total_quizzes,
+                         (SELECT COUNT(DISTINCT sq.quiz_id) 
+                          FROM section_quizzes sq 
+                          JOIN course_sections cs2 ON sq.section_id = cs2.section_id
+                          LEFT JOIN (
+                              SELECT quiz_id, MAX(score) as score, MAX(passed) as passed
+                              FROM student_quiz_attempts
+                              WHERE user_id = ?
+                              GROUP BY quiz_id
+                          ) sqa ON sq.quiz_id = sqa.quiz_id
+                          WHERE cs2.course_id = ? AND sqa.passed = 1) as passed_quizzes
                          FROM course_sections cs
                          JOIN section_topics st ON cs.section_id = st.section_id
                          LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
                          WHERE cs.course_id = ?";
+
 $stmt = $conn->prepare($course_progress_query);
-$stmt->bind_param("ii", $enrollment_id, $course_id);
+$stmt->bind_param("iiiii", $course_id, $user_id, $course_id, $enrollment_id, $course_id);
 $stmt->execute();
 $course_progress_result = $stmt->get_result();
 $course_progress = $course_progress_result->fetch_assoc();
 
 $course_percentage = 0;
-if ($course_progress['total_topics'] > 0) {
-    $course_percentage = round(($course_progress['completed_topics'] / $course_progress['total_topics']) * 100);
+$total_items = $course_progress['total_topics'] + $course_progress['total_quizzes'];
+$completed_items = $course_progress['completed_topics'] + $course_progress['passed_quizzes'];
+
+if ($total_items > 0) {
+    $course_percentage = round(($completed_items / $total_items) * 100);
 }
+
+// Update the completion percentage in enrollments table
+$update_enrollment = "UPDATE enrollments 
+                    SET completion_percentage = ?, 
+                        last_accessed = NOW()
+                    WHERE enrollment_id = ?";
+$stmt = $conn->prepare($update_enrollment);
+$stmt->bind_param("di", $course_percentage, $enrollment_id);
+$stmt->execute();
+
 
 // Helper function to get content type icon
 function getContentTypeIcon($content_type)
@@ -634,25 +662,63 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     $stmt->bind_param("di", $completed_percentage, $enrollment_id);
     $stmt->execute();
 
-    // Check if course is now 100% complete
+// Check if course is now 100% complete
 if ($completed_percentage >= 100) {
-    // Include certificate and badge handlers
-    require_once '../backend/certificates/CertificateHandler.php';
-    require_once '../backend/badges/BadgeHandler.php';
+    // Check if all quizzes have been passed
+    $quiz_check_query = "SELECT 
+                        COUNT(sq.quiz_id) as total_quizzes,
+                        COUNT(CASE WHEN sqa.score >= sq.pass_mark THEN 1 END) as passed_quizzes
+                       FROM section_quizzes sq
+                       JOIN course_sections cs ON sq.section_id = cs.section_id
+                       LEFT JOIN (
+                           SELECT quiz_id, MAX(score) as score, MAX(passed) as passed
+                           FROM student_quiz_attempts
+                           WHERE user_id = ?
+                           GROUP BY quiz_id
+                       ) sqa ON sq.quiz_id = sqa.quiz_id
+                       WHERE cs.course_id = ?";
+    $stmt = $conn->prepare($quiz_check_query);
+    $stmt->bind_param("ii", $user_id, $course_id);
+    $stmt->execute();
+    $quiz_result = $stmt->get_result();
+    $quiz_data = $quiz_result->fetch_assoc();
     
-    // Generate certificate
-    $certificateHandler = new CertificateHandler();
-    $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
+    $all_requirements_met = true;
     
-    // Award course completion badge
-    $badgeHandler = new BadgeHandler();
-    $badgeResult = $badgeHandler->awardCourseBadge($user_id, $course_id);
+    // Check if all quizzes were passed
+    if ($quiz_data['total_quizzes'] > 0 && $quiz_data['passed_quizzes'] < $quiz_data['total_quizzes']) {
+        $all_requirements_met = false;
+    }
     
-    // Store results for notification
-    $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
-    $_SESSION['badge_awarded'] = $badgeResult['success'] ?? false;
-    $_SESSION['completion_notification'] = true;
+    // Check if there are any other completion requirements (e.g., assignments)
+    // You can add additional checks here for other requirements
+    
+    // Only proceed with certificate and badge if all requirements are met
+    if ($all_requirements_met) {
+        // Include certificate and badge handlers
+        require_once '../backend/certificates/CertificateHandler.php';
+        require_once '../backend/badges/BadgeHandler.php';
+        
+        // Generate certificate
+        $certificateHandler = new CertificateHandler();
+        $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
+        
+        // Award course completion badge
+        $badgeHandler = new BadgeHandler();
+        $badgeResult = $badgeHandler->awardCourseBadge($user_id, $course_id);
+        
+        // Store results for notification
+        $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
+        $_SESSION['badge_awarded'] = $badgeResult['success'] ?? false;
+        $_SESSION['completion_notification'] = true;
+    } else {
+        // Store a notification that course is not fully complete
+        $_SESSION['incomplete_requirements'] = true;
+        $_SESSION['quizzes_remaining'] = $quiz_data['total_quizzes'] - $quiz_data['passed_quizzes'];
+    }
 }
+
+
 // Check if section is now completed
 if ($remaining_topics == 0) {
     // Include badge handler if not already included
@@ -989,6 +1055,35 @@ function getLinkDisplay($topic)
 </div>
 <!-- End Toast -->
 
+<?php
+// Add this to the existing toast notification section (around line 1360) to handle incomplete requirements notification
+
+// Add condition for incomplete requirements notification
+if (isset($_SESSION['incomplete_requirements']) && $_SESSION['incomplete_requirements']): ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the toast element
+        const toast = document.getElementById('liveToast');
+        const toastHeader = toast.querySelector('.toast-header h5');
+        const toastBody = toast.querySelector('.toast-body');
+        
+        // Update toast content
+        toastHeader.textContent = "Course Progress Update";
+        toastBody.innerHTML = "You've completed all topics, but still need to <?php echo $_SESSION['quizzes_remaining'] > 0 ? 'pass ' . $_SESSION['quizzes_remaining'] . ' quiz(es)' : 'complete some requirements'; ?> to fully complete this course.";
+        
+        // Show the toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+    });
+    </script>
+    
+    <?php 
+    // Clear notifications after displaying them
+    unset($_SESSION['incomplete_requirements']);
+    unset($_SESSION['quizzes_remaining']);
+    ?>
+<?php endif; ?>
+
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Breadcrumb -->
@@ -1120,6 +1215,87 @@ function getLinkDisplay($topic)
                             </li>
                         </ul>
                     </div>
+                    // Get the course requirements
+$quiz_requirements_query = "SELECT 
+                          COUNT(sq.quiz_id) as total_quizzes,
+                          COUNT(CASE WHEN sqa.score >= sq.pass_mark THEN 1 END) as passed_quizzes
+                          FROM section_quizzes sq
+                          JOIN course_sections cs ON sq.section_id = cs.section_id
+                          LEFT JOIN (
+                              SELECT quiz_id, MAX(score) as score, MAX(passed) as passed
+                              FROM student_quiz_attempts
+                              WHERE user_id = ?
+                              GROUP BY quiz_id
+                          ) sqa ON sq.quiz_id = sqa.quiz_id
+                          WHERE cs.course_id = ?";
+$stmt = $conn->prepare($quiz_requirements_query);
+$stmt->bind_param("ii", $user_id, $course_id);
+$stmt->execute();
+$quiz_requirements_result = $stmt->get_result();
+$quiz_requirements = $quiz_requirements_result->fetch_assoc();
+
+$topics_requirements_query = "SELECT 
+                           COUNT(DISTINCT st.topic_id) as total_topics,
+                           COUNT(DISTINCT CASE WHEN p.completion_status = 'Completed' THEN st.topic_id END) as completed_topics
+                           FROM course_sections cs
+                           JOIN section_topics st ON cs.section_id = st.section_id
+                           LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
+                           WHERE cs.course_id = ?";
+$stmt = $conn->prepare($topics_requirements_query);
+$stmt->bind_param("ii", $enrollment_id, $course_id);
+$stmt->execute();
+$topics_requirements_result = $stmt->get_result();
+$topics_requirements = $topics_requirements_result->fetch_assoc();
+
+// Calculate if all requirements are met
+$all_topics_completed = $topics_requirements['completed_topics'] == $topics_requirements['total_topics'];
+$all_quizzes_passed = $quiz_requirements['passed_quizzes'] == $quiz_requirements['total_quizzes'];
+$all_requirements_met = $all_topics_completed && $all_quizzes_passed;
+?>
+
+<div class="d-none d-md-block mb-7">
+    <h4 class="mb-3">Completion Requirements</h4>
+    <ul class="navbar-nav nav nav-vertical nav-tabs nav-tabs-borderless nav-sm">
+        <li class="nav-item">
+            <span class="nav-subtitle">Course Content</span>
+        </li>
+        <li class="nav-item d-flex justify-content-between align-items-center">
+            <span>Complete All Topics</span>
+            <?php if ($all_topics_completed): ?>
+                <i class="bi bi-check-circle-fill text-success"></i>
+            <?php else: ?>
+                <span class="badge bg-secondary"><?php echo $topics_requirements['completed_topics']; ?>/<?php echo $topics_requirements['total_topics']; ?></span>
+            <?php endif; ?>
+        </li>
+        
+        <?php if ($quiz_requirements['total_quizzes'] > 0): ?>
+        <li class="nav-item d-flex justify-content-between align-items-center">
+            <span>Pass All Quizzes</span>
+            <?php if ($all_quizzes_passed): ?>
+                <i class="bi bi-check-circle-fill text-success"></i>
+            <?php else: ?>
+                <span class="badge bg-secondary"><?php echo $quiz_requirements['passed_quizzes']; ?>/<?php echo $quiz_requirements['total_quizzes']; ?></span>
+            <?php endif; ?>
+        </li>
+        <?php endif; ?>
+        
+        <!-- Add more requirements here if needed -->
+        
+        <li class="nav-item my-1 my-lg-2"></li>
+        
+        <li class="nav-item">
+            <span class="nav-subtitle">Certification Status</span>
+        </li>
+        <li class="nav-item d-flex justify-content-between align-items-center">
+            <span>All Requirements Met</span>
+            <?php if ($all_requirements_met): ?>
+                <i class="bi bi-check-circle-fill text-success"></i>
+            <?php else: ?>
+                <i class="bi bi-x-circle-fill text-danger"></i>
+            <?php endif; ?>
+        </li>
+    </ul>
+</div>
 
 
 

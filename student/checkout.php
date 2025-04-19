@@ -100,7 +100,7 @@ $formatted_price = number_format($course_price, 2);
 
 // Get course level text and badge color
 $level_badge_color = "primary";
-switch($course['course_level']) {
+switch ($course['course_level']) {
     case 'Beginner':
         $level_badge_color = "success";
         break;
@@ -119,20 +119,21 @@ $review_count = 124; // Example count
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Checkout - <?php echo $course_title; ?> | Learnix</title>
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
-    
+
     <!-- Include your existing CSS -->
-    
+
     <!-- Stripe JS -->
     <script src="https://js.stripe.com/v3/"></script>
-    
+
     <!-- Custom CSS for enhanced checkout -->
     <style>
         :root {
@@ -143,31 +144,31 @@ $review_count = 124; // Example count
             --dark-bg: #343a40;
             --success-color: #28a745;
         }
-        
+
         body {
             background-color: #f8f9fa;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        
+
         .checkout-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 30px 15px;
         }
-        
+
         .checkout-card {
             border: none;
             border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             overflow: hidden;
         }
-        
+
         .checkout-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
         }
-        
+
         .card-header {
             border-bottom: none;
             background: linear-gradient(135deg, var(--primary-color) 0%, #5f85e5 100%);
@@ -175,19 +176,19 @@ $review_count = 124; // Example count
             font-weight: 600;
             padding: 20px 25px;
         }
-        
+
         .summary-card {
             position: sticky;
             top: 20px;
         }
-        
+
         .course-image-container {
             position: relative;
             overflow: hidden;
             border-radius: 10px;
             margin-bottom: 20px;
         }
-        
+
         .course-image {
             width: 100%;
             height: 180px;
@@ -195,11 +196,11 @@ $review_count = 124; // Example count
             transform: scale(1);
             transition: transform 0.4s;
         }
-        
+
         .course-image:hover {
             transform: scale(1.05);
         }
-        
+
         .secure-badge {
             display: flex;
             align-items: center;
@@ -211,7 +212,7 @@ $review_count = 124; // Example count
             color: #3a66db;
             font-size: 14px;
         }
-        
+
         .guarantee-badge {
             display: flex;
             align-items: center;
@@ -223,7 +224,7 @@ $review_count = 124; // Example count
             color: #28a745;
             font-size: 14px;
         }
-        
+
         .checkout-btn {
             font-weight: 600;
             letter-spacing: 0.5px;
@@ -234,39 +235,39 @@ $review_count = 124; // Example count
             border: none;
             box-shadow: 0 4px 10px rgba(58, 102, 219, 0.25);
         }
-        
+
         .checkout-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(58, 102, 219, 0.35);
             background: linear-gradient(135deg, #3a66db 0%, #4372e8 100%);
         }
-        
+
         .course-details {
             padding: 20px;
             background-color: #f8f9fa;
             border-radius: 10px;
             margin-bottom: 20px;
         }
-        
+
         .course-meta {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
             margin-bottom: 15px;
         }
-        
+
         .course-meta-item {
             display: flex;
             align-items: center;
             font-size: 14px;
             color: #6c757d;
         }
-        
+
         .course-meta-item i {
             margin-right: 5px;
             color: var(--primary-color);
         }
-        
+
         .payment-method-selector {
             display: flex;
             margin-bottom: 20px;
@@ -274,7 +275,7 @@ $review_count = 124; // Example count
             overflow: hidden;
             border: 1px solid #dee2e6;
         }
-        
+
         .payment-method-option {
             flex: 1;
             text-align: center;
@@ -284,22 +285,22 @@ $review_count = 124; // Example count
             font-weight: 500;
             transition: all 0.2s;
         }
-        
+
         .payment-method-option.active {
             background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             color: var(--primary-color);
             border-bottom: 2px solid var(--primary-color);
         }
-        
+
         .payment-method-option:hover:not(.active) {
             background-color: #f1f3f5;
         }
-        
+
         .input-icon-group {
             position: relative;
         }
-        
+
         .input-icon-group i {
             position: absolute;
             left: 15px;
@@ -307,11 +308,11 @@ $review_count = 124; // Example count
             transform: translateY(-50%);
             color: #adb5bd;
         }
-        
+
         .input-icon-group input {
             padding-left: 40px;
         }
-        
+
         #card-element {
             padding: 15px;
             border: 1px solid #dee2e6;
@@ -319,17 +320,17 @@ $review_count = 124; // Example count
             background-color: white;
             transition: all 0.2s;
         }
-        
+
         #card-element:focus {
             box-shadow: 0 0 0 3px rgba(58, 102, 219, 0.15);
             border-color: var(--primary-color);
             outline: none;
         }
-        
+
         .form-floating>label {
             padding-left: 40px;
         }
-        
+
         .discount-badge {
             position: absolute;
             top: 10px;
@@ -341,20 +342,20 @@ $review_count = 124; // Example count
             font-weight: bold;
             z-index: 1;
         }
-        
+
         .checkout-progress {
             display: flex;
             margin-bottom: 30px;
             justify-content: space-between;
         }
-        
+
         .checkout-step {
             flex: 1;
             text-align: center;
             padding: 10px;
             position: relative;
         }
-        
+
         .checkout-step::after {
             content: '';
             position: absolute;
@@ -365,11 +366,11 @@ $review_count = 124; // Example count
             background-color: #dee2e6;
             z-index: 0;
         }
-        
+
         .checkout-step:last-child::after {
             display: none;
         }
-        
+
         .step-number {
             width: 30px;
             height: 30px;
@@ -383,31 +384,31 @@ $review_count = 124; // Example count
             position: relative;
             z-index: 1;
         }
-        
+
         .checkout-step.active .step-number {
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         .checkout-step.completed .step-number {
             background-color: var(--success-color);
             color: white;
         }
-        
+
         .step-label {
             font-size: 14px;
             color: #6c757d;
         }
-        
+
         .checkout-step.active .step-label {
             color: var(--primary-color);
             font-weight: 600;
         }
-        
+
         .checkout-step.completed .step-label {
             color: var(--success-color);
         }
-        
+
         .promo-banner {
             background: linear-gradient(135deg, #4a66d9 0%, #5d85f3 100%);
             border-radius: 10px;
@@ -418,9 +419,9 @@ $review_count = 124; // Example count
             align-items: center;
             gap: 15px;
         }
-        
+
         .promo-banner-icon {
-            background-color: rgba(255,255,255,0.2);
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -429,31 +430,31 @@ $review_count = 124; // Example count
             justify-content: center;
             font-size: 20px;
         }
-        
+
         .promo-banner-text {
             flex: 1;
             font-size: 14px;
         }
-        
+
         .promo-banner-title {
             font-weight: bold;
             margin-bottom: 3px;
         }
-        
+
         .counter-container {
             display: flex;
             align-items: center;
             gap: 5px;
             margin-top: 5px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             padding: 5px;
             border-radius: 5px;
             justify-content: center;
             width: fit-content;
         }
-        
+
         .counter-box {
-            background: rgba(0,0,0,0.1);
+            background: rgba(0, 0, 0, 0.1);
             border-radius: 3px;
             padding: 2px 5px;
             font-size: 12px;
@@ -461,24 +462,32 @@ $review_count = 124; // Example count
             min-width: 20px;
             text-align: center;
         }
-        
+
         /* Animation */
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(58, 102, 219, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(58, 102, 219, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(58, 102, 219, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(58, 102, 219, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(58, 102, 219, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(58, 102, 219, 0);
+            }
         }
-        
+
         .pulse-animation {
             animation: pulse 2s infinite;
         }
-        
+
         /* Mobile responsiveness */
         @media (max-width: 767px) {
             .checkout-progress {
                 display: none;
             }
-            
+
             .course-meta {
                 flex-direction: column;
                 gap: 10px;
@@ -512,7 +521,7 @@ $review_count = 124; // Example count
                 <div class="alert alert-danger d-flex align-items-center" role="alert">
                     <i class="bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
                     <div>
-                        <?php 
+                        <?php
                         echo $_SESSION['error_message'];
                         unset($_SESSION['error_message']);
                         ?>
@@ -541,7 +550,7 @@ $review_count = 124; // Example count
             <div class="row g-4">
                 <div class="col-lg-8 mb-4 mb-lg-0">
                     <h1 class="mb-4">Complete your purchase</h1>
-                    
+
                     <!-- Special Offer Banner -->
                     <div class="promo-banner mb-4">
                         <div class="promo-banner-icon">
@@ -557,7 +566,7 @@ $review_count = 124; // Example count
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Course Details Overview -->
                     <div class="course-details mb-4">
                         <div class="course-meta">
@@ -579,17 +588,14 @@ $review_count = 124; // Example count
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Payment Method Selection -->
                     <div class="payment-method-selector mb-4">
                         <div class="payment-method-option active" data-method="card">
                             <i class="bi-credit-card me-2"></i> Credit Card
                         </div>
-                        <div class="payment-method-option" data-method="paypal">
-                            <i class="bi-paypal me-2"></i> PayPal
-                        </div>
                     </div>
-                    
+
                     <!-- Payment Form -->
                     <div class="checkout-card mb-4" id="card-payment-form">
                         <div class="card-header">
@@ -598,29 +604,29 @@ $review_count = 124; // Example count
                         <div class="card-body p-4">
                             <form action="../backend/student/process-payment.php" method="post" id="payment-form">
                                 <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
-                                
+
                                 <!-- Name -->
                                 <div class="mb-4">
                                     <label class="form-label" for="cardName">Name on card</label>
                                     <div class="input-icon-group">
                                         <i class="bi-person"></i>
-                                        <input type="text" class="form-control form-control-lg" id="cardName" name="cardName" 
-                                               placeholder="John Smith" required 
-                                               value="<?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>">
+                                        <input type="text" class="form-control form-control-lg" id="cardName" name="cardName"
+                                            placeholder="John Smith" required
+                                            value="<?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>">
                                     </div>
                                 </div>
-                                
+
                                 <!-- Email -->
                                 <div class="mb-4">
                                     <label class="form-label" for="email">Email (for receipt)</label>
                                     <div class="input-icon-group">
                                         <i class="bi-envelope"></i>
-                                        <input type="email" class="form-control form-control-lg" id="email" name="email" 
-                                               placeholder="email@example.com" required 
-                                               value="<?php echo htmlspecialchars($user['email']); ?>" readonly>
+                                        <input type="email" class="form-control form-control-lg" id="email" name="email"
+                                            placeholder="email@example.com" required
+                                            value="<?php echo htmlspecialchars($user['email']); ?>" readonly>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Stripe Elements placeholder -->
                                 <div class="mb-4">
                                     <label class="form-label" for="card-element">Card details</label>
@@ -630,7 +636,7 @@ $review_count = 124; // Example count
                                     <!-- Used to display form errors. -->
                                     <div id="card-errors" role="alert" class="text-danger mt-2"></div>
                                 </div>
-                                
+
                                 <!-- <div class="form-check mb-4">
                                     <input class="form-check-input" type="checkbox" id="saveCard" name="saveCard">
                                     <label class="form-check-label" for="saveCard">
@@ -638,9 +644,9 @@ $review_count = 124; // Example count
                                     </label>
                                 </div> -->
                                 <button type="submit" class="btn checkout-btn btn-lg w-100 pulse-animation text-white" id="submit-button">
-    <i class="bi-lock-fill me-2"></i> Pay Securely ₵<?php echo $formatted_price; ?>
-</button>
-                                
+                                    <i class="bi-lock-fill me-2"></i> Pay Securely ₵<?php echo $formatted_price; ?>
+                                </button>
+
                                 <div class="secure-badge">
                                     <i class="bi-shield-lock-fill me-2"></i> Your payment information is securely processed through Stripe
                                 </div>
@@ -648,7 +654,7 @@ $review_count = 124; // Example count
                         </div>
                     </div>
                     <!-- End Payment Form -->
-                    
+
                     <!-- PayPal Form (hidden by default) -->
                     <div class="checkout-card mb-4" id="paypal-payment-form" style="display: none;">
                         <div class="card-header">
@@ -661,20 +667,20 @@ $review_count = 124; // Example count
                             </button>
                         </div>
                     </div>
-                    
+
                     <div class="guarantee-badge">
-                        <i class="bi-shield-check me-2"></i> 
+                        <i class="bi-shield-check me-2"></i>
                         30-day money-back guarantee. Full refund if you're not satisfied.
                     </div>
                 </div>
-                
+
                 <!-- Order Summary -->
                 <div class="col-lg-4">
                     <div class="checkout-card summary-card">
                         <div class="card-header">
                             <h4 class="card-header-title m-0">Order Summary</h4>
                         </div>
-                        
+
                         <div class="card-body p-4">
                             <!-- Course Image -->
                             <div class="course-image-container">
@@ -683,7 +689,7 @@ $review_count = 124; // Example count
                                     <div class="discount-badge">20% OFF</div>
                                 <?php endif; ?>
                             </div>
-                            
+
                             <div class="mb-4">
                                 <h5 class="mb-1"><?php echo $course_title; ?></h5>
                                 <p class="text-muted mb-2">
@@ -700,9 +706,9 @@ $review_count = 124; // Example count
                                     <span class="small text-muted">(<?php echo $review_count; ?> reviews)</span>
                                 </div>
                             </div>
-                            
+
                             <hr>
-                            
+
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>Original price</span>
@@ -713,7 +719,7 @@ $review_count = 124; // Example count
                                     <span>₵<?php echo $formatted_price; ?></span>
                                 </div>
                             </div>
-                            
+
                             <!-- Coupon Code Input -->
                             <div class="mb-4">
                                 <div class="input-group">
@@ -721,14 +727,14 @@ $review_count = 124; // Example count
                                     <button class="btn btn-outline-primary" type="button">Apply</button>
                                 </div>
                             </div>
-                            
+
                             <hr>
-                            
+
                             <div class="d-flex justify-content-between mb-4">
                                 <span class="h5 mb-0">Total</span>
                                 <span class="h5 mb-0 text-primary">₵<?php echo $formatted_price; ?></span>
                             </div>
-                            
+
                             <!-- What you get -->
                             <div class="mb-4">
                                 <h6 class="mb-3">What you get:</h6>
@@ -755,10 +761,10 @@ $review_count = 124; // Example count
                                     </li>
                                 </ul>
                             </div>
-                            
+
                             <div class="small text-muted">
-                                By completing your purchase you agree to our 
-                                <a href="#">Terms of Service</a> and 
+                                By completing your purchase you agree to our
+                                <a href="#">Terms of Service</a> and
                                 <a href="#">Privacy Policy</a>
                             </div>
                         </div>
@@ -775,10 +781,10 @@ $review_count = 124; // Example count
     <script>
         // Create a Stripe client.
         var stripe = Stripe('<?php echo STRIPE_PUBLISHABLE_KEY; ?>');
-        
+
         // Create an instance of Elements.
         var elements = stripe.elements();
-        
+
         // Custom styling
         var style = {
             base: {
@@ -801,16 +807,16 @@ $review_count = 124; // Example count
                 }
             }
         };
-        
+
         // Create an instance of the card Element.
         var card = elements.create('card', {
             style: style,
             hidePostalCode: false
         });
-        
+
         // Add an instance of the card Element into the `card-element` div.
         card.mount('#card-element');
-        
+
         // Handle real-time validation errors from the card Element.
         card.on('change', function(event) {
             var displayError = document.getElementById('card-errors');
@@ -820,16 +826,16 @@ $review_count = 124; // Example count
                 displayError.textContent = '';
             }
         });
-        
+
         // Handle form submission.
         var form = document.getElementById('payment-form');
         form.addEventListener('submit', function(event) {
             event.preventDefault();
-            
+
             // Disable the submit button to prevent repeated clicks
             document.getElementById('submit-button').disabled = true;
             document.getElementById('submit-button').innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
-            
+
             stripe.createToken(card).then(function(result) {
                 if (result.error) {
                     // Inform the user if there was an error.
@@ -843,7 +849,7 @@ $review_count = 124; // Example count
                 }
             });
         });
-        
+
         // Submit the form with the token ID.
         function stripeTokenHandler(token) {
             // Insert the token ID into the form so it gets submitted to the server
@@ -853,11 +859,11 @@ $review_count = 124; // Example count
             hiddenInput.setAttribute('name', 'stripeToken');
             hiddenInput.setAttribute('value', token.id);
             form.appendChild(hiddenInput);
-            
+
             // Submit the form
             form.submit();
         }
-        
+
         // Payment method selector
         document.querySelectorAll('.payment-method-option').forEach(function(option) {
             option.addEventListener('click', function() {
@@ -865,10 +871,10 @@ $review_count = 124; // Example count
                 document.querySelectorAll('.payment-method-option').forEach(function(opt) {
                     opt.classList.remove('active');
                 });
-                
+
                 // Add active class to clicked option
                 this.classList.add('active');
-                
+
                 // Show/hide payment forms based on selection
                 var method = this.getAttribute('data-method');
                 if (method === 'card') {
@@ -880,42 +886,72 @@ $review_count = 124; // Example count
                 }
             });
         });
-        
-        // Countdown timer
-        function updateCountdown() {
-            var hours = document.querySelector('.counter-box:nth-child(1)');
-            var minutes = document.querySelector('.counter-box:nth-child(3)');
-            var seconds = document.querySelector('.counter-box:nth-child(5)');
-            
-            var h = parseInt(hours.textContent);
-            var m = parseInt(minutes.textContent);
-            var s = parseInt(seconds.textContent);
-            
-            s--;
-            
-            if (s < 0) {
-                s = 59;
-                m--;
-                
-                if (m < 0) {
-                    m = 59;
-                    h--;
-                    
-                    if (h < 0) {
-                        h = 23;
-                    }
-                }
+
+        // Countdown timer with localStorage persistence
+        function initializeCountdown() {
+            // Check if we already have an end time saved
+            let endTime = localStorage.getItem('promoEndTime');
+
+            // If no end time is saved, or it has already passed, set a new one (24 hours from now)
+            if (!endTime || new Date(parseInt(endTime)) <= new Date()) {
+                endTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 hours from now
+                localStorage.setItem('promoEndTime', endTime);
             }
-            
+
+            // Start the countdown
+            updateCountdown(endTime);
+        }
+
+        function updateCountdown(endTime) {
+            // Get the counter elements
+            const counterBoxes = document.querySelectorAll('.counter-container .counter-box');
+
+            // Check if we have the right number of elements
+            if (counterBoxes.length !== 3) {
+                console.log("Expected 3 counter boxes, found " + counterBoxes.length);
+                return;
+            }
+
+            const hours = counterBoxes[0];
+            const minutes = counterBoxes[1];
+            const seconds = counterBoxes[2];
+
+            // Calculate remaining time
+            const now = new Date().getTime();
+            const distance = parseInt(endTime) - now;
+
+            // Time calculations
+            let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            let s = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // If countdown is finished
+            if (distance < 0) {
+                // Reset for a new countdown or handle expiration
+                localStorage.removeItem('promoEndTime');
+                hours.textContent = "00";
+                minutes.textContent = "00";
+                seconds.textContent = "00";
+
+                // You could also hide the promo banner or show an "expired" message
+                // document.querySelector('.promo-banner').style.display = 'none';
+
+                return;
+            }
+
+            // Display the time
             hours.textContent = h.toString().padStart(2, '0');
             minutes.textContent = m.toString().padStart(2, '0');
             seconds.textContent = s.toString().padStart(2, '0');
-            
-            setTimeout(updateCountdown, 1000);
+
+            // Update every second
+            setTimeout(() => updateCountdown(endTime), 1000);
         }
-        
-        // Start the countdown when the page loads
-        updateCountdown();
+
+        // Make sure DOM is fully loaded before starting the countdown
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCountdown();
+        });
     </script>
 
-<?php include '../includes/student-footer.php'; ?>
+    <?php include '../includes/student-footer.php'; ?>

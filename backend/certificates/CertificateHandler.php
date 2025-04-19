@@ -40,8 +40,8 @@ class CertificateHandler {
         }
         
         // Generate certificate
-$result = $this->certificateGenerator->generateCertificate($user_id, $course_id, $enrollment_id);
-$certificate_id = $result['success'] ? $result['certificate_id'] : false;        
+        $result = $this->certificateGenerator->generateCertificate($user_id, $course_id, $enrollment_id);
+        $certificate_id = $result['success'] ? $result['certificate_id'] : false;        
         if (!$certificate_id) {
             return [
                 'success' => false,

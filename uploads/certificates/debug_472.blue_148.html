@@ -71,11 +71,6 @@
             border-radius: 3px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        .qr-code img {
-            width: 100px;
-            height: auto;
-        }
         
         .certificate-header {
             margin-top: 40px;
@@ -205,46 +200,37 @@
             height: 120px;
         }
         
-       
         .seal-circle {
-            width: 100px;
-            height: 100px;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
-            background: radial-gradient(circle, #fef3c7, #facc15);
+            background: radial-gradient(circle, var(--gold-color) 0%, #E5B93D 70%);
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: inset 0 0 10px #d4af37, 0 0 15px rgba(0, 0, 0, 0.2);
-            border: 5px double #bfa52f;
-            font-family: 'Georgia', serif;
-            margin: 30px auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            position: relative;
         }
-
-        .seal-border {
-            width: 90%;
-            height: 90%;
+        
+        .seal-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .seal-inner {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            border: 2px dashed #7c6a0a;
+            background-color: white;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 24px;
+            color: var(--primary-color);
         }
-
-        .seal-inner-text .seal-top,
-        .seal-inner-text .seal-bottom {
-            font-size: 8px;
-            text-transform: uppercase;
-            color: #4c4304;
-            font-weight: bold;
-        }
-
-        .seal-icon {
-            font-size: 28px;
-            margin: 4px 0;
-        }
-
 
         @media print {
             body {
@@ -262,12 +248,12 @@
         <div class="certificate" id="certificate">
             <div class="logo">
                 <!-- Favicon can be inserted here -->
-                <img src="favicon.ico" alt="Learnix Logo">
+                <img src="../../favicon.ico" alt="Learnix Logo">
             </div>
             
             <div class="qr-code">
                 <!-- QR code will be generated and placed here -->
-                <img src="{{qr_code_path}}" alt="Verification QR Code">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM0AAADNCAIAAACU3mM+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEqklEQVR4nO3dwY6sOBBFwenR/P8v9+xZWEJOH+C9iG1XgUt9ZTmBxD+/v7//wGH/Pj0A/gpyRkHOKMgZBTmjIGcU5IyCnFGQMwpyRkHOKMgZBTmjIGcU5IyCnFGQMwpyRkHOKPy38+Wfn5+pcaytmxguwxjseDj3Awd/0Uv+C2vmMwpyRkHOKMgZha064CJbgN9a+WZr+Z3F++XDO0d+ZxlkPqMgZxTkjIKcUZisAy5urSJvrV7Xy+T1eW+daGcBPlis7Cztz/0XbjGfUZAzCnJGQc4oHKwDzrm1an6qStg51K0TfYL5jIKcUZAzCnJG4ZN1wM4jN7f+unPktZ37H19kPqMgZxTkjIKcUThYB5xbvQ5eHx8sCy5u3ZY41wj9khrCfEZBzijIGQU5ozBZB2Qvrhm0c7dg8H7AucrmJcxnFOSMgpxRkDMKPy+5XnzOuXdwPnUf4ov/MvMZBTmjIGcU5IzCVh0weOl559r64JF3qoRzl/jXwzh3S2NwzOYzCnJGQc4oyBmFt9QBF1kL7sXOQnhwkE/dLTh3ZPMZBTmjIGcU5IzCVn/AuWvNO1fe13Y28FoP49Zfb41qbbDH2P4BfJucUZAzCnJGYasOOPcIys4eAE81yg52Hqy/O7jwz3YmMJ9RkDMKckZBzih07wsaXJ8OPuM/uGPw4JbIO3bqrXPMZxTkjIKcUZAzCl1/wM5aPntePnu06ZZzZVDWeWA+oyBnFOSMgpxRmOwPuDhXJQw69/6cc/0Bg5udrXlfEB8jZxTkjIKcUZjsD7jYWa4Obsa7c6LB72Zv6Fx7ahjmMwpyRkHOKMgZhcnngl7ygqCnhjH4QE72E24Ncof5jIKcUZAzCnJG4WAdsPPh9Xcvzq2L14cafJYp64fQH8CfTM4oyBkFOaOwVQdcj3Ws9ffcmzJvDXL94bXBboms49r9AD5GzijIGQU5o3DwfUHnrmKvnVvbvmS34cETDZ53zXxGQc4oyBkFOaMweT9g0FObYWVP4t861K0j6w/g7yVnFOSMgpxR6PoD1t+9eOpBoLXsbaZPrfT1B/BtckZBzijIGYXufUEXWVPxuXXxxVOX2l/SRL1mPqMgZxTkjIKcUdjaP+CWc5twrb+bvdb/qX7dc60Vg8xnFOSMgpxRkDMKXR2wdm7z4ZdskLAe1bk9gdfnXRu8h2E+oyBnFOSMgpxReGmf8NpL+gPeed7BYagD+Bg5oyBnFOSMwtb9gHf2zV4+nF15v3XzYLAv4SUvRl0zn1GQMwpyRkHOKEw+F/SSLckGH9e5NaodT73GJ9tWzHxGQc4oyBkFOaNwsD/gXIdqtr/u4DAGK4x37hS2Zj6jIGcU5IyCnFF4S5/woHNlwa37EGsvuWlx6/fuMJ9RkDMKckZBzij8gXXAxc7ifacsGPxrtjGD/gC+Tc4oyBkFOaNwsA7IHkF5ybX1WyfKyoK1cwv/C/MZBTmjIGcU5IzCZB2QvT7oIrsCvvOI0a0PD5YFtx71cT+Ab5MzCnJGQc4ofHL/AD7HfEZBzijIGQU5oyBnFOSMgpxRkDMKckZBzijIGQU5oyBnFOSMgpxRkDMKckZBzijIGYX/AT4mSaXekG+IAAAAAElFTkSuQmCC" alt="Verification QR Code">
             </div>
             
             <div class="certificate-header">
@@ -281,42 +267,37 @@
                 <div class="line"></div>
             </div>
             
-            <h1 class="recipient-name">{{student_name}}</h1>
+            <h1 class="recipient-name">472 blue</h1>
             
             <div class="certificate-text">
                 has successfully completed all requirements and demonstrated proficiency in the following course.
             </div>
             
             <div class="course-details">
-                <div class="course-name">{{course_title}}</div>
+                <div class="course-name">Mastering Productivity: Build Better Habits and Achieve More</div>
                 
                 <div class="course-info">
                     <div class="info-item">
                         <div class="info-label">Completion Date</div>
-                        <div class="info-value">{{completion_date}}</div>
+                        <div class="info-value">April 19, 2025</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">Course ID</div>
-                        <div class="info-value">{{course_id}}</div>
+                        <div class="info-value">148</div>
                     </div>
                 </div>
             </div>
             
             <div class="verification">
-                Verify this certificate at <span class="verification-code">learnix.com/verify/{{verification_code}}</span>
+                Verify this certificate at <span class="verification-code">learnix.com/verify/AF303BCD680369BF</span>
             </div>
             
-            <div class="certificate-date">Issued on {{issue_date}}</div>
+            <div class="certificate-date">Issued on April 19, 2025</div>
             
             <div class="certificate-seal">
                 <div class="seal-circle">
-                    <div class="seal-border">
-                        <div class="seal-inner-text">
-                            <div class="seal-top">Learnix Certificate</div>
-                            <div class="seal-icon">🎓</div>
-                            <div class="seal-bottom">Authentic</div>
-                        </div>
-                    </div>
+                    <div class="seal-text">★ VERIFIED CERTIFICATE ★ LEARNIX LMS ★</div>
+                    <div class="seal-inner">LRX</div>
                 </div>
             </div>
         </div>
