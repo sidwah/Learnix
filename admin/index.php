@@ -24,7 +24,7 @@
             <!-- End Col -->
 
             <div class="col-md-6 col-xl-6">
-                <img class="img-fluid" src="../assets/svg/illustrations/oc-building-apps.svg" alt="Admin Dashboard Image">
+                <img class="img-fluid" src="../assets/svg/illustrations/oc-growing.svg" alt="Admin Dashboard Image">
             </div>
             <!-- End Col -->
         </div>

@@ -8,7 +8,7 @@
             <div class="col-8 col-sm-6 col-md-5 mb-5 mb-sm-0">
                 <img
                     class="img-fluid"
-                    src="../assets/svg/illustrations/oc-growing.svg"
+                    src="../assets/svg/illustrations/oc-collaboration.svg"
                     alt="Image Description" />
             </div>
             <!-- End Col -->
