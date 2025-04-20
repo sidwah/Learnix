@@ -1060,23 +1060,23 @@ function getLinkDisplay($topic)
 <!-- // Add condition for incomplete requirements notification -->
 <?php if (isset($_SESSION['incomplete_requirements']) && $_SESSION['incomplete_requirements']): ?>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get the toast element
-        const toast = document.getElementById('liveToast');
-        const toastHeader = toast.querySelector('.toast-header h5');
-        const toastBody = toast.querySelector('.toast-body');
-        
-        // Update toast content
-        toastHeader.textContent = "Course Progress Update";
-        toastBody.innerHTML = "You've completed all topics, but still need to <?php echo $_SESSION['quizzes_remaining'] > 0 ? 'pass ' . $_SESSION['quizzes_remaining'] . ' quiz(es)' : 'complete some requirements'; ?> to fully complete this course.";
-        
-        // Show the toast
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-    });
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the toast element
+            const toast = document.getElementById('liveToast');
+            const toastHeader = toast.querySelector('.toast-header h5');
+            const toastBody = toast.querySelector('.toast-body');
+
+            // Update toast content
+            toastHeader.textContent = "Course Progress Update";
+            toastBody.innerHTML = "You've completed all topics, but still need to <?php echo $_SESSION['quizzes_remaining'] > 0 ? 'pass ' . $_SESSION['quizzes_remaining'] . ' quiz(es)' : 'complete some requirements'; ?> to fully complete this course.";
+
+            // Show the toast
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        });
     </script>
-    
-    <?php 
+
+    <?php
     // Clear notifications after displaying them
     unset($_SESSION['incomplete_requirements']);
     unset($_SESSION['quizzes_remaining']);
@@ -1215,10 +1215,10 @@ function getLinkDisplay($topic)
                         </ul>
                     </div>
 
-                    
+
                     <?php
-// Get the course requirements
-$quiz_requirements_query = "SELECT
+                    // Get the course requirements
+                    $quiz_requirements_query = "SELECT
                          COUNT(sq.quiz_id) as total_quizzes,
                          COUNT(CASE WHEN sqa.score >= sq.pass_mark THEN 1 END) as passed_quizzes
                          FROM section_quizzes sq
@@ -1230,74 +1230,101 @@ $quiz_requirements_query = "SELECT
                              GROUP BY quiz_id
                          ) sqa ON sq.quiz_id = sqa.quiz_id
                          WHERE cs.course_id = ?";
-$stmt = $conn->prepare($quiz_requirements_query);
-$stmt->bind_param("ii", $user_id, $course_id);
-$stmt->execute();
-$quiz_requirements_result = $stmt->get_result();
-$quiz_requirements = $quiz_requirements_result->fetch_assoc();
+                    $stmt = $conn->prepare($quiz_requirements_query);
+                    $stmt->bind_param("ii", $user_id, $course_id);
+                    $stmt->execute();
+                    $quiz_requirements_result = $stmt->get_result();
+                    $quiz_requirements = $quiz_requirements_result->fetch_assoc();
 
-$topics_requirements_query = "SELECT
+                    $topics_requirements_query = "SELECT
                            COUNT(DISTINCT st.topic_id) as total_topics,
                            COUNT(DISTINCT CASE WHEN p.completion_status = 'Completed' THEN st.topic_id END) as completed_topics
                            FROM course_sections cs
                            JOIN section_topics st ON cs.section_id = st.section_id
                            LEFT JOIN progress p ON st.topic_id = p.topic_id AND p.enrollment_id = ?
                            WHERE cs.course_id = ?";
-$stmt = $conn->prepare($topics_requirements_query);
-$stmt->bind_param("ii", $enrollment_id, $course_id);
-$stmt->execute();
-$topics_requirements_result = $stmt->get_result();
-$topics_requirements = $topics_requirements_result->fetch_assoc();
+                    $stmt = $conn->prepare($topics_requirements_query);
+                    $stmt->bind_param("ii", $enrollment_id, $course_id);
+                    $stmt->execute();
+                    $topics_requirements_result = $stmt->get_result();
+                    $topics_requirements = $topics_requirements_result->fetch_assoc();
 
-// Calculate if all requirements are met
-$all_topics_completed = $topics_requirements['completed_topics'] == $topics_requirements['total_topics'];
-$all_quizzes_passed = $quiz_requirements['passed_quizzes'] == $quiz_requirements['total_quizzes'];
-$all_requirements_met = $all_topics_completed && $all_quizzes_passed;
-?>
+                    // Calculate if all requirements are met
+                    $all_topics_completed = $topics_requirements['completed_topics'] == $topics_requirements['total_topics'];
+                    $all_quizzes_passed = $quiz_requirements['passed_quizzes'] == $quiz_requirements['total_quizzes'];
+                    $all_requirements_met = $all_topics_completed && $all_quizzes_passed;
+                    ?>
 
-<div class="d-none d-md-block mb-7">
-    <h4 class="mb-3">Completion Requirements</h4>
-    <ul class="navbar-nav nav nav-vertical nav-tabs nav-tabs-borderless nav-sm">
-        <li class="nav-item">
-            <span class="nav-subtitle">Course Content</span>
-        </li>
-        <li class="nav-item d-flex justify-content-between align-items-center">
-            <span>Complete All Topics</span>
-            <?php if ($all_topics_completed): ?>
-                <i class="bi bi-check-circle-fill text-success"></i>
-            <?php else: ?>
-                <span class="badge bg-secondary"><?php echo $topics_requirements['completed_topics']; ?>/<?php echo $topics_requirements['total_topics']; ?></span>
-            <?php endif; ?>
-        </li>
+                    <div class="d-none d-md-block mb-7">
+                        <h4 class="mb-3">Completion Requirements</h4>
+                        <ul class="navbar-nav nav nav-vertical nav-tabs nav-tabs-borderless nav-sm">
+                            <li class="nav-item">
+                                <span class="nav-subtitle">Course Content</span>
+                            </li>
+                            <li class="nav-item">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span></span> <!-- Empty span for spacing -->
+                                    <span class="text-muted" style="font-size: 10px;"><?php echo $topics_requirements['completed_topics']; ?>/<?php echo $topics_requirements['total_topics']; ?></span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar <?php echo $all_topics_completed ? 'bg-success' : 'bg-primary'; ?>"
+                                        style="width: <?php echo ($topics_requirements['total_topics'] > 0) ? ($topics_requirements['completed_topics'] / $topics_requirements['total_topics']) * 100 : 0; ?>%">
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="nav-item my-1 my-lg-2"></li>
 
-        <?php if ($quiz_requirements['total_quizzes'] > 0): ?>
-            <li class="nav-item d-flex justify-content-between align-items-center">
-                <span>Pass All Quizzes</span>
-                <?php if ($all_quizzes_passed): ?>
-                    <i class="bi bi-check-circle-fill text-success"></i>
-                <?php else: ?>
-                    <span class="badge bg-secondary"><?php echo $quiz_requirements['passed_quizzes']; ?>/<?php echo $quiz_requirements['total_quizzes']; ?></span>
-                <?php endif; ?>
-            </li>
-        <?php endif; ?>
+                            <?php if ($quiz_requirements['total_quizzes'] > 0): ?>
+                                <li class="nav-item">
+                                    <span class="nav-subtitle">Course Quizzes</span>
+                                </li>
+                                <li class="nav-item">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span></span> <!-- Empty span for spacing -->
+                                        <span class="text-muted" style="font-size: 10px;"><?php echo $quiz_requirements['passed_quizzes']; ?>/<?php echo $quiz_requirements['total_quizzes']; ?></span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar <?php echo $all_quizzes_passed ? 'bg-success' : 'bg-primary'; ?>"
+                                            style="width: <?php echo ($quiz_requirements['total_quizzes'] > 0) ? ($quiz_requirements['passed_quizzes'] / $quiz_requirements['total_quizzes']) * 100 : 0; ?>%">
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="nav-item my-1 my-lg-2"></li>
+                            <?php endif; ?>
 
-        <!-- Add more requirements here if needed -->
+                            <!-- Add more requirements here if needed -->
 
-        <li class="nav-item my-1 my-lg-2"></li>
-
-        <li class="nav-item">
-            <span class="nav-subtitle">Certification Status</span>
-        </li>
-        <li class="nav-item d-flex justify-content-between align-items-center">
-            <span>All Requirements Met</span>
-            <?php if ($all_requirements_met): ?>
-                <i class="bi bi-check-circle-fill text-success"></i>
-            <?php else: ?>
-                <i class="bi bi-x-circle-fill text-danger"></i>
-            <?php endif; ?>
-        </li>
-    </ul>
-</div>
+                            <li class="nav-item">
+                                <span class="nav-subtitle">Certification Status</span>
+                            </li>
+                            <li class="nav-item">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span></span> <!-- Empty span for spacing -->
+                                    <?php
+                                    // Calculate overall completion 
+                                    $total_requirements = $topics_requirements['total_topics'] + $quiz_requirements['total_quizzes'];
+                                    $completed_requirements = $topics_requirements['completed_topics'] + $quiz_requirements['passed_quizzes'];
+                                    ?>
+                                    <span class="text-muted" style="font-size: 10px;"><?php echo $completed_requirements; ?>/<?php echo $total_requirements; ?></span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar <?php echo $all_requirements_met ? 'bg-success' : 'bg-primary'; ?>"
+                                        style="width: <?php echo ($total_requirements > 0) ? ($completed_requirements / $total_requirements) * 100 : 0; ?>%">
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="nav-item mt-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small">All Requirements Met</span>
+                                    <?php if ($all_requirements_met): ?>
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    <?php else: ?>
+                                        <i class="bi bi-x-circle-fill text-danger"></i>
+                                    <?php endif; ?>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
 
 
                     <a class="link-sm link-secondary" href="#">

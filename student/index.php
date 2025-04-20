@@ -219,7 +219,7 @@
                       </h5>
                       <p class="card-text small">Instructor: <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?></p>
                       <div class="d-grid gap-2">
-                        <a href="certificates.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>" class="btn btn-soft-success btn-sm">View Certificate</a>
+                        <a href="my-certifications.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>" class="btn btn-soft-success btn-sm">View Certificate</a>
                         <a href="course-materials.php?course_id=<?php echo htmlspecialchars($course['course_id']); ?>" class="btn btn-outline-secondary btn-sm">Review Course</a>
                       </div>
                     </div>

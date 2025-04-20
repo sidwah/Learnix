@@ -38,7 +38,7 @@ function formatDate($dateString) {
     return $date->format('F j, Y');
 }
 
-include '../includes/signin-header.php';
+include '../includes/student-header.php';
 ?>
 
 <!-- ========== MAIN CONTENT ========== -->

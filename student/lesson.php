@@ -1,4 +1,4 @@
-<?php include '../includes/signin-header.php'; ?>
+<?php include '../includes/student-header.php'; ?>
 
 <!-- Skip navigation for accessibility -->
 <a href="#content" class="visually-hidden-focusable p-3 bg-white text-primary position-absolute">Skip to main content</a>

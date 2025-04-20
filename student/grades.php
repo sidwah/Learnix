@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Include header
-include '../includes/signin-header.php';
+include '../includes/student-header.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {

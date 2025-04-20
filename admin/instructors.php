@@ -91,7 +91,7 @@
             <div class="col-sm-6 col-lg-3">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h6 class="card-subtitle mb-2">Banned Instructors</h6>
+                        <h6 class="card-subtitle mb-2">Deleted Instructors</h6>
                         <div class="row align-items-center">
                             <div class="col">
                                 <h2 class="card-title text-inherit" id="bannedInstructors">0</h2>
@@ -124,7 +124,7 @@
                         <option value="all">All Status</option>
                         <option value="active">Active</option>
                         <option value="suspended">Suspended</option>
-                        <option value="banned">Banned</option>
+                        <option value="banned">Deleted</option>
                     </select>
                     <select id="verifiedFilter" class="form-select form-select-sm me-2">
                         <option value="all">All Verification</option>
@@ -460,7 +460,7 @@
                                     <div class="form-check mb-3" id="banRadioContainer">
                                         <input class="form-check-input" type="radio" name="statusAction" id="banRadio" value="banned">
                                         <label class="form-check-label text-danger" for="banRadio">
-                                            Ban Account
+                                            Delete Account
                                         </label>
                                     </div>
                                     <div id="actionReasonField" class="mb-3 d-none">
@@ -593,7 +593,7 @@
                                     statusBadge = `<span class="badge bg-warning">Suspended</span>`;
                                     break;
                                 case "banned":
-                                    statusBadge = `<span class="badge bg-danger">Banned</span>`;
+                                    statusBadge = `<span class="badge bg-danger">Deleted</span>`;
                                     break;
                             }
 
@@ -613,7 +613,7 @@
                                 statusDropdown += `<a href="#" class="status-action change-status" data-id="${instructor.id}" data-status="suspended">Suspend Account</a>`;
                             }
                             if (instructor.status !== "banned") {
-                                statusDropdown += `<a href="#" class="status-action change-status" data-id="${instructor.id}" data-status="banned">Ban Account</a>`;
+                                statusDropdown += `<a href="#" class="status-action change-status" data-id="${instructor.id}" data-status="banned">Delete Account</a>`;
                             }
 
                             statusDropdown += `

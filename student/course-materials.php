@@ -9,6 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Include header
 include '../includes/student-header.php';
+include '../includes/toast.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -423,7 +424,7 @@ if ($certificate_enabled) {
         <!-- End Row -->
     </div>
     <!-- End Breadcrumb -->
-  
+
     <div class="container py-5">
         <div class="row">
             <!-- Left Sidebar -->
@@ -623,204 +624,283 @@ if ($certificate_enabled) {
             <!-- Main Content -->
             <div class="col-lg-8">
             <?php
-    // Get quiz completion status if not already done
-    if (!isset($quiz_requirements)) {
-        require_once '../includes/helpers/course-progress-helpers.php';
-        $quiz_requirements = checkQuizzesCompleted($user_id, $course_id, $conn);
-    }
+// Get quiz completion status if not already done
+if (!isset($quiz_requirements)) {
+    require_once '../includes/helpers/course-progress-helpers.php';
+    $quiz_requirements = checkQuizzesCompleted($user_id, $course_id, $conn);
+}
 
-    // If there are failed quizzes and course is almost complete
-    if (!$quiz_requirements['all_passed'] && $completed_percentage >= 90) {
-        $failedQuizCount = count($quiz_requirements['failed_quizzes']);
-    ?>
-        <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
-            <div class="d-flex">
-                <div class="flex-shrink-0">
-                    <i class="bi-exclamation-triangle fs-2 me-3"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h5>Almost There!</h5>
-                    <p>
-                        You're making great progress, but you still need to pass
-                        <?php echo $failedQuizCount; ?> quiz<?php echo $failedQuizCount > 1 ? 'zes' : ''; ?>
-                        to complete this course and earn your certificate.
-                    </p>
-
-                    <?php if ($failedQuizCount <= 3): ?>
-                        <div class="mt-2">
-                            <p class="mb-2">Quizzes to complete:</p>
-                            <ul class="mb-0">
-                                <?php foreach ($quiz_requirements['failed_quizzes'] as $quiz): ?>
-                                    <li>
-                                        <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>">
-                                            <?php echo htmlspecialchars($quiz['quiz_title']); ?>
-                                        </a>
-                                        <small class="text-muted">(Section: <?php echo htmlspecialchars($quiz['section_title']); ?>)</small>
-
-                                        <?php if ($quiz['highest_score'] > 0): ?>
-                                            <span class="badge bg-danger ms-2">Score: <?php echo $quiz['highest_score']; ?>% (Required: <?php echo $quiz['pass_mark']; ?>%)</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-secondary ms-2">Not attempted</span>
-                                        <?php endif; ?>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+// If there are failed quizzes and course is almost complete
+if (!$quiz_requirements['all_passed'] && $completed_percentage >= 90) {
+    $failedQuizCount = count($quiz_requirements['failed_quizzes']);
+    
+    // Store failed quiz HTML to insert into toast via JavaScript
+    ob_start();
+?>
+    <div class="d-flex">
+        <div class="flex-shrink-0">
+            <i class="bi-trophy-fill fs-3 me-2 text-warning"></i>
         </div>
-    <?php
-    }
-    ?>
-                <!-- Assessment Items -->
+        <div class="flex-grow-1">
+            <h6 class="mb-1 fw-bold">Almost There!</h6>
+            <p class="small mb-2">Complete <?php echo $failedQuizCount; ?> more quiz<?php echo $failedQuizCount > 1 ? 'zes' : ''; ?> to earn your certificate.</p>
+
+            <?php if ($failedQuizCount <= 3): ?>
+                <div class="bg-light rounded-2 overflow-hidden">
+                    <?php foreach ($quiz_requirements['failed_quizzes'] as $index => $quiz): ?>
+                        <div class="d-flex justify-content-between align-items-center px-2 py-1 <?php echo $index % 2 == 0 ? 'bg-light' : 'bg-white'; ?> border-bottom small">
+                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="text-decoration-none text-truncate me-2">
+                                <?php echo htmlspecialchars($quiz['quiz_title']); ?>
+                            </a>
+                            <?php if ($quiz['highest_score'] > 0): ?>
+                                <span class="badge rounded-pill bg-danger bg-opacity-75" style="min-width: 40px;">
+                                    <?php echo $quiz['highest_score']; ?>%
+                                </span>
+                            <?php else: ?>
+                                <span class="badge rounded-pill bg-secondary bg-opacity-50">New</span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php
+    $toastContent = ob_get_clean();
+    
+    // Convert PHP content to JavaScript-safe string
+    $jsContent = str_replace(["\r", "\n"], '', $toastContent);
+    $jsContent = str_replace("'", "\\'", $jsContent);
+?>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Get toast elements
+    const toast = document.getElementById("liveToast");
+    const toastBody = toast.querySelector(".toast-body");
+    
+    // Update toast header with soft warning background
+    const toastHeader = toast.querySelector(".toast-header");
+    toastHeader.classList.add("bg-warning", "bg-opacity-10");
+    
+    // Add a subtle left border to indicate status
+    toast.classList.add("border-start", "border-3", "border-warning");
+    
+    // Update toast title
+    const toastTitle = toast.querySelector(".toast-header h5");
+    toastTitle.textContent = "Quiz Alert";
+    
+    // Update toast content
+    toastBody.innerHTML = '<?php echo $jsContent; ?>';
+    
+    // Adjust toast size - wider but not too wide
+    toast.style.maxWidth = "380px";
+    toast.style.width = "380px";
+    
+    // Initialize and show the toast
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: false
+    });
+    bsToast.show();
+});
+</script>
+
+<?php
+}
+?>
+                <!-- Final Module Assessment Card -->
                 <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-white">
-                        <button class="btn btn-link text-decoration-none text-dark p-0 d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#endOfCourseCollapse" aria-expanded="true" aria-controls="endOfCourseCollapse">
-                            <span class="me-2">
-                                <i class="bi bi-caret-down-fill"></i>
-                            </span>
-                            <h5 class=" fw-bold">Final Module Assessment</h5>
+                    <div class="card-header bg-white py-2">
+                        <button class="btn btn-link text-decoration-none text-dark p-0 d-flex align-items-center w-100"
+                            type="button" data-bs-toggle="collapse" data-bs-target="#endOfCourseCollapse"
+                            aria-expanded="true" aria-controls="endOfCourseCollapse">
+                            <div class="d-flex align-items-center justify-content-between w-100">
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2">
+                                        <i class="bi bi-trophy-fill text-primary"></i>
+                                    </span>
+                                    <h5 class="fw-bold mb-0 fs-6">Final Module Assessment</h5>
+                                </div>
+                                <i class="bi bi-chevron-down small"></i>
+                            </div>
                         </button>
                     </div>
+
                     <div class="collapse show" id="endOfCourseCollapse">
-                        <div class="card-body">
-                            <!-- Progress Stats -->
-                            <div class="d-flex flex-wrap text-muted small">
-                                <?php if ($video_count > 0): ?>
-                                    <div class="me-4">
-                                        <i class="bi bi-camera-video me-1"></i>
-                                        <span><?php echo $video_count; ?> video<?php echo $video_count > 1 ? 's' : ''; ?> left</span>
-                                    </div>
-                                <?php endif; ?>
-
-                                <?php if ($reading_count > 0): ?>
-                                    <div class="me-4">
-                                        <i class="bi bi-book me-1"></i>
-                                        <span><?php echo $reading_count; ?> reading<?php echo $reading_count > 1 ? 's' : ''; ?> left</span>
-                                    </div>
-                                <?php endif; ?>
-
-                                <?php if ($quiz_count > 0): ?>
-                                    <div>
-                                        <i class="bi bi-clipboard-check me-1"></i>
-                                        <span><?php echo $quiz_count; ?> graded assessment<?php echo $quiz_count > 1 ? 's' : ''; ?> left</span>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Description -->
-                            <!-- <p>In the final module, you'll synthesize the skills you gained from the course to create a practical project. After completing the individual units in this module, you will be able to take the final assessment and reflect on your learning journey.</p> -->
-                            <!-- Add this card component to show course completion requirements -->
-                            <div class="card border-0 shadow-sm mb-4">
-                                <div class="card-header">
-                                    <h5 class="card-header-title">Course Completion Requirements</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <h6>Progress</h6>
-                                            <ul class="list-group list-group-flush mb-4">
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <i class="bi bi-book me-2"></i> Complete All Topics
-                                                        <div class="text-muted small"><?php echo $requirements['topics_status']['completed_topics']; ?> of <?php echo $requirements['topics_status']['total_topics']; ?> topics</div>
-                                                    </div>
-                                                    <?php if ($all_topics_completed): ?>
-                                                        <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
-                                                    <?php else: ?>
-                                                        <span class="badge bg-secondary rounded-pill"><?php echo round(($requirements['topics_status']['completed_topics'] / $requirements['topics_status']['total_topics']) * 100); ?>%</span>
-                                                    <?php endif; ?>
-                                                </li>
-
-                                                <?php if ($quiz_requirements['total_quizzes'] > 0): ?>
-                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <i class="bi bi-question-circle me-2"></i> Pass All Quizzes
-                                                            <div class="text-muted small"><?php echo $quiz_requirements['passed_quizzes']; ?> of <?php echo $quiz_requirements['total_quizzes']; ?> quizzes</div>
-                                                        </div>
-                                                        <?php if ($all_quizzes_passed): ?>
-                                                            <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-secondary rounded-pill"><?php echo round(($quiz_requirements['passed_quizzes'] / $quiz_requirements['total_quizzes']) * 100); ?>%</span>
-                                                        <?php endif; ?>
-                                                    </li>
-                                                <?php endif; ?>
-                                            </ul>
+                        <div class="card-body p-3">
+                            <!-- Remaining Content Stats -->
+                            <?php if ($video_count > 0 || $reading_count > 0 || $quiz_count > 0): ?>
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <?php if ($video_count > 0): ?>
+                                        <div class="badge bg-light text-dark py-1 px-2 d-flex align-items-center">
+                                            <i class="bi bi-camera-video text-primary me-1 small"></i>
+                                            <span class="small"><?php echo $video_count; ?> video<?php echo $video_count > 1 ? 's' : ''; ?></span>
                                         </div>
+                                    <?php endif; ?>
 
-                                        <div class="col-md-6">
-                                            <h6>Achievements</h6>
-                                            <ul class="list-group list-group-flush">
-                                                <?php if ($certificate_enabled): ?>
-                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <i class="bi bi-award me-2"></i> Certificate
-                                                            <?php if ($has_certificate): ?>
-                                                                <div class="text-muted small">Certificate earned</div>
-                                                            <?php elseif ($all_requirements_met): ?>
-                                                                <div class="text-muted small">Ready to be awarded</div>
-                                                            <?php else: ?>
-                                                                <div class="text-muted small">Complete all requirements</div>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                        <?php if ($has_certificate): ?>
-                                                            <a href="my-certifications.php" class="btn btn-sm btn-primary">View</a>
-                                                        <?php elseif ($all_requirements_met): ?>
-                                                            <span class="badge bg-success rounded-pill"><i class="bi bi-check-lg"></i></span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-warning rounded-pill"><i class="bi bi-clock"></i></span>
-                                                        <?php endif; ?>
-                                                    </li>
-                                                <?php endif; ?>
-
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <i class="bi bi-trophy me-2"></i> Course Badge
-                                                        <?php if ($all_requirements_met): ?>
-                                                            <div class="text-muted small">Badge earned</div>
-                                                        <?php else: ?>
-                                                            <div class="text-muted small">Complete all requirements</div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <?php if ($all_requirements_met): ?>
-                                                        <a href="my-badges.php" class="btn btn-sm btn-primary">View</a>
-                                                    <?php else: ?>
-                                                        <span class="badge bg-warning rounded-pill"><i class="bi bi-clock"></i></span>
-                                                    <?php endif; ?>
-                                                </li>
-                                            </ul>
+                                    <?php if ($reading_count > 0): ?>
+                                        <div class="badge bg-light text-dark py-1 px-2 d-flex align-items-center">
+                                            <i class="bi bi-book text-primary me-1 small"></i>
+                                            <span class="small"><?php echo $reading_count; ?> reading<?php echo $reading_count > 1 ? 's' : ''; ?></span>
                                         </div>
-                                    </div>
+                                    <?php endif; ?>
 
-                                    <?php if (!$all_requirements_met): ?>
-                                        <div class="alert alert-info mt-3 mb-0">
-                                            <i class="bi bi-info-circle me-2"></i>
-                                            <?php if (!$all_topics_completed && !$all_quizzes_passed): ?>
-                                                Complete all topics and pass all quizzes to earn your certificate and badge.
-                                            <?php elseif (!$all_topics_completed): ?>
-                                                Complete all topics to earn your certificate and badge.
-                                            <?php elseif (!$all_quizzes_passed): ?>
-                                                Pass all quizzes to earn your certificate and badge.
-                                            <?php endif; ?>
+                                    <?php if ($quiz_count > 0): ?>
+                                        <div class="badge bg-light text-dark py-1 px-2 d-flex align-items-center">
+                                            <i class="bi bi-clipboard-check text-primary me-1 small"></i>
+                                            <span class="small"><?php echo $quiz_count; ?> quiz<?php echo $quiz_count > 1 ? 'zes' : ''; ?></span>
                                         </div>
                                     <?php endif; ?>
                                 </div>
+                            <?php endif; ?>
+
+                            <!-- Course Requirements -->
+                            <div class="card border bg-light mb-3">
+                                <div class="card-body p-3">
+                                    <h6 class="fw-bold mb-3 fs-6">Course Completion Requirements</h6>
+
+                                    <div class="row g-3">
+                                        <!-- Progress Column -->
+                                        <div class="col-lg-5">
+                                            <!-- Topics Progress -->
+                                            <div class="mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-book-half text-primary me-2 small"></i>
+                                                        <span class="small fw-semibold">Complete Topics</span>
+                                                    </div>
+                                                    <span class="badge <?php echo $all_topics_completed ? 'bg-success' : 'bg-secondary'; ?> rounded-pill small">
+                                                        <?php echo $requirements['topics_status']['completed_topics']; ?>/<?php echo $requirements['topics_status']['total_topics']; ?>
+                                                    </span>
+                                                </div>
+                                                <div class="progress" style="height: 6px;">
+                                                    <div class="progress-bar <?php echo $all_topics_completed ? 'bg-success' : 'bg-primary'; ?>"
+                                                        role="progressbar"
+                                                        style="width: <?php echo ($requirements['topics_status']['total_topics'] > 0) ? ($requirements['topics_status']['completed_topics'] / $requirements['topics_status']['total_topics']) * 100 : 0; ?>%"
+                                                        aria-valuenow="<?php echo $requirements['topics_status']['completed_topics']; ?>"
+                                                        aria-valuemin="0"
+                                                        aria-valuemax="<?php echo $requirements['topics_status']['total_topics']; ?>">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Quizzes Progress -->
+                                            <?php if ($quiz_requirements['total_quizzes'] > 0): ?>
+                                                <div>
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="bi bi-question-circle text-primary me-2 small"></i>
+                                                            <span class="small fw-semibold">Pass Quizzes</span>
+                                                        </div>
+                                                        <span class="badge <?php echo $all_quizzes_passed ? 'bg-success' : 'bg-secondary'; ?> rounded-pill small">
+                                                            <?php echo $quiz_requirements['passed_quizzes']; ?>/<?php echo $quiz_requirements['total_quizzes']; ?>
+                                                        </span>
+                                                    </div>
+                                                    <div class="progress" style="height: 6px;">
+                                                        <div class="progress-bar <?php echo $all_quizzes_passed ? 'bg-success' : 'bg-primary'; ?>"
+                                                            role="progressbar"
+                                                            style="width: <?php echo ($quiz_requirements['total_quizzes'] > 0) ? ($quiz_requirements['passed_quizzes'] / $quiz_requirements['total_quizzes']) * 100 : 0; ?>%"
+                                                            aria-valuenow="<?php echo $quiz_requirements['passed_quizzes']; ?>"
+                                                            aria-valuemin="0"
+                                                            aria-valuemax="<?php echo $quiz_requirements['total_quizzes']; ?>">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Achievements Column -->
+                                        <div class="col-lg-7">
+                                            <div class="row g-2">
+                                                <!-- Certificate Card -->
+                                                <?php if ($certificate_enabled): ?>
+                                                    <div class="col-md-6">
+                                                        <div class="card border <?php echo $has_certificate ? 'border-success bg-success bg-opacity-10' : ($all_requirements_met ? 'border-success bg-success bg-opacity-10' : 'border-secondary'); ?> h-100">
+                                                            <div class="card-body p-2">
+                                                                <div class="d-flex align-items-center justify-content-between">
+                                                                    <div class="d-flex align-items-center">
+                                                                        <i class="bi bi-award-fill <?php echo $has_certificate || $all_requirements_met ? 'text-success' : 'text-secondary'; ?> me-2"></i>
+                                                                        <span class="small fw-semibold">Certificate</span>
+                                                                    </div>
+                                                                    <?php if ($has_certificate): ?>
+                                                                        <a href="my-certifications.php" class="btn btn-sm btn-success py-0 px-2"><small>View</small></a>
+                                                                    <?php elseif ($all_requirements_met): ?>
+                                                                        <span class="badge bg-success p-1"><i class="bi bi-check-lg"></i></span>
+                                                                    <?php else: ?>
+                                                                        <span class="badge bg-secondary p-1"><i class="bi bi-lock"></i></span>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
+
+                                                <!-- Badge Card -->
+                                                <div class="col-md-6">
+                                                    <div class="card border <?php echo $all_requirements_met ? 'border-success bg-success bg-opacity-10' : 'border-secondary'; ?> h-100">
+                                                        <div class="card-body p-2">
+                                                            <div class="d-flex align-items-center justify-content-between">
+                                                                <div class="d-flex align-items-center">
+                                                                    <i class="bi bi-trophy-fill <?php echo $all_requirements_met ? 'text-success' : 'text-secondary'; ?> me-2"></i>
+                                                                    <span class="small fw-semibold">Course Badge</span>
+                                                                </div>
+                                                                <?php if ($all_requirements_met): ?>
+                                                                    <a href="my-badges.php" class="btn btn-sm btn-success py-0 px-2"><small>View</small></a>
+                                                                <?php else: ?>
+                                                                    <span class="badge bg-secondary p-1"><i class="bi bi-lock"></i></span>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Alert Message only shown if requirements not met -->
+                                            <?php if (!$all_requirements_met): ?>
+                                                <div class="alert alert-primary py-2 px-3 mt-2 mb-0 small">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-info-circle-fill me-2"></i>
+                                                        <div>
+                                                            <?php if (!$all_topics_completed && !$all_quizzes_passed): ?>
+                                                                Complete topics and pass quizzes to earn your certificate.
+                                                            <?php elseif (!$all_topics_completed): ?>
+                                                                Complete remaining topics for your certificate.
+                                                            <?php elseif (!$all_quizzes_passed): ?>
+                                                                Pass remaining quizzes for your certificate.
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Learning Objectives -->
-                            <div class="mb-3">
-                                <button class="btn btn-link text-primary p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#learningObjectivesCollapse">
-                                    <i class="bi bi-chevron-down me-1"></i> Show Learning Objectives
-                                </button>
-                                <div class="collapse mt-2" id="learningObjectivesCollapse">
-                                    <div class="card card-body bg-light">
-                                        <ul class="mb-0">
-                                            <?php foreach ($learning_outcomes as $outcome): ?>
-                                                <li><?php echo htmlspecialchars($outcome); ?></li>
-                                            <?php endforeach; ?>
-                                        </ul>
+                            <!-- Learning Objectives Accordion -->
+                            <div class="accordion" id="learningObjectivesAccordion">
+                                <div class="accordion-item border-0">
+                                    <h2 class="accordion-header" id="headingLearningObjectives">
+                                        <button class="accordion-button collapsed bg-white text-primary border-0 p-0 shadow-none"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#learningObjectivesCollapse"
+                                            aria-expanded="false"
+                                            aria-controls="learningObjectivesCollapse">
+                                            <i class="bi bi-lightbulb-fill me-2 small"></i> <span class="small">Learning Objectives</span>
+                                        </button>
+                                    </h2>
+                                    <div id="learningObjectivesCollapse"
+                                        class="accordion-collapse collapse"
+                                        aria-labelledby="headingLearningObjectives"
+                                        data-bs-parent="#learningObjectivesAccordion">
+                                        <div class="accordion-body bg-light rounded-3 mt-2 p-3">
+                                            <ul class="mb-0 small">
+                                                <?php foreach ($learning_outcomes as $outcome): ?>
+                                                    <li class="mb-1"><?php echo htmlspecialchars($outcome); ?></li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
