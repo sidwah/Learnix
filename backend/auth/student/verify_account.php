@@ -43,7 +43,7 @@ try {
             INDEX (attempt_time)
         )
     ");
-    
+
     // Check for too many attempts
     $checkAttempts = $conn->prepare("
         SELECT COUNT(*) FROM verification_attempts 
@@ -54,7 +54,7 @@ try {
     $checkAttempts->bind_result($attemptCount);
     $checkAttempts->fetch();
     $checkAttempts->close();
-    
+
     if ($attemptCount >= $maxAttempts) {
         echo json_encode([
             'status' => 'error',
@@ -65,7 +65,7 @@ try {
         ]);
         exit;
     }
-    
+
     // Log this attempt
     $logAttempt = $conn->prepare("INSERT INTO verification_attempts (ip_address, email, attempt_time) VALUES (?, ?, NOW())");
     $logAttempt->bind_param("ss", $ip, $email);
@@ -132,27 +132,46 @@ try {
     if (!$stmt->execute()) {
         throw new Exception("Failed to update user verification status");
     }
-    
+
     // Mark verification record as verified
     $stmt = $conn->prepare("UPDATE user_verification SET verified = 1 WHERE user_id = ? AND token = ?");
     $stmt->bind_param("is", $userId, $code);
     if (!$stmt->execute()) {
         throw new Exception("Failed to update verification record");
     }
-    
+
     // Clean up old verification records for this user
     $stmt = $conn->prepare("DELETE FROM user_verification WHERE user_id = ? AND verified = 0");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
-    
+
     // Also clean up old verification attempts for this user
     $stmt = $conn->prepare("DELETE FROM verification_attempts WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
-    
+
     // Commit transaction
     $conn->commit();
-    
+
+
+// --- Insert Notification Here ---
+$notificationSql = "INSERT INTO user_notifications (user_id, title, type, message, created_at, is_read) 
+                    VALUES (?, ?, ?, ?, NOW(), 0)";
+$notificationStmt = $conn->prepare($notificationSql);
+
+$title = 'Verification Successful'; // ✅ Must have a title
+$type = 'Account Verification';
+$message = 'Your Learnix account has been successfully verified. Welcome aboard!';
+
+$notificationStmt->bind_param("isss", $userId, $title, $type, $message); // ✅ 4 fields bound here
+
+if (!$notificationStmt->execute()) {
+    error_log("Failed to insert verification notification: " . $conn->error);
+}
+$notificationStmt->close();
+// --- End of Notification ---
+
+
     // Get user details to personalize the success message
     $stmt = $conn->prepare("SELECT first_name FROM users WHERE user_id = ?");
     $stmt->bind_param("i", $userId);
@@ -160,7 +179,7 @@ try {
     $stmt->bind_result($firstName);
     $stmt->fetch();
     $stmt->close();
-    
+
     echo json_encode([
         'status' => 'success',
         'message' => $firstName ? "Thank you {$firstName}! Your account has been verified successfully!" : "Account verified successfully!",
@@ -169,11 +188,10 @@ try {
 } catch (Exception $e) {
     // Rollback transaction on error
     $conn->rollback();
-    
+
     error_log("Verification error: " . $e->getMessage());
     echo json_encode([
         'status' => 'error',
         'message' => 'Failed to verify account: ' . $e->getMessage()
     ]);
 }
-?>

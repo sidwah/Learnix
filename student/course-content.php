@@ -662,6 +662,33 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     $stmt->bind_param("di", $completed_percentage, $enrollment_id);
     $stmt->execute();
 
+
+     
+    // Trigger badge evaluation for topic completion
+    require_once '../backend/events/ProgressEvents.php';
+    $progressEvents = new ProgressEvents();
+    $badgeResults = $progressEvents->onTopicCompleted($user_id, $enrollment_id, $topic_id, $course_id);
+    
+    // Store badge results in session for notification
+    if (!empty($badgeResults['section_badge']) && $badgeResults['section_badge']['success']) {
+        $_SESSION['section_badge_awarded'] = true;
+    }
+    
+    if (!empty($badgeResults['course_badge']) && $badgeResults['course_badge']['success']) {
+        $_SESSION['badge_awarded'] = true;
+    }
+    
+    if (!empty($badgeResults['streak_badge']) && $badgeResults['streak_badge']['success']) {
+        $_SESSION['streak_badge_awarded'] = true;
+        $_SESSION['streak_badge_tier'] = $badgeResults['streak_badge']['tier'] ?? 'bronze';
+    }
+    
+    // Store notification flag
+    if (!empty($badgeResults)) {
+        $_SESSION['completion_notification'] = true;
+    }
+    
+
     // Check if course is now 100% complete
     // Check if course is now 100% complete
     if ($completed_percentage >= 100) {

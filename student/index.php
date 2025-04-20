@@ -592,7 +592,7 @@ HAVING AVG(cr.rating) >= 4
                 <div class="col-sm-6 col-lg-4 mb-4">
                   <div class="card h-100">
                     <div class="card-pinned">
-                      <img class="card-img-top" src="../assets/img/700x400/img1.jpg" alt="Certificate">
+                      <img class="card-img-top" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="Certificate">
                       <div class="card-pinned-top-end">
                         <div class="dropdown">
                           <button type="button" class="btn btn-ghost-secondary btn-icon btn-sm rounded-circle" id="dropdownMenuButtonCert1" data-bs-toggle="dropdown" aria-expanded="false">
@@ -618,11 +618,11 @@ HAVING AVG(cr.rating) >= 4
                     <div class="card-footer">
                       <div class="row align-items-center">
                         <div class="col">
-                          <a href="#" class="btn btn-primary btn-sm">View Certificate</a>
+                          <a href="my-certifications.php" class="btn btn-primary btn-sm">View Certificate</a>
                         </div>
-                        <div class="col-auto">
+                        <!-- <div class="col-auto">
                           <span class="badge bg-soft-success text-success">Verified</span>
-                        </div>
+                        </div> -->
                       </div>
                     </div>
                   </div>
@@ -643,109 +643,7 @@ HAVING AVG(cr.rating) >= 4
           <?php endif; ?>
         </div>
         <!-- End Earned Certificates Section -->
-
-        <!-- Professional Certifications Section -->
-        <div>
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="mb-0">Recommended Certification Paths</h3>
-          </div>
-
-          <div class="row">
-            <!-- Certification Path Card -->
-            <div class="col-md-6 col-xl-4 mb-4">
-              <div class="card h-100">
-                <div class="card-body">
-                  <div class="d-flex align-items-center mb-3">
-                    <span class="flex-shrink-0 avatar avatar-lg avatar-4x3 me-3">
-                      <img class="avatar-img" src="../assets/svg/brands/google-webdev.svg" alt="Image Description">
-                    </span>
-                    <div>
-                      <h4 class="mb-1">Full-Stack Web Development</h4>
-                      <span class="d-block text-body">5 Courses • 6 Months</span>
-                    </div>
-                  </div>
-
-                  <p class="card-text">Master modern web development with HTML, CSS, JavaScript, React, Node.js, and MongoDB.</p>
-
-                  <ul class="list-checked list-checked-primary mb-0">
-                    <li class="list-checked-item">Professional Certificate</li>
-                    <li class="list-checked-item">Beginner Friendly</li>
-                    <li class="list-checked-item">Projects Included</li>
-                  </ul>
-                </div>
-                <div class="card-footer pt-0">
-                  <div class="d-grid">
-                    <a class="btn btn-outline-primary" href="#">View Details</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- End Certification Path Card -->
-
-            <!-- Certification Path Card -->
-            <div class="col-md-6 col-xl-4 mb-4">
-              <div class="card h-100">
-                <div class="card-body">
-                  <div class="d-flex align-items-center mb-3">
-                    <span class="flex-shrink-0 avatar avatar-lg avatar-4x3 me-3">
-                      <img class="avatar-img" src="../assets/svg/brands/data-analysis.svg" alt="Image Description">
-                    </span>
-                    <div>
-                      <h4 class="mb-1">Data Science Professional</h4>
-                      <span class="d-block text-body">8 Courses • 8 Months</span>
-                    </div>
-                  </div>
-
-                  <p class="card-text">Become a data scientist with Python, pandas, machine learning, and visualization skills.</p>
-
-                  <ul class="list-checked list-checked-primary mb-0">
-                    <li class="list-checked-item">Professional Certificate</li>
-                    <li class="list-checked-item">Intermediate Level</li>
-                    <li class="list-checked-item">Capstone Project</li>
-                  </ul>
-                </div>
-                <div class="card-footer pt-0">
-                  <div class="d-grid">
-                    <a class="btn btn-outline-primary" href="#">View Details</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- End Certification Path Card -->
-
-            <!-- Certification Path Card -->
-            <div class="col-md-6 col-xl-4 mb-4">
-              <div class="card h-100">
-                <div class="card-body">
-                  <div class="d-flex align-items-center mb-3">
-                    <span class="flex-shrink-0 avatar avatar-lg avatar-4x3 me-3">
-                      <img class="avatar-img" src="../assets/svg/brands/cybersecurity.svg" alt="Image Description">
-                    </span>
-                    <div>
-                      <h4 class="mb-1">Cybersecurity Specialist</h4>
-                      <span class="d-block text-body">6 Courses • 7 Months</span>
-                    </div>
-                  </div>
-
-                  <p class="card-text">Learn network security, ethical hacking, and cyber defense techniques.</p>
-
-                  <ul class="list-checked list-checked-primary mb-0">
-                    <li class="list-checked-item">Industry Certification</li>
-                    <li class="list-checked-item">Advanced Level</li>
-                    <li class="list-checked-item">Hands-on Labs</li>
-                  </ul>
-                </div>
-                <div class="card-footer pt-0">
-                  <div class="d-grid">
-                    <a class="btn btn-outline-primary" href="#">View Details</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- End Certification Path Card -->
-          </div>
-        </div>
-        <!-- End Professional Certifications Section -->
+         
       </div>
       <!-- End Tab 3 -->
 

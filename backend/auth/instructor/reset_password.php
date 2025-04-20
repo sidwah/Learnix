@@ -14,7 +14,8 @@ require '../../PHPMailer/src/PHPMailer.php';
 require '../../PHPMailer/src/SMTP.php';
 
 // Function to send password reset confirmation email
-function sendResetConfirmationEmail($email, $firstName) {
+function sendResetConfirmationEmail($email, $firstName)
+{
     $mail = new PHPMailer(true);
 
     try {
@@ -23,7 +24,7 @@ function sendResetConfirmationEmail($email, $firstName) {
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
         $mail->Username = 'barrock.sidwah@st.rmu.edu.gh';
-        $mail->Password = 'mtltujmsmmlkkxtv'; 
+        $mail->Password = 'mtltujmsmmlkkxtv';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = 465;
 
@@ -70,7 +71,8 @@ function sendResetConfirmationEmail($email, $firstName) {
 }
 
 // Validate session and reset request security
-function validateResetRequest($conn) {
+function validateResetRequest($conn)
+{
     // Check if reset was initiated and verified
     if (!isset($_SESSION['reset_verified']) || !$_SESSION['reset_verified']) {
         return ['status' => false, 'message' => 'Unauthorized reset attempt'];
@@ -96,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $sessionValidation = validateResetRequest($conn);
     if (!$sessionValidation['status']) {
         echo json_encode([
-            'status' => 'error', 
+            'status' => 'error',
             'message' => $sessionValidation['message']
         ]);
         exit;
@@ -112,7 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Validate input
     if (empty($password) || empty($confirmPassword)) {
         echo json_encode([
-            'status' => 'error', 
+            'status' => 'error',
             'message' => 'All fields are required'
         ]);
         exit;
@@ -121,7 +123,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Validate password match
     if ($password !== $confirmPassword) {
         echo json_encode([
-            'status' => 'error', 
+            'status' => 'error',
             'message' => 'Passwords do not match'
         ]);
         exit;
@@ -130,7 +132,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Validate password strength
     if (strlen($password) < 8) {
         echo json_encode([
-            'status' => 'error', 
+            'status' => 'error',
             'message' => 'Password must be at least 8 characters long'
         ]);
         exit;
@@ -146,7 +148,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Check if new password is the same as current password
     if (password_verify($password, $user['password_hash'])) {
         echo json_encode([
-            'status' => 'error', 
+            'status' => 'error',
             'message' => 'New password cannot be the same as the current password'
         ]);
         exit;
@@ -182,6 +184,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Commit transaction
         $conn->commit();
 
+        // Insert notification after successful password reset
+// Insert notification after successful password reset
+$notificationSql = "
+    INSERT INTO user_notifications (user_id, title, type, message, created_at, is_read)
+    VALUES (?, ?, ?, ?, NOW(), 0)
+";
+$notificationStmt = $conn->prepare($notificationSql);
+
+$title = 'Password Reset Successful'; // ✅ NEW
+$type = 'Password Reset';
+$message = 'Your instructor account password was successfully reset. If this wasn\'t you, contact support immediately.';
+
+// Notice 4 parameters now
+$notificationStmt->bind_param("isss", $userId, $title, $type, $message);
+
+if (!$notificationStmt->execute()) {
+    error_log("Failed to insert instructor password reset notification: " . $conn->error);
+}
+
+$notificationStmt->close();
+
+
+
         // Clear reset session
         unset($_SESSION['reset_verified']);
         unset($_SESSION['reset_user_id']);
@@ -189,7 +214,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         unset($_SESSION['reset_time']);
 
         echo json_encode([
-            'status' => 'success', 
+            'status' => 'success',
             'message' => 'Password reset successfully',
             'email_sent' => $emailSent
         ]);
@@ -198,16 +223,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $conn->rollback();
 
         echo json_encode([
-            'status' => 'error', 
+            'status' => 'error',
             'message' => 'Failed to reset password: ' . $e->getMessage()
         ]);
     }
 } else {
     echo json_encode([
-        'status' => 'error', 
+        'status' => 'error',
         'message' => 'Invalid request method'
     ]);
 }
 
 mysqli_close($conn);
-?>

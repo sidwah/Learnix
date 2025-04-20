@@ -109,7 +109,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $update_time_stmt->bind_param("is", $user_id, $section);
         $update_time_stmt->execute();
         $update_time_stmt->close();
-
+    
+        // Create in-app notification for password change
+        $notification_query = "
+            INSERT INTO `user_notifications` (
+              `user_id`, 
+              `type`, 
+              `title`, 
+              `message`, 
+              `related_id`, 
+              `related_type`, 
+              `is_read`
+            ) VALUES (
+              ?, 
+              'security', 
+              'Password Successfully Changed', 
+              'Your account password was changed successfully. If you did not make this change, please contact support immediately.', 
+              NULL, 
+              NULL, 
+              0
+            )
+        ";
+        $notification_stmt = $conn->prepare($notification_query);
+        $notification_stmt->bind_param("i", $user_id);
+        $notification_stmt->execute();
+        $notification_stmt->close();
+    
         // Send email notification
         $emailSent = sendPasswordChangeEmail($email, $firstName, $lastName);
         
@@ -121,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         die("Error updating password: " . $update_stmt->error);
     }
-
+    
     $update_stmt->close();
     $conn->close();
 }

@@ -337,7 +337,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $clearCodesStmt = mysqli_prepare($conn, $clearCodesSql);
                 mysqli_stmt_bind_param($clearCodesStmt, "s", $email);
                 mysqli_stmt_execute($clearCodesStmt);
-                
+            
+// --- START of new notification insertion ---
+$notificationSql = "INSERT INTO user_notifications (user_id, title, type, message, created_at, is_read) 
+                    VALUES (?, ?, ?, ?, NOW(), 0)";
+$notificationStmt = mysqli_prepare($conn, $notificationSql);
+
+$title = 'Password Reset Successful'; // ✅ You must add a title
+$type = 'Password Reset';
+$message = 'Your password was successfully reset. If this wasn\'t you, contact support immediately.';
+
+mysqli_stmt_bind_param($notificationStmt, "isss", $userId, $title, $type, $message); // Notice 4 fields bound
+
+if (!mysqli_stmt_execute($notificationStmt)) {
+    error_log("Failed to insert notification: " . mysqli_error($conn));
+}
+mysqli_stmt_close($notificationStmt);
+// --- END of notification insertion ---
+
+            
                 // Send success email
                 if (sendResetEmail($email, "")) {
                     echo json_encode([
@@ -348,10 +366,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     echo json_encode(["status" => "success", "message" => "Password has been reset, but notification email could not be sent"]);
                 }
                 exit;
-            } else {
-                echo json_encode(["status" => "error", "message" => "Failed to update password"]);
-                exit;
             }
+            
         }
         
         // If we're here, this is the initial request for a verification code

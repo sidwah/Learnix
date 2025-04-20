@@ -54,6 +54,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Send welcome email
         sendWelcomeEmail($userEmail, $firstName);
+
+// Insert notification after successful password reset
+$notificationSql = "
+    INSERT INTO user_notifications (user_id, title, type, message, created_at, is_read)
+    VALUES (?, ?, ?, ?, NOW(), 0)
+";
+$notificationStmt = $conn->prepare($notificationSql);
+
+$title = 'Password Reset Successful'; // ✅ New Title
+$type = 'Password Reset';
+$message = 'Your instructor account password was successfully reset. If this wasn\'t you, contact support immediately.';
+
+$notificationStmt->bind_param("isss", $userId, $title, $type, $message);
+
+if (!$notificationStmt->execute()) {
+    error_log("Failed to insert instructor password reset notification: " . $conn->error);
+}
+
+$notificationStmt->close();
+
         
         removeOverlay();
         echo json_encode(["status" => "success", "message" => "Account verified successfully."]);
