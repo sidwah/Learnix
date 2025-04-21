@@ -62,7 +62,6 @@ class BadgeQualificationService {
         $topic_data = $result->fetch_assoc();
         $section_id = $topic_data['section_id'];
         
-        // Check if section is now complete
         // Count remaining topics in the section
         $stmt = $this->conn->prepare("SELECT COUNT(*) as remaining_count
                                     FROM section_topics st
@@ -109,7 +108,6 @@ class BadgeQualificationService {
     
     /**
      * Check if topic completion leads to course completion
-     * Evaluates if completing this topic completes the entire course
      * 
      * @param int $enrollment_id Enrollment ID
      * @param int $course_id Course ID
@@ -179,8 +177,31 @@ class BadgeQualificationService {
     }
     
     /**
+     * Check for quiz excellence achievement
+     * 
+     * @param int $user_id User ID
+     * @param int $course_id Course ID
+     * @param int $quiz_id Quiz ID
+     * @param float $score Quiz score (percentage)
+     * @return array|null Event data if achievement earned, null otherwise
+     */
+    public function checkQuizExcellence($user_id, $course_id, $quiz_id, $score) {
+        // Only trigger for perfect (100%) scores
+        if ($score >= 100) {
+            return [
+                'event_type' => 'quiz_completed',
+                'user_id' => $user_id,
+                'course_id' => $course_id,
+                'quiz_id' => $quiz_id,
+                'score' => $score
+            ];
+        }
+        
+        return null;
+    }
+    
+    /**
      * Check for streak achievements
-     * Called when user completes a topic, to check for daily learning streaks
      * 
      * @param int $user_id User ID
      * @return array|null Event data if streak achievement earned, null otherwise
@@ -215,33 +236,7 @@ class BadgeQualificationService {
     }
     
     /**
-     * Check for quiz excellence achievement
-     * Called when user completes a quiz with a perfect score
-     * 
-     * @param int $user_id User ID
-     * @param int $course_id Course ID
-     * @param int $quiz_id Quiz ID
-     * @param float $score Quiz score (percentage)
-     * @return array|null Event data if achievement earned, null otherwise
-     */
-    public function checkQuizExcellence($user_id, $course_id, $quiz_id, $score) {
-        // Only trigger for perfect (100%) scores
-        if ($score >= 100) {
-            return [
-                'event_type' => 'quiz_completed',
-                'user_id' => $user_id,
-                'course_id' => $course_id,
-                'quiz_id' => $quiz_id,
-                'score' => $score
-            ];
-        }
-        
-        return null;
-    }
-    
-    /**
      * Update a user's learning streak
-     * Called when user engages with learning content
      * 
      * @param int $user_id User ID
      * @return int Current streak days
@@ -249,6 +244,21 @@ class BadgeQualificationService {
     public function updateLearningStreak($user_id) {
         // Get current date for comparison
         $today = date('Y-m-d');
+        
+        // Check if we have a user_learning_stats table - if not, create one
+        $check_table = $this->conn->query("SHOW TABLES LIKE 'user_learning_stats'");
+        if ($check_table->num_rows == 0) {
+            // Create the table if it doesn't exist
+            $create_table = "CREATE TABLE IF NOT EXISTS user_learning_stats (
+                user_id INT NOT NULL,
+                last_activity_date DATE NOT NULL,
+                current_streak_days INT NOT NULL DEFAULT 1,
+                total_learning_days INT NOT NULL DEFAULT 1,
+                PRIMARY KEY (user_id),
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            )";
+            $this->conn->query($create_table);
+        }
         
         // Check if user already has learning stats
         $stmt = $this->conn->prepare("SELECT user_id, last_activity_date, current_streak_days 
@@ -295,8 +305,8 @@ class BadgeQualificationService {
             
             // Create new stats record
             $stmt = $this->conn->prepare("INSERT INTO user_learning_stats 
-                                        (user_id, last_activity_date, current_streak_days) 
-                                        VALUES (?, ?, 1)");
+                                        (user_id, last_activity_date, current_streak_days, total_learning_days) 
+                                        VALUES (?, ?, 1, 1)");
             $stmt->bind_param("is", $user_id, $today);
             $stmt->execute();
         }
