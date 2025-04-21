@@ -623,91 +623,91 @@ if ($certificate_enabled) {
 
             <!-- Main Content -->
             <div class="col-lg-8">
-            <?php
-// Get quiz completion status if not already done
-if (!isset($quiz_requirements)) {
-    require_once '../includes/helpers/course-progress-helpers.php';
-    $quiz_requirements = checkQuizzesCompleted($user_id, $course_id, $conn);
-}
+                <?php
+                // Get quiz completion status if not already done
+                if (!isset($quiz_requirements)) {
+                    require_once '../includes/helpers/course-progress-helpers.php';
+                    $quiz_requirements = checkQuizzesCompleted($user_id, $course_id, $conn);
+                }
 
-// If there are failed quizzes and course is almost complete
-if (!$quiz_requirements['all_passed'] && $completed_percentage >= 90) {
-    $failedQuizCount = count($quiz_requirements['failed_quizzes']);
-    
-    // Store failed quiz HTML to insert into toast via JavaScript
-    ob_start();
-?>
-    <div class="d-flex">
-        <div class="flex-shrink-0">
-            <i class="bi-trophy-fill fs-3 me-2 text-warning"></i>
-        </div>
-        <div class="flex-grow-1">
-            <h6 class="mb-1 fw-bold">Almost There!</h6>
-            <p class="small mb-2">Complete <?php echo $failedQuizCount; ?> more quiz<?php echo $failedQuizCount > 1 ? 'zes' : ''; ?> to earn your certificate.</p>
+                // If there are failed quizzes and course is almost complete
+                if (!$quiz_requirements['all_passed'] && $completed_percentage >= 90) {
+                    $failedQuizCount = count($quiz_requirements['failed_quizzes']);
 
-            <?php if ($failedQuizCount <= 3): ?>
-                <div class="bg-light rounded-2 overflow-hidden">
-                    <?php foreach ($quiz_requirements['failed_quizzes'] as $index => $quiz): ?>
-                        <div class="d-flex justify-content-between align-items-center px-2 py-1 <?php echo $index % 2 == 0 ? 'bg-light' : 'bg-white'; ?> border-bottom small">
-                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="text-decoration-none text-truncate me-2">
-                                <?php echo htmlspecialchars($quiz['quiz_title']); ?>
-                            </a>
-                            <?php if ($quiz['highest_score'] > 0): ?>
-                                <span class="badge rounded-pill bg-danger bg-opacity-75" style="min-width: 40px;">
-                                    <?php echo $quiz['highest_score']; ?>%
-                                </span>
-                            <?php else: ?>
-                                <span class="badge rounded-pill bg-secondary bg-opacity-50">New</span>
+                    // Store failed quiz HTML to insert into toast via JavaScript
+                    ob_start();
+                ?>
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="bi-trophy-fill fs-3 me-2 text-warning"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1 fw-bold">Almost There!</h6>
+                            <p class="small mb-2">Complete <?php echo $failedQuizCount; ?> more quiz<?php echo $failedQuizCount > 1 ? 'zes' : ''; ?> to earn your certificate.</p>
+
+                            <?php if ($failedQuizCount <= 3): ?>
+                                <div class="bg-light rounded-2 overflow-hidden">
+                                    <?php foreach ($quiz_requirements['failed_quizzes'] as $index => $quiz): ?>
+                                        <div class="d-flex justify-content-between align-items-center px-2 py-1 <?php echo $index % 2 == 0 ? 'bg-light' : 'bg-white'; ?> border-bottom small">
+                                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="text-decoration-none text-truncate me-2">
+                                                <?php echo htmlspecialchars($quiz['quiz_title']); ?>
+                                            </a>
+                                            <?php if ($quiz['highest_score'] > 0): ?>
+                                                <span class="badge rounded-pill bg-danger bg-opacity-75" style="min-width: 40px;">
+                                                    <?php echo $quiz['highest_score']; ?>%
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge rounded-pill bg-secondary bg-opacity-50">New</span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
                             <?php endif; ?>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-<?php
-    $toastContent = ob_get_clean();
-    
-    // Convert PHP content to JavaScript-safe string
-    $jsContent = str_replace(["\r", "\n"], '', $toastContent);
-    $jsContent = str_replace("'", "\\'", $jsContent);
-?>
+                    </div>
+                    <?php
+                    $toastContent = ob_get_clean();
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Get toast elements
-    const toast = document.getElementById("liveToast");
-    const toastBody = toast.querySelector(".toast-body");
-    
-    // Update toast header with soft warning background
-    const toastHeader = toast.querySelector(".toast-header");
-    toastHeader.classList.add("bg-warning", "bg-opacity-10");
-    
-    // Add a subtle left border to indicate status
-    toast.classList.add("border-start", "border-3", "border-warning");
-    
-    // Update toast title
-    const toastTitle = toast.querySelector(".toast-header h5");
-    toastTitle.textContent = "Quiz Alert";
-    
-    // Update toast content
-    toastBody.innerHTML = '<?php echo $jsContent; ?>';
-    
-    // Adjust toast size - wider but not too wide
-    toast.style.maxWidth = "380px";
-    toast.style.width = "380px";
-    
-    // Initialize and show the toast
-    const bsToast = new bootstrap.Toast(toast, {
-        autohide: false
-    });
-    bsToast.show();
-});
-</script>
+                    // Convert PHP content to JavaScript-safe string
+                    $jsContent = str_replace(["\r", "\n"], '', $toastContent);
+                    $jsContent = str_replace("'", "\\'", $jsContent);
+                    ?>
 
-<?php
-}
-?>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            // Get toast elements
+                            const toast = document.getElementById("liveToast");
+                            const toastBody = toast.querySelector(".toast-body");
+
+                            // Update toast header with soft warning background
+                            const toastHeader = toast.querySelector(".toast-header");
+                            toastHeader.classList.add("bg-warning", "bg-opacity-10");
+
+                            // Add a subtle left border to indicate status
+                            toast.classList.add("border-start", "border-3", "border-warning");
+
+                            // Update toast title
+                            const toastTitle = toast.querySelector(".toast-header h5");
+                            toastTitle.textContent = "Quiz Alert";
+
+                            // Update toast content
+                            toastBody.innerHTML = '<?php echo $jsContent; ?>';
+
+                            // Adjust toast size - wider but not too wide
+                            toast.style.maxWidth = "380px";
+                            toast.style.width = "380px";
+
+                            // Initialize and show the toast
+                            const bsToast = new bootstrap.Toast(toast, {
+                                autohide: false
+                            });
+                            bsToast.show();
+                        });
+                    </script>
+
+                <?php
+                }
+                ?>
                 <!-- Final Module Assessment Card -->
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white py-2">

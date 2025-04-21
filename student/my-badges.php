@@ -77,8 +77,8 @@
                       </a>
                     </li>
                     <li class="nav-item">
-                      <a class="nav-link active" href="course-accomplishments.php">
-                        <i class="bi-chat-dots nav-icon"></i> Accomplishments
+                      <a class="nav-link active" href="my-badges.php">
+                        <i class="bi-chat-dots nav-icon"></i> Badges
                       </a>
                     </li>
                     <li class="nav-item">
@@ -189,7 +189,7 @@
             <!-- Card -->
             <div id="editAddressCard" class="card">
               <div class="card-header border-bottom">
-                <h4 class="card-header-title">Accomplishments</h4>
+                <h4 class="card-header-title">My Badges</h4>
               </div>
 
               <!-- Body -->

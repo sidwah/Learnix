@@ -75,8 +75,8 @@
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" href="course-accomplishments.php">
-                      <i class="bi-chat-dots nav-icon"></i> Accomplishments
+                    <a class="nav-link" href="my-badges.php">
+                      <i class="bi-chat-dots nav-icon"></i> Badges
                     </a>
                   </li>
                   <li class="nav-item">

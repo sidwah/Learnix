@@ -23,15 +23,14 @@ if (!isset($_SESSION['user_id'])) {
         ]);
         exit();
     }
-    
+
     // Redirect to login page with return URL
     header("Location: ../../index.php?redirect=" . urlencode($_SERVER['REQUEST_URI']));
     exit();
 }
 
 // Get course_id from GET or POST
-$course_id = isset($_POST['course_id']) ? intval($_POST['course_id']) : 
-             (isset($_GET['course_id']) ? intval($_GET['course_id']) : 0);
+$course_id = isset($_POST['course_id']) ? intval($_POST['course_id']) : (isset($_GET['course_id']) ? intval($_GET['course_id']) : 0);
 
 // Check if course_id is provided
 if (!$course_id) {
@@ -43,7 +42,7 @@ if (!$course_id) {
         ]);
         exit();
     }
-    
+
     // Redirect to courses page if no course ID
     header("Location: ../../student/courses.php");
     exit();
@@ -74,7 +73,7 @@ if ($result->num_rows === 0) {
         ]);
         exit();
     }
-    
+
     $_SESSION['error_message'] = "Course not found or not available.";
     header("Location: ../../student/courses.php");
     exit();
@@ -99,7 +98,7 @@ if ($result->num_rows > 0) {
         ]);
         exit();
     }
-    
+
     $_SESSION['info_message'] = "You are already enrolled in this course.";
     header("Location: ../../student/course-materials.php?course_id=" . $course_id);
     exit();
@@ -109,18 +108,18 @@ if ($result->num_rows > 0) {
 if ($course['price'] == 0) {
     // Start transaction
     $conn->begin_transaction();
-    
+
     try {
         // Free course, enroll directly
         $sql = "INSERT INTO enrollments (user_id, course_id, enrolled_at, status)
                 VALUES (?, ?, NOW(), 'Active')";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ii", $user_id, $course_id);
-        
+
         if ($stmt->execute()) {
             // Enrollment successful
             $enrollment_id = $stmt->insert_id;
-            
+
             // Get all section topics for initial progress records
             $sql = "SELECT st.topic_id
                     FROM section_topics st
@@ -130,33 +129,43 @@ if ($course['price'] == 0) {
             $stmt->bind_param("i", $course_id);
             $stmt->execute();
             $topics_result = $stmt->get_result();
-            
+
+            // Create initial progress records
             // Create initial progress records
             while ($topic = $topics_result->fetch_assoc()) {
                 $sql = "INSERT INTO progress (enrollment_id, topic_id, completion_status)
-                        VALUES (?, ?, 'Not Started')";
+            VALUES (?, ?, 'Not Started')";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("ii", $enrollment_id, $topic['topic_id']);
                 $stmt->execute();
             }
-            
+
+            // Add notification for successful enrollment
+            $notification_title = "Course Enrollment";
+            $notification_message = "You have successfully enrolled in {$course['title']}.";
+            $sql = "INSERT INTO user_notifications (user_id, type, title, message, related_id, related_type, is_read, created_at)
+        VALUES (?, 'enrollment', ?, ?, ?, 'course', 0, NOW())";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("issi", $user_id, $notification_title, $notification_message, $course_id);
+            $stmt->execute();
+
             // Update course analytics
             $sql = "INSERT INTO course_analytics (course_id, total_students, active_students, last_updated)
-                    VALUES (?, 1, 1, NOW())
-                    ON DUPLICATE KEY UPDATE 
-                    total_students = total_students + 1,
-                    active_students = active_students + 1,
-                    last_updated = NOW()";
+        VALUES (?, 1, 1, NOW())
+        ON DUPLICATE KEY UPDATE 
+        total_students = total_students + 1,
+        active_students = active_students + 1,
+        last_updated = NOW()";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $course_id);
             $stmt->execute();
-            
+
             // Commit the transaction
             $conn->commit();
-            
+
             // Send enrollment confirmation email
             sendEnrollmentEmail($course);
-            
+
             // AJAX response
             if (isset($_POST['ajax'])) {
                 echo json_encode([
@@ -166,7 +175,7 @@ if ($course['price'] == 0) {
                 ]);
                 exit();
             }
-            
+
             // Standard response
             $_SESSION['success_message'] = "You have successfully enrolled in this course!";
             header("Location: ../../student/course-materials.php?course_id=" . $course_id);
@@ -174,7 +183,7 @@ if ($course['price'] == 0) {
         } else {
             // Rollback on error
             $conn->rollback();
-            
+
             // Error during enrollment
             if (isset($_POST['ajax'])) {
                 echo json_encode([
@@ -183,7 +192,7 @@ if ($course['price'] == 0) {
                 ]);
                 exit();
             }
-            
+
             $_SESSION['error_message'] = "There was an error enrolling in this course. Please try again.";
             header("Location: ../../student/course-overview.php?id=" . $course_id);
             exit();
@@ -191,10 +200,10 @@ if ($course['price'] == 0) {
     } catch (Exception $e) {
         // Rollback on exception
         $conn->rollback();
-        
+
         // Log the error
         error_log("Enrollment error: " . $e->getMessage());
-        
+
         if (isset($_POST['ajax'])) {
             echo json_encode([
                 'success' => false,
@@ -202,7 +211,7 @@ if ($course['price'] == 0) {
             ]);
             exit();
         }
-        
+
         $_SESSION['error_message'] = "There was an error enrolling in this course. Please try again.";
         header("Location: ../../student/course-overview.php?id=" . $course_id);
         exit();
@@ -217,7 +226,7 @@ if ($course['price'] == 0) {
         ]);
         exit();
     }
-    
+
     // Redirect to checkout
     header("Location: ../../student/checkout.php?course_id=" . $course_id);
     exit();
@@ -229,10 +238,11 @@ if ($course['price'] == 0) {
  * @param array $course Course details
  * @return bool Success status
  */
-function sendEnrollmentEmail($course) {
+function sendEnrollmentEmail($course)
+{
     try {
         $mail = new PHPMailer(true);
-        
+
         // SMTP configuration
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
@@ -241,15 +251,15 @@ function sendEnrollmentEmail($course) {
         $mail->Password = 'mtltujmsmmlkkxtv'; // Use a secure method instead
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = 465;
-        
+
         // Sender and recipient details
         $mail->setFrom('no-reply@learnix.com', 'Learnix');
         $mail->addAddress($course['student_email']);
-        
+
         // Email content
         $mail->isHTML(true);
         $mail->Subject = 'Welcome to ' . $course['title'] . ' - Your Enrollment Confirmation';
-        
+
         // Email body
         $mail->Body = '<!DOCTYPE html>
         <html>
@@ -420,17 +430,17 @@ function sendEnrollmentEmail($course) {
             </div>
         </body>
         </html>';
-        
+
         // Alternative plain text body
         $mail->AltBody = "Welcome to " . $course['title'] . "!\n\n" .
-                        "Dear " . $course['student_first_name'] . " " . $course['student_last_name'] . ",\n\n" .
-                        "Thank you for enrolling in " . $course['title'] . ". Your course is now ready for you to begin learning.\n\n" .
-                        "This course is taught by " . $course['instructor_first_name'] . " " . $course['instructor_last_name'] . ".\n\n" .
-                        "To start learning now, visit: https://yourdomain.com/student/course-materials.php?course_id=" . $course['course_id'] . "\n\n" .
-                        "Happy learning!\n\n" .
-                        "Best regards,\n" .
-                        "The Learnix Team";
-        
+            "Dear " . $course['student_first_name'] . " " . $course['student_last_name'] . ",\n\n" .
+            "Thank you for enrolling in " . $course['title'] . ". Your course is now ready for you to begin learning.\n\n" .
+            "This course is taught by " . $course['instructor_first_name'] . " " . $course['instructor_last_name'] . ".\n\n" .
+            "To start learning now, visit: https://yourdomain.com/student/course-materials.php?course_id=" . $course['course_id'] . "\n\n" .
+            "Happy learning!\n\n" .
+            "Best regards,\n" .
+            "The Learnix Team";
+
         return $mail->send();
     } catch (Exception $e) {
         error_log("Mail Error: " . $e->getMessage());
@@ -439,6 +449,10 @@ function sendEnrollmentEmail($course) {
 }
 
 // Close connection
-$stmt->close();
-$conn->close();
-?>
+// Ensure the connection is closed properly
+if (isset($stmt)) {
+    $stmt->close();
+}
+if (isset($conn)) {
+    $conn->close();
+}

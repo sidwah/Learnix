@@ -23,7 +23,7 @@ if (!isset($_SESSION['user_id'])) {
         ]);
         exit();
     }
-    
+
     $_SESSION['error_message'] = "You must be logged in to complete a purchase.";
     header("Location: ../../student/");
     exit();
@@ -38,7 +38,7 @@ if (!isset($_POST['course_id']) || !isset($_POST['stripeToken'])) {
         ]);
         exit();
     }
-    
+
     $_SESSION['error_message'] = "Missing required information.";
     header("Location: ../../student/courses.php");
     exit();
@@ -75,7 +75,7 @@ if ($result->num_rows === 0) {
         ]);
         exit();
     }
-    
+
     $_SESSION['error_message'] = "Course not found or not available.";
     header("Location: ../../student/courses.php");
     exit();
@@ -100,7 +100,7 @@ if ($enrollment_result->num_rows > 0) {
         ]);
         exit();
     }
-    
+
     $_SESSION['info_message'] = "You are already enrolled in this course.";
     header("Location: ../../student/course-materials.php?course_id=" . $course_id);
     exit();
@@ -115,7 +115,7 @@ try {
     $stmt->execute();
     $user_result = $stmt->get_result();
     $user = $user_result->fetch_assoc();
-    
+
     // Create a charge
     $charge = \Stripe\Charge::create([
         'amount' => $amount,
@@ -128,12 +128,12 @@ try {
             'email' => $user['email']
         ]
     ]);
-    
+
     // If charge is successful, create enrollment
     if ($charge->status === 'succeeded') {
         // Start a transaction
         $conn->begin_transaction();
-        
+
         try {
             // Create enrollment record
             $sql = "INSERT INTO enrollments (user_id, course_id, enrolled_at, status) 
@@ -142,7 +142,7 @@ try {
             $stmt->bind_param("ii", $user_id, $course_id);
             $stmt->execute();
             $enrollment_id = $stmt->insert_id;
-            
+
             // Record payment
             $sql = "INSERT INTO course_payments (enrollment_id, amount, currency, payment_date, payment_method, transaction_id, status) 
                     VALUES (?, ?, ?, NOW(), 'Credit Card', ?, 'Completed')";
@@ -152,7 +152,7 @@ try {
             $stmt->bind_param("idss", $enrollment_id, $course['price'], $currency, $transaction_id);
             $stmt->execute();
             $payment_id = $stmt->insert_id;
-            
+
             // Initialize progress records
             $sql = "SELECT st.topic_id 
                     FROM section_topics st 
@@ -162,7 +162,7 @@ try {
             $stmt->bind_param("i", $course_id);
             $stmt->execute();
             $topics_result = $stmt->get_result();
-            
+
             while ($topic = $topics_result->fetch_assoc()) {
                 $sql = "INSERT INTO progress (enrollment_id, topic_id, completion_status) 
                         VALUES (?, ?, 'Not Started')";
@@ -170,11 +170,11 @@ try {
                 $stmt->bind_param("ii", $enrollment_id, $topic['topic_id']);
                 $stmt->execute();
             }
-            
+
             // Calculate instructor earnings
             $platform_fee = $course['price'] * 0.20; // 20% platform fee
             $instructor_share = $course['price'] - $platform_fee;
-            
+
             // Record instructor earnings
             $sql = "INSERT INTO instructor_earnings 
                     (instructor_id, course_id, payment_id, amount, instructor_share, platform_fee, status, created_at, available_at) 
@@ -182,26 +182,35 @@ try {
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("iiiddd", $course['instructor_id'], $course_id, $payment_id, $course['price'], $instructor_share, $platform_fee);
             $stmt->execute();
-            
+
             // Update course analytics
             $sql = "INSERT INTO course_analytics (course_id, total_students, active_students, revenue_total, revenue_month, views_total, last_updated)
-                    VALUES (?, 1, 1, ?, ?, 1, NOW())
-                    ON DUPLICATE KEY UPDATE 
-                    total_students = total_students + 1,
-                    active_students = active_students + 1,
-                    revenue_total = revenue_total + ?,
-                    revenue_month = revenue_month + ?,
-                    last_updated = NOW()";
+VALUES (?, 1, 1, ?, ?, 1, NOW())
+ON DUPLICATE KEY UPDATE 
+total_students = total_students + 1,
+active_students = active_students + 1,
+revenue_total = revenue_total + ?,
+revenue_month = revenue_month + ?,
+last_updated = NOW()";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("idddd", $course_id, $course['price'], $course['price'], $course['price'], $course['price']);
             $stmt->execute();
-            
+
+            // Add user notification for successful enrollment
+            $notification_title = "Payment Successful";
+            $notification_message = "Your payment of ₵" . number_format($course['price'], 2) . " for " . $course['title'] . " was successful. You now have full access to the course.";
+            $sql = "INSERT INTO user_notifications (user_id, type, title, message, related_id, related_type, is_read, created_at)
+VALUES (?, 'payment', ?, ?, ?, 'course', 0, NOW())";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("issi", $user_id, $notification_title, $notification_message, $course_id);
+            $stmt->execute();
+
             // Commit transaction
             $conn->commit();
-            
+
             // Send enrollment confirmation email
             sendEnrollmentEmail($course);
-            
+
             // Success response based on request type
             if (isset($_POST['modal'])) {
                 echo json_encode([
@@ -212,16 +221,15 @@ try {
                 ]);
                 exit();
             }
-            
+
             // Success, redirect to success page
             $_SESSION['success_message'] = "Payment successful! You are now enrolled in the course.";
             header("Location: ../../student/payment-success.php?course_id=" . $course_id);
             exit();
-            
         } catch (Exception $e) {
             // Rollback transaction on error
             $conn->rollback();
-            
+
             if (isset($_POST['modal'])) {
                 echo json_encode([
                     'success' => false,
@@ -229,7 +237,7 @@ try {
                 ]);
                 exit();
             }
-            
+
             $_SESSION['error_message'] = "Enrollment failed after payment. Please contact support.";
             // Log the error
             error_log("Enrollment error: " . $e->getMessage());
@@ -244,12 +252,11 @@ try {
             ]);
             exit();
         }
-        
+
         $_SESSION['error_message'] = "Payment failed. Please try again.";
         header("Location: ../../student/checkout.php?course_id=" . $course_id);
         exit();
     }
-    
 } catch (\Stripe\Exception\CardException $e) {
     // Card was declined
     if (isset($_POST['modal'])) {
@@ -259,7 +266,7 @@ try {
         ]);
         exit();
     }
-    
+
     $_SESSION['error_message'] = "Your card was declined: " . $e->getError()->message;
     header("Location: ../../student/checkout.php?course_id=" . $course_id);
     exit();
@@ -272,7 +279,7 @@ try {
         ]);
         exit();
     }
-    
+
     $_SESSION['error_message'] = "Payment error: " . $e->getMessage();
     // Log the error
     error_log("Stripe error: " . $e->getMessage());
@@ -286,10 +293,11 @@ try {
  * @param array $course Course details
  * @return bool Success status
  */
-function sendEnrollmentEmail($course) {
+function sendEnrollmentEmail($course)
+{
     try {
         $mail = new PHPMailer(true);
-        
+
         // SMTP configuration
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
@@ -298,15 +306,15 @@ function sendEnrollmentEmail($course) {
         $mail->Password = 'mtltujmsmmlkkxtv'; // Use a secure method instead
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = 465;
-        
+
         // Sender and recipient details
         $mail->setFrom('no-reply@learnix.com', 'Learnix');
         $mail->addAddress($course['student_email']);
-        
+
         // Email content
         $mail->isHTML(true);
         $mail->Subject = 'Welcome to ' . $course['title'] . ' - Your Enrollment Confirmation';
-        
+
         // Email body with payment confirmation details
         $mail->Body = '<!DOCTYPE html>
         <html>
@@ -525,25 +533,24 @@ function sendEnrollmentEmail($course) {
             </div>
         </body>
         </html>';
-        
+
         // Alternative plain text body
         $mail->AltBody = "Thank You for Your Purchase!\n\n" .
-                        "Dear " . $course['student_first_name'] . " " . $course['student_last_name'] . ",\n\n" .
-                        "Your payment has been processed successfully and you are now enrolled in " . $course['title'] . ".\n\n" .
-                        "Payment Receipt:\n" .
-                        "- Course: " . $course['title'] . "\n" .
-                        "- Date: " . date('F j, Y') . "\n" .
-                        "- Instructor: " . $course['instructor_first_name'] . " " . $course['instructor_last_name'] . "\n" .
-                        "- Total: ₵" . number_format($course['price'], 2) . "\n\n" .
-                        "To start learning now, visit: https://yourdomain.com/student/course-materials.php?course_id=" . $course['course_id'] . "\n\n" .
-                        "Happy learning!\n\n" .
-                        "Best regards,\n" .
-                        "The Learnix Team";
-        
+            "Dear " . $course['student_first_name'] . " " . $course['student_last_name'] . ",\n\n" .
+            "Your payment has been processed successfully and you are now enrolled in " . $course['title'] . ".\n\n" .
+            "Payment Receipt:\n" .
+            "- Course: " . $course['title'] . "\n" .
+            "- Date: " . date('F j, Y') . "\n" .
+            "- Instructor: " . $course['instructor_first_name'] . " " . $course['instructor_last_name'] . "\n" .
+            "- Total: ₵" . number_format($course['price'], 2) . "\n\n" .
+            "To start learning now, visit: https://yourdomain.com/student/course-materials.php?course_id=" . $course['course_id'] . "\n\n" .
+            "Happy learning!\n\n" .
+            "Best regards,\n" .
+            "The Learnix Team";
+
         return $mail->send();
     } catch (Exception $e) {
         error_log("Mail Error: " . $e->getMessage());
         return false;
     }
 }
-?>
