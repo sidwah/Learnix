@@ -825,21 +825,21 @@ function getTimeAgo($datetime)
                                         <i class="bi-person"></i>
                                     </span> Account
                                 </a>
-                                <a class="dropdown-item" href="account-notifications.php">
+                                <!-- <a class="dropdown-item" href="account-notifications.php">
                                     <span class="dropdown-item-icon">
                                         <i class="bi-chat-left-dots"></i>
                                     </span> Notifications
-                                </a>
+                                </a> -->
                                 <a class="dropdown-item" href="payment-history.php">
                                     <span class="dropdown-item-icon">
                                         <i class="bi-wallet2"></i>
                                     </span> Purchase History
                                 </a>
-                                <a class="dropdown-item" href="payment-method.php">
+                                <!-- <a class="dropdown-item" href="payment-method.php">
                                     <span class="dropdown-item-icon">
                                         <i class="bi-credit-card"></i>
                                     </span> Payment Methods
-                                </a>
+                                </a> -->
 
                                 <div class="dropdown-divider"></div>
 

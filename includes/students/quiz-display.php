@@ -101,12 +101,13 @@ if ($attemptCount > 0) {
     $stmt->close();
 }
 
-// Check when the next attempt is available (if there's a cooldown period)
+// Check when the next attempt is available (only if max attempts reached)
 $nextAttemptAvailable = null;
 $cooldownActive = false;
 $cooldownTimeRemaining = null;
 
-if ($attemptCount > 0) {
+// Only check for cooldown if max attempts have been reached
+if ($attemptCount >= $quiz['attempts_allowed'] && $quiz['attempts_allowed'] > 0) {
     $stmt = $conn->prepare("
         SELECT next_attempt_available
         FROM student_quiz_attempts
@@ -135,11 +136,13 @@ if ($attemptCount > 0) {
             } else {
                 $cooldownTimeRemaining = $interval->format('%i minutes, %s seconds');
             }
+        } else {
+            // Reset attempt count since cooldown has passed
+            $attemptCount = 0;
         }
     }
 }
 
-// Determine if student can take the quiz
 // Determine if student can take the quiz - only check cooldown
 $canTakeQuiz = !$cooldownActive;
 $attemptsRemaining = $quiz['attempts_allowed'] == 0 ? 'Unlimited' : max(1, $quiz['attempts_allowed'] - $attemptCount);
@@ -843,7 +846,6 @@ if ($activeSession && !$activeSession['is_completed']) {
     </div>
 </div>
 
-<!-- JavaScript for quiz functionality will be implemented separately -->
 
 <!-- JavaScript for the quiz functionality -->
 <script>

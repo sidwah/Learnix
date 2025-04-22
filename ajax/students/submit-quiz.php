@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Submit Quiz AJAX Handler
  * 
@@ -45,7 +46,7 @@ try {
     if ($checkColumnResult && $checkColumnResult->num_rows > 0) {
         $notesColumnExists = true;
     }
-    
+
     // If it doesn't exist, try to add it
     if (!$notesColumnExists) {
         try {
@@ -110,7 +111,7 @@ try {
 
     // Calculate score as percentage
     $score = $totalPoints > 0 ? ($earnedPoints / $totalPoints) * 100 : 0;
-    
+
     // Round score to 1 decimal place
     $score = round($score, 1);
 
@@ -173,7 +174,7 @@ try {
 
         if ($enrollmentResult) {
             $enrollmentId = $enrollmentResult['enrollment_id'];
-            
+
             // Check if progress record exists
             $stmt = $conn->prepare("
                 SELECT progress_id, completion_status
@@ -212,19 +213,54 @@ try {
         }
     }
 
-    // Set the next attempt available time (12 hour cooldown)
-$nextAttemptTime = new DateTime();
-$nextAttemptTime->add(new DateInterval('PT12H')); // 12 hours
-$nextAttemptAvailable = $nextAttemptTime->format('Y-m-d H:i:s');
+// Get current attempt count and max attempts allowed
+$stmt = $conn->prepare("
+    SELECT COUNT(*) as attempt_count 
+    FROM student_quiz_attempts 
+    WHERE user_id = ? AND quiz_id = ?
+");
+$stmt->bind_param("ii", $_SESSION['user_id'], $attempt['quiz_id']);
+$stmt->execute();
+$attemptCountResult = $stmt->get_result()->fetch_assoc();
+$attemptCount = $attemptCountResult['attempt_count'];
+$stmt->close();
 
 $stmt = $conn->prepare("
-    UPDATE student_quiz_attempts
-    SET next_attempt_available = ?
-    WHERE attempt_id = ?
+    SELECT attempts_allowed 
+    FROM section_quizzes 
+    WHERE quiz_id = ?
 ");
-$stmt->bind_param("si", $nextAttemptAvailable, $attemptId);
+$stmt->bind_param("i", $attempt['quiz_id']);
 $stmt->execute();
+$attemptsAllowedResult = $stmt->get_result()->fetch_assoc();
+$attemptsAllowed = $attemptsAllowedResult['attempts_allowed'];
 $stmt->close();
+
+// Only set cooldown if max attempts reached
+if ($attemptsAllowed > 0 && $attemptCount >= $attemptsAllowed) {
+    $nextAttemptTime = new DateTime();
+    $nextAttemptTime->add(new DateInterval('PT12H')); // 12 hours
+    $nextAttemptAvailable = $nextAttemptTime->format('Y-m-d H:i:s');
+
+    $stmt = $conn->prepare("
+        UPDATE student_quiz_attempts
+        SET next_attempt_available = ?
+        WHERE attempt_id = ?
+    ");
+    $stmt->bind_param("si", $nextAttemptAvailable, $attemptId);
+    $stmt->execute();
+    $stmt->close();
+} else {
+    // No cooldown needed, set next_attempt_available to null
+    $stmt = $conn->prepare("
+        UPDATE student_quiz_attempts
+        SET next_attempt_available = NULL
+        WHERE attempt_id = ?
+    ");
+    $stmt->bind_param("i", $attemptId);
+    $stmt->execute();
+    $stmt->close();
+}
 
 
     // Commit transaction
@@ -246,10 +282,8 @@ $stmt->close();
         'message' => $message,
         'submission_type' => $isForfeit ? 'forfeit' : ($isTimeExpired ? 'time_expired' : 'normal')
     ]);
-
 } catch (Exception $e) {
     // Rollback transaction on error
     $conn->rollback();
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
-?>
