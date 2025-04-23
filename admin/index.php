@@ -29,27 +29,25 @@
             <!-- End Col -->
         </div>
         <!-- End Row -->
-
         <?php
         include '../backend/config.php';
 
-        // Query to fetch the counts for each category
+        // Main counts query (unchanged)
         $query = "SELECT 
-              (SELECT COUNT(*) FROM users ) AS user_count,
-              (SELECT COUNT(*) FROM courses) AS course_count,
-              (SELECT COUNT(*) FROM categories) AS categories_count,
-              (SELECT COUNT(*) FROM subcategories) AS subcategories_count,
-              (SELECT COUNT(*) FROM issue_reports) AS issues,
-              (SELECT COUNT(*) FROM chatbot_responses) AS chatbot_responses,
-              (SELECT COUNT(*) FROM users WHERE role = 'student') AS students,
-              (SELECT COUNT(*) FROM issue_reports WHERE status = 'pending') AS recent_reports,
-              (SELECT COUNT(*) FROM users WHERE role = 'instructor') AS instructors,
-              (SELECT COUNT(*) FROM users WHERE role = 'admin') AS admins";
+      (SELECT COUNT(*) FROM users ) AS user_count,
+      (SELECT COUNT(*) FROM courses) AS course_count,
+      (SELECT COUNT(*) FROM categories) AS categories_count,
+      (SELECT COUNT(*) FROM subcategories) AS subcategories_count,
+      (SELECT COUNT(*) FROM issue_reports) AS issues,
+      (SELECT COUNT(*) FROM chatbot_responses) AS chatbot_responses,
+      (SELECT COUNT(*) FROM users WHERE role = 'student') AS students,
+      (SELECT COUNT(*) FROM issue_reports WHERE status = 'pending') AS recent_reports,
+      (SELECT COUNT(*) FROM users WHERE role = 'instructor') AS instructors,
+      (SELECT COUNT(*) FROM users WHERE role = 'admin') AS admins";
 
-        // Execute the query
+        // Execute the main query
         $result = mysqli_query($conn, $query);
 
-        // Check if the query was successful and fetch the data
         if ($result) {
             $data = mysqli_fetch_assoc($result);
             $users_count = $data['user_count'];
@@ -63,42 +61,76 @@
             $admins = $data['admins'];
             $recent_reports = $data['recent_reports'];
         } else {
-            // Handle the error if the query fails
-            die("Error executing query: " . mysqli_error($conn));
+            die("Error executing main query: " . mysqli_error($conn));
         }
 
+        // Enrollment count
+        $enrollment_query = "SELECT COUNT(*) AS enrollment_count FROM enrollments";
+        $enrollment_result = mysqli_query($conn, $enrollment_query);
+        $enrollment_count = $enrollment_result ? mysqli_fetch_assoc($enrollment_result)['enrollment_count'] : 0;
 
-        // Sample numbers for dashboard statistics
-        // $user_count = 1200;
-        // $instructor_count = 75;
-        $enrollment_count = 0;
+        // Course approval status counts - updated to exclude drafts and properly count published/approved courses
+        $course_status_query = "SELECT 
+    SUM(CASE WHEN status = 'Published' AND approval_status = 'Approved' THEN 1 ELSE 0 END) AS approved_courses,
+    SUM(CASE WHEN status = 'Published' AND approval_status = 'Pending'  THEN 1 ELSE 0 END) AS pending_courses,
+    SUM(CASE WHEN approval_status = 'Rejected' THEN 1 ELSE 0 END) AS rejected_courses,
+    SUM(CASE WHEN status = 'Draft' THEN 1 ELSE 0 END) AS draft_courses
+FROM courses";
+        $course_status_result = mysqli_query($conn, $course_status_query);
+        if ($course_status_result) {
+            $status_data = mysqli_fetch_assoc($course_status_result);
+            $approved_courses = $status_data['approved_courses'];
+            $pending_courses = $status_data['pending_courses'];
+            $rejected_courses = $status_data['rejected_courses'];
+            $draft_courses = $status_data['draft_courses']; // Added if you want to display drafts separately
+        } else {
+            $approved_courses = $pending_courses = $rejected_courses = $draft_courses = 0;
+        }
 
+        // Quiz statistics - fixed to use correct column names from your schema
+        $quiz_query = "SELECT 
+    COUNT(*) AS total_quizzes,
+    (SELECT quiz_title FROM section_quizzes 
+     JOIN student_quiz_attempts ON section_quizzes.quiz_id = student_quiz_attempts.quiz_id
+     GROUP BY section_quizzes.quiz_id 
+     ORDER BY COUNT(*) DESC LIMIT 1) AS most_attempted_quiz,
+    AVG(score) AS average_quiz_score
+FROM section_quizzes
+LEFT JOIN student_quiz_attempts ON section_quizzes.quiz_id = student_quiz_attempts.quiz_id";
+        $quiz_result = mysqli_query($conn, $quiz_query);
+        if ($quiz_result) {
+            $quiz_data = mysqli_fetch_assoc($quiz_result);
+            $total_quizzes = $quiz_data['total_quizzes'];
+            $most_attempted_quiz = $quiz_data['most_attempted_quiz'] ?: "No quizzes attempted";
+            $average_quiz_score = round($quiz_data['average_quiz_score'] ?: 0, 2);
+        } else {
+            $total_quizzes = 0;
+            $most_attempted_quiz = "N/A";
+            $average_quiz_score = 0;
+            // For debugging:
+            // die("Error executing quiz query: " . mysqli_error($conn));
+        }
 
-        
+        // System logs count
+        $logs_query = "SELECT COUNT(*) AS recent_logs FROM user_activity_logs 
+               WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+        $logs_result = mysqli_query($conn, $logs_query);
+        $recent_logs = $logs_result ? mysqli_fetch_assoc($logs_result)['recent_logs'] : 0;
 
-        // Sample numbers for course management statistics
-        $approved_courses = 0;
-        $pending_courses = 0;
-        $rejected_courses = 0;
-
-
-        // Sample numbers for quiz & performance analytics
-        $total_quizzes = 0;
-        $most_attempted_quiz = "Intro to Programming";
-        $average_quiz_score = 0;
-
-
-
-        // Sample numbers for system notifications & reports
-        // $recent_reports = 12;
-        $recent_logs = 0;
-
-        // Sample numbers for help center & chatbot stats
-        $open_tickets = 0;
-        $resolved_tickets = 0;
-
+        // Help center tickets (using issue_reports table)
+        $tickets_query = "SELECT 
+    SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS open_tickets,
+    SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) AS resolved_tickets
+FROM issue_reports";
+        $tickets_result = mysqli_query($conn, $tickets_query);
+        if ($tickets_result) {
+            $tickets_data = mysqli_fetch_assoc($tickets_result);
+            $open_tickets = $tickets_data['open_tickets'];
+            $resolved_tickets = $tickets_data['resolved_tickets'];
+        } else {
+            $open_tickets = $resolved_tickets = 0;
+        }
         ?>
-
 
         <hr class="mb-5">
 
@@ -280,7 +312,7 @@
                         <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
                             <div class="card-body text-center">
                                 <h5 class="card-title text-inherit">Most Attempted Quiz</h5>
-                                <h1 class="card-text large text-body"><?php echo ($most_attempted_quiz); ?></h1>
+                                <h3 class="card-text text-body"><?php echo ($most_attempted_quiz); ?></h3>
                             </div>
                         </a>
                     </div>
@@ -330,7 +362,7 @@
                         </a>
                     </div>
 
-                
+
                 </div>
             </div>
         </div>
@@ -418,5 +450,4 @@
 
     </div>
     <!-- End Content -->
-</main>
-<!-- ========== END MAIN CONTENT ========== -->
+     
