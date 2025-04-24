@@ -665,28 +665,28 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
 
      
     // Trigger badge evaluation for topic completion
-    require_once '../backend/events/ProgressEvents.php';
-    $progressEvents = new ProgressEvents();
-    $badgeResults = $progressEvents->onTopicCompleted($user_id, $enrollment_id, $topic_id, $course_id);
+    // require_once '../backend/events/ProgressEvents.php';
+    // $progressEvents = new ProgressEvents();
+    // $badgeResults = $progressEvents->onTopicCompleted($user_id, $enrollment_id, $topic_id, $course_id);
     
     // Store badge results in session for notification
-    if (!empty($badgeResults['section_badge']) && $badgeResults['section_badge']['success']) {
-        $_SESSION['section_badge_awarded'] = true;
-    }
+    // if (!empty($badgeResults['section_badge']) && $badgeResults['section_badge']['success']) {
+    //     $_SESSION['section_badge_awarded'] = true;
+    // }
     
-    if (!empty($badgeResults['course_badge']) && $badgeResults['course_badge']['success']) {
-        $_SESSION['badge_awarded'] = true;
-    }
+    // if (!empty($badgeResults['course_badge']) && $badgeResults['course_badge']['success']) {
+    //     $_SESSION['badge_awarded'] = true;
+    // }
     
-    if (!empty($badgeResults['streak_badge']) && $badgeResults['streak_badge']['success']) {
-        $_SESSION['streak_badge_awarded'] = true;
-        $_SESSION['streak_badge_tier'] = $badgeResults['streak_badge']['tier'] ?? 'bronze';
-    }
+    // if (!empty($badgeResults['streak_badge']) && $badgeResults['streak_badge']['success']) {
+    //     $_SESSION['streak_badge_awarded'] = true;
+    //     $_SESSION['streak_badge_tier'] = $badgeResults['streak_badge']['tier'] ?? 'bronze';
+    // }
     
-    // Store notification flag
-    if (!empty($badgeResults)) {
-        $_SESSION['completion_notification'] = true;
-    }
+    // // Store notification flag
+    // if (!empty($badgeResults)) {
+    //     $_SESSION['completion_notification'] = true;
+    // }
     
 
     // Check if course is now 100% complete
@@ -725,19 +725,19 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         if ($all_requirements_met) {
             // Include certificate and badge handlers
             require_once '../backend/certificates/CertificateHandler.php';
-            require_once '../backend/badges/BadgeHandler.php';
+            // require_once '../backend/badges/BadgeHandler.php';
 
             // Generate certificate
             $certificateHandler = new CertificateHandler();
             $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
 
             // Award course completion badge
-            $badgeHandler = new BadgeHandler();
-            $badgeResult = $badgeHandler->awardCourseBadge($user_id, $course_id);
+            // $badgeHandler = new BadgeHandler();
+            // $badgeResult = $badgeHandler->awardCourseBadge($user_id, $course_id);
 
             // Store results for notification
             $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
-            $_SESSION['badge_awarded'] = $badgeResult['success'] ?? false;
+            // $_SESSION['badge_awarded'] = $badgeResult['success'] ?? false;
             $_SESSION['completion_notification'] = true;
         } else {
             // Store a notification that course is not fully complete
@@ -750,16 +750,16 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     // Check if section is now completed
     if ($remaining_topics == 0) {
         // Include badge handler if not already included
-        if (!class_exists('BadgeHandler')) {
-            require_once '../backend/badges/BadgeHandler.php';
-        }
+        // if (!class_exists('BadgeHandler')) {
+        //     require_once '../backend/badges/BadgeHandler.php';
+        // }
 
-        // Award section completion badge
-        $badgeHandler = new BadgeHandler();
-        $sectionBadgeResult = $badgeHandler->awardSectionBadge($user_id, $course_id, $section_id);
+        // // Award section completion badge
+        // $badgeHandler = new BadgeHandler();
+        // $sectionBadgeResult = $badgeHandler->awardSectionBadge($user_id, $course_id, $section_id);
 
-        // Store result for notification
-        $_SESSION['section_badge_awarded'] = $sectionBadgeResult['success'] ?? false;
+        // // Store result for notification
+        // $_SESSION['section_badge_awarded'] = $sectionBadgeResult['success'] ?? false;
     }
     // Check if this section has any more uncompleted topics
     $remaining_topics_query = "SELECT COUNT(*) as remaining_count
@@ -1669,7 +1669,7 @@ function getLinkDisplay($topic)
                     bsToast.show();
                 <?php endif; ?>
 
-                <?php if (isset($_SESSION['badge_awarded']) && $_SESSION['badge_awarded']): ?>
+                <?php /* if (isset($_SESSION['badge_awarded']) && $_SESSION['badge_awarded']): ?>
                     // Show badge notification after small delay
                     setTimeout(function() {
                         toastHeader.textContent = "Badge Earned!";
@@ -1690,8 +1690,8 @@ function getLinkDisplay($topic)
                         // Show the toast
                         const bsToast = new bootstrap.Toast(toast);
                         bsToast.show();
-                    }, 1500);
-                <?php endif; ?>
+                    }, 1500); 
+                <?php endif; */?>
             });
         </script>
 
@@ -1699,8 +1699,8 @@ function getLinkDisplay($topic)
         // Clear notifications after displaying them
         unset($_SESSION['completion_notification']);
         unset($_SESSION['certificate_generated']);
-        unset($_SESSION['badge_awarded']);
-        unset($_SESSION['section_badge_awarded']);
+        // unset($_SESSION['badge_awarded']);
+        // unset($_SESSION['section_badge_awarded']);
         ?>
     <?php endif; ?>
 </main>

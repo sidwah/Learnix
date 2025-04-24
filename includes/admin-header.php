@@ -12,6 +12,27 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     header('Location: signin.php');
     exit;
 }
+
+// Add is_deleted column to user_notifications table if it doesn't exist
+try {
+    $conn = new mysqli('localhost', 'root', 'root', 'learnix_db');
+    if (!$conn->connect_error) {
+        // Check if is_deleted column exists
+        $checkColQuery = "SHOW COLUMNS FROM user_notifications LIKE 'is_deleted'";
+        $result = $conn->query($checkColQuery);
+        
+        if ($result->num_rows == 0) {
+            // Add the column if it doesn't exist
+            $addColQuery = "ALTER TABLE user_notifications ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0";
+            $conn->query($addColQuery);
+        }
+        
+        // $conn->close();
+    }
+} catch (Exception $e) {
+    // Log the error but continue execution
+    error_log("Error updating database schema: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
@@ -123,6 +144,17 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
       font-weight: 600;
       margin-bottom: 10px;
       color: #566a7f;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .notification-group-count {
+      font-size: 12px;
+      background-color: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 12px;
+      color: #666;
     }
     
     .notification-item {
@@ -262,6 +294,19 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
       align-items: center;
     }
     
+    /* View All Button */
+    .view-all-btn {
+      font-size: 12px;
+      color: #3498db;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    
+    /* Grouped Notifications */
+    .notification-group-collapsed .notification-item:nth-child(n+5) {
+      display: none;
+    }
+    
     /* Dark Mode Compatibility */
     .dark-mode-preload .notification-panel,
     html[data-darkreader-mode] .notification-panel {
@@ -304,6 +349,11 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
       background-color: rgba(250, 173, 20, 0.1) !important;
     }
     
+    .dark-mode-preload .notification-group-count,
+    html[data-darkreader-mode] .notification-group-count {
+      background-color: #2c3e50 !important;
+    }
+    
     /* Overlay when notification panel is open */
     .notification-overlay {
       position: fixed;
@@ -318,6 +368,20 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     
     .notification-overlay.show {
       display: block;
+    }
+    
+    /* Read notification styles */
+    .notification-item.read {
+      opacity: 0.7;
+      background-color: #f8f8f8 !important;
+    }
+    
+    html[data-darkreader-mode] .notification-item.read {
+      background-color: #1c2630 !important;
+    }
+    
+    .dark-mode-preload .notification-item.read {
+      background-color: #1c2630 !important;
     }
   </style>
 
@@ -515,7 +579,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                   <button id="notificationBell" class="btn btn-ghost-secondary notification-bell" 
                           title="Notifications">
                     <i class="bi-bell fs-4"></i>
-                    <span class="notification-badge" id="notificationCount">3</span>
+                    <span class="notification-badge" id="notificationCount">0</span>
                   </button>
                 </li>
                 <!-- Dark mode toggle will be added here by JavaScript -->
@@ -545,68 +609,47 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
   <div class="notification-panel" id="notificationPanel">
     <div class="notification-panel-header">
       <h4 class="mb-0">Notifications</h4>
-      <button id="clearAllNotifications" class="btn btn-sm btn-ghost-secondary">Clear All</button>
+      <button id="clearAllNotifications" class="btn btn-sm btn-ghost-secondary">Mark All Read</button>
     </div>
     
     <!-- Reports Group -->
     <div class="notification-group" id="reportsGroup">
       <div class="notification-group-header">
-        <i class="bi-file-earmark-text me-2"></i> Reports
+        <span><i class="bi-file-earmark-text me-2"></i> Reports</span>
+        <span class="notification-group-count" id="reportsCount">0</span>
       </div>
       <div class="notification-items" id="reportsItems">
         <!-- Report notifications will be dynamically added here -->
-        <div class="notification-item notification-item-important" data-id="report-1">
-          <span class="close-btn"><i class="bi-x"></i></span>
-          <div class="notification-title">Monthly Revenue Report Ready</div>
-          <div class="notification-content">The monthly revenue report for April 2025 is now available for review.</div>
-          <div class="notification-time">2 hours ago</div>
-          <div class="notification-actions">
-            <button class="btn btn-sm btn-outline-primary">View Report</button>
-            <button class="btn btn-sm btn-outline-secondary">Download</button>
-          </div>
-        </div>
       </div>
     </div>
     
     <!-- System Updates Group -->
     <div class="notification-group" id="systemGroup">
       <div class="notification-group-header">
-        <i class="bi-gear me-2"></i> System Updates
+        <span><i class="bi-gear me-2"></i> System Updates</span>
+        <span class="notification-group-count" id="systemCount">0</span>
       </div>
       <div class="notification-items" id="systemItems">
         <!-- System notifications will be dynamically added here -->
-        <div class="notification-item notification-item-system" data-id="system-1">
-          <span class="close-btn"><i class="bi-x"></i></span>
-          <div class="notification-title">System Maintenance</div>
-          <div class="notification-content">System maintenance scheduled for tonight at 2:00 AM UTC.</div>
-          <div class="notification-time">5 hours ago</div>
-        </div>
       </div>
     </div>
     
     <!-- Messages Group -->
     <div class="notification-group" id="messagesGroup">
       <div class="notification-group-header">
-        <i class="bi-chat-dots me-2"></i> Messages
+        <span><i class="bi-chat-dots me-2"></i> Messages</span>
+        <span class="notification-group-count" id="messagesCount">0</span>
       </div>
       <div class="notification-items" id="messagesItems">
         <!-- Message notifications will be dynamically added here -->
-        <div class="notification-item notification-item-message" data-id="message-1">
-          <span class="close-btn"><i class="bi-x"></i></span>
-          <div class="notification-title">New Message from Sarah</div>
-          <div class="notification-content">Hi there! Just wanted to check in about the new course materials.</div>
-          <div class="notification-time">1 day ago</div>
-          <div class="notification-actions">
-            <button class="btn btn-sm btn-outline-primary">Reply</button>
-          </div>
-        </div>
       </div>
     </div>
     
     <!-- Other Notifications Group -->
     <div class="notification-group" id="otherGroup">
       <div class="notification-group-header">
-        <i class="bi-bell me-2"></i> Other Notifications
+        <span><i class="bi-bell me-2"></i> Other Notifications</span>
+        <span class="notification-group-count" id="otherCount">0</span>
       </div>
       <div class="notification-items" id="otherItems">
         <!-- Other notifications will be dynamically added here -->
@@ -631,7 +674,13 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
           overlay: document.getElementById('notificationOverlay'),
           toastContainer: document.getElementById('toastContainer'),
           badge: document.getElementById('notificationCount'),
-          clearAllBtn: document.getElementById('clearAllNotifications')
+          clearAllBtn: document.getElementById('clearAllNotifications'),
+          counters: {
+            reports: document.getElementById('reportsCount'),
+            system: document.getElementById('systemCount'),
+            messages: document.getElementById('messagesCount'),
+            other: document.getElementById('otherCount')
+          }
         },
         
         // Storage for notifications
@@ -642,19 +691,31 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
           other: []
         },
         
+        // Grouping state
+        groupState: {
+          reports: false,
+          system: false,
+          messages: false,
+          other: false
+        },
+        
         // Initialize the notification system
         init: function() {
           // Add event listeners
           this.addEventListeners();
           
-          // Load saved notifications from localStorage (in a real app)
-          // this.loadNotifications();
+          // Empty notification containers
+          document.querySelectorAll('.notification-items').forEach(container => {
+            container.innerHTML = '';
+          });
           
-          // Add some test notifications
-          this.addTestNotifications();
+          // Fetch notifications from server
+          this.fetchNotifications();
           
-          // Update notification count badge
-          this.updateNotificationCount();
+          // Set up periodic refresh (every 60 seconds)
+          setInterval(() => {
+            this.fetchNotifications(true); // silent refresh
+          }, 60000);
           
           // Add toast container to DOM if it doesn't exist
           if (!this.elements.toastContainer) {
@@ -662,6 +723,178 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
             this.elements.toastContainer.id = 'toastContainer';
             this.elements.toastContainer.className = 'toast-container';
             document.body.appendChild(this.elements.toastContainer);
+          }
+        },
+        
+        // Fetch notifications from server
+        fetchNotifications: function(silent = false) {
+          fetch('../ajax/admin/fetch_admin_notifications.php')
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                // Store notifications
+                this.notifications = data.notifications;
+                
+                // Store grouping state
+                this.groupState = data.shouldGroup;
+                
+                // Update the notification panel
+                this.updateNotificationPanel();
+                
+                // Update notification count
+                this.updateNotificationCountFromData(data.counts);
+                
+                // Update group counters
+                this.updateGroupCounters(data.counts);
+                
+                // Show toast for new notifications if not silent refresh
+                if (!silent) {
+                  this.showNewNotificationsToast();
+                }
+              } else {
+                console.error('Error fetching notifications:', data.error);
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching notifications:', error);
+            });
+        },
+        
+        // Update group counters
+        updateGroupCounters: function(counts) {
+          for (const category in counts) {
+            if (category !== 'total' && this.elements.counters[category]) {
+              this.elements.counters[category].textContent = counts[category];
+              
+              // Hide group if no notifications
+              const group = document.getElementById(`${category}Group`);
+              if (group) {
+                if (counts[category] === 0 && this.notifications[category].length === 0) {
+                  group.style.display = 'none';
+                } else {
+                  group.style.display = 'block';
+                }
+              }
+            }
+          }
+        },
+        
+        // Update notification panel with fetched notifications
+        updateNotificationPanel: function() {
+          // Clear existing notifications
+          document.querySelectorAll('.notification-items').forEach(container => {
+            container.innerHTML = '';
+          });
+          
+          // Add each notification to the panel
+          for (const category in this.notifications) {
+            const container = document.getElementById(`${category}Items`);
+            if (!container) continue;
+            
+            // Get parent group
+            const group = document.getElementById(`${category}Group`);
+            
+            if (this.notifications[category].length === 0) {
+              container.innerHTML = '<div class="text-muted py-3 text-center">No notifications</div>';
+              
+              // Hide empty groups
+              if (group) {
+                group.style.display = 'none';
+              }
+              continue;
+            }
+            
+            // Show the group
+            if (group) {
+              group.style.display = 'block';
+            }
+            
+            // Check if we need to group notifications
+            const shouldGroup = this.groupState[category];
+            if (shouldGroup) {
+              // Add collapsible class
+              container.parentElement.classList.add('notification-group-collapsed');
+              
+              // Add first 4 notifications
+              for (let i = 0; i < Math.min(4, this.notifications[category].length); i++) {
+                this.addNotificationToPanel(this.notifications[category][i], `${category}Items`);
+              }
+              
+              // Add "View All" button if more than 4
+              if (this.notifications[category].length > 4) {
+                const viewAllBtn = document.createElement('div');
+                viewAllBtn.className = 'text-center my-2';
+                viewAllBtn.innerHTML = `<span class="view-all-btn">View all ${this.notifications[category].length} notifications</span>`;
+                
+                viewAllBtn.querySelector('.view-all-btn').addEventListener('click', () => {
+                  container.parentElement.classList.remove('notification-group-collapsed');
+                  
+                  // Remove "View All" button
+                  viewAllBtn.remove();
+                  
+                  // Add remaining notifications
+                  for (let i = 4; i < this.notifications[category].length; i++) {
+                    this.addNotificationToPanel(this.notifications[category][i], `${category}Items`);
+                  }
+                });
+                
+                container.appendChild(viewAllBtn);
+              }
+            } else {
+              // Add all notifications
+              this.notifications[category].forEach(notification => {
+                this.addNotificationToPanel(notification, `${category}Items`);
+              });
+            }
+          }
+        },
+        
+        // Show toast for new unread notifications
+        showNewNotificationsToast: function() {
+          const totalUnread = 
+            this.countUnread(this.notifications.reports) + 
+            this.countUnread(this.notifications.system) + 
+            this.countUnread(this.notifications.messages) + 
+            this.countUnread(this.notifications.other);
+            
+          if (totalUnread > 0) {
+            // Find most recent unread notification
+            let mostRecent = null;
+            
+            for (const category in this.notifications) {
+              for (const notification of this.notifications[category]) {
+                if (!notification.is_read && (!mostRecent || notification.time === 'Just now')) {
+                  mostRecent = notification;
+                }
+              }
+            }
+            
+            if (mostRecent) {
+              this.showToast({
+                id: 'new-notifications',
+                title: totalUnread > 1 ? `${totalUnread} New Notifications` : 'New Notification',
+                message: totalUnread > 1 ? 
+                  `You have ${totalUnread} unread notifications including: "${mostRecent.title}"` : 
+                  mostRecent.message,
+                category: mostRecent.category,
+                important: mostRecent.important
+              });
+            }
+          }
+        },
+        
+        // Count unread notifications in an array
+        countUnread: function(notificationsArray) {
+          return notificationsArray.filter(n => !n.is_read).length;
+        },
+        
+        // Update notification count badge from fetched data
+        updateNotificationCountFromData: function(counts) {
+          const totalCount = counts.total;
+          
+          if (this.elements.badge) {
+            this.elements.badge.textContent = totalCount;
+            this.elements.badge.style.display = totalCount > 0 ? 'flex' : 'none';
           }
         },
         
@@ -686,19 +919,9 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
           // Clear all notifications
           if (this.elements.clearAllBtn) {
             this.elements.clearAllBtn.addEventListener('click', function() {
-              self.clearAllNotifications();
+              self.markAllAsRead();
             });
           }
-          
-          // Individual notification close buttons
-          document.querySelectorAll('.notification-item .close-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-              e.stopPropagation();
-              const notificationItem = this.closest('.notification-item');
-              const notificationId = notificationItem.dataset.id;
-              self.removeNotification(notificationId);
-            });
-          });
         },
         
         // Toggle notification panel visibility
@@ -722,37 +945,194 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
           this.elements.overlay.classList.remove('show');
         },
         
-        // Add a new notification
-        addNotification: function(notification) {
-          // Add to storage based on category
-          switch(notification.category) {
-            case 'reports':
-              this.notifications.reports.unshift(notification);
-              this.addNotificationToPanel(notification, 'reportsItems');
-              break;
-            case 'system':
-              this.notifications.system.unshift(notification);
-              this.addNotificationToPanel(notification, 'systemItems');
-              break;
-            case 'messages':
-              this.notifications.messages.unshift(notification);
-              this.addNotificationToPanel(notification, 'messagesItems');
-              break;
-            default:
-              this.notifications.other.unshift(notification);
-              this.addNotificationToPanel(notification, 'otherItems');
+        // Add notification to the panel
+        addNotificationToPanel: function(notification, containerId) {
+          const container = document.getElementById(containerId);
+          if (!container) return;
+          
+          // Create notification item element
+          const notificationItem = document.createElement('div');
+          notificationItem.className = `notification-item notification-item-${notification.category === 'reports' ? 'important' : notification.category}`;
+          if (notification.is_read) {
+            notificationItem.classList.add('read');
+          }
+          notificationItem.setAttribute('data-id', notification.id);
+          
+          // Create notification content
+          notificationItem.innerHTML = `
+            <span class="close-btn"><i class="bi-x"></i></span>
+            <div class="notification-title">${notification.title}</div>
+            <div class="notification-content">${notification.message}</div>
+            <div class="notification-time">${notification.time}</div>
+            ${notification.actions && notification.actions.length > 0 ? `
+              <div class="notification-actions">
+                ${notification.actions.map(action => {
+                  if (action.action === 'markAsRead') {
+                    return `<button class="btn btn-sm btn-outline-${action.type} mark-read-btn">${action.text}</button>`;
+                  } else {
+                    return `<a href="${action.url}" class="btn btn-sm btn-outline-${action.type}">${action.text}</a>`;
+                  }
+                }).join('')}
+              </div>
+            ` : ''}
+          `;
+          
+          // Add to container
+          container.appendChild(notificationItem);
+          
+          // Mark as read when clicked (except on action buttons or close button)
+          notificationItem.addEventListener('click', (e) => {
+            if (!e.target.closest('.close-btn') && 
+                !e.target.closest('.btn') && 
+                !notification.is_read) {
+              this.markNotificationRead(notification.id);
+            }
+          });
+          
+          // Add close button event - This deletes the notification
+          const closeBtn = notificationItem.querySelector('.close-btn');
+          if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              this.deleteNotification(notification.id);
+            });
           }
           
-          // Show toast notification
-          this.showToast(notification);
+          // Add "Mark as Read" button event
+          const markReadBtn = notificationItem.querySelector('.mark-read-btn');
+          if (markReadBtn) {
+            markReadBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              this.markNotificationRead(notification.id);
+            });
+          }
+        },
+        
+        // Mark notification as read
+        markNotificationRead: function(notificationId) {
+          // Find notification in storage
+          let foundNotification = null;
+          let foundCategory = null;
+          
+          for (const category in this.notifications) {
+            const index = this.notifications[category].findIndex(n => n.id === notificationId);
+            if (index !== -1) {
+              foundNotification = this.notifications[category][index];
+              foundCategory = category;
+              break;
+            }
+          }
+          
+          if (!foundNotification || foundNotification.is_read) return;
+          
+          // Update UI
+          const notificationItem = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+          if (notificationItem) {
+            notificationItem.classList.add('read');
+          }
+          
+          // Update in storage
+          foundNotification.is_read = true;
+          
+          // Update count
+          this.updateNotificationCount();
+          
+          // Update group counter
+          if (foundCategory && this.elements.counters[foundCategory]) {
+            const currentCount = parseInt(this.elements.counters[foundCategory].textContent);
+            this.elements.counters[foundCategory].textContent = Math.max(0, currentCount - 1);
+          }
+          
+          // Send to server
+          const formData = new FormData();
+          formData.append('notification_id', notificationId);
+          
+          fetch('../ajax/admin/mark_notification_read.php', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .catch(error => {
+            console.error('Error marking notification as read:', error);
+          });
+        },
+        
+        // Delete a notification
+        deleteNotification: function(notificationId) {
+          // Remove from panel
+          const notificationItem = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
+          if (notificationItem) {
+            notificationItem.parentNode.removeChild(notificationItem);
+          }
+          
+          // Find notification in storage
+          let foundNotification = null;
+          let foundCategory = null;
+          let foundIndex = -1;
+          
+          for (const category in this.notifications) {
+            const index = this.notifications[category].findIndex(n => n.id === notificationId);
+            if (index !== -1) {
+              foundNotification = this.notifications[category][index];
+              foundCategory = category;
+              foundIndex = index;
+              break;
+            }
+          }
+          
+          if (!foundNotification) return;
+          
+          // Update count if needed
+          if (!foundNotification.is_read) {
+            // Update group counter
+            if (foundCategory && this.elements.counters[foundCategory]) {
+              const currentCount = parseInt(this.elements.counters[foundCategory].textContent);
+              this.elements.counters[foundCategory].textContent = Math.max(0, currentCount - 1);
+            }
+          }
+          
+          // Remove from storage
+          if (foundCategory && foundIndex !== -1) {
+            this.notifications[foundCategory].splice(foundIndex, 1);
+          }
           
           // Update notification count
           this.updateNotificationCount();
           
-          // Save notifications (in a real app)
-          // this.saveNotifications();
+          // If panel is empty for this category, add "No notifications" message
+          for (const category in this.notifications) {
+            const container = document.getElementById(`${category}Items`);
+            if (container && this.notifications[category].length === 0) {
+              container.innerHTML = '<div class="text-muted py-3 text-center">No notifications</div>';
+            }
+          }
           
-          return notification.id;
+          // Send to server
+          const formData = new FormData();
+          formData.append('notification_id', notificationId);
+          
+          fetch('../ajax/admin/delete_notification.php', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .catch(error => {
+            console.error('Error deleting notification:', error);
+          });
+        },
+        
+        // Update notification count badge
+        updateNotificationCount: function() {
+          const totalCount = 
+            this.countUnread(this.notifications.reports) + 
+            this.countUnread(this.notifications.system) + 
+            this.countUnread(this.notifications.messages) + 
+            this.countUnread(this.notifications.other);
+          
+          if (this.elements.badge) {
+            this.elements.badge.textContent = totalCount;
+            this.elements.badge.style.display = totalCount > 0 ? 'flex' : 'none';
+          }
         },
         
         // Show toast notification
@@ -781,7 +1161,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
           toastElement.setAttribute('role', 'alert');
           toastElement.setAttribute('aria-live', 'assertive');
           toastElement.setAttribute('aria-atomic', 'true');
-          toastElement.setAttribute('data-id', notification.id);
+          toastElement.setAttribute('data-id', notification.id || 'system-toast-' + Date.now());
           
           toastElement.innerHTML = `
             <div class="toast-header">
@@ -803,7 +1183,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
               ${notification.important && notification.actions ? `
                 <div class="mt-2 pt-2 border-top">
                   ${notification.actions.map(action => `
-                    <button type="button" class="btn btn-sm btn-${action.type}">${action.text}</button>
+                    <a href="${action.url}" class="btn btn-sm btn-${action.type}">${action.text}</a>
                   `).join(' ')}
                 </div>
               ` : ''}
@@ -823,19 +1203,6 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
           if (closeBtn) {
             closeBtn.addEventListener('click', function() {
               self.removeToast(toastElement);
-            });
-          }
-          
-          // Add action button events if important
-          if (notification.important && notification.actions) {
-            const actionButtons = toastElement.querySelectorAll('.toast-body .btn');
-            actionButtons.forEach((btn, index) => {
-              btn.addEventListener('click', function() {
-                if (notification.actions[index].callback) {
-                  notification.actions[index].callback();
-                }
-                // Don't remove the toast for important notifications
-              });
             });
           }
           
@@ -859,312 +1226,55 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
           }, 300); // Animation duration
         },
         
-        // Add notification to the panel
-        addNotificationToPanel: function(notification, containerId) {
-          const container = document.getElementById(containerId);
-          if (!container) return;
-          
-          // Create notification item element
-          const notificationItem = document.createElement('div');
-          notificationItem.className = `notification-item notification-item-${notification.category === 'reports' ? 'important' : notification.category}`;
-          notificationItem.setAttribute('data-id', notification.id);
-          
-          // Create notification content
-          notificationItem.innerHTML = `
-            <span class="close-btn"><i class="bi-x"></i></span>
-            <div class="notification-title">${notification.title}</div>
-            <div class="notification-content">${notification.message}</div>
-            <div class="notification-time">${notification.time}</div>
-            ${notification.actions ? `
-              <div class="notification-actions">
-                ${notification.actions.map(action => `
-                  <button class="btn btn-sm btn-outline-${action.type}">${action.text}</button>
-                `).join('')}
-              </div>
-            ` : ''}
-          `;
-          
-          // Add event listeners for notification item
-          container.prepend(notificationItem);
-          
-          // Add close button event
-          const closeBtn = notificationItem.querySelector('.close-btn');
-          if (closeBtn) {
-            closeBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              this.removeNotification(notification.id);
-            });
-          }
-          
-          // Add action button events
-          if (notification.actions) {
-            const actionButtons = notificationItem.querySelectorAll('.notification-actions .btn');
-            actionButtons.forEach((btn, index) => {
-              btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                if (notification.actions[index].callback) {
-                  notification.actions[index].callback();
-                }
-              });
-            });
-          }
-        },
-        
-        // Remove a notification
-        removeNotification: function(notificationId) {
-          // Remove from panel
-          const notificationItem = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
-          if (notificationItem) {
-            notificationItem.parentNode.removeChild(notificationItem);
-          }
-          
-          // Remove from storage
-          let notificationRemoved = false;
-          
-          for (const category in this.notifications) {
-            const index = this.notifications[category].findIndex(n => n.id === notificationId);
-            if (index !== -1) {
-              this.notifications[category].splice(index, 1);
-              notificationRemoved = true;
-              break;
-            }
-          }
-          
-          // Remove toast if exists
-          const toast = document.querySelector(`.toast[data-id="${notificationId}"]`);
-          if (toast) {
-            this.removeToast(toast);
-          }
-          
-          // Update notification count
-          if (notificationRemoved) {
-            this.updateNotificationCount();
-            // Save notifications (in a real app)
-            // this.saveNotifications();
-          }
-        },
-        
-        // Clear all notifications
-        clearAllNotifications: function() {
-          // Clear all notification items from panel
-          document.querySelectorAll('.notification-items').forEach(container => {
-            container.innerHTML = '';
-          });
-          
-          // Clear storage
-          this.notifications = {
-            reports: [],
-            system: [],
-            messages: [],
-            other: []
-          };
-          
-          // Remove all toasts
-          const toasts = document.querySelectorAll('.toast');
-          toasts.forEach(toast => {
-            this.removeToast(toast);
-          });
-          
-          // Update notification count
-          this.updateNotificationCount();
-          
-          // Save notifications (in a real app)
-          // this.saveNotifications();
-        },
-        
-        // Update notification count badge
-        updateNotificationCount: function() {
-          const totalCount = 
-            this.notifications.reports.length + 
-            this.notifications.system.length + 
-            this.notifications.messages.length + 
-            this.notifications.other.length;
-          
-          if (this.elements.badge) {
-            this.elements.badge.textContent = totalCount;
-            this.elements.badge.style.display = totalCount > 0 ? 'flex' : 'none';
-          }
-        },
-        
-        // Add test notifications for demo
-        addTestNotifications: function() {
-          // Add notification groups to the panel if they don't exist
-          const groups = ['reports', 'system', 'messages', 'other'];
-          groups.forEach(group => {
-            if (!document.getElementById(`${group}Group`)) {
-              const groupElement = document.createElement('div');
-              groupElement.className = 'notification-group';
-              groupElement.id = `${group}Group`;
-              
-              const header = document.createElement('div');
-              header.className = 'notification-group-header';
-              
-              let icon = 'bell';
-              switch(group) {
-                case 'reports': icon = 'file-earmark-text'; break;
-                case 'system': icon = 'gear'; break;
-                case 'messages': icon = 'chat-dots'; break;
+        // Mark all notifications as read
+        markAllAsRead: function() {
+          fetch('../ajax/admin/mark_all_notifications_read.php', {
+            method: 'POST'
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Update all notifications in storage as read
+              for (const category in this.notifications) {
+                this.notifications[category].forEach(notification => {
+                  notification.is_read = true;
+                });
               }
               
-              header.innerHTML = `<i class="bi-${icon} me-2"></i> ${group.charAt(0).toUpperCase() + group.slice(1)}`;
+              // Update UI
+              document.querySelectorAll('.notification-item').forEach(item => {
+                item.classList.add('read');
+              });
               
-              const items = document.createElement('div');
-              items.className = 'notification-items';
-              items.id = `${group}Items`;
+              // Update count
+              this.updateNotificationCount();
               
-              groupElement.appendChild(header);
-              groupElement.appendChild(items);
+              // Update group counters
+              for (const category in this.elements.counters) {
+                if (this.elements.counters[category]) {
+                  this.elements.counters[category].textContent = '0';
+                }
+              }
               
-              this.elements.panel.appendChild(groupElement);
+              // Show success toast
+              this.showToast({
+                title: 'Notifications Cleared',
+                message: 'All notifications have been marked as read.',
+                category: 'system',
+                important: false
+              });
             }
+          })
+          .catch(error => {
+            console.error('Error marking all notifications as read:', error);
           });
-        },
-        
-        // Generate a unique ID for notifications
-        generateId: function(prefix) {
-          return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        },
-        
-        // Create a standard notification
-        createStandardNotification: function(title, message, category = 'other') {
-          const notification = {
-            id: this.generateId(category),
-            title: title,
-            message: message,
-            category: category,
-            time: 'Just now',
-            important: false
-          };
-          
-          return this.addNotification(notification);
-        },
-        
-        // Create an important notification with actions
-        createImportantNotification: function(title, message, actions = [], category = 'reports') {
-          const notification = {
-            id: this.generateId(category),
-            title: title,
-            message: message,
-            category: category,
-            time: 'Just now',
-            important: true,
-            actions: actions
-          };
-          
-          return this.addNotification(notification);
         }
       };
       
       // Initialize the notification system
       notificationSystem.init();
       
-      // Expose the notification system to the window for testing
+      // Expose the notification system to the window for debugging
       window.notificationSystem = notificationSystem;
-      
-      // Add test notifications on page load for demo purposes
-      setTimeout(() => {
-        notificationSystem.createStandardNotification(
-          'Welcome to Learnix Admin',
-          'You have successfully logged in to the administration panel.',
-          'system'
-        );
-        
-        setTimeout(() => {
-          notificationSystem.createImportantNotification(
-            'New Course Submission',
-            'A new course "Advanced Machine Learning" has been submitted for review.',
-            [
-              { text: 'Review Now', type: 'primary', callback: () => alert('Review action clicked') },
-              { text: 'Later', type: 'secondary', callback: () => alert('Later action clicked') }
-            ],
-            'reports'
-          );
-          
-          setTimeout(() => {
-            notificationSystem.createStandardNotification(
-              'New Message from John',
-              'Hey there! I have a question about the course platform.',
-              'messages'
-            );
-          }, 2000);
-        }, 3000);
-      }, 1000);
-      
-      // Add demo button to test notifications
-      const demoContainer = document.createElement('div');
-      demoContainer.className = 'container mt-4';
-      demoContainer.innerHTML = `
-        <div class="card">
-          <div class="card-header">
-            <h5 class="card-title mb-0">Notification System Demo</h5>
-          </div>
-          <div class="card-body">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <h6>Standard Notifications</h6>
-                <button id="demoStandardSystem" class="btn btn-sm btn-primary mb-2">System Update</button>
-                <button id="demoStandardMessage" class="btn btn-sm btn-success mb-2">New Message</button>
-                <button id="demoStandardOther" class="btn btn-sm btn-warning mb-2">Other Notification</button>
-              </div>
-              <div class="col-md-6">
-                <h6>Important Notifications</h6>
-                <button id="demoImportantReport" class="btn btn-sm btn-danger mb-2">Report Ready</button>
-                <button id="demoImportantSystem" class="btn btn-sm btn-info mb-2">Important System Alert</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(demoContainer);
-      
-      // Add event listeners for demo buttons
-      document.getElementById('demoStandardSystem').addEventListener('click', function() {
-        notificationSystem.createStandardNotification(
-          'System Update Available',
-          'A new system update is available for installation.',
-          'system'
-        );
-      });
-      
-      document.getElementById('demoStandardMessage').addEventListener('click', function() {
-        notificationSystem.createStandardNotification(
-          'New Message from Admin',
-          'Please review the updated guidelines for course submissions.',
-          'messages'
-        );
-      });
-      
-      document.getElementById('demoStandardOther').addEventListener('click', function() {
-        notificationSystem.createStandardNotification(
-          'Browser Update',
-          'Your browser is up to date!',
-          'other'
-        );
-      });
-      
-      document.getElementById('demoImportantReport').addEventListener('click', function() {
-        notificationSystem.createImportantNotification(
-          'Critical Report Ready',
-          'The quarterly financial report is now available for review.',
-          [
-            { text: 'View Report', type: 'primary', callback: () => alert('View Report clicked') },
-            { text: 'Download', type: 'secondary', callback: () => alert('Download clicked') }
-          ],
-          'reports'
-        );
-      });
-      
-      document.getElementById('demoImportantSystem').addEventListener('click', function() {
-        notificationSystem.createImportantNotification(
-          'Urgent System Maintenance',
-          'The system will undergo maintenance in 30 minutes. Please save your work.',
-          [
-            { text: 'Got it', type: 'primary', callback: () => alert('Got it clicked') }
-          ],
-          'system'
-        );
-      });
     });
   </script>
-  

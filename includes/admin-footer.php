@@ -15,7 +15,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Dark Mode Script - Add this before other initialization scripts -->
-<script src="../assets/js/dark-mode.js"></script>
+<!-- <script src="../assets/js/dark-mode.js"></script> -->
 
 <!-- JS Plugins Initialization -->
 <script>
