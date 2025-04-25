@@ -24,11 +24,53 @@ function fetchStatistics($conn) {
     $completionResult = $conn->query($completionQuery);
     $completionData = $completionResult->fetch_assoc();
     
+    // Calculate growth percentages (comparing to previous month)
+    $prevMonthStudentQuery = "SELECT COUNT(*) as prev_students FROM users WHERE role = 'student' AND created_at < DATE_SUB(NOW(), INTERVAL 1 MONTH)";
+    $prevMonthStudentResult = $conn->query($prevMonthStudentQuery);
+    $prevMonthStudentData = $prevMonthStudentResult->fetch_assoc();
+    
+    $prevMonthCourseQuery = "SELECT COUNT(*) as prev_courses FROM courses WHERE status = 'Published' AND approval_status = 'Approved' AND created_at < DATE_SUB(NOW(), INTERVAL 1 MONTH)";
+    $prevMonthCourseResult = $conn->query($prevMonthCourseQuery);
+    $prevMonthCourseData = $prevMonthCourseResult->fetch_assoc();
+    
+    $prevMonthRevenueQuery = "SELECT SUM(amount) as prev_revenue FROM course_payments WHERE status = 'Completed' AND payment_date < DATE_SUB(NOW(), INTERVAL 1 MONTH)";
+    $prevMonthRevenueResult = $conn->query($prevMonthRevenueQuery);
+    $prevMonthRevenueData = $prevMonthRevenueResult->fetch_assoc();
+    
+    $prevMonthCompletionQuery = "SELECT AVG(completion_percentage) as prev_completion FROM enrollments WHERE enrolled_at < DATE_SUB(NOW(), INTERVAL 1 MONTH)";
+    $prevMonthCompletionResult = $conn->query($prevMonthCompletionQuery);
+    $prevMonthCompletionData = $prevMonthCompletionResult->fetch_assoc();
+    
+    // Calculate growth rates
+    $studentGrowth = 0;
+    if ($prevMonthStudentData['prev_students'] > 0) {
+        $studentGrowth = (($studentData['total_students'] - $prevMonthStudentData['prev_students']) / $prevMonthStudentData['prev_students']) * 100;
+    }
+    
+    $courseGrowth = 0;
+    if ($prevMonthCourseData['prev_courses'] > 0) {
+        $courseGrowth = (($courseData['total_courses'] - $prevMonthCourseData['prev_courses']) / $prevMonthCourseData['prev_courses']) * 100;
+    }
+    
+    $revenueGrowth = 0;
+    if ($prevMonthRevenueData['prev_revenue'] > 0) {
+        $revenueGrowth = (($revenueData['total_revenue'] - $prevMonthRevenueData['prev_revenue']) / $prevMonthRevenueData['prev_revenue']) * 100;
+    }
+    
+    $completionGrowth = 0;
+    if ($prevMonthCompletionData['prev_completion'] > 0) {
+        $completionGrowth = (($completionData['avg_completion'] - $prevMonthCompletionData['prev_completion']) / $prevMonthCompletionData['prev_completion']) * 100;
+    }
+    
     return [
         'total_students' => $studentData['total_students'] ?? 0,
         'total_courses' => $courseData['total_courses'] ?? 0,
         'total_revenue' => $revenueData['total_revenue'] ?? 0,
-        'avg_completion' => $completionData['avg_completion'] ?? 0
+        'avg_completion' => $completionData['avg_completion'] ?? 0,
+        'student_growth' => round($studentGrowth, 1),
+        'course_growth' => round($courseGrowth, 1),
+        'revenue_growth' => round($revenueGrowth, 1),
+        'completion_growth' => round($completionGrowth, 1)
     ];
 }
 
@@ -86,7 +128,7 @@ function fetchRecentActivities($conn, $limit = 5) {
              
              UNION
              
-             SELECT 'payout_processed' as activity_type, CONCAT('$', FORMAT(ip.amount, 2)) as title,
+             SELECT 'payout_processed' as activity_type, CONCAT('GH₵', FORMAT(ip.amount, 2)) as title,
              CONCAT(u.first_name, ' ', u.last_name) as user_name, ip.processed_date as activity_time
              FROM instructor_payouts ip
              JOIN instructors i ON ip.instructor_id = i.instructor_id
@@ -127,6 +169,187 @@ function fetchRecentActivities($conn, $limit = 5) {
     return $result->fetch_all(MYSQLI_ASSOC);
 }
 
+// Get monthly enrollment data for the chart
+function getMonthlyEnrollments($conn) {
+    $query = "SELECT 
+                MONTH(enrolled_at) as month, 
+                COUNT(*) as enrollments 
+              FROM 
+                enrollments 
+              WHERE 
+                enrolled_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) 
+              GROUP BY 
+                MONTH(enrolled_at) 
+              ORDER BY 
+                month";
+    
+    $result = $conn->query($query);
+    $monthlyData = array_fill(0, 12, 0); // Initialize with zeros for all 12 months
+    
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $monthIndex = $row['month'] - 1; // 0-based index for months
+            $monthlyData[$monthIndex] = (int)$row['enrollments'];
+        }
+    }
+    
+    return $monthlyData;
+}
+
+// Get top categories data
+function getTopCategories($conn) {
+    $query = "SELECT 
+                c.name as category, 
+                COUNT(co.course_id) as course_count
+              FROM 
+                categories c
+              JOIN 
+                subcategories s ON c.category_id = s.category_id
+              JOIN 
+                courses co ON s.subcategory_id = co.subcategory_id
+              WHERE 
+                co.status = 'Published' AND co.approval_status = 'Approved'
+              GROUP BY 
+                c.category_id
+              ORDER BY 
+                course_count DESC
+              LIMIT 5";
+    
+    $result = $conn->query($query);
+    $categories = [];
+    $counts = [];
+    
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $categories[] = $row['category'];
+            $counts[] = (int)$row['course_count'];
+        }
+    }
+    
+    // Add "Others" if we have fewer than 5 categories
+    if (count($categories) < 5) {
+        $categories[] = "Others";
+        $counts[] = 5; // Default value
+    }
+    
+    return [
+        'categories' => $categories,
+        'counts' => $counts
+    ];
+}
+
+// Get revenue breakdown by course category
+function getRevenueByCategory($conn) {
+    $query = "SELECT 
+                c.name as category,
+                SUM(cp.amount) as total_revenue
+              FROM 
+                categories c
+              JOIN 
+                subcategories s ON c.category_id = s.category_id
+              JOIN 
+                courses co ON s.subcategory_id = co.subcategory_id
+              JOIN 
+                enrollments e ON co.course_id = e.course_id
+              JOIN 
+                course_payments cp ON e.enrollment_id = cp.enrollment_id
+              WHERE 
+                cp.status = 'Completed'
+              GROUP BY 
+                c.category_id
+              ORDER BY 
+                total_revenue DESC
+              LIMIT 6";
+    
+    $result = $conn->query($query);
+    $categories = [];
+    $revenues = [];
+    
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $categories[] = $row['category'];
+            $revenues[] = round((float)$row['total_revenue'], 2);
+        }
+    } else {
+        // Sample data if no records found
+        $categories = ['Web Dev', 'Data Science', 'UI/UX', 'Digital Marketing', 'Python', 'Business'];
+        $revenues = [12500, 9800, 8400, 7600, 6900, 5800];
+    }
+    
+    return [
+        'categories' => $categories,
+        'revenues' => $revenues
+    ];
+}
+
+// Get user activity data for the past 12 months
+function getUserActivityData($conn) {
+    $query = "SELECT 
+                MONTH(created_at) as month,
+                COUNT(*) as new_users
+              FROM 
+                users
+              WHERE 
+                created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+              GROUP BY 
+                MONTH(created_at)
+              ORDER BY 
+                month";
+    
+    $result = $conn->query($query);
+    $newUsers = array_fill(0, 12, 0);
+    
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $monthIndex = $row['month'] - 1;
+            $newUsers[$monthIndex] = (int)$row['new_users'];
+        }
+    }
+    
+    // Get active users data
+    $activeQuery = "SELECT 
+                    MONTH(last_accessed) as month,
+                    COUNT(DISTINCT user_id) as active_users
+                  FROM 
+                    enrollments
+                  WHERE 
+                    last_accessed >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+                  GROUP BY 
+                    MONTH(last_accessed)
+                  ORDER BY 
+                    month";
+    
+    $activeResult = $conn->query($activeQuery);
+    $activeUsers = array_fill(0, 12, 0);
+    
+    if ($activeResult && $activeResult->num_rows > 0) {
+        while ($row = $activeResult->fetch_assoc()) {
+            $monthIndex = $row['month'] - 1;
+            $activeUsers[$monthIndex] = (int)$row['active_users'];
+        }
+    }
+    
+    return [
+        'new_users' => $newUsers,
+        'active_users' => $activeUsers
+    ];
+}
+
+// Initialize our data arrays with default values
+$monthlyEnrollments = array_fill(0, 12, 0);
+$topCategories = [
+    'categories' => ['Development', 'Business', 'Design', 'Marketing', 'Others'],
+    'counts' => [35, 25, 20, 15, 5]
+];
+$revenueByCategory = [
+    'categories' => ['Web Dev', 'Data Science', 'UI/UX', 'Digital Marketing', 'Python', 'Business'],
+    'revenues' => [12500, 9800, 8400, 7600, 6900, 5800]
+];
+$userActivity = [
+    'new_users' => [45, 52, 38, 24, 33, 26, 21, 20, 6, 8, 15, 10],
+    'active_users' => [87, 57, 74, 99, 75, 38, 62, 47, 82, 56, 45, 47]
+];
+
 // Get database connection
 try {
     require_once '../backend/config.php';
@@ -134,13 +357,23 @@ try {
     $topCourses = fetchTopCourses($conn);
     $topInstructors = fetchTopInstructors($conn);
     $recentActivities = fetchRecentActivities($conn);
+    
+    // Get chart data
+    $monthlyEnrollments = getMonthlyEnrollments($conn);
+    $topCategories = getTopCategories($conn);
+    $revenueByCategory = getRevenueByCategory($conn);
+    $userActivity = getUserActivityData($conn);
 } catch (Exception $e) {
     error_log("Database connection error: " . $e->getMessage());
     $stats = [
         'total_students' => 1254,
         'total_courses' => 328,
         'total_revenue' => 48295,
-        'avg_completion' => 68.7
+        'avg_completion' => 68.7,
+        'student_growth' => 12.5,
+        'course_growth' => 5.3,
+        'revenue_growth' => 18.2,
+        'completion_growth' => -2.4
     ];
     $topCourses = [];
     $topInstructors = [];
@@ -216,9 +449,10 @@ try {
                         <h6 class="card-subtitle mb-2">Total Students</h6>
                         <div class="row align-items-center">
                             <div class="col">
-                                <h2 class="card-title text-primary">1,254</h2>
-                                <div class="text-success">
-                                    <i class="bi-graph-up me-1"></i> +12.5%
+                                <h2 class="card-title text-primary"><?php echo number_format($stats['total_students']); ?></h2>
+                                <div class="<?php echo $stats['student_growth'] >= 0 ? 'text-success' : 'text-danger'; ?>">
+                                    <i class="bi-graph-<?php echo $stats['student_growth'] >= 0 ? 'up' : 'down'; ?> me-1"></i> 
+                                    <?php echo $stats['student_growth'] >= 0 ? '+' : ''; ?><?php echo $stats['student_growth']; ?>%
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -236,9 +470,10 @@ try {
                         <h6 class="card-subtitle mb-2">Active Courses</h6>
                         <div class="row align-items-center">
                             <div class="col">
-                                <h2 class="card-title text-primary">328</h2>
-                                <div class="text-success">
-                                    <i class="bi-graph-up me-1"></i> +5.3%
+                                <h2 class="card-title text-primary"><?php echo number_format($stats['total_courses']); ?></h2>
+                                <div class="<?php echo $stats['course_growth'] >= 0 ? 'text-success' : 'text-danger'; ?>">
+                                    <i class="bi-graph-<?php echo $stats['course_growth'] >= 0 ? 'up' : 'down'; ?> me-1"></i> 
+                                    <?php echo $stats['course_growth'] >= 0 ? '+' : ''; ?><?php echo $stats['course_growth']; ?>%
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -256,9 +491,10 @@ try {
                         <h6 class="card-subtitle mb-2">Total Revenue</h6>
                         <div class="row align-items-center">
                             <div class="col">
-                                <h2 class="card-title text-primary">$48,295</h2>
-                                <div class="text-success">
-                                    <i class="bi-graph-up me-1"></i> +18.2%
+                                <h2 class="card-title text-primary">GH₵<?php echo number_format($stats['total_revenue']); ?></h2>
+                                <div class="<?php echo $stats['revenue_growth'] >= 0 ? 'text-success' : 'text-danger'; ?>">
+                                    <i class="bi-graph-<?php echo $stats['revenue_growth'] >= 0 ? 'up' : 'down'; ?> me-1"></i> 
+                                    <?php echo $stats['revenue_growth'] >= 0 ? '+' : ''; ?><?php echo $stats['revenue_growth']; ?>%
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -276,9 +512,10 @@ try {
                         <h6 class="card-subtitle mb-2">Completion Rate</h6>
                         <div class="row align-items-center">
                             <div class="col">
-                                <h2 class="card-title text-primary">68.7%</h2>
-                                <div class="text-danger">
-                                    <i class="bi-graph-down me-1"></i> -2.4%
+                                <h2 class="card-title text-primary"><?php echo number_format($stats['avg_completion'], 1); ?>%</h2>
+                                <div class="<?php echo $stats['completion_growth'] >= 0 ? 'text-success' : 'text-danger'; ?>">
+                                    <i class="bi-graph-<?php echo $stats['completion_growth'] >= 0 ? 'up' : 'down'; ?> me-1"></i> 
+                                    <?php echo $stats['completion_growth'] >= 0 ? '+' : ''; ?><?php echo $stats['completion_growth']; ?>%
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -368,181 +605,156 @@ try {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <img class="avatar avatar-sm avatar-4x3" src="../uploads/thumbnails/default.jpg" alt="Course Image">
+                            <?php if (!empty($topCourses)): ?>
+                                <?php foreach ($topCourses as $course): ?>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    <img class="avatar avatar-sm avatar-4x3" src="<?php echo !empty($course['thumbnail']) ? '../uploads/thumbnails/'.$course['thumbnail'] : '../uploads/thumbnails/default.jpg'; ?>" alt="Course Image">
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <a class="text-body" href="#"><?php echo $course['title']; ?></a>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><?php echo $course['category']; ?></td>
+                                        <td><?php echo $course['enrollment_count']; ?></td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="me-2"><?php echo number_format($course['completion_rate'], 0); ?>%</span>
+                                                <div class="progress table-progress">
+                                                    <div class="progress-bar <?php echo $course['completion_rate'] >= 75 ? 'bg-success' : 'bg-warning'; ?>" style="width: <?php echo $course['completion_rate']; ?>%" role="progressbar" aria-valuenow="<?php echo $course['completion_rate']; ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>GH₵<?php echo number_format($course['revenue'], 2); ?></td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="me-2"><?php echo number_format($course['avg_rating'], 1); ?></span>
+                                                <div class="text-warning">
+                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                        <?php if ($i <= floor($course['avg_rating'])): ?>
+                                                            <i class="bi-star-fill"></i>
+                                                        <?php elseif ($i - 0.5 <= $course['avg_rating']): ?>
+                                                            <i class="bi-star-half"></i>
+                                                        <?php else: ?>
+                                                            <i class="bi-star"></i>
+                                                        <?php endif; ?>
+                                                    <?php endfor; ?>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <!-- Default course rows if no data -->
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <img class="avatar avatar-sm avatar-4x3" src="../uploads/thumbnails/default.jpg" alt="Course Image">
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <a class="text-body" href="#">Web Development Bootcamp</a>
+                                            </div>
                                         </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <a class="text-body" href="#">Web Development Bootcamp</a>
+                                    </td>
+                                    <td>Development</td>
+                                    <td>254</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">82%</span>
+                                            <div class="progress table-progress">
+                                                <div class="progress-bar bg-success" style="width: 82%" role="progressbar" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>Development</td>
-                                <td>254</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">82%</span>
-                                        <div class="progress table-progress">
-                                            <div class="progress-bar bg-success" style="width: 82%" role="progressbar" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </td>
+                                    <td>GH₵12,580</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">4.8</span>
+                                            <div class="text-warning">
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-half"></i>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>$12,580</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">4.8</span>
-                                        <div class="text-warning">
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-half"></i>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <img class="avatar avatar-sm avatar-4x3" src="../uploads/thumbnails/default.jpg" alt="Course Image">
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <a class="text-body" href="#">Data Science Fundamentals</a>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <img class="avatar avatar-sm avatar-4x3" src="../uploads/thumbnails/default.jpg" alt="Course Image">
+                                    </td>
+                                    <td>Data Science</td>
+                                    <td>187</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">75%</span>
+                                            <div class="progress table-progress">
+                                                <div class="progress-bar bg-success" style="width: 75%" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
                                         </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <a class="text-body" href="#">Data Science Fundamentals</a>
+                                    </td>
+                                    <td>GH₵9,345</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">4.7</span>
+                                            <div class="text-warning">
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-half"></i>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>Data Science</td>
-                                <td>187</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">75%</span>
-                                        <div class="progress table-progress">
-                                            <div class="progress-bar bg-success" style="width: 75%" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <img class="avatar avatar-sm avatar-4x3" src="../uploads/thumbnails/default.jpg" alt="Course Image">
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <a class="text-body" href="#">UI/UX Design Masterclass</a>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>$9,345</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">4.7</span>
-                                        <div class="text-warning">
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-half"></i>
+                                    </td>
+                                    <td>Design</td>
+                                    <td>176</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">92%</span>
+                                            <div class="progress table-progress">
+                                                <div class="progress-bar bg-success" style="width: 92%" role="progressbar" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <img class="avatar avatar-sm avatar-4x3" src="../uploads/thumbnails/default.jpg" alt="Course Image">
+                                    </td>
+                                    <td>GH₵8,720</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">4.9</span>
+                                            <div class="text-warning">
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                                <i class="bi-star-fill"></i>
+                                            </div>
                                         </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <a class="text-body" href="#">UI/UX Design Masterclass</a>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Design</td>
-                                <td>176</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">92%</span>
-                                        <div class="progress table-progress">
-                                            <div class="progress-bar bg-success" style="width: 92%" role="progressbar" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>$8,720</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">4.9</span>
-                                        <div class="text-warning">
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <img class="avatar avatar-sm avatar-4x3" src="../uploads/thumbnails/default.jpg" alt="Course Image">
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <a class="text-body" href="#">Digital Marketing Pro</a>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Marketing</td>
-                                <td>165</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">68%</span>
-                                        <div class="progress table-progress">
-                                            <div class="progress-bar bg-warning" style="width: 68%" role="progressbar" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>$7,540</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">4.5</span>
-                                        <div class="text-warning">
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-half"></i>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <img class="avatar avatar-sm avatar-4x3" src="../uploads/thumbnails/default.jpg" alt="Course Image">
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <a class="text-body" href="#">Python for Data Analysis</a>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>Data Science</td>
-                                <td>142</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">79%</span>
-                                        <div class="progress table-progress">
-                                            <div class="progress-bar bg-success" style="width: 79%" role="progressbar" aria-valuenow="79" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>$6,950</td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="me-2">4.6</span>
-                                        <div class="text-warning">
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-fill"></i>
-                                            <i class="bi-star-half"></i>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -569,66 +781,72 @@ try {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="flex-shrink-0">
-                                                    <img class="avatar avatar-sm avatar-circle" src="../uploads/instructor-profile/default.png" alt="Instructor">
+                                    <?php if (!empty($topInstructors)): ?>
+                                        <?php foreach ($topInstructors as $instructor): ?>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="flex-shrink-0">
+                                                            <img class="avatar avatar-sm avatar-circle" src="<?php echo !empty($instructor['profile_pic']) && $instructor['profile_pic'] != 'default.png' ? '../uploads/instructor-profile/'.$instructor['profile_pic'] : '../uploads/instructor-profile/default.png'; ?>" alt="Instructor">
+                                                        </div>
+                                                        <div class="flex-grow-1 ms-3">
+                                                            <h5 class="mb-0"><?php echo $instructor['first_name'] . ' ' . $instructor['last_name']; ?></h5>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td><?php echo $instructor['course_count']; ?></td>
+                                                <td><?php echo $instructor['student_count']; ?></td>
+                                                <td>GH₵<?php echo number_format($instructor['total_revenue'], 2); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <!-- Default instructor rows if no data -->
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-shrink-0">
+                                                        <img class="avatar avatar-sm avatar-circle" src="../uploads/instructor-profile/default.png" alt="Instructor">
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-3">
+                                                        <h5 class="mb-0">Sarah Williams</h5>
+                                                    </div>
                                                 </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <h5 class="mb-0">Sarah Williams</h5>
+                                            </td>
+                                            <td>12</td>
+                                            <td>458</td>
+                                            <td>GH₵28,450</td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-shrink-0">
+                                                        <img class="avatar avatar-sm avatar-circle" src="../uploads/instructor-profile/default.png" alt="Instructor">
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-3">
+                                                        <h5 class="mb-0">Robert Johnson</h5>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td>12</td>
-                                        <td>458</td>
-                                        <td>$28,450</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="flex-shrink-0">
-                                                    <img class="avatar avatar-sm avatar-circle" src="../uploads/instructor-profile/default.png" alt="Instructor">
+                                            </td>
+                                            <td>9</td>
+                                            <td>392</td>
+                                            <td>GH₵21,980</td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-shrink-0">
+                                                        <img class="avatar avatar-sm avatar-circle" src="../uploads/instructor-profile/default.png" alt="Instructor">
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-3">
+                                                        <h5 class="mb-0">Jennifer Lee</h5>
+                                                    </div>
                                                 </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <h5 class="mb-0">Robert Johnson</h5>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>9</td>
-                                        <td>392</td>
-                                        <td>$21,980</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="flex-shrink-0">
-                                                    <img class="avatar avatar-sm avatar-circle" src="../uploads/instructor-profile/default.png" alt="Instructor">
-                                                </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <h5 class="mb-0">Jennifer Lee</h5>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>7</td>
-                                        <td>325</td>
-                                        <td>$18,620</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="flex-shrink-0">
-                                                    <img class="avatar avatar-sm avatar-circle" src="../uploads/instructor-profile/default.png" alt="Instructor">
-                                                </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <h5 class="mb-0">Michael Chen</h5>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>6</td>
-                                        <td>283</td>
-                                        <td>$15,840</td>
-                                    </tr>
+                                            </td>
+                                            <td>7</td>
+                                            <td>325</td>
+                                            <td>GH₵18,620</td>
+                                        </tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -667,56 +885,92 @@ try {
             </div>
             <div class="card-body">
                 <ul class="list-group list-group-timeline list-group-timeline-primary">
-                    <li class="list-group-item list-group-timeline-item">
-                        <span class="list-group-timeline-badge"></span>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">New course published</h5>
-                                <p class="mb-0">"Advanced React Development" by Robert Johnson</p>
+                    <?php if (!empty($recentActivities)): ?>
+                        <?php foreach ($recentActivities as $activity): ?>
+                            <li class="list-group-item list-group-timeline-item">
+                                <span class="list-group-timeline-badge"></span>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <?php 
+                                        $activityTitle = '';
+                                        switch ($activity['activity_type']) {
+                                            case 'course_published':
+                                                $activityTitle = 'New course published';
+                                                break;
+                                            case 'payout_processed':
+                                                $activityTitle = 'Instructor payout processed';
+                                                break;
+                                            case 'verification_request':
+                                                $activityTitle = 'New verification request';
+                                                break;
+                                            case 'course_review':
+                                                $activityTitle = 'Course review request';
+                                                break;
+                                            case 'support_ticket':
+                                                $activityTitle = 'New support ticket';
+                                                break;
+                                            default:
+                                                $activityTitle = 'Activity';
+                                        }
+                                        ?>
+                                        <h5 class="mb-1"><?php echo $activityTitle; ?></h5>
+                                        <p class="mb-0"><?php echo $activity['title']; ?> by <?php echo $activity['user_name']; ?></p>
+                                    </div>
+                                    <small class="text-muted">
+                                        <?php 
+                                        $activityTime = strtotime($activity['activity_time']);
+                                        $now = time();
+                                        $diff = $now - $activityTime;
+                                        
+                                        if ($diff < 60) {
+                                            echo "Just now";
+                                        } elseif ($diff < 3600) {
+                                            echo floor($diff / 60) . " minutes ago";
+                                        } elseif ($diff < 86400) {
+                                            echo floor($diff / 3600) . " hours ago";
+                                        } elseif ($diff < 172800) {
+                                            echo "Yesterday";
+                                        } else {
+                                            echo date("M j", $activityTime);
+                                        }
+                                        ?>
+                                    </small>
+                                </div>
+                            </li>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <!-- Default activity items if no data -->
+                        <li class="list-group-item list-group-timeline-item">
+                            <span class="list-group-timeline-badge"></span>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">New course published</h5>
+                                    <p class="mb-0">"Advanced React Development" by Robert Johnson</p>
+                                </div>
+                                <small class="text-muted">Just now</small>
                             </div>
-                            <small class="text-muted">Just now</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item list-group-timeline-item">
-                        <span class="list-group-timeline-badge"></span>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">Instructor payout processed</h5>
-                                <p class="mb-0">$12,560 to Sarah Williams</p>
+                        </li>
+                        <li class="list-group-item list-group-timeline-item">
+                            <span class="list-group-timeline-badge"></span>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">Instructor payout processed</h5>
+                                    <p class="mb-0">GH₵12,560 to Sarah Williams</p>
+                                </div>
+                                <small class="text-muted">2 hours ago</small>
                             </div>
-                            <small class="text-muted">2 hours ago</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item list-group-timeline-item">
-                        <span class="list-group-timeline-badge"></span>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">New verification request</h5>
-                                <p class="mb-0">Jennifer Lee submitted instructor verification documents</p>
+                        </li>
+                        <li class="list-group-item list-group-timeline-item">
+                            <span class="list-group-timeline-badge"></span>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">New verification request</h5>
+                                    <p class="mb-0">Jennifer Lee submitted instructor verification documents</p>
+                                </div>
+                                <small class="text-muted">5 hours ago</small>
                             </div>
-                            <small class="text-muted">5 hours ago</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item list-group-timeline-item">
-                        <span class="list-group-timeline-badge"></span>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">Course review request</h5>
-                                <p class="mb-0">"Python for Machine Learning" awaiting admin approval</p>
-                            </div>
-                            <small class="text-muted">8 hours ago</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item list-group-timeline-item">
-                        <span class="list-group-timeline-badge"></span>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1">New support ticket</h5>
-                                <p class="mb-0">Student reported issue with video playback</p>
-                            </div>
-                            <small class="text-muted">Yesterday</small>
-                        </div>
-                    </li>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
@@ -768,7 +1022,7 @@ try {
                 },
                 series: [{
                     name: 'Enrollments',
-                    data: [30, 40, 45, 50, 49, 60, 70, 91, 125, 150, 160, 180]
+                    data: <?php echo json_encode($monthlyEnrollments); ?>
                 }],
                 xaxis: {
                     categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -800,8 +1054,8 @@ try {
                     type: 'donut',
                     height: 320
                 },
-                series: [35, 25, 20, 15, 5],
-                labels: ['Development', 'Business', 'Design', 'Marketing', 'Others'],
+                series: <?php echo json_encode($topCategories['counts']); ?>,
+                labels: <?php echo json_encode($topCategories['categories']); ?>,
                 colors: ['#3a66db', '#5f85e5', '#88a6ee', '#b0c6f6', '#d8e3fb'],
                 legend: {
                     position: 'bottom'
@@ -830,11 +1084,11 @@ try {
                     }
                 },
                 series: [{
-                    name: 'Revenue',
-                    data: [12500, 9800, 8400, 7600, 6900, 5800]
+                    name: 'Revenue (GH₵)',
+                    data: <?php echo json_encode($revenueByCategory['revenues']); ?>
                 }],
                 xaxis: {
-                    categories: ['Web Dev', 'Data Science', 'UI/UX', 'Digital Marketing', 'Python', 'Business']
+                    categories: <?php echo json_encode($revenueByCategory['categories']); ?>
                 },
                 colors: ['#3a66db'],
                 plotOptions: {
@@ -851,7 +1105,6 @@ try {
             revenueChart.render();
 
             // User Activity Chart
-            // User Activity Chart
             var activityOptions = {
                 chart: {
                     type: 'line',
@@ -862,11 +1115,11 @@ try {
                 },
                 series: [{
                         name: 'New Registrations',
-                        data: [45, 52, 38, 24, 33, 26, 21, 20, 6, 8, 15, 10]
+                        data: <?php echo json_encode($userActivity['new_users']); ?>
                     },
                     {
                         name: 'Active Users',
-                        data: [87, 57, 74, 99, 75, 38, 62, 47, 82, 56, 45, 47]
+                        data: <?php echo json_encode($userActivity['active_users']); ?>
                     }
                 ],
                 xaxis: {
@@ -920,7 +1173,7 @@ try {
                     }
                 },
                 series: [38, 22, 15, 12, 8, 5],
-                labels: ['North America', 'Europe', 'Asia', 'South America', 'Africa', 'Other'],
+                labels: ['Ghana', 'Nigeria', 'Kenya', 'South Africa', 'Other African', 'International'],
                 colors: ['#3a66db', '#5f85e5', '#88a6ee', '#b0c6f6', '#d8e3fb', '#eef3fd'],
                 legend: {
                     position: 'bottom',

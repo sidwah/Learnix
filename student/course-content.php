@@ -1539,7 +1539,7 @@ function getLinkDisplay($topic)
                                                                 </div>
                                                             </div>
                                                             <div class="card-footer bg-transparent border-top-0">
-                                                                <a href="<?php echo '../uploads/documents/' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
+                                                                <a href="<?php echo '../uploads/resources/' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
                                                                     <i class="bi-download me-2"></i> Download
                                                                 </a>
                                                             </div>

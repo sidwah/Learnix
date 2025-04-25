@@ -84,11 +84,11 @@
                       <i class="bi-award nav-icon"></i> Certifications
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <!-- <li class="nav-item">
                     <a class="nav-link" href="course-progress.php">
                       <i class="bi-bar-chart-line nav-icon"></i> Course Progress
                     </a>
-                  </li>
+                  </li> -->
                 </ul>
 
                 <!-- Payment Section for Students -->
@@ -99,7 +99,7 @@
                       <i class="bi-credit-card nav-icon"></i> Payment History
                     </a>
                   </li>
-                  
+
                 </ul>
 
 
@@ -180,7 +180,7 @@
                         </div>
                         <button type="button" class="js-file-attach-reset-img btn btn-white btn-sm" id="resetBtn">Delete</button>
                       </div>
-                      
+
 
                       <script>
                         // Store the original image path on load

@@ -777,7 +777,7 @@ function getTimeAgo($datetime)
                                     <?php if ($total_courses > 3): ?>
                                         <!-- See All Courses Link -->
                                         <div class="dropdown-divider my-3"></div>
-                                        <a class="dropdown-item text-center" href="enrolled-courses.php">
+                                        <a class="dropdown-item text-center" href="my-courses.php">
                                             <span>See All Courses (<?php echo htmlspecialchars($total_courses); ?>)</span>
                                             <i class="bi-chevron-right small ms-1"></i>
                                         </a>
@@ -1217,7 +1217,7 @@ function getTimeAgo($datetime)
                 </a>
             </li>
             <li class="mb-2">
-                <a class="dropdown-item rounded-3 d-flex align-items-center" href="enrolled-courses.php">
+                <a class="dropdown-item rounded-3 d-flex align-items-center" href="my-courses.php">
                     <span class="dropdown-item-icon bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center"
                         style="width: 32px; height: 32px;">
                         <i class="bi-collection-play"></i>

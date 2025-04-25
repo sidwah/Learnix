@@ -83,11 +83,11 @@
                       <i class="bi-award nav-icon"></i> Certifications
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <!-- <li class="nav-item">
                     <a class="nav-link" href="course-progress.php">
                       <i class="bi-bar-chart-line nav-icon"></i> Course Progress
                     </a>
-                  </li>
+                  </li> -->
                 </ul>
 
                 <!-- Payment Section for Students -->
@@ -98,11 +98,11 @@
                       <i class="bi-credit-card nav-icon"></i> Payment History
                     </a>
                   </li>
-                  <!-- <li class="nav-item">
+                  <!--   <li class="nav-item">
                     <a class="nav-link" href="payment-method.php">
                       <i class="bi-wallet nav-icon"></i> Payment Methods
                     </a>
-                  </li> -->
+                  </li> --> 
                 </ul>
 
                 <!-- Instructor/Admin Section (Dynamic Role Check) -->

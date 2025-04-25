@@ -83,11 +83,11 @@
                       <i class="bi-award nav-icon"></i> Certifications
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <!-- <li class="nav-item">
                     <a class="nav-link" href="course-progress.php">
                       <i class="bi-bar-chart-line nav-icon"></i> Course Progress
                     </a>
-                  </li>
+                  </li> -->
                 </ul>
 
                 <!-- Payment Section for Students -->
@@ -98,7 +98,7 @@
                       <i class="bi-credit-card nav-icon"></i> Payment History
                     </a>
                   </li>
-                  
+
                 </ul>
 
 
@@ -201,133 +201,133 @@
             </div>
 
             <script>
-             // Show alert notification function
-function showAlert(type, message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-    alertDiv.setAttribute('role', 'alert');
-    alertDiv.innerHTML = `
+              // Show alert notification function
+              function showAlert(type, message) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+                alertDiv.setAttribute('role', 'alert');
+                alertDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
-    // Position the alert
-    alertDiv.style.position = 'fixed';
-    alertDiv.style.top = '20px';
-    alertDiv.style.left = '50%';
-    alertDiv.style.transform = 'translateX(-50%)';
-    alertDiv.style.zIndex = '9999';
-    alertDiv.style.minWidth = '300px';
-    alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-    document.body.appendChild(alertDiv);
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.classList.remove('show');
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.parentNode.removeChild(alertDiv);
+                // Position the alert
+                alertDiv.style.position = 'fixed';
+                alertDiv.style.top = '20px';
+                alertDiv.style.left = '50%';
+                alertDiv.style.transform = 'translateX(-50%)';
+                alertDiv.style.zIndex = '9999';
+                alertDiv.style.minWidth = '300px';
+                alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                document.body.appendChild(alertDiv);
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                  if (alertDiv.parentNode) {
+                    alertDiv.classList.remove('show');
+                    setTimeout(() => {
+                      if (alertDiv.parentNode) {
+                        alertDiv.parentNode.removeChild(alertDiv);
+                      }
+                    }, 300);
+                  }
+                }, 5000);
+              }
+
+              // Create and apply page overlay for loading effect
+              function createOverlay() {
+                const overlay = document.createElement('div');
+                overlay.id = 'pageOverlay';
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+                overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                overlay.style.backdropFilter = 'blur(5px)';
+                overlay.style.zIndex = '9998';
+                overlay.style.display = 'flex';
+                overlay.style.justifyContent = 'center';
+                overlay.style.alignItems = 'center';
+
+                // Add a loading spinner
+                const spinner = document.createElement('div');
+                spinner.className = 'spinner-border text-primary';
+                spinner.setAttribute('role', 'status');
+                spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
+
+                overlay.appendChild(spinner);
+                document.body.appendChild(overlay);
+              }
+
+              // Remove overlay
+              function removeOverlay() {
+                const overlay = document.getElementById('pageOverlay');
+                if (overlay) {
+                  document.body.removeChild(overlay);
                 }
-            }, 300);
-        }
-    }, 5000);
-}
+              }
 
-// Create and apply page overlay for loading effect
-function createOverlay() {
-    const overlay = document.createElement('div');
-    overlay.id = 'pageOverlay';
-    overlay.style.position = 'fixed';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-    overlay.style.backdropFilter = 'blur(5px)';
-    overlay.style.zIndex = '9998';
-    overlay.style.display = 'flex';
-    overlay.style.justifyContent = 'center';
-    overlay.style.alignItems = 'center';
-    
-    // Add a loading spinner
-    const spinner = document.createElement('div');
-    spinner.className = 'spinner-border text-primary';
-    spinner.setAttribute('role', 'status');
-    spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
-    
-    overlay.appendChild(spinner);
-    document.body.appendChild(overlay);
-}
+              document.getElementById('passwordChangeForm').addEventListener('submit', function(event) {
+                event.preventDefault();
 
-// Remove overlay
-function removeOverlay() {
-    const overlay = document.getElementById('pageOverlay');
-    if (overlay) {
-        document.body.removeChild(overlay);
-    }
-}
+                const updateButton = document.getElementById('updateButton');
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
 
-document.getElementById('passwordChangeForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    
-    const updateButton = document.getElementById('updateButton');
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-    
-    // Client-side validation
-    if (newPassword !== confirmNewPassword) {
-        showAlert('danger', 'New password and confirm password do not match!');
-        return;
-    }
-    
-    if (newPassword.length < 8) {
-        showAlert('danger', 'Password must be at least 8 characters long.');
-        return;
-    }
-    
-    // Disable the button and show loading text
-    updateButton.disabled = true;
-    updateButton.textContent = 'Updating...';
-    
-    // Create overlay to prevent interaction
-    createOverlay();
-    
-    // Send the request to update the password
-    const formData = new FormData(this);
-    
-    fetch('../backend/auth/student/change_password.php', {
-        method: 'POST',
-        body: formData,
-    })
-    .then(response => response.text())
-    .then(result => {
-        // Check if the operation was successful
-        if (result.includes('success')) {
-            showAlert('success', result);
-            // Reload the page after a short delay
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
-        } else {
-            removeOverlay();
-            showAlert('danger', result);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        removeOverlay();
-        showAlert('danger', 'An error occurred. Please try again.');
-    })
-    .finally(() => {
-        // Re-enable the button and restore its original text
-        updateButton.disabled = false;
-        updateButton.textContent = 'Update Password';
-    });
-});
+                // Client-side validation
+                if (newPassword !== confirmNewPassword) {
+                  showAlert('danger', 'New password and confirm password do not match!');
+                  return;
+                }
 
-function resetForm() {
-    document.getElementById('passwordChangeForm').reset();
-}
+                if (newPassword.length < 8) {
+                  showAlert('danger', 'Password must be at least 8 characters long.');
+                  return;
+                }
+
+                // Disable the button and show loading text
+                updateButton.disabled = true;
+                updateButton.textContent = 'Updating...';
+
+                // Create overlay to prevent interaction
+                createOverlay();
+
+                // Send the request to update the password
+                const formData = new FormData(this);
+
+                fetch('../backend/auth/student/change_password.php', {
+                    method: 'POST',
+                    body: formData,
+                  })
+                  .then(response => response.text())
+                  .then(result => {
+                    // Check if the operation was successful
+                    if (result.includes('success')) {
+                      showAlert('success', result);
+                      // Reload the page after a short delay
+                      setTimeout(() => {
+                        location.reload();
+                      }, 2000);
+                    } else {
+                      removeOverlay();
+                      showAlert('danger', result);
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error:', error);
+                    removeOverlay();
+                    showAlert('danger', 'An error occurred. Please try again.');
+                  })
+                  .finally(() => {
+                    // Re-enable the button and restore its original text
+                    updateButton.disabled = false;
+                    updateButton.textContent = 'Update Password';
+                  });
+              });
+
+              function resetForm() {
+                document.getElementById('passwordChangeForm').reset();
+              }
             </script>
 
 
@@ -345,6 +345,6 @@ function resetForm() {
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-  <!-- ========== FOOTER ========== -->
-  <?php include '../includes/student-footer.php'; ?>
-  <!-- ========== END FOOTER ========== -->
+<!-- ========== FOOTER ========== -->
+<?php include '../includes/student-footer.php'; ?>
+<!-- ========== END FOOTER ========== -->

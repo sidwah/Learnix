@@ -1,4 +1,5 @@
 <?php
+
 /**
  * My Certificates Page
  * 
@@ -10,9 +11,9 @@ session_start();
 
 // Check if user is logged in and has student role
 if (!isset($_SESSION['user_id'])) {
-    // Not logged in, redirect to login page
-    header('Location: ../login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
-    exit;
+  // Not logged in, redirect to login page
+  header('Location: ../login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+  exit;
 }
 
 require_once '../vendor/autoload.php';
@@ -33,9 +34,10 @@ $certificates = $certificateRepo->getUserCertificates($userId);
 // Get user info from session or database as needed - already loaded in included header
 
 // Function to format date
-function formatDate($dateString) {
-    $date = new DateTime($dateString);
-    return $date->format('F j, Y');
+function formatDate($dateString)
+{
+  $date = new DateTime($dateString);
+  return $date->format('F j, Y');
 }
 
 include '../includes/student-header.php';
@@ -123,11 +125,11 @@ include '../includes/student-header.php';
                       <i class="bi-award nav-icon"></i>Certificates
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <!-- <li class="nav-item">
                     <a class="nav-link" href="course-progress.php">
                       <i class="bi-bar-chart-line nav-icon"></i> Course Progress
                     </a>
-                  </li>
+                  </li> -->
                 </ul>
 
                 <!-- Payment Section for Students -->
@@ -138,7 +140,7 @@ include '../includes/student-header.php';
                       <i class="bi-credit-card nav-icon"></i> Payment History
                     </a>
                   </li>
-                  
+
                 </ul>
 
                 <!-- Instructor/Admin Section (Dynamic Role Check) -->
@@ -187,15 +189,15 @@ include '../includes/student-header.php';
                     </a>
                   </li>
                   <li class="nav-item">
-                      <a class="nav-link" href="FAQ.php">
-                        <i class="bi-card-list nav-icon"></i> FAQ's
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link " href="report.php">
-                        <i class="bi-exclamation-triangle nav-icon"></i> Report Issues
-                      </a>
-                    </li>
+                    <a class="nav-link" href="FAQ.php">
+                      <i class="bi-card-list nav-icon"></i> FAQ's
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link " href="report.php">
+                      <i class="bi-exclamation-triangle nav-icon"></i> Report Issues
+                    </a>
+                  </li>
                   <li class="nav-item">
                     <a class="nav-link" href="../backend/signout.php">
                       <i class="bi-box-arrow-right nav-icon"></i> Sign out
@@ -225,7 +227,7 @@ include '../includes/student-header.php';
             <!-- Body -->
             <div class="card-body">
               <!-- Certificates content starts here -->
-              
+
               <?php if (empty($certificates)): ?>
                 <div class="text-center py-5">
                   <div class="mb-3">
@@ -246,7 +248,7 @@ include '../includes/student-header.php';
                             <span class="badge bg-soft-success text-success">Verified</span>
                           </div>
                         </div>
-                        
+
                         <div class="card-body">
                           <div class="bg-soft-secondary p-3 mb-3 rounded d-flex align-items-center justify-content-center" style="height: 100px;">
                             <div class="text-center">
@@ -254,12 +256,12 @@ include '../includes/student-header.php';
                               <div>Certificate Preview</div>
                             </div>
                           </div>
-                          
+
                           <div class="d-flex align-items-center small text-muted mb-3">
                             <i class="bi-calendar me-1"></i>
                             <span>Issued on: <?php echo formatDate($certificate['issue_date']); ?></span>
                           </div>
-                          
+
                           <div class="d-flex flex-column flex-sm-row gap-2 mt-3">
                             <a href="../download-certificate.php?id=<?php echo $certificate['certificate_id']; ?>" class="btn btn-primary btn-sm">
                               <i class="bi-download me-1"></i> Download

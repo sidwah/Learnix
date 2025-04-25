@@ -83,11 +83,11 @@
                       <i class="bi-award nav-icon"></i> Certifications
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <!-- <li class="nav-item">
                     <a class="nav-link" href="course-progress.php">
                       <i class="bi-bar-chart-line nav-icon"></i> Course Progress
                     </a>
-                  </li>
+                  </li> -->
                 </ul>
 
                 <!-- Payment Section for Students -->
@@ -98,7 +98,7 @@
                       <i class="bi-credit-card nav-icon"></i> Payment History
                     </a>
                   </li>
-                  
+
                 </ul>
 
 
@@ -197,116 +197,116 @@
 
               <script>
                 // Show alert notification function
-function showAlert(type, message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-    alertDiv.setAttribute('role', 'alert');
-    alertDiv.innerHTML = `
+                function showAlert(type, message) {
+                  const alertDiv = document.createElement('div');
+                  alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+                  alertDiv.setAttribute('role', 'alert');
+                  alertDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
-    // Position the alert
-    alertDiv.style.position = 'fixed';
-    alertDiv.style.top = '20px';
-    alertDiv.style.left = '50%';
-    alertDiv.style.transform = 'translateX(-50%)';
-    alertDiv.style.zIndex = '9999';
-    alertDiv.style.minWidth = '300px';
-    alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-    document.body.appendChild(alertDiv);
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.classList.remove('show');
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.parentNode.removeChild(alertDiv);
+                  // Position the alert
+                  alertDiv.style.position = 'fixed';
+                  alertDiv.style.top = '20px';
+                  alertDiv.style.left = '50%';
+                  alertDiv.style.transform = 'translateX(-50%)';
+                  alertDiv.style.zIndex = '9999';
+                  alertDiv.style.minWidth = '300px';
+                  alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                  document.body.appendChild(alertDiv);
+                  // Auto-dismiss after 5 seconds
+                  setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                      alertDiv.classList.remove('show');
+                      setTimeout(() => {
+                        if (alertDiv.parentNode) {
+                          alertDiv.parentNode.removeChild(alertDiv);
+                        }
+                      }, 300);
+                    }
+                  }, 5000);
                 }
-            }, 300);
-        }
-    }, 5000);
-}
 
-// Create and apply page overlay for loading effect
-function createOverlay() {
-    const overlay = document.createElement('div');
-    overlay.id = 'pageOverlay';
-    overlay.style.position = 'fixed';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-    overlay.style.backdropFilter = 'blur(5px)';
-    overlay.style.zIndex = '9998';
-    overlay.style.display = 'flex';
-    overlay.style.justifyContent = 'center';
-    overlay.style.alignItems = 'center';
-    
-    // Add a loading spinner
-    const spinner = document.createElement('div');
-    spinner.className = 'spinner-border text-primary';
-    spinner.setAttribute('role', 'status');
-    spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
-    
-    overlay.appendChild(spinner);
-    document.body.appendChild(overlay);
-}
+                // Create and apply page overlay for loading effect
+                function createOverlay() {
+                  const overlay = document.createElement('div');
+                  overlay.id = 'pageOverlay';
+                  overlay.style.position = 'fixed';
+                  overlay.style.top = '0';
+                  overlay.style.left = '0';
+                  overlay.style.width = '100%';
+                  overlay.style.height = '100%';
+                  overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                  overlay.style.backdropFilter = 'blur(5px)';
+                  overlay.style.zIndex = '9998';
+                  overlay.style.display = 'flex';
+                  overlay.style.justifyContent = 'center';
+                  overlay.style.alignItems = 'center';
 
-// Remove overlay
-function removeOverlay() {
-    const overlay = document.getElementById('pageOverlay');
-    if (overlay) {
-        document.body.removeChild(overlay);
-    }
-}
+                  // Add a loading spinner
+                  const spinner = document.createElement('div');
+                  spinner.className = 'spinner-border text-primary';
+                  spinner.setAttribute('role', 'status');
+                  spinner.innerHTML = '<span class="visually-hidden">Loading...</span>';
 
-function resetForm() {
-    document.getElementById("reportIssueForm").reset();
-}
+                  overlay.appendChild(spinner);
+                  document.body.appendChild(overlay);
+                }
 
-document.getElementById("reportIssueForm").addEventListener("submit", function(e) {
-    e.preventDefault();
-    
-    let formData = new FormData(this);
-    let reportButton = document.getElementById("reportButton");
-    let buttonText = document.getElementById("buttonText");
-    let spinner = document.getElementById("spinner");
-    
-    // Disable button and show spinner
-    reportButton.disabled = true;
-    buttonText.textContent = "Reporting...";
-    spinner.classList.remove("d-none");
-    
-    // Create overlay to prevent interaction
-    createOverlay();
-    
-    fetch("../backend/others/report_issue.php", {
-        method: "POST",
-        body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === "success") {
-            showAlert('success', data.message);
-            document.getElementById("reportIssueForm").reset();
-        } else {
-            showAlert('danger', data.message);
-        }
-        removeOverlay();
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        showAlert('danger', "Something went wrong! Please try again.");
-        removeOverlay();
-    })
-    .finally(() => {
-        // Re-enable button and hide spinner
-        reportButton.disabled = false;
-        buttonText.textContent = "Report Issue";
-        spinner.classList.add("d-none");
-    });
-});
+                // Remove overlay
+                function removeOverlay() {
+                  const overlay = document.getElementById('pageOverlay');
+                  if (overlay) {
+                    document.body.removeChild(overlay);
+                  }
+                }
+
+                function resetForm() {
+                  document.getElementById("reportIssueForm").reset();
+                }
+
+                document.getElementById("reportIssueForm").addEventListener("submit", function(e) {
+                  e.preventDefault();
+
+                  let formData = new FormData(this);
+                  let reportButton = document.getElementById("reportButton");
+                  let buttonText = document.getElementById("buttonText");
+                  let spinner = document.getElementById("spinner");
+
+                  // Disable button and show spinner
+                  reportButton.disabled = true;
+                  buttonText.textContent = "Reporting...";
+                  spinner.classList.remove("d-none");
+
+                  // Create overlay to prevent interaction
+                  createOverlay();
+
+                  fetch("../backend/others/report_issue.php", {
+                      method: "POST",
+                      body: formData,
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                      if (data.status === "success") {
+                        showAlert('success', data.message);
+                        document.getElementById("reportIssueForm").reset();
+                      } else {
+                        showAlert('danger', data.message);
+                      }
+                      removeOverlay();
+                    })
+                    .catch(error => {
+                      console.error("Error:", error);
+                      showAlert('danger', "Something went wrong! Please try again.");
+                      removeOverlay();
+                    })
+                    .finally(() => {
+                      // Re-enable button and hide spinner
+                      reportButton.disabled = false;
+                      buttonText.textContent = "Report Issue";
+                      spinner.classList.add("d-none");
+                    });
+                });
               </script>
 
             </div>
@@ -324,6 +324,6 @@ document.getElementById("reportIssueForm").addEventListener("submit", function(e
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-  <!-- ========== FOOTER ========== -->
-  <?php include '../includes/student-footer.php'; ?>
-  <!-- ========== END FOOTER ========== -->
+<!-- ========== FOOTER ========== -->
+<?php include '../includes/student-footer.php'; ?>
+<!-- ========== END FOOTER ========== -->

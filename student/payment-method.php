@@ -83,11 +83,11 @@
                       <i class="bi-award nav-icon"></i> Certifications
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <!-- <li class="nav-item">
                     <a class="nav-link" href="course-progress.php">
                       <i class="bi-bar-chart-line nav-icon"></i> Course Progress
                     </a>
-                  </li>
+                  </li> -->
                 </ul>
 
                 <!-- Payment Section for Students -->
@@ -207,6 +207,6 @@
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-  <!-- ========== FOOTER ========== -->
-  <?php include '../includes/student-footer.php'; ?>
-  <!-- ========== END FOOTER ========== -->
+<!-- ========== FOOTER ========== -->
+<?php include '../includes/student-footer.php'; ?>
+<!-- ========== END FOOTER ========== -->

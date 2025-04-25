@@ -836,8 +836,8 @@ if ($certificate_enabled) {
                                                 <?php endif; ?>
 
                                                 <!-- Badge Card -->
-                                                <div class="col-md-6">
-                                                    <div class="card border <?php echo $all_requirements_met ? 'border-success bg-success bg-opacity-10' : 'border-secondary'; ?> h-100">
+                                                <!-- <div class="col-md-6">
+                                                    <div class="card border <?php /* echo $all_requirements_met ? 'border-success bg-success bg-opacity-10' : 'border-secondary'; ?> h-100">
                                                         <div class="card-body p-2">
                                                             <div class="d-flex align-items-center justify-content-between">
                                                                 <div class="d-flex align-items-center">
@@ -848,11 +848,11 @@ if ($certificate_enabled) {
                                                                     <a href="my-badges.php" class="btn btn-sm btn-success py-0 px-2"><small>View</small></a>
                                                                 <?php else: ?>
                                                                     <span class="badge bg-secondary p-1"><i class="bi bi-lock"></i></span>
-                                                                <?php endif; ?>
+                                                                <?php endif; */ ?>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </div> -->
                                             </div>
 
                                             <!-- Alert Message only shown if requirements not met -->
