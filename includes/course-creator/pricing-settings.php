@@ -33,7 +33,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                 <div class="mb-3">
                     <label for="coursePrice" class="form-label">Price (GHS) <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text">&#8373;</span>
+                        <!-- <span class="input-group-text">&#8373;</span> -->
                         <input type="number" step="0.01" min="0" class="form-control" id="coursePrice" name="price" 
                                value="<?php echo htmlspecialchars($price); ?>" required>
                     </div>

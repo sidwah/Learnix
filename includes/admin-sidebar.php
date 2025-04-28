@@ -164,7 +164,7 @@ if (!$result) {
         <span class="nav-subtitle">Announcements & Notifications</span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="announcements.php">Send Announcements</a>
+        <a class="nav-link" href="announcements.php">Announcements</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="notifications.php">Manage Notifications</a>

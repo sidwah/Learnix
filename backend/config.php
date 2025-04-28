@@ -7,7 +7,7 @@ $db_name = 'learnix_db';
 
 // Site-wide settings
 $site_name = 'Learnix';
-$base_url = 'http://localhost/learnix'; // Change this to your project's base URL
+$base_url = 'http://localhost:8888/learnix'; // Change this to your project's base URL
 
 // Database connection
 $conn = mysqli_connect($host, $username, $password, $db_name);
