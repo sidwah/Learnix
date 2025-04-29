@@ -367,8 +367,8 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                             </a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="#course-announcements" data-bs-toggle="tab" aria-expanded="false" class="nav-link">
-                                                Course Announcements
+                                            <a href="#announcement-templates" data-bs-toggle="tab" aria-expanded="false" class="nav-link">
+                                                Announcement Templates
                                             </a>
                                         </li>
                                         <li class="nav-item">
@@ -451,39 +451,41 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                             </div>
                                         </div>
 
-                                        <!-- Course Announcements Tab -->
-                                        <div class="tab-pane" id="course-announcements">
+                                        <!-- Announcement Templates Tab -->
+                                        <div class="tab-pane" id="announcement-templates">
                                             <div class="row mt-3">
                                                 <div class="col-12">
-                                                    <select class="form-select mb-3" id="course-filter">
-                                                        <option value="all">All Courses</option>
-                                                        <!-- Course options will be populated dynamically -->
-                                                    </select>
+                                                    <button class="btn btn-primary mb-3" id="create-template-btn">
+                                                        <i class="mdi mdi-plus-circle me-1"></i> Create Template
+                                                    </button>
                                                 </div>
                                             </div>
                                             <div class="table-responsive">
                                                 <table class="table table-hover table-centered mb-0">
                                                     <thead>
                                                         <tr>
-                                                            <th>Title</th>
-                                                            <th>Author</th>
-                                                            <th>Course</th>
-                                                            <th>Importance</th>
-                                                            <th>Date</th>
+                                                            <th>Template Name</th>
+                                                            <th>Description</th>
+                                                            <th>Created Date</th>
+                                                            <th>Last Used</th>
                                                             <th>Actions</th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody id="course-announcements-list">
+                                                    <tbody id="templates-list">
                                                         <!-- Empty state message -->
-                                                        <tr id="empty-course-announcements">
-                                                            <td colspan="6" class="text-center py-4">
+                                                        <tr id="empty-templates">
+                                                            <td colspan="5" class="text-center py-4">
                                                                 <div>
-                                                                    <i class="mdi mdi-information-outline text-muted" style="font-size: 48px;"></i>
-                                                                    <h5 class="mt-2">No course announcements found</h5>
-                                                                    <p class="text-muted">There are no announcements for your courses yet</p>
+                                                                    <i class="mdi mdi-file-document-outline text-muted" style="font-size: 48px;"></i>
+                                                                    <h5 class="mt-2">No templates found</h5>
+                                                                    <p class="text-muted">Create templates to save time when creating similar announcements</p>
+                                                                    <button type="button" class="btn btn-primary mt-2" id="empty-create-template-btn">
+                                                                        Create Template
+                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
+                                                        <!-- Templates will be populated here -->
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -765,6 +767,36 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     <!-- third party js ends -->
 
     <script>
+        // Make sure the empty-create-template-btn works
+        $(document).on('click', '#empty-create-template-btn', function() {
+            currentTemplateId = null;
+            $('#template-modal-label').text('Create Template');
+            $('#template-title').val('');
+
+            if (typeof tinymce !== 'undefined' && tinymce.get('template-content')) {
+                tinymce.get('template-content').setContent('');
+            } else {
+                $('#template-content').val('');
+            }
+
+            $('#template-modal').modal('show');
+        });
+        
+       // Unified dropdown handler for all dropdowns
+$(document).on('click', '.dropdown-toggle, .action-dropdown .dropdown-toggle', function(e) {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling to document click handler
+    
+    const $dropdown = $(this).closest('.dropdown, .action-dropdown');
+    const $dropdownMenu = $dropdown.find('.dropdown-menu');
+    
+    // Close all other dropdowns
+    $('.dropdown-menu.show').not($dropdownMenu).removeClass('show');
+    
+    // Toggle the current dropdown
+    $dropdownMenu.toggleClass('show');
+});
+
         $(document).ready(function() {
             // Global variable for announcement actions
             let currentAnnouncementId = null;
@@ -999,6 +1031,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                 const targetType = $('input[name="target-type"]:checked').attr('id');
                 const courseId = $('#target-course').val();
                 const emailNotification = $('#channel-email').is(':checked');
+                const announcementId = $('#edit-announcement-id').val() || null;
 
                 if (!title.trim()) return showAlert('error', 'Please enter an announcement title');
                 if (!content.trim()) return showAlert('error', 'Please enter announcement content');
@@ -1015,11 +1048,27 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                 formData.append('target_type', targetType === 'target-course-specific' ? 'course' : 'all_courses');
                 formData.append('course_id', targetType === 'target-course-specific' ? courseId : '');
                 formData.append('email_notification', emailNotification ? '1' : '0');
-                uploadedFiles.forEach(fileObj => formData.append('files[]', fileObj.file));
 
-                showOverlay('Saving announcement...');
+                // If we have an announcement ID, this is an edit
+                if (announcementId) {
+                    formData.append('announcement_id', announcementId);
+                }
+
+                // Handle file uploads
+                uploadedFiles.forEach(fileObj => {
+                    if (fileObj.existingFile) {
+                        // This is an existing file, just pass the ID
+                        formData.append('existing_files[]', fileObj.attachment_id);
+                    } else {
+                        // This is a new file to upload
+                        formData.append('files[]', fileObj.file);
+                    }
+                });
+
+                showOverlay(announcementId ? 'Updating announcement...' : 'Saving announcement...');
                 $.ajax({
-                    url: '../ajax/instructors/create_announcement.php',
+                    url: announcementId ?
+                        '../ajax/instructors/update_announcement.php' : '../ajax/instructors/create_announcement.php',
                     type: 'POST',
                     data: formData,
                     processData: false,
@@ -1029,13 +1078,16 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                         try {
                             const result = typeof response === 'string' ? JSON.parse(response) : response;
                             if (result.success) {
-                                showAlert('success', 'Announcement successfully created!');
+                                showAlert('success', announcementId ?
+                                    'Announcement successfully updated!' :
+                                    'Announcement successfully created!');
                                 $('#create-announcement-modal').modal('hide');
                                 resetAnnouncementForm();
                                 loadAnnouncements();
                                 loadAnnouncementStats();
                             } else {
-                                showAlert('error', result.message || 'Error creating announcement');
+                                showAlert('error', result.message || 'Error ' +
+                                    (announcementId ? 'updating' : 'creating') + ' announcement');
                             }
                         } catch (e) {
                             showAlert('error', 'Invalid response from server');
@@ -1071,17 +1123,12 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                 updateFileCounter();
             }
 
-            // Initialize dropdowns using event delegation
-            $(document).on('click', '.dropdown-toggle', function(e) {
-                e.preventDefault();
-                $(this).next('.dropdown-menu').toggleClass('show');
-            });
-
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('.dropdown').length) {
-                    $('.dropdown-menu').removeClass('show');
-                }
-            });
+           // Close dropdowns when clicking outside
+$(document).on('click', function(e) {
+    if (!$(e.target).closest('.dropdown, .action-dropdown').length) {
+        $('.dropdown-menu').removeClass('show');
+    }
+});
 
             // Action handlers
             $(document).on('click', '.edit-announcement', function(e) {
@@ -1193,15 +1240,159 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                 currentAnnouncementId = null;
             });
 
-            // Announcement action functions
             window.editAnnouncement = function(announcementId) {
-                console.log('Edit announcement:', announcementId);
-                // Implementation would go here
+                showOverlay('Loading announcement data...');
+                $.ajax({
+                    url: '../ajax/instructors/get_announcement.php',
+                    type: 'GET',
+                    data: {
+                        announcement_id: announcementId
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        removeOverlay();
+                        if (data.success) {
+                            // Populate the form with the announcement data
+                            $('#announcement-title').val(data.announcement.title);
+
+                            // Set TinyMCE content
+                            if (typeof tinymce !== 'undefined' && tinymce.get('announcement-content')) {
+                                tinymce.get('announcement-content').setContent(data.announcement.content);
+                            } else {
+                                $('#announcement-content').val(data.announcement.content);
+                            }
+
+                            // Set other form fields
+                            $('#announcement-importance').val(data.announcement.importance);
+                            $('#announcement-status').val(data.announcement.status);
+
+                            if (data.announcement.status === 'Scheduled') {
+                                $('#scheduled-options').show();
+                                const scheduledDate = new Date(data.announcement.scheduled_at);
+                                $('#scheduled-date').val(scheduledDate.toISOString().slice(0, 16));
+                            }
+
+                            if (data.announcement.expires_at) {
+                                const expiryDate = new Date(data.announcement.expires_at);
+                                $('#announcement-expires').val(expiryDate.toISOString().slice(0, 10));
+                            }
+
+                            // Set targeting options
+                            if (data.announcement.course_id) {
+                                $('#target-course-specific').prop('checked', true);
+                                $('#course-specific-options').show();
+                                $('#target-course').val(data.announcement.course_id);
+                            } else {
+                                $('#target-all-courses').prop('checked', true);
+                                $('#course-specific-options').hide();
+                            }
+
+                            // Show attachments if any
+                            if (data.attachments && data.attachments.length > 0) {
+                                data.attachments.forEach(function(attachment) {
+                                    const fileId = 'file-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+                                    uploadedFiles.push({
+                                        id: fileId,
+                                        existingFile: true,
+                                        attachment_id: attachment.attachment_id,
+                                        name: attachment.file_name,
+                                        size: attachment.file_size
+                                    });
+                                    addFilePreview(fileId, attachment.file_name, attachment.file_size);
+                                });
+                                updateFileCounter();
+                            }
+
+                            // Add a hidden input for the announcement ID
+                            if ($('#edit-announcement-id').length === 0) {
+                                $('<input>').attr({
+                                    type: 'hidden',
+                                    id: 'edit-announcement-id',
+                                    value: announcementId
+                                }).appendTo('#announcement-form');
+                            } else {
+                                $('#edit-announcement-id').val(announcementId);
+                            }
+
+                            // Update the modal title and button text
+                            $('#create-announcement-modal-label').text('Edit Announcement');
+                            $('#save-announcement').text('Update Announcement');
+
+                            // Show the modal
+                            $('#create-announcement-modal').modal('show');
+                        } else {
+                            showAlert('error', data.message || 'Failed to load announcement data');
+                        }
+                    },
+                    error: function(xhr) {
+                        removeOverlay();
+                        showAlert('error', 'Server error. Please try again later.');
+                        console.error('Error loading announcement data:', xhr);
+                    }
+                });
             };
 
             window.duplicateAnnouncement = function(announcementId) {
-                console.log('Duplicate announcement:', announcementId);
-                // Implementation would go here
+                showOverlay('Duplicating announcement...');
+                $.ajax({
+                    url: '../ajax/instructors/get_announcement.php',
+                    type: 'GET',
+                    data: {
+                        announcement_id: announcementId
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        removeOverlay();
+                        if (data.success) {
+                            // Populate the form with the announcement data but change the title
+                            $('#announcement-title').val(data.announcement.title + ' (Copy)');
+
+                            // Set TinyMCE content
+                            if (typeof tinymce !== 'undefined' && tinymce.get('announcement-content')) {
+                                tinymce.get('announcement-content').setContent(data.announcement.content);
+                            } else {
+                                $('#announcement-content').val(data.announcement.content);
+                            }
+
+                            // Set other form fields but default to Draft status
+                            $('#announcement-importance').val(data.announcement.importance);
+                            $('#announcement-status').val('Draft');
+                            $('#scheduled-options').hide();
+
+                            if (data.announcement.expires_at) {
+                                const expiryDate = new Date(data.announcement.expires_at);
+                                $('#announcement-expires').val(expiryDate.toISOString().slice(0, 10));
+                            }
+
+                            // Set targeting options
+                            if (data.announcement.course_id) {
+                                $('#target-course-specific').prop('checked', true);
+                                $('#course-specific-options').show();
+                                $('#target-course').val(data.announcement.course_id);
+                            } else {
+                                $('#target-all-courses').prop('checked', true);
+                                $('#course-specific-options').hide();
+                            }
+
+                            // Remove any existing hidden input for edit mode
+                            $('#edit-announcement-id').remove();
+
+                            // Update the modal title and button text
+                            $('#create-announcement-modal-label').text('Create Announcement');
+                            $('#save-announcement').text('Save Announcement');
+
+                            // Show the modal
+                            $('#create-announcement-modal').modal('show');
+                        } else {
+                            showAlert('error', data.message || 'Failed to duplicate announcement');
+                        }
+                    },
+                    error: function(xhr) {
+                        removeOverlay();
+                        showAlert('error', 'Server error. Please try again later.');
+                        console.error('Error duplicating announcement:', xhr);
+                    }
+                });
             };
 
             // Load announcements
@@ -1294,9 +1485,9 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                 </td>
                 <td>
                     <div class="btn-group dropdown">
-                        <a href="#" class="dropdown-toggle arrow-none btn btn-light btn-sm" data-bs-toggle="dropdown">
-                            <i class="mdi mdi-dots-horizontal"></i>
-                        </a>
+                        <a href="#" class="dropdown-toggle arrow-none btn btn-light btn-sm">
+        <i class="mdi mdi-dots-horizontal"></i>
+    </a>
                         <div class="dropdown-menu dropdown-menu-end">
                             <a class="dropdown-item edit-announcement" href="#" data-id="${announcement.announcement_id}">
                                 <i class="mdi mdi-pencil me-1"></i>Edit
@@ -1516,17 +1707,33 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                 });
             });
 
-            // Search functionality
-            $('#announcement-search').on('keyup', function(e) {
-                if (e.keyCode === 13) {
-                    const searchTerm = $(this).val().trim();
-                    if (searchTerm) searchAnnouncements(searchTerm);
+            // Search functionality with debounce
+            let searchTimeout = null;
+            $('#announcement-search').on('keyup', function() {
+                const searchTerm = $(this).val().trim();
+
+                // Clear the previous timeout
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
                 }
+
+                // Set a new timeout to prevent excessive requests
+                searchTimeout = setTimeout(function() {
+                    if (searchTerm.length >= 2) {
+                        searchAnnouncements(searchTerm);
+                    } else if (searchTerm.length === 0) {
+                        // If search cleared, reload all announcements
+                        loadAnnouncements();
+                    }
+                }, 500); // 500ms delay
             });
+
+            // Keep the button click handler as well
             $('#announcement-search').next('button').on('click', function() {
                 const searchTerm = $('#announcement-search').val().trim();
                 if (searchTerm) searchAnnouncements(searchTerm);
             });
+
 
             function searchAnnouncements(searchTerm) {
                 showOverlay('Searching announcements...');
@@ -1568,17 +1775,363 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                 });
             }
 
-            // Initialize the page
+            // Tab selection
+            $('.nav-tabs a').on('click', function(e) {
+                e.preventDefault();
+                $(this).tab('show');
+
+                // Load data for the selected tab if needed
+                const tabId = $(this).attr('href');
+                if (tabId === '#announcement-templates' && $('#templates-list tr').length <= 1) {
+                    loadTemplates();
+                }
+            });
+
+            // Template functionality
+            let currentTemplateId = null;
+
+            // Load templates
+            // Load templates
+            function loadTemplates() {
+                showOverlay('Loading templates...');
+                $.ajax({
+                    url: '../ajax/instructors/load_announcement_templates.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        removeOverlay();
+                        $('#templates-list').empty(); // Clear the list first
+
+                        // Add the empty state row back to the table (it will be hidden if not needed)
+                        if ($('#empty-templates').length === 0) {
+                            $('#templates-list').append(`
+                    <tr id="empty-templates">
+                        <td colspan="5" class="text-center py-4">
+                            <div>
+                                <i class="mdi mdi-file-document-outline text-muted" style="font-size: 48px;"></i>
+                                <h5 class="mt-2">No templates found</h5>
+                                <p class="text-muted">Create templates to save time when creating similar announcements</p>
+                                <button type="button" class="btn btn-primary mt-2" id="empty-create-template-btn">
+                                    Create Template
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+                        }
+
+                        if (data.success && data.templates && data.templates.length > 0) {
+                            // Hide the empty state and add templates
+                            $('#empty-templates').hide();
+                            data.templates.forEach(function(template) {
+                                addTemplateToList(template);
+                            });
+                        } else {
+                            // Show the empty state if no templates
+                            $('#empty-templates').show();
+                        }
+                    },
+                    error: function(xhr) {
+                        removeOverlay();
+                        showAlert('error', 'Failed to load templates. Please try again.');
+                        console.error('Error loading templates:', xhr);
+                    }
+                });
+            }
+            // Add template to list
+            function addTemplateToList(template) {
+                const row = $(`
+        <tr>
+            <td><a href="#" class="text-body fw-bold template-title" data-id="${template.template_id}">${template.title}</a></td>
+            <td>${template.content_preview || 'No description'}</td>
+            <td>${template.created_at_formatted}</td>
+            <td>${template.last_used_formatted}</td>
+            <td>
+                <div class="action-dropdown">
+                    <a href="#" class="dropdown-toggle arrow-none btn btn-light btn-sm">
+                        <i class="mdi mdi-dots-horizontal"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <a class="dropdown-item edit-template" href="#" data-id="${template.template_id}">
+                            <i class="mdi mdi-pencil me-1"></i>Edit
+                        </a>
+                        <a class="dropdown-item use-template" href="#" data-id="${template.template_id}">
+                            <i class="mdi mdi-file-document-edit-outline me-1"></i>Use as Announcement
+                        </a>
+                        <a class="dropdown-item delete-template" href="#" data-id="${template.template_id}">
+                            <i class="mdi mdi-delete me-1"></i>Delete
+                        </a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    `);
+                $('#templates-list').append(row);
+            }
+            // Template Modal HTML
+            function addTemplateModal() {
+                if ($('#template-modal').length === 0) {
+                    const modal = `
+            <div class="modal fade" id="template-modal" tabindex="-1" role="dialog" aria-labelledby="template-modal-label" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="template-modal-label">Create Template</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="template-form">
+                                <div class="mb-3">
+                                    <label for="template-title" class="form-label">Template Name</label>
+                                    <input type="text" class="form-control" id="template-title" required placeholder="Enter template name">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="template-content" class="form-label">Content</label>
+                                    <textarea class="form-control" id="template-content" rows="5" placeholder="Enter template content"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="save-template">Save Template</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+                    $('body').append(modal);
+
+                    // Initialize TinyMCE for the template content
+                    if (typeof tinymce !== 'undefined') {
+                        tinymce.init({
+                            selector: '#template-content',
+                            height: 300,
+                            menubar: false,
+                            plugins: ['lists', 'link', 'image', 'code', 'table'],
+                            toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter ' +
+                                'alignright alignjustify | bullist numlist | link image | table | removeformat',
+                        });
+                    }
+                }
+            }
+
+            // Template Modal Events
+            function initTemplateEvents() {
+                // Create template button
+                $('#create-template-btn, #empty-create-template-btn').on('click', function() {
+                    currentTemplateId = null;
+                    $('#template-modal-label').text('Create Template');
+                    $('#template-title').val('');
+
+                    if (typeof tinymce !== 'undefined' && tinymce.get('template-content')) {
+                        tinymce.get('template-content').setContent('');
+                    } else {
+                        $('#template-content').val('');
+                    }
+
+                    $('#template-modal').modal('show');
+                });
+
+                // Save template
+                $(document).on('click', '#save-template', function() {
+                    const title = $('#template-title').val();
+                    let content = typeof tinymce !== 'undefined' && tinymce.get('template-content') ?
+                        tinymce.get('template-content').getContent() : $('#template-content').val();
+
+                    if (!title.trim()) return showAlert('error', 'Please enter a template name');
+                    if (!content.trim()) return showAlert('error', 'Please enter template content');
+
+                    const formData = new FormData();
+                    formData.append('title', title);
+                    formData.append('content', content);
+
+                    if (currentTemplateId) {
+                        formData.append('template_id', currentTemplateId);
+                    }
+
+                    showOverlay('Saving template...');
+                    $.ajax({
+                        url: '../ajax/instructors/save_announcement_templates.php',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            removeOverlay();
+                            try {
+                                const result = typeof response === 'string' ? JSON.parse(response) : response;
+                                if (result.success) {
+                                    showAlert('success', currentTemplateId ?
+                                        'Template updated successfully!' :
+                                        'Template created successfully!');
+                                    $('#template-modal').modal('hide');
+                                    loadTemplates();
+                                } else {
+                                    showAlert('error', result.message || 'Error saving template');
+                                }
+                            } catch (e) {
+                                showAlert('error', 'Invalid response from server');
+                                console.error('Error parsing response:', e, response);
+                            }
+                        },
+                        error: function(xhr) {
+                            removeOverlay();
+                            showAlert('error', 'Server error. Please try again later.');
+                            console.error('AJAX error:', xhr);
+                        }
+                    });
+                });
+
+                // Edit template
+                $(document).on('click', '.edit-template', function(e) {
+                    e.preventDefault();
+                    const templateId = $(this).data('id');
+                    editTemplate(templateId);
+                });
+
+                // Use template
+                $(document).on('click', '.use-template, .template-title', function(e) {
+                    e.preventDefault();
+                    const templateId = $(this).data('id');
+                    useTemplate(templateId);
+                });
+
+                // Delete template
+                $(document).on('click', '.delete-template', function(e) {
+                    e.preventDefault();
+                    const templateId = $(this).data('id');
+                    deleteTemplate(templateId);
+                });
+            }
+
+            // Edit template
+            function editTemplate(templateId) {
+                showOverlay('Loading template...');
+                $.ajax({
+                    url: '../ajax/instructors/get_announcement_templates.php',
+                    type: 'GET',
+                    data: {
+                        template_id: templateId
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        removeOverlay();
+                        if (data.success) {
+                            currentTemplateId = templateId;
+                            $('#template-modal-label').text('Edit Template');
+                            $('#template-title').val(data.template.title);
+
+                            if (typeof tinymce !== 'undefined' && tinymce.get('template-content')) {
+                                tinymce.get('template-content').setContent(data.template.content);
+                            } else {
+                                $('#template-content').val(data.template.content);
+                            }
+
+                            $('#template-modal').modal('show');
+                        } else {
+                            showAlert('error', data.message || 'Failed to load template');
+                        }
+                    },
+                    error: function(xhr) {
+                        removeOverlay();
+                        showAlert('error', 'Server error. Please try again later.');
+                        console.error('Error loading template:', xhr);
+                    }
+                });
+            }
+
+            // Use template for new announcement
+            function useTemplate(templateId) {
+                showOverlay('Loading template...');
+                $.ajax({
+                    url: '../ajax/instructors/get_announcement_templates.php',
+                    type: 'GET',
+                    data: {
+                        template_id: templateId
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        removeOverlay();
+                        if (data.success) {
+                            // Fill the announcement form with template data
+                            $('#announcement-title').val(data.template.title);
+
+                            if (typeof tinymce !== 'undefined' && tinymce.get('announcement-content')) {
+                                tinymce.get('announcement-content').setContent(data.template.content);
+                            } else {
+                                $('#announcement-content').val(data.template.content);
+                            }
+
+                            // Switch to the "My Announcements" tab
+                            $('.nav-tabs a[href="#my-announcements"]').tab('show');
+
+                            // Open the announcement modal
+                            $('#create-announcement-modal').modal('show');
+
+                            // Clear any edit mode state
+                            $('#edit-announcement-id').remove();
+                            $('#create-announcement-modal-label').text('Create Announcement');
+                            $('#save-announcement').text('Save Announcement');
+                        } else {
+                            showAlert('error', data.message || 'Failed to load template');
+                        }
+                    },
+                    error: function(xhr) {
+                        removeOverlay();
+                        showAlert('error', 'Server error. Please try again later.');
+                        console.error('Error loading template:', xhr);
+                    }
+                });
+            }
+
+            // Delete template
+            function deleteTemplate(templateId) {
+                if (confirm('Are you sure you want to delete this template?')) {
+                    showOverlay('Deleting template...');
+                    $.ajax({
+                        url: '../ajax/instructors/delete_announcement_templates.php',
+                        type: 'POST',
+                        data: {
+                            template_id: templateId
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            removeOverlay();
+                            if (data.success) {
+                                showAlert('success', 'Template deleted successfully');
+                                loadTemplates();
+                            } else {
+                                showAlert('error', data.message || 'Failed to delete template');
+                            }
+                        },
+                        error: function(xhr) {
+                            removeOverlay();
+                            showAlert('error', 'Server error. Please try again later.');
+                            console.error('Error deleting template:', xhr);
+                        }
+                    });
+                }
+            }
+
+            // Initialize the page - add to your existing initialization function
             function initializeAnnouncementPage() {
                 // First clear hardcoded content
                 clearHardcodedContent();
+
+                // Add the template modal
+                addTemplateModal();
+
+                // Initialize template events
+                initTemplateEvents();
 
                 // Then load real data
                 fetchCourses();
                 loadAnnouncements();
                 loadAnnouncementStats();
+                loadTemplates(); // Add this line
                 updateFileCounter();
             }
+
 
             // Additional utility functions for system announcements
             window.viewAnnouncementDetails = function(announcementId) {
