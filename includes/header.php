@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en" dir="">
-<!-- Mirrored from htmlstream.com/preview/Learnix-v4.2/html/demo-course/index.php by HTTrack Website Copier/3.x [XR&CO'2014], Tue, 02 Aug 2022 18:11:07 GMT -->
 
 <head>
   <!-- Required Meta Tags Always Come First -->

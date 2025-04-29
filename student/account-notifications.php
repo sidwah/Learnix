@@ -1,11 +1,9 @@
 <?php include '../includes/student-header.php'; ?>
 
-
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main" class="bg-light">
   <!-- Breadcrumb -->
   <?php include '../includes/student-breadcrumb.php'; ?>
-
   <!-- End Breadcrumb -->
 
   <!-- Content -->
@@ -23,7 +21,7 @@
                   <div class="avatar avatar-xxl avatar-circle mb-3">
                     <div class="flex-shrink-0">
                       <img class="avatar avatar-xl avatar-circle"
-                        src="../uploads/profile/<?php echo $row['profile_pic'] ?>"
+                        src="../Uploads/profile/<?php echo $row['profile_pic'] ?>"
                         alt="Profile">
                     </div>
                   </div>
@@ -33,7 +31,6 @@
                 <!-- End Avatar -->
 
                 <!-- Sidebar Content -->
-
                 <!-- Overview Section -->
                 <span class="text-cap">Overview</span>
                 <ul class="nav nav-sm nav-tabs nav-vertical mb-4">
@@ -83,11 +80,11 @@
                       <i class="bi-award nav-icon"></i> Certifications
                     </a>
                   </li>
-                  <!-- <li class="nav-item">
-                    <a class="nav-link" href="course-progress.php">
-                      <i class="bi-bar-chart-line nav-icon"></i> Course Progress
+                  <li class="nav-item">
+                    <a class="nav-link" href="my-notes.php">
+                      <i class="bi-journal-text nav-icon"></i> Notes
                     </a>
-                  </li> -->
+                  </li>
                 </ul>
 
                 <!-- Payment Section for Students -->
@@ -98,11 +95,6 @@
                       <i class="bi-credit-card nav-icon"></i> Payment History
                     </a>
                   </li>
-                  <!-- <li class="nav-item">
-                    <a class="nav-link" href="payment-method.php">
-                      <i class="bi-wallet nav-icon"></i> Payment Methods
-                    </a>
-                  </li> -->
                 </ul>
 
                 <!-- Instructor/Admin Section (Dynamic Role Check) -->
@@ -166,9 +158,7 @@
                     </a>
                   </li>
                 </ul>
-
                 <!-- End of Sidebar -->
-
               </div>
             </div>
             <!-- End Card -->
@@ -181,9 +171,6 @@
       <div class="col-lg-9">
         <div class="d-grid gap-3 gap-lg-5">
           <!-- Card -->
-
-
-          <!-- Card -->
           <div id="editAddressCard" class="card">
             <div class="card-header border-bottom">
               <h4 class="card-header-title">Notifications</h4>
@@ -191,7 +178,48 @@
 
             <!-- Body -->
             <div class="card-body">
-              <!-- Add your course content here -->
+              <!-- Notification Controls -->
+              <div class="flex justify-between items-center mb-4">
+                <div class="flex space-x-4">
+                  <select class="form-select w-40" id="filterType" onchange="filterNotifications()">
+                    <option value="all">All Types</option>
+                    <option value="course">Course Updates</option>
+                    <option value="assignment">Assignments</option>
+                    <option value="system">System</option>
+                  </select>
+                  <select class="form-select w-40" id="sortOrder" onchange="filterNotifications()">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                  </select>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="markAllRead()">Mark All as Read</button>
+              </div>
+
+              <!-- Notification List -->
+              <div id="notificationList" class="space-y-4">
+                <!-- Sample Notification (Dynamically populated via JS) -->
+                <div class="notification-item p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow flex justify-between items-center" data-type="course" data-timestamp="2025-04-28T10:00:00Z">
+                  <div class="flex items-center space-x-4">
+                    <i class="bi bi-book text-primary text-xl"></i>
+                    <div>
+                      <h5 class="text-sm font-semibold">New Lecture Added</h5>
+                      <p class="text-sm text-gray-600">A new lecture on "Algorithms" has been added to Introduction to Computer Science.</p>
+                      <span class="text-xs text-gray-400">Apr 28, 2025, 10:00 AM</span>
+                    </div>
+                  </div>
+                  <div class="flex space-x-2">
+                    <button class="btn btn-sm btn-soft-primary" onclick="toggleRead(this)">Mark as Read</button>
+                    <button class="btn btn-sm btn-soft-danger" onclick="deleteNotification(this)">Delete</button>
+                  </div>
+                </div>
+                <!-- Add more notifications dynamically via JS -->
+              </div>
+
+              <!-- Empty State -->
+              <div id="emptyState" class="hidden text-center py-8">
+                <i class="bi bi-bell-slash text-gray-400 text-4xl mb-2"></i>
+                <p class="text-gray-600">No notifications to display.</p>
+              </div>
             </div>
             <!-- End Body -->
           </div>
@@ -199,7 +227,6 @@
         </div>
       </div>
       <!-- End Col -->
-
     </div>
     <!-- End Row -->
   </div>
@@ -210,3 +237,117 @@
 <!-- ========== FOOTER ========== -->
 <?php include '../includes/student-footer.php'; ?>
 <!-- ========== END FOOTER ========== -->
+
+<!-- Tailwind CSS CDN -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<!-- JavaScript for Notification Interactivity -->
+<script>
+  // Sample notification data (replace with PHP backend data)
+  const notifications = [{
+      id: 1,
+      type: 'course',
+      title: 'New Lecture Added',
+      message: 'A new lecture on "Algorithms" has been added to Introduction to Computer Science.',
+      timestamp: '2025-04-28T10:00:00Z',
+      read: false
+    },
+    {
+      id: 2,
+      type: 'assignment',
+      title: 'Assignment Due Soon',
+      message: 'Your Calculus Problem Set is due on May 3, 2025.',
+      timestamp: '2025-04-27T15:30:00Z',
+      read: false
+    },
+    {
+      id: 3,
+      type: 'system',
+      title: 'System Maintenance',
+      message: 'LMS will undergo maintenance on May 1, 2025, from 1:00 AM to 3:00 AM.',
+      timestamp: '2025-04-26T09:00:00Z',
+      read: true
+    }
+  ];
+
+  // Render notifications
+  function renderNotifications(filteredNotifications) {
+    const notificationList = document.getElementById('notificationList');
+    const emptyState = document.getElementById('emptyState');
+    notificationList.innerHTML = '';
+
+    if (filteredNotifications.length === 0) {
+      emptyState.classList.remove('hidden');
+      return;
+    }
+
+    emptyState.classList.add('hidden');
+    filteredNotifications.forEach(notification => {
+      const notificationItem = document.createElement('div');
+      notificationItem.className = `notification-item p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow flex justify-between items-center ${notification.read ? 'opacity-75' : ''}`;
+      notificationItem.dataset.type = notification.type;
+      notificationItem.dataset.timestamp = notification.timestamp;
+      notificationItem.innerHTML = `
+        <div class="flex items-center space-x-4">
+          <i class="bi bi-${notification.type === 'course' ? 'book' : notification.type === 'assignment' ? 'pencil-square' : 'gear'} text-primary text-xl"></i>
+          <div>
+            <h5 class="text-sm font-semibold">${notification.title}</h5>
+            <p class="text-sm text-gray-600">${notification.message}</p>
+            <span class="text-xs text-gray-400">${new Date(notification.timestamp).toLocaleString()}</span>
+          </div>
+        </div>
+        <div class="flex space-x-2">
+          <button class="btn btn-sm btn-soft-primary" onclick="toggleRead(this)">${notification.read ? 'Mark as Unread' : 'Mark as Read'}</button>
+          <button class="btn btn-sm btn-soft-danger" onclick="deleteNotification(this)">Delete</button>
+        </div>
+      `;
+      notificationList.appendChild(notificationItem);
+    });
+  }
+
+  // Filter and sort notifications
+  function filterNotifications() {
+    const filterType = document.getElementById('filterType').value;
+    const sortOrder = document.getElementById('sortOrder').value;
+
+    let filteredNotifications = notifications;
+    if (filterType !== 'all') {
+      filteredNotifications = notifications.filter(n => n.type === filterType);
+    }
+
+    filteredNotifications.sort((a, b) => {
+      const dateA = new Date(a.timestamp);
+      const dateB = new Date(b.timestamp);
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+
+    renderNotifications(filteredNotifications);
+  }
+
+  // Mark all notifications as read
+  function markAllRead() {
+    notifications.forEach(n => n.read = true);
+    filterNotifications();
+  }
+
+  // Toggle read/unread status
+  function toggleRead(button) {
+    const notificationItem = button.closest('.notification-item');
+    const timestamp = notificationItem.dataset.timestamp;
+    const notification = notifications.find(n => n.timestamp === timestamp);
+    notification.read = !notification.read;
+    filterNotifications();
+  }
+
+  // Delete a notification
+  function deleteNotification(button) {
+    const notificationItem = button.closest('.notification-item');
+    const timestamp = notificationItem.dataset.timestamp;
+    const index = notifications.findIndex(n => n.timestamp === timestamp);
+    notifications.splice(index, 1);
+    filterNotifications();
+  }
+
+  // Initial render
+  renderNotifications(notifications);
+</script>

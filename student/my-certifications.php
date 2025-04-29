@@ -3,7 +3,7 @@
 /**
  * My Certificates Page
  * 
- * Displays all certificates earned by a student and allows them to download them.
+ * Displays all certificates earned by a student and allows them to download and share verification links.
  */
 
 // Start or resume session
@@ -22,7 +22,6 @@ require_once '../backend/certificates/CertificateRepository.php';
 
 use Learnix\Certificates\CertificateRepository;
 
-
 $userId = $_SESSION['user_id'];
 
 // Initialize repository
@@ -31,13 +30,11 @@ $certificateRepo = new CertificateRepository($conn);
 // Get all certificates for the user
 $certificates = $certificateRepo->getUserCertificates($userId);
 
-// Get user info from session or database as needed - already loaded in included header
-
 // Function to format date
 function formatDate($dateString)
 {
   $date = new DateTime($dateString);
-  return $date->format('F j, Y');
+  return $date->format('Y-m-d');
 }
 
 include '../includes/student-header.php';
@@ -47,7 +44,6 @@ include '../includes/student-header.php';
 <main id="content" role="main" class="bg-light">
   <!-- Breadcrumb -->
   <?php include '../includes/student-breadcrumb.php'; ?>
-
   <!-- End Breadcrumb -->
 
   <!-- Content -->
@@ -65,17 +61,16 @@ include '../includes/student-header.php';
                   <div class="avatar avatar-xxl avatar-circle mb-3">
                     <div class="flex-shrink-0">
                       <img class="avatar avatar-xl avatar-circle"
-                        src="../uploads/profile/<?php echo $row['profile_pic'] ?>"
+                        src="../Uploads/profile/<?php echo htmlspecialchars($row['profile_pic']); ?>"
                         alt="Profile">
                     </div>
                   </div>
-                  <h4 class="card-title mb-0"><?php echo $row['first_name'] . ' ' . $row['last_name']; ?></h4>
-                  <p class="card-text small"><?php echo $row['email']; ?></p>
+                  <h4 class="card-title mb-0"><?php echo htmlspecialchars($row['first_name'] . ' ' . $row['last_name']); ?></h4>
+                  <p class="card-text small"><?php echo htmlspecialchars($row['email']); ?></p>
                 </div>
                 <!-- End Avatar -->
 
                 <!-- Sidebar Content -->
-
                 <!-- Overview Section -->
                 <span class="text-cap">Overview</span>
                 <ul class="nav nav-sm nav-tabs nav-vertical mb-4">
@@ -122,14 +117,14 @@ include '../includes/student-header.php';
                   </li>
                   <li class="nav-item">
                     <a class="nav-link active" href="my-certifications.php">
-                      <i class="bi-award nav-icon"></i>Certificates
+                      <i class="bi-award nav-icon"></i> Certifications
                     </a>
                   </li>
-                  <!-- <li class="nav-item">
-                    <a class="nav-link" href="course-progress.php">
-                      <i class="bi-bar-chart-line nav-icon"></i> Course Progress
+                  <li class="nav-item">
+                    <a class="nav-link" href="my-notes.php">
+                      <i class="bi-journal-text nav-icon"></i> Notes
                     </a>
-                  </li> -->
+                  </li>
                 </ul>
 
                 <!-- Payment Section for Students -->
@@ -140,7 +135,6 @@ include '../includes/student-header.php';
                       <i class="bi-credit-card nav-icon"></i> Payment History
                     </a>
                   </li>
-
                 </ul>
 
                 <!-- Instructor/Admin Section (Dynamic Role Check) -->
@@ -194,7 +188,7 @@ include '../includes/student-header.php';
                     </a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link " href="report.php">
+                    <a class="nav-link" href="report.php">
                       <i class="bi-exclamation-triangle nav-icon"></i> Report Issues
                     </a>
                   </li>
@@ -204,9 +198,7 @@ include '../includes/student-header.php';
                     </a>
                   </li>
                 </ul>
-
                 <!-- End of Sidebar -->
-
               </div>
             </div>
             <!-- End Card -->
@@ -219,64 +211,37 @@ include '../includes/student-header.php';
       <div class="col-lg-9">
         <div class="d-grid gap-3 gap-lg-5">
           <!-- Card -->
-          <div id="editAddressCard" class="card">
+          <div id="certificationsCard" class="card">
             <div class="card-header border-bottom">
-              <h4 class="card-header-title">My Certificates</h4>
+              <h4 class="card-header-title">Certifications</h4>
             </div>
 
             <!-- Body -->
             <div class="card-body">
-              <!-- Certificates content starts here -->
+              <!-- Certification Controls -->
+              <div class="flex justify-between items-center mb-4">
+                <input type="text" class="form-control w-64" id="searchCertifications" placeholder="Search certifications..." oninput="filterCertifications()">
+                <a href="my-courses.php" class="btn btn-sm btn-primary">Earn More Certifications</a>
+              </div>
 
-              <?php if (empty($certificates)): ?>
-                <div class="text-center py-5">
-                  <div class="mb-3">
-                    <i class="bi-award fs-1 text-muted"></i>
+              <!-- Certification List -->
+              <div id="certificationList" class="space-y-4">
+                <?php if (empty($certificates)): ?>
+                  <!-- Empty State -->
+                  <div id="emptyCertifications" class="text-center py-8">
+                    <i class="bi bi-award text-gray-400 text-4xl mb-2"></i>
+                    <p class="text-gray-600">No certifications earned yet. Complete a course to earn your first certificate!</p>
+                    <a href="my-courses.php" class="btn btn-primary mt-3">Explore Courses</a>
                   </div>
-                  <h3 class="mb-2">No Certificates Yet</h3>
-                  <p class="mb-4 text-muted">Complete courses to earn certificates that will appear here. Certificates showcase your achievements and can be shared with employers.</p>
-                  <a href="courses.php" class="btn btn-primary">Browse Courses</a>
-                </div>
-              <?php else: ?>
-                <div class="row">
-                  <?php foreach ($certificates as $certificate): ?>
-                    <div class="col-md-6 mb-4">
-                      <div class="card h-100 shadow-sm">
-                        <div class="card-header bg-soft-primary">
-                          <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-header-title mb-0"><?php echo htmlspecialchars($certificate['course_title']); ?></h5>
-                            <span class="badge bg-soft-success text-success">Verified</span>
-                          </div>
-                        </div>
+                <?php endif; ?>
+              </div>
 
-                        <div class="card-body">
-                          <div class="bg-soft-secondary p-3 mb-3 rounded d-flex align-items-center justify-content-center" style="height: 100px;">
-                            <div class="text-center">
-                              <i class="bi-award fs-2 text-primary mb-1"></i>
-                              <div>Certificate Preview</div>
-                            </div>
-                          </div>
-
-                          <div class="d-flex align-items-center small text-muted mb-3">
-                            <i class="bi-calendar me-1"></i>
-                            <span>Issued on: <?php echo formatDate($certificate['issue_date']); ?></span>
-                          </div>
-
-                          <div class="d-flex flex-column flex-sm-row gap-2 mt-3">
-                            <a href="../download-certificate.php?id=<?php echo $certificate['certificate_id']; ?>" class="btn btn-primary btn-sm">
-                              <i class="bi-download me-1"></i> Download
-                            </a>
-                            <a href="../verify-certificate.php?code=<?php echo $certificate['certificate_hash']; ?>" target="_blank" class="btn btn-outline-primary btn-sm">
-                              <i class="bi-shield-check me-1"></i> Verify
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  <?php endforeach; ?>
-                </div>
-              <?php endif; ?>
-              <!-- Certificates content ends here -->
+              <!-- Empty State (for JavaScript filtering) -->
+              <div id="emptyCertifications" class="hidden text-center py-8">
+                <i class="bi bi-award text-gray-400 text-4xl mb-2"></i>
+                <p class="text-gray-600">No certifications earned yet. Complete a course to earn your first certificate!</p>
+                <a href="my-courses.php" class="btn btn-primary mt-3">Explore Courses</a>
+              </div>
             </div>
             <!-- End Body -->
           </div>
@@ -294,3 +259,118 @@ include '../includes/student-header.php';
 <!-- ========== FOOTER ========== -->
 <?php include '../includes/student-footer.php'; ?>
 <!-- ========== END FOOTER ========== -->
+
+<!-- Tailwind CSS CDN -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<!-- JavaScript for Certification Interactivity -->
+<script>
+  // Certification data from PHP backend
+  const certifications = [
+    <?php foreach ($certificates as $certificate): ?>,
+      {
+        id: <?php echo $certificate['certificate_id']; ?>,
+        title: '<?php echo htmlspecialchars($certificate['course_title']); ?>',
+        course: '<?php echo htmlspecialchars($certificate['course_title']); ?>',
+        issueDate: '<?php echo formatDate($certificate['issue_date']); ?>',
+        downloadUrl: '../download-certificate.php?id=<?php echo $certificate['certificate_id']; ?>',
+        verifyUrl: 'Learnix/verify-certificate.php?code=<?php echo htmlspecialchars($certificate['certificate_hash']); ?>'
+      },
+    <?php endforeach; ?>
+  ];
+
+  // Render certifications
+  function renderCertifications(filteredCertifications) {
+    const certificationList = document.getElementById('certificationList');
+    const emptyCertifications = document.getElementById('emptyCertifications');
+    certificationList.innerHTML = '';
+
+    if (filteredCertifications.length === 0) {
+      emptyCertifications.classList.remove('hidden');
+      return;
+    }
+
+    emptyCertifications.classList.add('hidden');
+    filteredCertifications.forEach(cert => {
+      const certificationItem = document.createElement('div');
+      certificationItem.className = 'certification-item p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow flex justify-between items-center';
+      certificationItem.innerHTML = `
+        <div class="flex items-center space-x-4">
+          <i class="bi bi-award text-primary text-xl"></i>
+          <div>
+            <h5 class="text-sm font-semibold">${cert.title}</h5>
+            <p class="text-sm text-gray-600">Issued on: ${new Date(cert.issueDate).toLocaleDateString()}</p>
+            <span class="text-xs text-gray-400">Course: ${cert.course}</span>
+          </div>
+        </div>
+        <div class="flex space-x-2 relative">
+          <button class="btn btn-sm btn-soft-primary" onclick="toggleShareMenu(this, '${cert.verifyUrl}', '${cert.title}')">Share</button>
+          <a href="${cert.downloadUrl}" class="btn btn-sm btn-soft-secondary" target="_blank">View</a>
+          <div class="share-menu hidden absolute right-0 top-full mt-2 bg-white shadow-lg rounded-lg p-2 z-10" style="min-width: 150px;">
+            <a href="#" onclick="shareToLinkedIn('${cert.verifyUrl}', '${cert.title}')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">LinkedIn</a>
+            <a href="#" onclick="shareToTwitter('${cert.verifyUrl}', '${cert.title}')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Twitter</a>
+            <a href="#" onclick="shareToFacebook('${cert.verifyUrl}', '${cert.title}')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Facebook</a>
+            <a href="#" onclick="shareToEmail('${cert.verifyUrl}', '${cert.title}')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Email</a>
+          </div>
+        </div>
+      `;
+      certificationList.appendChild(certificationItem);
+    });
+  }
+
+  // Filter certifications
+  function filterCertifications() {
+    const searchQuery = document.getElementById('searchCertifications').value.toLowerCase();
+    const filteredCertifications = certifications.filter(cert =>
+      cert.title.toLowerCase().includes(searchQuery) || cert.course.toLowerCase().includes(searchQuery)
+    );
+    renderCertifications(filteredCertifications);
+  }
+
+  // Toggle share menu
+  function toggleShareMenu(button, url, title) {
+    const shareMenu = button.nextElementSibling.nextElementSibling;
+    const isVisible = !shareMenu.classList.contains('hidden');
+    // Close all other share menus
+    document.querySelectorAll('.share-menu').forEach(menu => menu.classList.add('hidden'));
+    // Toggle the current menu
+    shareMenu.classList.toggle('hidden', isVisible);
+  }
+
+  // Share to LinkedIn
+  function shareToLinkedIn(url, title) {
+    const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+  }
+
+  // Share to Twitter
+  function shareToTwitter(url, title) {
+    const text = `I earned my ${title} certificate! Verify it here: ${url}`;
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+  }
+
+  // Share to Facebook
+  function shareToFacebook(url, title) {
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+  }
+
+  // Share to Email
+  function shareToEmail(url, title) {
+    const subject = `My ${title} Certificate Verification`;
+    const body = `I earned my ${title} certificate! You can verify it here: ${url}`;
+    const shareUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = shareUrl;
+  }
+
+  // Close share menu when clicking outside
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.share-menu') && !event.target.closest('.btn-soft-primary')) {
+      document.querySelectorAll('.share-menu').forEach(menu => menu.classList.add('hidden'));
+    }
+  });
+
+  // Initial render
+  renderCertifications(certifications);
+</script>

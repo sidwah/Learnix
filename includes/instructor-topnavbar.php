@@ -148,7 +148,7 @@ $isVerified = isset($userData['verification_status']) && $userData['verification
                 </div>
 
                 <!-- All-->
-                <a href="javascript:void(0);" class="dropdown-item text-center text-primary notify-item border-top border-light py-2">
+                <a href="notifications.php" class="dropdown-item text-center text-primary notify-item border-top border-light py-2">
                     View All
                 </a>
 
