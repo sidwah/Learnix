@@ -280,9 +280,80 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                         </div>
                                     </div>
                                 </div>
+                                <!-- Single Button trigger modal -->
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#announcementsGuideModal">
+                                    Announcements Guide
+                                </button>
+
+                                <!-- Announcements Guide Modal -->
+                                <div id="announcementsGuideModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-body p-4">
+                                                <div class="text-center mb-4">
+                                                    <i class="dripicons-information h1 text-primary"></i>
+                                                    <h4 class="mt-2">Announcements Management Guide</h4>
+                                                </div>
+
+                                                <!-- My Announcements Section -->
+                                                <div class="alert alert-success mb-4">
+                                                    <div class="d-flex">
+                                                        <i class="dripicons-checklist h3 mt-1 me-3"></i>
+                                                        <div>
+                                                            <h5>My Announcements</h5>
+                                                            <p class="mb-2">Your personal announcement workspace with full control.</p>
+                                                            <ul class="ps-3">
+                                                                <li><strong>Status:</strong> Published, Draft, Scheduled, Archived</li>
+                                                                <li><strong>Importance:</strong> Low, Medium, High, Critical</li>
+                                                                <li><strong>Analytics:</strong> View tracking for each announcement</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Course Announcements Section -->
+                                                <div class="alert alert-info mb-4">
+                                                    <div class="d-flex">
+                                                        <i class="dripicons-user-group h3 mt-1 me-3"></i>
+                                                        <div>
+                                                            <h5>Course Announcements</h5>
+                                                            <p class="mb-2">View announcements from colleagues in shared courses.</p>
+                                                            <ul class="ps-3">
+                                                                <li>See author information for each announcement</li>
+                                                                <li>Filter by specific courses</li>
+                                                                <li>View details and mark as read</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- System Announcements Section -->
+                                                <div class="alert alert-warning">
+                                                    <div class="d-flex">
+                                                        <i class="dripicons-bell h3 mt-1 me-3"></i>
+                                                        <div>
+                                                            <h5>System Announcements</h5>
+                                                            <p class="mb-2">Important platform-wide messages from administrators.</p>
+                                                            <ul class="ps-3">
+                                                                <li>Color-coded by importance level</li>
+                                                                <li>Badge shows unread count</li>
+                                                                <li>Preview content before opening</li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="text-center mt-3">
+                                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Got It!</button>
+                                                </div>
+                                            </div>
+                                        </div><!-- /.modal-content -->
+                                    </div><!-- /.modal-dialog -->
+                                </div><!-- /.modal -->
                             </div>
                         </div>
                     </div>
+
 
                     <!-- Announcement Tabs -->
                     <div class="row">
@@ -303,7 +374,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                         <li class="nav-item">
                                             <a href="#system-announcements" data-bs-toggle="tab" aria-expanded="false" class="nav-link">
                                                 System Announcements
-                                                <span class="badge bg-danger ms-1">2</span>
+                                                <span class="badge bg-danger ms-1">0</span>
                                             </a>
                                         </li>
                                     </ul>
@@ -374,6 +445,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                         </td>
                                     </tr>
                                     -->
+
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -740,6 +812,27 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                 }
             });
 
+            // Function to clear hardcoded content
+            function clearHardcodedContent() {
+                // Clear hardcoded stats in a more precise way
+                $('.col-xl-3 .card .mt-0.text-dark').each(function(index) {
+                    if (index % 2 === 0) { // for 1st and 3rd items
+                        $(this).text('0');
+                    } else { // for 2nd and 4th items
+                        $(this).text('0%');
+                    }
+                });
+
+                // Clear system announcement badge
+                $('.nav-tabs .nav-item:nth-child(3) .badge').text('0');
+
+                // Clear hardcoded system announcements
+                $('#system-announcements-container .col-md-6').not('#empty-system-announcements').remove();
+
+                // Show empty system announcement state
+                $('#empty-system-announcements').removeClass('d-none');
+            }
+
             // Fetch courses for the dropdown
             function fetchCourses() {
                 $.ajax({
@@ -747,23 +840,72 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     type: 'GET',
                     dataType: 'json',
                     success: function(courses) {
+                        console.log("Courses loaded:", courses);
                         const courseSelect = $('#target-course');
                         courseSelect.empty().append('<option value="">Select a course</option>');
 
                         const courseFilter = $('#course-filter');
                         courseFilter.empty().append('<option value="all">All Courses</option>');
 
-                        courses.forEach(course => {
-                            courseSelect.append(`<option value="${course.course_id}">${course.title}</option>`);
-                            courseFilter.append(`<option value="${course.course_id}">${course.title}</option>`);
-                        });
+                        if (courses && courses.length > 0) {
+                            courses.forEach(course => {
+                                courseSelect.append(`<option value="${course.course_id}">${course.title}</option>`);
+                                courseFilter.append(`<option value="${course.course_id}">${course.title}</option>`);
+                            });
+                        } else {
+                            console.log('No courses found or empty response');
+                        }
                     },
                     error: function(xhr) {
+                        console.error('Error loading courses:', xhr);
                         showAlert('error', 'Failed to load courses. Please try again.');
                     }
                 });
             }
 
+            // Load announcement stats
+            function loadAnnouncementStats() {
+                $.ajax({
+                    url: '../ajax/instructors/get_announcement_stats.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(stats) {
+                        console.log("Stats loaded:", stats);
+                        if (stats.error) {
+                            console.error('Error loading stats:', stats.error);
+                            return;
+                        }
+
+                        // Update stats cards with real data
+                        $('.col-xl-3:nth-child(1) .card .mt-0.text-dark').text(stats.total_announcements || 0);
+                        $('.col-xl-3:nth-child(2) .card .mt-0.text-dark').text((stats.read_rate || 0) + '%');
+                        $('.col-xl-3:nth-child(3) .card .mt-0.text-dark').text(stats.scheduled_count || 0);
+                        $('.col-xl-3:nth-child(4) .card .mt-0.text-dark').text((stats.email_open_rate || 0) + '%');
+                    },
+                    error: function(xhr) {
+                        console.error('Failed to load announcement stats:', xhr);
+                        // Handle potential malformed JSON in the response
+                        if (xhr.status === 200 && xhr.responseText) {
+                            try {
+                                // Try to extract just the JSON part of the response
+                                const jsonStartPos = xhr.responseText.indexOf('{');
+                                if (jsonStartPos >= 0) {
+                                    const jsonStr = xhr.responseText.substring(jsonStartPos);
+                                    const stats = JSON.parse(jsonStr);
+
+                                    // Update stats cards with extracted data
+                                    $('.col-xl-3:nth-child(1) .card .mt-0.text-dark').text(stats.total_announcements || 0);
+                                    $('.col-xl-3:nth-child(2) .card .mt-0.text-dark').text((stats.read_rate || 0) + '%');
+                                    $('.col-xl-3:nth-child(3) .card .mt-0.text-dark').text(stats.scheduled_count || 0);
+                                    $('.col-xl-3:nth-child(4) .card .mt-0.text-dark').text((stats.email_open_rate || 0) + '%');
+                                }
+                            } catch (e) {
+                                console.error('Error parsing stats data:', e);
+                            }
+                        }
+                    }
+                });
+            }
             // File Upload Management
             const MAX_FILES = 5;
             const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -891,16 +1033,19 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                 $('#create-announcement-modal').modal('hide');
                                 resetAnnouncementForm();
                                 loadAnnouncements();
+                                loadAnnouncementStats();
                             } else {
                                 showAlert('error', result.message || 'Error creating announcement');
                             }
                         } catch (e) {
                             showAlert('error', 'Invalid response from server');
+                            console.error('Error parsing response:', e, response);
                         }
                     },
                     error: function(xhr) {
                         removeOverlay();
                         showAlert('error', 'Server error. Please try again later.');
+                        console.error('AJAX error:', xhr);
                     }
                 });
             });
@@ -982,16 +1127,19 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                 if (result.success) {
                                     showAlert('success', 'Announcement deleted successfully');
                                     loadAnnouncements();
+                                    loadAnnouncementStats();
                                 } else {
                                     showAlert('error', result.message || 'Error deleting announcement');
                                 }
                             } catch (e) {
                                 showAlert('error', 'Invalid response from server');
+                                console.error('Error parsing response:', e);
                             }
                         },
                         error: function(xhr) {
                             removeOverlay();
                             showAlert('error', 'Server error. Please try again later.');
+                            console.error('Delete AJAX error:', xhr);
                         }
                     });
                 }
@@ -1021,16 +1169,19 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                 if (result.success) {
                                     showAlert('success', 'Announcement archived successfully');
                                     loadAnnouncements();
+                                    loadAnnouncementStats();
                                 } else {
                                     showAlert('error', result.message || 'Error archiving announcement');
                                 }
                             } catch (e) {
                                 showAlert('error', 'Invalid response from server');
+                                console.error('Error parsing response:', e);
                             }
                         },
                         error: function(xhr) {
                             removeOverlay();
                             showAlert('error', 'Server error. Please try again later.');
+                            console.error('Archive AJAX error:', xhr);
                         }
                     });
                 }
@@ -1061,6 +1212,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     type: 'GET',
                     dataType: 'json',
                     success: function(data) {
+                        console.log("Announcements loaded:", data);
                         removeOverlay();
 
                         // My Announcements
@@ -1084,17 +1236,23 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                         }
 
                         // System Announcements
+                        // Remove existing system announcements (except empty state)
                         $('#system-announcements-container').find('.col-md-6:not(#empty-system-announcements)').remove();
+
                         if (data.systemAnnouncements && data.systemAnnouncements.length > 0) {
+                            // Update badge count
+                            $('.nav-tabs .nav-item:nth-child(3) .badge').text(data.systemAnnouncements.length);
                             $('#empty-system-announcements').addClass('d-none');
                             data.systemAnnouncements.forEach(addSystemAnnouncementCard);
                         } else {
+                            $('.nav-tabs .nav-item:nth-child(3) .badge').text('0');
                             $('#empty-system-announcements').removeClass('d-none');
                         }
                     },
                     error: function(xhr) {
                         removeOverlay();
                         showAlert('error', 'Failed to load announcements. Please try again.');
+                        console.error('Error loading announcements:', xhr);
                     }
                 });
             }
@@ -1323,6 +1481,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     error: function(xhr) {
                         removeOverlay();
                         showAlert('error', 'Failed to filter announcements. Please try again.');
+                        console.error('Error filtering announcements:', xhr);
                     }
                 });
             });
@@ -1352,6 +1511,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     error: function(xhr) {
                         removeOverlay();
                         showAlert('error', 'Failed to filter course announcements. Please try again.');
+                        console.error('Error filtering course announcements:', xhr);
                     }
                 });
             });
@@ -1363,7 +1523,6 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     if (searchTerm) searchAnnouncements(searchTerm);
                 }
             });
-
             $('#announcement-search').next('button').on('click', function() {
                 const searchTerm = $('#announcement-search').val().trim();
                 if (searchTerm) searchAnnouncements(searchTerm);
@@ -1404,14 +1563,43 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     error: function(xhr) {
                         removeOverlay();
                         showAlert('error', 'Failed to search announcements. Please try again.');
+                        console.error('Error searching announcements:', xhr);
                     }
                 });
             }
 
             // Initialize the page
-            fetchCourses();
-            loadAnnouncements();
-            updateFileCounter();
+            function initializeAnnouncementPage() {
+                // First clear hardcoded content
+                clearHardcodedContent();
+
+                // Then load real data
+                fetchCourses();
+                loadAnnouncements();
+                loadAnnouncementStats();
+                updateFileCounter();
+            }
+
+            // Additional utility functions for system announcements
+            window.viewAnnouncementDetails = function(announcementId) {
+                console.log('View announcement details:', announcementId);
+                // Implementation would go here
+            };
+
+            window.markAsRead = function(announcementId) {
+                console.log('Mark announcement as read:', announcementId);
+                // Implementation would go here
+            };
+
+            window.markSystemAnnouncementAsRead = function(announcementId) {
+                console.log('Mark system announcement as read:', announcementId);
+                // Implementation would go here
+            };
+
+            window.dismissSystemAnnouncement = function(announcementId) {
+                console.log('Dismiss system announcement:', announcementId);
+                // Implementation would go here
+            };
 
             // Modal events
             $('#create-announcement-modal').on('shown.bs.modal', function() {
@@ -1436,11 +1624,11 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
             function showAlert(type, message) {
                 const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
                 const alertDiv = $(`
-            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `).css({
+           <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+               ${message}
+               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+           </div>
+       `).css({
                     'position': 'fixed',
                     'top': '20px',
                     'left': '50%',
@@ -1459,13 +1647,13 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
             function showOverlay(message) {
                 const overlay = $(`
-            <div class="custom-overlay">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                ${message ? `<div class="text-white ms-3">${message}</div>` : ''}
-            </div>
-        `).css({
+           <div class="custom-overlay">
+               <div class="spinner-border text-primary" role="status">
+                   <span class="visually-hidden">Loading...</span>
+               </div>
+               ${message ? `<div class="text-white ms-3">${message}</div>` : ''}
+           </div>
+       `).css({
                     'position': 'fixed',
                     'top': '0',
                     'left': '0',
@@ -1484,10 +1672,12 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
             function removeOverlay() {
                 $('.custom-overlay').remove();
             }
+
+            // Initialize the page
+            initializeAnnouncementPage();
         });
     </script>
 
 </body>
-
 
 </html>
