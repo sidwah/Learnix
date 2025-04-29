@@ -722,6 +722,44 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     </div>
                 </div>
 
+                <!-- Delete Template Confirmation Modal -->
+                <div class="modal fade" id="deleteTemplateConfirmationModal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Template Deletion</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to delete this template? This action cannot be undone.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="confirmTemplateDeleteBtn">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Use Template Confirmation Modal -->
+                <div class="modal fade" id="useTemplateConfirmationModal" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Use Template</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Would you like to use this template to create a new announcement?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="confirmUseTemplateBtn">Use Template</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
             <!-- content -->
 
@@ -781,21 +819,21 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
             $('#template-modal').modal('show');
         });
-        
-       // Unified dropdown handler for all dropdowns
-$(document).on('click', '.dropdown-toggle, .action-dropdown .dropdown-toggle', function(e) {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent event bubbling to document click handler
-    
-    const $dropdown = $(this).closest('.dropdown, .action-dropdown');
-    const $dropdownMenu = $dropdown.find('.dropdown-menu');
-    
-    // Close all other dropdowns
-    $('.dropdown-menu.show').not($dropdownMenu).removeClass('show');
-    
-    // Toggle the current dropdown
-    $dropdownMenu.toggleClass('show');
-});
+
+        // Unified dropdown handler for all dropdowns
+        $(document).on('click', '.dropdown-toggle, .action-dropdown .dropdown-toggle', function(e) {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent event bubbling to document click handler
+
+            const $dropdown = $(this).closest('.dropdown, .action-dropdown');
+            const $dropdownMenu = $dropdown.find('.dropdown-menu');
+
+            // Close all other dropdowns
+            $('.dropdown-menu.show').not($dropdownMenu).removeClass('show');
+
+            // Toggle the current dropdown
+            $dropdownMenu.toggleClass('show');
+        });
 
         $(document).ready(function() {
             // Global variable for announcement actions
@@ -1123,12 +1161,12 @@ $(document).on('click', '.dropdown-toggle, .action-dropdown .dropdown-toggle', f
                 updateFileCounter();
             }
 
-           // Close dropdowns when clicking outside
-$(document).on('click', function(e) {
-    if (!$(e.target).closest('.dropdown, .action-dropdown').length) {
-        $('.dropdown-menu').removeClass('show');
-    }
-});
+            // Close dropdowns when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.dropdown, .action-dropdown').length) {
+                    $('.dropdown-menu').removeClass('show');
+                }
+            });
 
             // Action handlers
             $(document).on('click', '.edit-announcement', function(e) {
@@ -2041,52 +2079,66 @@ $(document).on('click', function(e) {
             }
 
             // Use template for new announcement
+            // Use template for new announcement
             function useTemplate(templateId) {
-                showOverlay('Loading template...');
-                $.ajax({
-                    url: '../ajax/instructors/get_announcement_templates.php',
-                    type: 'GET',
-                    data: {
-                        template_id: templateId
-                    },
-                    dataType: 'json',
-                    success: function(data) {
-                        removeOverlay();
-                        if (data.success) {
-                            // Fill the announcement form with template data
-                            $('#announcement-title').val(data.template.title);
+                // Show the existing useTemplateConfirmationModal
+                $('#useTemplateConfirmationModal').modal('show');
 
-                            if (typeof tinymce !== 'undefined' && tinymce.get('announcement-content')) {
-                                tinymce.get('announcement-content').setContent(data.template.content);
+                // Update the confirm button to handle template use
+                $('#confirmUseTemplateBtn').off('click').on('click', function() {
+                    $('#useTemplateConfirmationModal').modal('hide');
+
+                    showOverlay('Loading template...');
+                    $.ajax({
+                        url: '../ajax/instructors/get_announcement_templates.php',
+                        type: 'GET',
+                        data: {
+                            template_id: templateId
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            removeOverlay();
+                            if (data.success) {
+                                // Fill the announcement form with template data
+                                $('#announcement-title').val(data.template.title);
+
+                                if (typeof tinymce !== 'undefined' && tinymce.get('announcement-content')) {
+                                    tinymce.get('announcement-content').setContent(data.template.content);
+                                } else {
+                                    $('#announcement-content').val(data.template.content);
+                                }
+
+                                // Switch to the "My Announcements" tab
+                                $('.nav-tabs a[href="#my-announcements"]').tab('show');
+
+                                // Open the announcement modal
+                                $('#create-announcement-modal').modal('show');
+
+                                // Clear any edit mode state
+                                $('#edit-announcement-id').remove();
+                                $('#create-announcement-modal-label').text('Create Announcement');
+                                $('#save-announcement').text('Save Announcement');
                             } else {
-                                $('#announcement-content').val(data.template.content);
+                                showAlert('error', data.message || 'Failed to load template');
                             }
-
-                            // Switch to the "My Announcements" tab
-                            $('.nav-tabs a[href="#my-announcements"]').tab('show');
-
-                            // Open the announcement modal
-                            $('#create-announcement-modal').modal('show');
-
-                            // Clear any edit mode state
-                            $('#edit-announcement-id').remove();
-                            $('#create-announcement-modal-label').text('Create Announcement');
-                            $('#save-announcement').text('Save Announcement');
-                        } else {
-                            showAlert('error', data.message || 'Failed to load template');
+                        },
+                        error: function(xhr) {
+                            removeOverlay();
+                            showAlert('error', 'Server error. Please try again later.');
+                            console.error('Error loading template:', xhr);
                         }
-                    },
-                    error: function(xhr) {
-                        removeOverlay();
-                        showAlert('error', 'Server error. Please try again later.');
-                        console.error('Error loading template:', xhr);
-                    }
+                    });
                 });
             }
-
+            // Delete template
             // Delete template
             function deleteTemplate(templateId) {
-                if (confirm('Are you sure you want to delete this template?')) {
+                // Use the existing deleteTemplateConfirmationModal
+                $('#deleteTemplateConfirmationModal').modal('show');
+
+                // Update the confirm button to handle the deletion
+                $('#confirmTemplateDeleteBtn').off('click').on('click', function() {
+                    $('#deleteTemplateConfirmationModal').modal('hide');
                     showOverlay('Deleting template...');
                     $.ajax({
                         url: '../ajax/instructors/delete_announcement_templates.php',
@@ -2110,9 +2162,8 @@ $(document).on('click', function(e) {
                             console.error('Error deleting template:', xhr);
                         }
                     });
-                }
+                });
             }
-
             // Initialize the page - add to your existing initialization function
             function initializeAnnouncementPage() {
                 // First clear hardcoded content
