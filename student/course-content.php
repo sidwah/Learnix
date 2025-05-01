@@ -1597,7 +1597,7 @@ function getLinkDisplay($topic)
 
 <!-- ========== JavaScript ========== -->
 <script>
-   document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function() {
     // Initialize Bootstrap components
     const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
@@ -1605,7 +1605,7 @@ function getLinkDisplay($topic)
     const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
     popovers.forEach(popover => new bootstrap.Popover(popover));
 
-    // Notes functionality
+    // Notes functionality (unchanged)
     const saveNotesBtn = document.getElementById('saveNotes');
     const notesTextarea = document.getElementById('personalNotes');
     const notesStatus = document.getElementById('notesStatus');
@@ -1684,98 +1684,249 @@ function getLinkDisplay($topic)
 
     // Quiz UI functionality
     const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
-
     if (isQuiz) {
         const startQuizBtn = document.getElementById('confirmStartQuiz');
+        const resumeQuizBtn = document.getElementById('confirmResumeQuiz');
+        const forfeitQuizBtn = document.getElementById('confirmForfeitQuiz');
         const quizOverview = document.querySelector('.quiz-cont .card');
         const quizQuestions = document.getElementById('quizQuestions');
         const sidebar = document.querySelector('.col-md-4.col-lg-3');
         const contentColumn = document.querySelector('.col-md-8.col-lg-9');
         const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
         const startBtn = document.getElementById('startQuizBtn');
+        const resumeBtn = document.getElementById('resumeQuizBtn');
+        const forfeitBtn = document.getElementById('forfeitQuizBtn');
         const timeLimit = <?php echo isset($quiz) ? (int)$quiz['time_limit'] : 0; ?>;
         let timerInterval;
-        let attemptCount = parseInt(startBtn.dataset.currentAttempts) || 0;
-        const maxAttempts = parseInt(startBtn.dataset.maxAttempts) || 5;
+        let attemptStatus = {
+            current_attempts: parseInt(startBtn?.dataset.currentAttempts) || 0,
+            attempts_allowed: parseInt(startBtn?.dataset.maxAttempts) || 5,
+            cooldown_end_time: null
+        };
 
+        // Fetch attempt status on page load
+        fetch('../includes/students/check-attempt-status.php?quiz_id=<?php echo $quiz['quiz_id']; ?>&user_id=<?php echo $user_id; ?>')
+            .then(response => response.json())
+            .then(data => {
+                attemptStatus = {
+                    current_attempts: data.current_attempts,
+                    attempts_allowed: data.attempts_allowed,
+                    cooldown_end_time: data.cooldown_end_time ? new Date(data.cooldown_end_time).getTime() : null
+                };
+                if (startBtn) {
+                    startBtn.dataset.currentAttempts = attemptStatus.current_attempts;
+                }
+                updateAttemptUI();
+            })
+            .catch(error => {
+                console.error('Error fetching attempt status:', error);
+                showError('Failed to load quiz status. Please try again.');
+            });
+
+        // Update attempt UI
+        function updateAttemptUI() {
+            const attemptInfo = document.getElementById('attemptInfo');
+            const cooldownTimer = document.getElementById('cooldownTimer');
+            if (!attemptInfo || !cooldownTimer) return;
+
+            attemptInfo.textContent = `Attempts remaining: ${attemptStatus.attempts_allowed - attemptStatus.current_attempts}/${attemptStatus.attempts_allowed}`;
+
+            if (attemptStatus.current_attempts >= attemptStatus.attempts_allowed && attemptStatus.cooldown_end_time) {
+                if (startBtn) {
+                    startBtn.disabled = true;
+                    startBtn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>Attempts Exhausted';
+                }
+                startCooldownTimer();
+            } else if (startBtn && !resumeBtn?.style.display && !forfeitBtn?.style.display) {
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Quiz';
+            }
+        }
+
+        // Start cooldown timer
+        function startCooldownTimer() {
+            const cooldownTimer = document.getElementById('cooldownTimer');
+            if (!cooldownTimer || !attemptStatus.cooldown_end_time) return;
+
+            const updateTimer = () => {
+                const now = Date.now();
+                const timeLeft = attemptStatus.cooldown_end_time - now;
+                if (timeLeft <= 0) {
+                    // Reset attempts
+                    fetch('../includes/students/reset-attempt-cycle.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            quiz_id: <?php echo $quiz['quiz_id']; ?>,
+                            user_id: <?php echo $user_id; ?>
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        attemptStatus.current_attempts = 0;
+                        attemptStatus.cooldown_end_time = null;
+                        if (startBtn) {
+                            startBtn.dataset.currentAttempts = 0;
+                        }
+                        updateAttemptUI();
+                        // Queue notification
+                        queueNotification('New Attempt Cycle Available', `You can now attempt <?php echo addslashes($quiz['quiz_title']); ?> again!`);
+                    });
+                    cooldownTimer.style.display = 'none';
+                } else {
+                    const hours = Math.floor(timeLeft / 3600000);
+                    const minutes = Math.floor((timeLeft % 3600000) / 60000);
+                    const seconds = Math.floor((timeLeft % 60000) / 1000);
+                    cooldownTimer.textContent = `Next attempt in: ${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    cooldownTimer.style.display = 'block';
+                    setTimeout(updateTimer, 1000);
+                }
+            };
+            updateTimer();
+        }
+
+        // Function to start/resume quiz
+        function startOrResumeQuiz(isResume = false) {
+            if (!quizOverview || !quizQuestions) {
+                console.error('Quiz UI elements missing');
+                return;
+            }
+
+            // Hide overview and show questions
+            quizOverview.style.display = 'none';
+            quizQuestions.style.display = 'block';
+
+            // Hide sidebar
+            if (sidebar) {
+                sidebar.style.display = 'none';
+            }
+
+            // Make content full width
+            if (contentColumn) {
+                contentColumn.classList.remove('col-md-8', 'col-lg-9');
+                contentColumn.classList.add('col-12');
+            }
+
+            // Hide navigation
+            if (navigationControls) {
+                navigationControls.style.display = 'none';
+            }
+
+            // Close modal
+            const modalId = isResume ? 'resumeQuizModal' : 'startQuizModal';
+            const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+            if (modal) {
+                modal.hide();
+            }
+
+            // Load questions
+            const questionContainer = document.getElementById('questionContainer');
+            const submitButtonWrapper = document.getElementById('submitButtonWrapper');
+            const submitBtn = document.getElementById('submitQuiz');
+            if (!questionContainer || !submitButtonWrapper || !submitBtn) {
+                console.error('Question container, submit button wrapper, or submit button missing');
+                return;
+            }
+
+            submitButtonWrapper.style.display = 'block';
+            submitBtn.disabled = false;
+
+            // Placeholder: Fetch questions (and previous answers for resume)
+            const fetchUrl = isResume
+                ? `../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz['quiz_id']; ?>&attempt_id=${resumeBtn?.dataset.attemptId}`
+                : `../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz['quiz_id']; ?>`;
+            fetch(fetchUrl)
+                .then(response => response.text())
+                .then(html => {
+                    questionContainer.innerHTML = html;
+                    console.log(isResume ? 'Resumed quiz with previous answers' : 'Started new quiz');
+                })
+                .catch(error => {
+                    console.error('Error loading questions:', error);
+                    showError('Failed to load quiz questions. Please try again.');
+                });
+
+            // Start timer if applicable
+            if (timeLimit > 0) {
+                let timeLeft = isResume ? parseInt(resumeBtn?.dataset.remainingTime) : timeLimit * 60;
+                const timeDisplay = document.getElementById('timeRemaining');
+                if (!timeDisplay) {
+                    console.error('Time display element missing');
+                    return;
+                }
+                timerInterval = setInterval(() => {
+                    let mins = Math.floor(timeLeft / 60);
+                    let secs = timeLeft % 60;
+                    timeDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                    timeLeft--;
+                    if (timeLeft < 0) {
+                        clearInterval(timerInterval);
+                        submitQuiz(true); // Auto-submit
+                    }
+                }, 1000);
+            }
+        }
+
+        // Start quiz
         if (startQuizBtn) {
             startQuizBtn.addEventListener('click', function() {
-                if (!quizOverview || !quizQuestions) {
-                    console.error('Quiz UI elements missing');
+                startOrResumeQuiz(false);
+            });
+        }
+
+        // Resume quiz
+        if (resumeQuizBtn) {
+            resumeQuizBtn.addEventListener('click', function() {
+                startOrResumeQuiz(true);
+            });
+        }
+
+        // Forfeit quiz
+        if (forfeitQuizBtn) {
+            forfeitQuizBtn.addEventListener('click', function() {
+                const attemptId = forfeitBtn?.dataset.attemptId;
+                if (!attemptId) {
+                    console.error('Attempt ID missing for forfeit');
                     return;
                 }
 
-                // Hide the overview and show questions
-                quizOverview.style.display = 'none';
-                quizQuestions.style.display = 'block';
-
-                // Hide sidebar
-                if (sidebar) {
-                    sidebar.style.display = 'none';
-                }
-
-                // Make content full width
-                if (contentColumn) {
-                    contentColumn.classList.remove('col-md-8', 'col-lg-9');
-                    contentColumn.classList.add('col-12');
-                }
-
-                // Hide navigation
-                if (navigationControls) {
-                    navigationControls.style.display = 'none';
-                }
-
-                // Close modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('startQuizModal'));
-                if (modal) {
-                    modal.hide();
-                }
-
-                // Load questions
-                const questionContainer = document.getElementById('questionContainer');
-                const submitButtonWrapper = document.getElementById('submitButtonWrapper');
-                const submitBtn = document.getElementById('submitQuiz');
-                if (!questionContainer || !submitButtonWrapper || !submitBtn) {
-                    console.error('Question container, submit button wrapper, or submit button missing');
-                    return;
-                }
-
-                submitButtonWrapper.style.display = 'block'; // Ensure wrapper is visible
-                submitBtn.disabled = false; // Enable submit button by default
-
-                fetch('../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz['quiz_id']; ?>')
-                    .then(response => response.text())
-                    .then(html => {
-                        questionContainer.innerHTML = html;
-                        console.log('Questions loaded successfully');
+                // Placeholder: Submit attempt and queue notification
+                fetch('../includes/students/forfeit-quiz.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        attempt_id: attemptId,
+                        user_id: <?php echo json_encode($user_id); ?>,
+                        quiz_id: <?php echo $quiz['quiz_id']; ?>
                     })
-                    .catch(error => {
-                        console.error('Error loading questions:', error);
-                        questionContainer.innerHTML = `
-                            <div class="alert alert-danger">Error loading questions: ${error.message}</div>
-                        `;
-                    });
-
-                // Start timer if applicable
-                if (timeLimit > 0) {
-                    let timeLeft = timeLimit * 60;
-                    const timeDisplay = document.getElementById('timeRemaining');
-                    if (!timeDisplay) {
-                        console.error('Time display element missing');
-                        return;
-                    }
-                    timerInterval = setInterval(() => {
-                        let mins = Math.floor(timeLeft / 60);
-                        let secs = timeLeft % 60;
-                        timeDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-                        timeLeft--;
-                        if (timeLeft < 0) {
-                            clearInterval(timerInterval);
-                            alert("Time's up! Submitting quiz...");
-                            submitQuiz();
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Quiz forfeited successfully');
+                        // Close modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('forfeitQuizModal'));
+                        if (modal) {
+                            modal.hide();
                         }
-                    }, 1000);
-                }
+                        // Update attempt status
+                        attemptStatus.current_attempts++;
+                        if (startBtn) {
+                            startBtn.dataset.currentAttempts = attemptStatus.current_attempts;
+                        }
+                        updateAttemptUI();
+                        resetQuizUI();
+                        queueNotification('Quiz Forfeited', `Your attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been forfeited.`);
+                    } else {
+                        showError('Failed to forfeit quiz: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error forfeiting quiz:', error);
+                    showError('Error forfeiting quiz. Please try again.');
+                });
             });
         }
 
@@ -1792,7 +1943,7 @@ function getLinkDisplay($topic)
         }
 
         // Submit quiz function
-        function submitQuiz() {
+        function submitQuiz(isAutoSubmit = false) {
             const questionContainer = document.getElementById('questionContainer');
             const quizTimer = document.getElementById('quizTimer');
             const submitButtonWrapper = document.getElementById('submitButtonWrapper');
@@ -1811,46 +1962,67 @@ function getLinkDisplay($topic)
             if (quizTimer) quizTimer.style.display = 'none';
             submitButtonWrapper.style.display = 'none';
 
-            // Increment attempt count
-            attemptCount++;
-            startBtn.dataset.currentAttempts = attemptCount;
+            // Update attempt count
+            attemptStatus.current_attempts++;
+            if (startBtn) {
+                startBtn.dataset.currentAttempts = attemptStatus.current_attempts;
+            }
 
-            // Update previous attempts list
+            // Placeholder: Submit quiz answers to backend
+            /*
+            fetch('../includes/students/submit-quiz.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    quiz_id: <?php echo $quiz['quiz_id']; ?>,
+                    user_id: <?php echo $user_id; ?>,
+                    attempt_id: resumeBtn?.dataset.attemptId || null,
+                    answers: collectAnswers() // Function to collect answers (to be implemented)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update UI with actual results
+                showQuizResults(data);
+            })
+            .catch(error => {
+                showError('Failed to submit quiz. Please try again.');
+            });
+            */
+
+            // Update attempts list (hardcoded for now)
             const attemptsList = document.getElementById('attemptsList');
-            if (!attemptsList) {
-                console.error('Attempts list missing');
-                return;
-            }
-            const newAttempt = `
-                <div class="border rounded p-3 bg-white shadow-sm d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="fw-bold">Attempt ${attemptCount}</div>
-                        <small class="text-muted">April 30, 2025 - ${new Date().toLocaleTimeString()}</small>
+            if (attemptsList) {
+                const newAttempt = `
+                    <div class="border rounded p-3 bg-white shadow-sm d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold">Attempt ${attemptStatus.current_attempts}</div>
+                            <small class="text-muted">May 1, 2025 - ${new Date().toLocaleTimeString()}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fs-5 fw-semibold text-success">85% <span class="badge bg-success ms-2">Passed</span></div>
+                            <div class="small text-muted">17/20 · 09:13 mins</div>
+                        </div>
                     </div>
-                    <div class="text-end">
-                        <div class="fs-5 fw-semibold text-success">85% <span class="badge bg-success ms-2">Passed</span></div>
-                        <div class="small text-muted">17/20 · 09:13 mins</div>
-                    </div>
-                </div>
-            `;
-            attemptsList.insertAdjacentHTML('afterbegin', newAttempt);
+                `;
+                attemptsList.insertAdjacentHTML('afterbegin', newAttempt);
 
-            // Keep only the last 5 attempts
-            const attempts = attemptsList.querySelectorAll('div');
-            if (attempts.length > 5) {
-                attempts[attempts.length - 1].remove();
+                // Keep only the last 5 attempts
+                const attempts = attemptsList.querySelectorAll('div');
+                if (attempts.length > 5) {
+                    attempts[attempts.length - 1].remove();
+                }
             }
 
-            // Set button to No Attempts Left
-            startBtn.disabled = true;
-            startBtn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>No Attempts Left';
+            // Update attempt UI
+            updateAttemptUI();
 
-            // Show hardcoded result summary
+            // Show hardcoded result summary (to be replaced with backend data)
             questionContainer.innerHTML = `
                 <div class="quiz-result-summary text-center p-4 border rounded bg-light">
                     <div class="mb-3">
                         <i class="bi bi-patch-check-fill text-success fs-1"></i>
-                        <h4 class="mt-2">Quiz Submitted Successfully</h4>
+                        <h4 class="mt-2">Quiz ${isAutoSubmit ? 'Auto-Submitted' : 'Submitted'} Successfully</h4>
                         <p class="text-muted">Well done! Here's how you performed.</p>
                         <span class="badge bg-success text-center">Passed</span>
                     </div>
@@ -1880,78 +2052,126 @@ function getLinkDisplay($topic)
                 </div>
             `;
 
+            // Queue notification
+            queueNotification(
+                isAutoSubmit ? 'Quiz Auto-Submitted' : 'Quiz Submitted',
+                `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been ${isAutoSubmit ? 'automatically submitted due to time expiration' : 'submitted'}.`
+            );
+
             // Add event listener for return button
             const returnBtn = document.getElementById('returnToQuizOverview');
             if (returnBtn) {
-                returnBtn.addEventListener('click', function() {
-                    if (!quizQuestions || !quizOverview) {
-                        console.error('Quiz UI elements missing on return');
-                        return;
-                    }
-
-                    // Reset UI to quiz overview
-                    quizQuestions.style.display = 'none';
-                    quizOverview.style.display = 'block';
-
-                    // Restore sidebar
-                    if (sidebar) {
-                        sidebar.style.display = 'block';
-                    }
-
-                    // Restore content column width
-                    if (contentColumn) {
-                        contentColumn.classList.remove('col-12');
-                        contentColumn.classList.add('col-md-8', 'col-lg-9');
-                    }
-
-                    // Restore navigation controls
-                    if (navigationControls) {
-                        navigationControls.style.display = 'flex';
-                    }
-
-                    // Start cooldown
-                    startCooldown();
-                });
+                returnBtn.addEventListener('click', resetQuizUI);
             }
         }
 
-        // Cooldown function
-        function startCooldown() {
-            const cooldownTimer = document.getElementById('cooldownTimer');
-            if (!cooldownTimer) {
-                console.error('Cooldown timer element missing');
+        // Show quiz results (placeholder for backend data)
+        function showQuizResults(data) {
+            const questionContainer = document.getElementById('questionContainer');
+            if (!questionContainer) return;
+
+            questionContainer.innerHTML = `
+                <div class="quiz-result-summary text-center p-4 border rounded bg-light">
+                    <div class="mb-3">
+                        <i class="bi bi-patch-check-fill ${data.passed ? 'text-success' : 'text-danger'} fs-1"></i>
+                        <h4 class="mt-2">Quiz ${data.is_auto_submit ? 'Auto-Submitted' : 'Submitted'} Successfully</h4>
+                        <p class="text-muted">Here's how you performed.</p>
+                        <span class="badge bg-${data.passed ? 'success' : 'danger'} text-center">${data.passed ? 'Passed' : 'Failed'}</span>
+                    </div>
+                    <div class="row justify-content-center g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 bg-white shadow-sm h-100">
+                                <p class="mb-1 text-muted">Score</p>
+                                <h3 class="${data.passed ? 'text-success' : 'text-danger'}">${data.score}%</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 bg-white shadow-sm h-100">
+                                <p class="mb-1 text-muted">Correct Answers</p>
+                                <h5>${data.correct} / ${data.total}</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 bg-white shadow-sm h-100">
+                                <p class="mb-1 text-muted">Time Taken</p>
+                                <h5>${data.time_taken}</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="returnToQuizOverview">
+                        <i class="bi bi-arrow-left-circle me-1"></i> Return to Quiz
+                    </button>
+                </div>
+            `;
+            const returnBtn = document.getElementById('returnToQuizOverview');
+            if (returnBtn) {
+                returnBtn.addEventListener('click', resetQuizUI);
+            }
+        }
+
+        // Reset quiz UI to overview
+        function resetQuizUI() {
+            if (!quizQuestions || !quizOverview) {
+                console.error('Quiz UI elements missing on return');
                 return;
             }
 
-            let cooldownTime = 10; // 10 seconds for countdown
-            startBtn.disabled = true;
-            cooldownTimer.style.display = 'block';
-            cooldownTimer.classList.remove('blink');
-            cooldownTimer.innerHTML = `Cooldown: ${cooldownTime}s`;
+            quizQuestions.style.display = 'none';
+            quizOverview.style.display = 'block';
 
-            const cooldownInterval = setInterval(() => {
-                cooldownTime--;
-                cooldownTimer.innerHTML = `Cooldown: ${cooldownTime}s`;
-                console.log(`Cooldown time: ${cooldownTime}s`);
-                if (cooldownTime <= 0) {
-                    clearInterval(cooldownInterval);
-                    cooldownTimer.innerHTML = 'Attempt Reset';
-                    cooldownTimer.classList.add('blink');
-                    setTimeout(() => {
-                        cooldownTimer.style.display = 'none';
-                        cooldownTimer.classList.remove('blink');
-                        startBtn.disabled = false;
-                        startBtn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Quiz';
-                        attemptCount = 0; // Reset attempt count
-                        startBtn.dataset.currentAttempts = attemptCount;
-                        console.log('Attempt count reset to:', attemptCount);
-                    }, 3000); // Blink for 3 seconds
-                }
-            }, 1000);
+            if (sidebar) {
+                sidebar.style.display = 'block';
+            }
+
+            if (contentColumn) {
+                contentColumn.classList.remove('col-12');
+                contentColumn.classList.add('col-md-8', 'col-lg-9');
+            }
+
+            if (navigationControls) {
+                navigationControls.style.display = 'flex';
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const questionContainer = document.getElementById('questionContainer');
+            if (questionContainer) {
+                questionContainer.innerHTML = `
+                    <div class="alert alert-danger">${message}</div>
+                `;
+            }
+        }
+
+        // Queue notification
+        function queueNotification(title, message) {
+            // Placeholder: Send to backend
+            /*
+            fetch('../includes/students/queue-notification.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: <?php echo $user_id; ?>,
+                    notification_type: 'quiz_update',
+                    message: message
+                })
+            });
+            */
+
+            // Show in toast
+            const toast = document.getElementById('liveToast');
+            const toastHeader = toast.querySelector('.toast-header h5');
+            const toastBody = toast.querySelector('.toast-body');
+            if (toast && toastHeader && toastBody) {
+                toastHeader.textContent = title;
+                toastBody.textContent = message;
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+            }
         }
     }
 
-    // Video progress tracking (if video content)
+    // Video progress tracking (unchanged)
     <?php if ($content_type === 'video' && !empty($video_source) && $video_source['provider'] === 'HTML5'): ?>
         const video = document.querySelector('video');
         if (video) {

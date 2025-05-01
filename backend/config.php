@@ -1,4 +1,5 @@
 <?php
+// backend/config.php
 // Database configuration
 $host = 'localhost';
 $username = 'root';
