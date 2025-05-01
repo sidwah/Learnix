@@ -1597,72 +1597,71 @@ function getLinkDisplay($topic)
 
 <!-- ========== JavaScript ========== -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Bootstrap components
-        const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+   document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap components
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
 
-        const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
-        popovers.forEach(popover => new bootstrap.Popover(popover));
+    const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
+    popovers.forEach(popover => new bootstrap.Popover(popover));
 
-        // Notes functionality
-        const saveNotesBtn = document.getElementById('saveNotes');
-        const notesTextarea = document.getElementById('personalNotes');
-        const notesStatus = document.getElementById('notesStatus');
-        const printNotesBtn = document.getElementById('printNotes');
+    // Notes functionality
+    const saveNotesBtn = document.getElementById('saveNotes');
+    const notesTextarea = document.getElementById('personalNotes');
+    const notesStatus = document.getElementById('notesStatus');
+    const printNotesBtn = document.getElementById('printNotes');
 
-        if (saveNotesBtn && notesTextarea) {
-            saveNotesBtn.addEventListener('click', function() {
-                const notesContent = notesTextarea.value;
-                const topicId = <?php echo json_encode($topic_id); ?>;
-                const userId = <?php echo json_encode($user_id); ?>;
+    if (saveNotesBtn && notesTextarea) {
+        saveNotesBtn.addEventListener('click', function() {
+            const notesContent = notesTextarea.value;
+            const topicId = <?php echo json_encode($topic_id); ?>;
+            const userId = <?php echo json_encode($user_id); ?>;
 
-                // Perform AJAX request to save notes
-                fetch('../backend/save_notes.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            user_id: userId,
-                            topic_id: topicId,
-                            content: notesContent
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        notesStatus.style.display = 'block';
-                        if (data.success) {
-                            notesStatus.className = 'alert alert-success';
-                            notesStatus.textContent = 'Notes saved successfully!';
-                            const notesTab = document.querySelector('#notes-tab');
-                            if (!notesTab.querySelector('.bi-check-circle-fill') && notesContent.trim()) {
-                                notesTab.insertAdjacentHTML('beforeend', '<i class="bi bi-check-circle-fill text-success ms-1 small"></i>');
-                            }
-                        } else {
-                            notesStatus.className = 'alert alert-danger';
-                            notesStatus.textContent = 'Failed to save notes: ' + (data.error || 'Unknown error');
-                        }
-                        setTimeout(() => {
-                            notesStatus.style.display = 'none';
-                        }, 3000);
-                    })
-                    .catch(error => {
-                        notesStatus.style.display = 'block';
-                        notesStatus.className = 'alert alert-danger';
-                        notesStatus.textContent = 'Error saving notes: ' + error.message;
-                        setTimeout(() => {
-                            notesStatus.style.display = 'none';
-                        }, 3000);
-                    });
+            fetch('../backend/save_notes.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    topic_id: topicId,
+                    content: notesContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                notesStatus.style.display = 'block';
+                if (data.success) {
+                    notesStatus.className = 'alert alert-success';
+                    notesStatus.textContent = 'Notes saved successfully!';
+                    const notesTab = document.querySelector('#notes-tab');
+                    if (!notesTab.querySelector('.bi-check-circle-fill') && notesContent.trim()) {
+                        notesTab.insertAdjacentHTML('beforeend', '<i class="bi bi-check-circle-fill text-success ms-1 small"></i>');
+                    }
+                } else {
+                    notesStatus.className = 'alert alert-danger';
+                    notesStatus.textContent = 'Failed to save notes: ' + (data.error || 'Unknown error');
+                }
+                setTimeout(() => {
+                    notesStatus.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                notesStatus.style.display = 'block';
+                notesStatus.className = 'alert alert-danger';
+                notesStatus.textContent = 'Error saving notes: ' + error.message;
+                setTimeout(() => {
+                    notesStatus.style.display = 'none';
+                }, 3000);
             });
-        }
+        });
+    }
 
-        if (printNotesBtn && notesTextarea) {
-            printNotesBtn.addEventListener('click', function() {
-                const notesContent = notesTextarea.value;
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
+    if (printNotesBtn && notesTextarea) {
+        printNotesBtn.addEventListener('click', function() {
+            const notesContent = notesTextarea.value;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
                 <html>
                     <head>
                         <title>Notes for <?php echo htmlspecialchars($topic_title); ?></title>
@@ -1678,146 +1677,151 @@ function getLinkDisplay($topic)
                     </body>
                 </html>
             `);
-                printWindow.document.close();
-                printWindow.print();
+            printWindow.document.close();
+            printWindow.print();
+        });
+    }
+
+    // Quiz UI functionality
+    const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
+
+    if (isQuiz) {
+        const startQuizBtn = document.getElementById('confirmStartQuiz');
+        const quizOverview = document.querySelector('.quiz-cont .card');
+        const quizQuestions = document.getElementById('quizQuestions');
+        const sidebar = document.querySelector('.col-md-4.col-lg-3');
+        const contentColumn = document.querySelector('.col-md-8.col-lg-9');
+        const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
+        const startBtn = document.getElementById('startQuizBtn');
+        const timeLimit = <?php echo isset($quiz) ? (int)$quiz['time_limit'] : 0; ?>;
+        let timerInterval;
+        let attemptCount = parseInt(startBtn.dataset.currentAttempts) || 0;
+        const maxAttempts = parseInt(startBtn.dataset.maxAttempts) || 5;
+
+        if (startQuizBtn) {
+            startQuizBtn.addEventListener('click', function() {
+                if (!quizOverview || !quizQuestions) {
+                    console.error('Quiz UI elements missing');
+                    return;
+                }
+
+                // Hide the overview and show questions
+                quizOverview.style.display = 'none';
+                quizQuestions.style.display = 'block';
+
+                // Hide sidebar
+                if (sidebar) {
+                    sidebar.style.display = 'none';
+                }
+
+                // Make content full width
+                if (contentColumn) {
+                    contentColumn.classList.remove('col-md-8', 'col-lg-9');
+                    contentColumn.classList.add('col-12');
+                }
+
+                // Hide navigation
+                if (navigationControls) {
+                    navigationControls.style.display = 'none';
+                }
+
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('startQuizModal'));
+                if (modal) {
+                    modal.hide();
+                }
+
+                // Load questions
+                const questionContainer = document.getElementById('questionContainer');
+                const submitButtonWrapper = document.getElementById('submitButtonWrapper');
+                const submitBtn = document.getElementById('submitQuiz');
+                if (!questionContainer || !submitButtonWrapper || !submitBtn) {
+                    console.error('Question container, submit button wrapper, or submit button missing');
+                    return;
+                }
+
+                submitButtonWrapper.style.display = 'block'; // Ensure wrapper is visible
+                submitBtn.disabled = false; // Enable submit button by default
+
+                fetch('../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz['quiz_id']; ?>')
+                    .then(response => response.text())
+                    .then(html => {
+                        questionContainer.innerHTML = html;
+                        console.log('Questions loaded successfully');
+                    })
+                    .catch(error => {
+                        console.error('Error loading questions:', error);
+                        questionContainer.innerHTML = `
+                            <div class="alert alert-danger">Error loading questions: ${error.message}</div>
+                        `;
+                    });
+
+                // Start timer if applicable
+                if (timeLimit > 0) {
+                    let timeLeft = timeLimit * 60;
+                    const timeDisplay = document.getElementById('timeRemaining');
+                    if (!timeDisplay) {
+                        console.error('Time display element missing');
+                        return;
+                    }
+                    timerInterval = setInterval(() => {
+                        let mins = Math.floor(timeLeft / 60);
+                        let secs = timeLeft % 60;
+                        timeDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                        timeLeft--;
+                        if (timeLeft < 0) {
+                            clearInterval(timerInterval);
+                            alert("Time's up! Submitting quiz...");
+                            submitQuiz();
+                        }
+                    }, 1000);
+                }
             });
         }
 
-        // Quiz UI functionality
-        const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
-
-        if (isQuiz) {
-            const startQuizBtn = document.getElementById('confirmStartQuiz');
-            const quizOverview = document.querySelector('.quiz-cont .card');
-            const quizQuestions = document.getElementById('quizQuestions');
-            const sidebar = document.querySelector('.col-md-4.col-lg-3');
-            const contentColumn = document.querySelector('.col-md-8.col-lg-9');
-            const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
-            const startBtn = document.getElementById('startQuizBtn');
-            const timeLimit = <?php echo isset($quiz) ? (int)$quiz['time_limit'] : 0; ?>;
-            let timerInterval;
-            let attemptCount = parseInt(startBtn.dataset.currentAttempts) || 0;
-            const maxAttempts = parseInt(startBtn.dataset.maxAttempts) || 5;
-
-            // Check initial attempts and disable button if max reached
-            if (attemptCount >= maxAttempts) {
-                startBtn.disabled = true;
-                startBtn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>No Attempts Left';
-            }
-
-            if (startQuizBtn) {
-                startQuizBtn.addEventListener('click', function() {
-                    // Hide the overview and show questions
-                    quizOverview.style.display = 'none';
-                    quizQuestions.style.display = 'block';
-
-                    // Hide sidebar
-                    if (sidebar) {
-                        sidebar.style.display = 'none';
-                    }
-
-                    // Make content full width
-                    if (contentColumn) {
-                        contentColumn.classList.remove('col-md-8', 'col-lg-9');
-                        contentColumn.classList.add('col-12');
-                    }
-
-                    // Hide navigation
-                    if (navigationControls) {
-                        navigationControls.style.display = 'none';
-                    }
-
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('startQuizModal'));
-                    if (modal) {
-                        modal.hide();
-                    }
-
-                    // Load questions
-                    const questionContainer = document.getElementById('questionContainer');
-                    fetch('../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz['quiz_id']; ?>')
-                        .then(response => response.text())
-                        .then(html => {
-                            questionContainer.innerHTML = html;
-                            const submitBtn = document.getElementById('submitQuiz');
-                            submitBtn.disabled = true;
-
-                            // Enable submit button when all questions are answered
-                            const radios = document.querySelectorAll('input[type="radio"]');
-                            radios.forEach(radio => {
-                                radio.addEventListener('change', checkAllAnswered);
-                            });
-                        })
-                        .catch(error => {
-                            questionContainer.innerHTML = `
-                            <div class="alert alert-danger">Error loading questions: ${error.message}</div>
-                        `;
-                        });
-
-                    // Start timer if applicable
-                    if (timeLimit > 0) {
-                        let timeLeft = timeLimit * 60;
-                        const timeDisplay = document.getElementById('timeRemaining');
-                        timerInterval = setInterval(() => {
-                            let mins = Math.floor(timeLeft / 60);
-                            let secs = timeLeft % 60;
-                            timeDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-                            timeLeft--;
-                            if (timeLeft < 0) {
-                                clearInterval(timerInterval);
-                                alert("Time's up! Submitting quiz...");
-                                submitQuiz();
-                            }
-                        }, 1000);
-                    }
-                });
-            }
-
-            // Check if all questions are answered
-            function checkAllAnswered() {
-                const questionGroups = document.querySelectorAll('.quiz-question');
-                let allAnswered = true;
-                questionGroups.forEach(group => {
-                    const checked = group.querySelector('input[type="radio"]:checked');
-                    if (!checked) allAnswered = false;
-                });
-                document.getElementById('submitQuiz').disabled = !allAnswered;
-            }
-
-            // Handle confirm submission
-            const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
-            if (confirmSubmitBtn) {
-                confirmSubmitBtn.addEventListener('click', function() {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
-                    if (modal) {
-                        modal.hide();
-                    }
-                    submitQuiz();
-                });
-            }
-
-            // Submit quiz function
-            function submitQuiz() {
-                const questionContainer = document.getElementById('questionContainer');
-                const quizTimer = document.getElementById('quizTimer');
-                const submitButtonWrapper = document.getElementById('submitButtonWrapper');
-
-                // Clear timer
-                if (timerInterval) {
-                    clearInterval(timerInterval);
+        // Handle confirm submission
+        const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+        if (confirmSubmitBtn) {
+            confirmSubmitBtn.addEventListener('click', function() {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
+                if (modal) {
+                    modal.hide();
                 }
+                submitQuiz();
+            });
+        }
 
-                // Hide timer and submit button
-                if (quizTimer) quizTimer.style.display = 'none';
-                if (submitButtonWrapper) submitButtonWrapper.style.display = 'none';
+        // Submit quiz function
+        function submitQuiz() {
+            const questionContainer = document.getElementById('questionContainer');
+            const quizTimer = document.getElementById('quizTimer');
+            const submitButtonWrapper = document.getElementById('submitButtonWrapper');
 
-                // Increment attempt count
-                attemptCount++;
-                startBtn.dataset.currentAttempts = attemptCount;
+            if (!questionContainer || !submitButtonWrapper) {
+                console.error('Question container or submit button wrapper missing');
+                return;
+            }
 
-                // Update previous attempts list
-                const attemptsList = document.getElementById('attemptsList');
-                const newAttempt = `
+            // Clear timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            // Hide timer and submit button
+            if (quizTimer) quizTimer.style.display = 'none';
+            submitButtonWrapper.style.display = 'none';
+
+            // Increment attempt count
+            attemptCount++;
+            startBtn.dataset.currentAttempts = attemptCount;
+
+            // Update previous attempts list
+            const attemptsList = document.getElementById('attemptsList');
+            if (!attemptsList) {
+                console.error('Attempts list missing');
+                return;
+            }
+            const newAttempt = `
                 <div class="border rounded p-3 bg-white shadow-sm d-flex justify-content-between align-items-center">
                     <div>
                         <div class="fw-bold">Attempt ${attemptCount}</div>
@@ -1829,22 +1833,20 @@ function getLinkDisplay($topic)
                     </div>
                 </div>
             `;
-                attemptsList.insertAdjacentHTML('afterbegin', newAttempt);
+            attemptsList.insertAdjacentHTML('afterbegin', newAttempt);
 
-                // Keep only the last 5 attempts
-                const attempts = attemptsList.querySelectorAll('div');
-                if (attempts.length > 5) {
-                    attempts[attempts.length - 1].remove();
-                }
+            // Keep only the last 5 attempts
+            const attempts = attemptsList.querySelectorAll('div');
+            if (attempts.length > 5) {
+                attempts[attempts.length - 1].remove();
+            }
 
-                // Update button state if max attempts reached
-                if (attemptCount >= maxAttempts) {
-                    startBtn.disabled = true;
-                    startBtn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>No Attempts Left';
-                }
+            // Set button to No Attempts Left
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>No Attempts Left';
 
-                // Show hardcoded result summary
-                questionContainer.innerHTML = `
+            // Show hardcoded result summary
+            questionContainer.innerHTML = `
                 <div class="quiz-result-summary text-center p-4 border rounded bg-light">
                     <div class="mb-3">
                         <i class="bi bi-patch-check-fill text-success fs-1"></i>
@@ -1878,85 +1880,86 @@ function getLinkDisplay($topic)
                 </div>
             `;
 
-                // Add event listener for return button
-                const returnBtn = document.getElementById('returnToQuizOverview');
-                if (returnBtn) {
-                    returnBtn.addEventListener('click', function() {
-                        // Reset UI to quiz overview
-                        quizQuestions.style.display = 'none';
-                        quizOverview.style.display = 'block';
-
-                        // Restore sidebar
-                        if (sidebar) {
-                            sidebar.style.display = 'block';
-                        }
-
-                        // Restore content column width
-                        if (contentColumn) {
-                            contentColumn.classList.remove('col-12');
-                            contentColumn.classList.add('col-md-8', 'col-lg-9');
-                        }
-
-                        // Restore navigation controls
-                        if (navigationControls) {
-                            navigationControls.style.display = 'flex';
-                        }
-
-                        // Start cooldown
-                        startCooldown();
-                    });
-                }
-            }
-
-            // Cooldown function
-            function startCooldown() {
-                let cooldownTime = 10; // 10 seconds for testing
-                const cooldownTimer = document.getElementById('cooldownTimer');
-                const cooldownSeconds = document.getElementById('cooldownSeconds');
-                startBtn.disabled = true;
-                cooldownTimer.style.display = 'block';
-                cooldownSeconds.textContent = cooldownTime;
-
-                const cooldownInterval = setInterval(() => {
-                    cooldownTime--;
-                    cooldownSeconds.textContent = cooldownTime;
-                    if (cooldownTime <= 0) {
-                        clearInterval(cooldownInterval);
-                        cooldownTimer.style.display = 'none';
-                        if (attemptCount < maxAttempts) {
-                            startBtn.disabled = false;
-                            startBtn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Quiz';
-                        }
-                        // No else needed, as button state is already set in submitQuiz if max attempts reached
+            // Add event listener for return button
+            const returnBtn = document.getElementById('returnToQuizOverview');
+            if (returnBtn) {
+                returnBtn.addEventListener('click', function() {
+                    if (!quizQuestions || !quizOverview) {
+                        console.error('Quiz UI elements missing on return');
+                        return;
                     }
-                }, 1000);
+
+                    // Reset UI to quiz overview
+                    quizQuestions.style.display = 'none';
+                    quizOverview.style.display = 'block';
+
+                    // Restore sidebar
+                    if (sidebar) {
+                        sidebar.style.display = 'block';
+                    }
+
+                    // Restore content column width
+                    if (contentColumn) {
+                        contentColumn.classList.remove('col-12');
+                        contentColumn.classList.add('col-md-8', 'col-lg-9');
+                    }
+
+                    // Restore navigation controls
+                    if (navigationControls) {
+                        navigationControls.style.display = 'flex';
+                    }
+
+                    // Start cooldown
+                    startCooldown();
+                });
             }
         }
 
-        // Video progress tracking (if video content)
-        <?php if ($content_type === 'video' && !empty($video_source) && $video_source['provider'] === 'HTML5'): ?>
-            const video = document.querySelector('video');
-            if (video) {
-                video.addEventListener('timeupdate', function() {
-                    const currentTime = video.currentTime;
-                    const duration = video.duration;
-                    if (duration && currentTime >= duration * 0.9 && !video.dataset.progressSent) {
-                        video.dataset.progressSent = 'true';
-                        fetch('../backend/update_video_progress.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                enrollment_id: <?php echo $enrollment_id; ?>,
-                                topic_id: <?php echo $topic_id; ?>,
-                                status: 'In Progress'
-                            })
-                        });
-                    }
-                });
+        // Cooldown function
+        function startCooldown() {
+            const cooldownTimer = document.getElementById('cooldownTimer');
+            if (!cooldownTimer) {
+                console.error('Cooldown timer element missing');
+                return;
+            }
 
-                video.addEventListener('ended', function() {
+            let cooldownTime = 10; // 10 seconds for countdown
+            startBtn.disabled = true;
+            cooldownTimer.style.display = 'block';
+            cooldownTimer.classList.remove('blink');
+            cooldownTimer.innerHTML = `Cooldown: ${cooldownTime}s`;
+
+            const cooldownInterval = setInterval(() => {
+                cooldownTime--;
+                cooldownTimer.innerHTML = `Cooldown: ${cooldownTime}s`;
+                console.log(`Cooldown time: ${cooldownTime}s`);
+                if (cooldownTime <= 0) {
+                    clearInterval(cooldownInterval);
+                    cooldownTimer.innerHTML = 'Attempt Reset';
+                    cooldownTimer.classList.add('blink');
+                    setTimeout(() => {
+                        cooldownTimer.style.display = 'none';
+                        cooldownTimer.classList.remove('blink');
+                        startBtn.disabled = false;
+                        startBtn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Quiz';
+                        attemptCount = 0; // Reset attempt count
+                        startBtn.dataset.currentAttempts = attemptCount;
+                        console.log('Attempt count reset to:', attemptCount);
+                    }, 3000); // Blink for 3 seconds
+                }
+            }, 1000);
+        }
+    }
+
+    // Video progress tracking (if video content)
+    <?php if ($content_type === 'video' && !empty($video_source) && $video_source['provider'] === 'HTML5'): ?>
+        const video = document.querySelector('video');
+        if (video) {
+            video.addEventListener('timeupdate', function() {
+                const currentTime = video.currentTime;
+                const duration = video.duration;
+                if (duration && currentTime >= duration * 0.9 && !video.dataset.progressSent) {
+                    video.dataset.progressSent = 'true';
                     fetch('../backend/update_video_progress.php', {
                         method: 'POST',
                         headers: {
@@ -1965,13 +1968,28 @@ function getLinkDisplay($topic)
                         body: JSON.stringify({
                             enrollment_id: <?php echo $enrollment_id; ?>,
                             topic_id: <?php echo $topic_id; ?>,
-                            status: 'Completed'
+                            status: 'In Progress'
                         })
                     });
+                }
+            });
+
+            video.addEventListener('ended', function() {
+                fetch('../backend/update_video_progress.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        enrollment_id: <?php echo $enrollment_id; ?>,
+                        topic_id: <?php echo $topic_id; ?>,
+                        status: 'Completed'
+                    })
                 });
-            }
-        <?php endif; ?>
-    });
+            });
+        }
+    <?php endif; ?>
+});
 </script>
 <!-- ========== END JavaScript ========== -->
 
