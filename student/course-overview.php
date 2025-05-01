@@ -453,7 +453,7 @@ function timeAgo($datetime)
                         </div>
 
                         <div class="text-break mb-4">
-                            <?php echo nl2br(htmlspecialchars($course['full_description'])); ?>
+                            <?php echo $course['full_description']; ?>
                         </div>
 
                         <!-- Learning Outcomes Section -->

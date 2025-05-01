@@ -119,7 +119,7 @@ while ($attempt = $quiz_attempts_result->fetch_assoc()) {
     $section_id = $attempt['section_id'];
     $section_title = $attempt['section_title'];
     $section_position = $attempt['section_position'];
-    
+
     if (!isset($quizzes_by_section[$section_id])) {
         $quizzes_by_section[$section_id] = [
             'title' => $section_title,
@@ -127,7 +127,7 @@ while ($attempt = $quiz_attempts_result->fetch_assoc()) {
             'quizzes' => []
         ];
     }
-    
+
     // Check if this quiz is already in the array
     $quiz_id = $attempt['quiz_id'];
     if (!isset($quizzes_by_section[$section_id]['quizzes'][$quiz_id])) {
@@ -143,7 +143,7 @@ while ($attempt = $quiz_attempts_result->fetch_assoc()) {
             'attempts' => []
         ];
     }
-    
+
     // Add this attempt if it exists
     if ($attempt['attempt_id']) {
         $attempt_data = [
@@ -159,25 +159,25 @@ while ($attempt = $quiz_attempts_result->fetch_assoc()) {
             'quiz_title' => $attempt['quiz_title'],
             'section_title' => $section_title
         ];
-        
+
         $quizzes_by_section[$section_id]['quizzes'][$quiz_id]['attempts'][] = $attempt_data;
         $quizzes_by_section[$section_id]['quizzes'][$quiz_id]['attempts_used'] = max(
             $quizzes_by_section[$section_id]['quizzes'][$quiz_id]['attempts_used'],
             $attempt['attempt_number']
         );
-        
+
         // Track highest score
         if ($attempt['score'] > $quizzes_by_section[$section_id]['quizzes'][$quiz_id]['highest_score']) {
             $quizzes_by_section[$section_id]['quizzes'][$quiz_id]['highest_score'] = $attempt['score'];
         }
-        
+
         // Add to all attempts array for the history section
         $all_attempts[] = $attempt_data;
     }
 }
 
 // Sort sections by position
-uasort($quizzes_by_section, function($a, $b) {
+uasort($quizzes_by_section, function ($a, $b) {
     return $a['position'] <=> $b['position'];
 });
 
@@ -192,31 +192,31 @@ $total_correct_answers = 0;
 foreach ($quizzes_by_section as $section) {
     foreach ($section['quizzes'] as $quiz) {
         $total_quizzes++;
-        
+
         if (!empty($quiz['attempts'])) {
             $completed_quizzes++;
             $highest_total_score += $quiz['highest_score'];
-            
+
             // Check if any attempt passed
             $has_passed = false;
             $best_correct = 0;
             $best_total = 1; // Prevent division by zero
-            
+
             foreach ($quiz['attempts'] as $attempt) {
                 if ($attempt['passed']) {
                     $has_passed = true;
                 }
-                
+
                 if ($attempt['correct_answers'] > $best_correct) {
                     $best_correct = $attempt['correct_answers'];
                     $best_total = max(1, $attempt['total_questions']);
                 }
             }
-            
+
             if ($has_passed) {
                 $passed_quizzes++;
             }
-            
+
             $total_questions_answered += $best_total;
             $total_correct_answers += $best_correct;
         }
@@ -228,7 +228,7 @@ $completion_rate = ($total_quizzes > 0) ? round(($completed_quizzes / $total_qui
 $accuracy_rate = ($total_questions_answered > 0) ? round(($total_correct_answers / $total_questions_answered) * 100) : 0;
 
 // Sort attempts by date (newest first)
-usort($all_attempts, function($a, $b) {
+usort($all_attempts, function ($a, $b) {
     return strtotime($b['end_time'] ?? $b['start_time']) - strtotime($a['end_time'] ?? $a['start_time']);
 });
 
@@ -255,7 +255,7 @@ $recent_attempts = array_slice($all_attempts, 0, 10);
             </div>
         </div>
     </div>
-    
+
     <div class="container py-5">
         <div class="row">
             <!-- Left Sidebar - Course Info Summary -->
@@ -265,17 +265,17 @@ $recent_attempts = array_slice($all_attempts, 0, 10);
                     <div class="card-body">
                         <h5 class="card-title fw-bold"><?php echo htmlspecialchars($course['title']); ?></h5>
                         <p class="card-text text-muted small">
-                            <i class="bi bi-person-circle me-1"></i> 
+                            <i class="bi bi-person-circle me-1"></i>
                             <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?>
                         </p>
-                        
+
                         <p class="card-text text-muted small">
-                            <i class="bi bi-folder me-1"></i> 
+                            <i class="bi bi-folder me-1"></i>
                             <?php echo htmlspecialchars($course['category_name'] . ' > ' . $course['subcategory_name']); ?>
                         </p>
-                        
+
                         <hr>
-                        
+
                         <div class="d-grid gap-2">
                             <a href="course-materials.php?course_id=<?php echo $course_id; ?>" class="btn btn-outline-primary">
                                 <i class="bi bi-arrow-left me-1"></i> Back to Course
@@ -283,85 +283,191 @@ $recent_attempts = array_slice($all_attempts, 0, 10);
                         </div>
                     </div>
                 </div>
-                
-                <!-- Grade Summary Card -->
+
                 <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-light py-3">
-                        <h5 class="mb-0 fw-bold">Grade Summary</h5>
+                    <div class="card-header bg-gradient py-2" style="background: linear-gradient(90deg, #007bff, #0056b3); color: white;">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-graph-up me-2"></i>Grade Summary</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-3">
+                        <style>
+                            .grade-card {
+                                background-color: #ffffff;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                font-size: 0.95rem;
+                            }
+
+                            .grade-circle {
+                                width: 100px;
+                                height: 100px;
+                                border-radius: 50%;
+                                background-color: #f8f9fa;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                margin: 0 auto 0.5rem;
+                                border: 3px solid;
+                                transition: transform 0.2s;
+                            }
+
+                            .grade-circle:hover {
+                                transform: scale(1.05);
+                            }
+
+                            .stat-tile {
+                                border: 1px solid #dee2e6;
+                                border-radius: 6px;
+                                padding: 10px;
+                                text-align: center;
+                                transition: transform 0.2s, box-shadow 0.2s;
+                                background-color: #f8f9fa;
+                            }
+
+                            .stat-tile:hover {
+                                transform: translateY(-2px);
+                                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                            }
+
+                            .stat-tile .h5 {
+                                font-size: 1.1rem;
+                                margin-bottom: 0.25rem;
+                            }
+
+                            .stat-tile .small {
+                                font-size: 0.75rem;
+                            }
+
+                            .achievement-badge {
+                                padding: 8px 12px;
+                                font-size: 0.85rem;
+                                border-radius: 12px;
+                                display: inline-flex;
+                                align-items: center;
+                                transition: transform 0.2s;
+                                cursor: default;
+                            }
+
+                            .achievement-badge:hover {
+                                transform: scale(1.03);
+                            }
+
+                            .achievement-badge i {
+                                font-size: 0.9rem;
+                            }
+
+                            .bg-teal {
+                                background-color: #20c997;
+                            }
+
+                            .tooltip-inner {
+                                font-size: 0.8rem;
+                            }
+
+                            @media (max-width: 768px) {
+                                .grade-circle {
+                                    width: 80px;
+                                    height: 80px;
+                                    font-size: 1.5rem;
+                                }
+
+                                .stat-tile {
+                                    padding: 8px;
+                                    font-size: 0.9rem;
+                                }
+
+                                .stat-tile .h5 {
+                                    font-size: 1rem;
+                                }
+
+                                .achievement-badge {
+                                    font-size: 0.8rem;
+                                    padding: 6px 10px;
+                                }
+                            }
+                        </style>
+
                         <!-- Overall Grade -->
-                        <div class="text-center mb-4">
-                            <div class="display-1 fw-bold <?php echo ($average_highest_score >= 70) ? 'text-success' : (($average_highest_score >= 50) ? 'text-warning' : 'text-danger'); ?>">
-                                <?php echo $average_highest_score; ?>%
+                        <div class="text-center mb-3">
+                            <div class="grade-circle <?php echo ($average_highest_score >= 70) ? 'border-success text-success' : (($average_highest_score >= 50) ? 'border-warning text-warning' : 'border-danger text-danger'); ?>">
+                                <span class="fw-bold" style="font-size: 1.75rem;"><?php echo $average_highest_score; ?>%</span>
                             </div>
-                            <p class="text-muted">Best Performance</p>
+                            <p class="text-muted small">Best Performance</p>
                         </div>
-                        
+
                         <!-- Grade Stats -->
-                        <div class="row text-center g-3 mb-4 small">
+                        <div class="row g-2 mb-3">
                             <div class="col-4">
-                                <div class="border rounded p-2">
-                                    <div class="h4 mb-0"><?php echo $completion_rate; ?>%</div>
-                                    <div class="small text-muted">Completion</div>
+                                <div class="stat-tile">
+                                    <div class="h5"><?php echo $completion_rate; ?>%</div>
+                                    <div class="small text-muted"><i class="bi bi-check-circle me-1"></i>Completion</div>
                                 </div>
                             </div>
                             <div class="col-4">
-                                <div class="border rounded p-2">
-                                    <div class="h4 mb-0"><?php echo $passed_quizzes; ?>/<?php echo $total_quizzes; ?></div>
-                                    <div class="small text-muted">Passed</div>
+                                <div class="stat-tile">
+                                    <div class="h5"><?php echo $passed_quizzes; ?>/<?php echo $total_quizzes; ?></div>
+                                    <div class="small text-muted"><i class="bi bi-trophy me-1"></i>Passed</div>
                                 </div>
                             </div>
                             <div class="col-4">
-                                <div class="border rounded p-2">
-                                    <div class="h4 mb-0"><?php echo $accuracy_rate; ?>%</div>
-                                    <div class="small text-muted">Accuracy</div>
+                                <div class="stat-tile">
+                                    <div class="h5"><?php echo $accuracy_rate; ?>%</div>
+                                    <div class="small text-muted"><i class="bi bi-bullseye me-1"></i>Accuracy</div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Achievements -->
-                        <div class="mt-4">
-                            <h6 class="fw-bold">Assessment Achievements</h6>
-                            <div class="d-flex flex-wrap gap-2 mt-3">
+                        <div class="mt-3">
+                            <h6 class="fw-bold mb-2" style="font-size: 1rem;">Assessment Achievements</h6>
+                            <div class="d-flex flex-wrap gap-2">
                                 <?php if ($passed_quizzes > 0): ?>
-                                    <div class="badge bg-success p-2">
-                                        <i class="bi bi-award-fill me-1"></i> Passed <?php echo $passed_quizzes; ?> Quiz<?php echo $passed_quizzes > 1 ? 'zes' : ''; ?>
+                                    <div class="badge bg-success achievement-badge" data-bs-toggle="tooltip" data-bs-placement="top" title="Passed <?php echo $passed_quizzes; ?> quiz<?php echo $passed_quizzes > 1 ? 'zes' : ''; ?>">
+                                        <i class="bi bi-award-fill me-1"></i> <?php echo $passed_quizzes; ?> Passed
                                     </div>
                                 <?php endif; ?>
-                                
                                 <?php if ($accuracy_rate >= 80): ?>
-                                    <div class="badge bg-primary p-2">
-                                        <i class="bi bi-bullseye me-1"></i> High Accuracy (<?php echo $accuracy_rate; ?>%)
+                                    <div class="badge bg-primary achievement-badge" data-bs-toggle="tooltip" data-bs-placement="top" title="Achieved <?php echo $accuracy_rate; ?>% accuracy">
+                                        <i class="bi bi-bullseye me-1"></i> High Accuracy
                                     </div>
                                 <?php endif; ?>
-                                
                                 <?php if ($completion_rate > 0): ?>
-                                    <div class="badge bg-info text-dark p-2">
+                                    <div class="badge bg-teal achievement-badge" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo $completion_rate; ?>% of the course completed">
                                         <i class="bi bi-check-circle-fill me-1"></i> <?php echo $completion_rate; ?>% Complete
                                     </div>
                                 <?php endif; ?>
-                                
                                 <?php if (count($all_attempts) >= 5): ?>
-                                    <div class="badge bg-secondary p-2">
+                                    <div class="badge bg-secondary achievement-badge" data-bs-toggle="tooltip" data-bs-placement="top" title="Made <?php echo count($all_attempts); ?> quiz attempts">
                                         <i class="bi bi-star-fill me-1"></i> <?php echo count($all_attempts); ?> Attempts
                                     </div>
                                 <?php endif; ?>
+                                <?php if (empty($passed_quizzes) && empty($all_attempts)): ?>
+                                    <!-- <p class="text-muted small">No achievements yet. Start taking quizzes to earn badges!</p> -->
+                                <?php endif; ?>
                             </div>
                         </div>
+
+                        <script>
+                            // Initialize Bootstrap tooltips
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+                                tooltipTriggerList.forEach(tooltipTriggerEl => {
+                                    new bootstrap.Tooltip(tooltipTriggerEl);
+                                });
+                            });
+                        </script>
                     </div>
                 </div>
             </div>
-            
-            <!-- Main Grade Content -->
+
             <div class="col-lg-8">
+                <!-- Course Assessments and Attempt History -->
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-bold">Course Assessments</h5>
+                        <h5 class="mb-0 fw-bold">Course Assessments & History</h5>
                     </div>
-                    <div class="card-body p-0">
+                    <div class="card-body p-3">
                         <?php if (empty($quizzes_by_section)): ?>
-                            <div class="p-4 text-center">
+                            <div class="text-center p-4">
                                 <div class="mb-3">
                                     <i class="bi bi-clipboard-data text-muted" style="font-size: 3rem;"></i>
                                 </div>
@@ -372,95 +478,257 @@ $recent_attempts = array_slice($all_attempts, 0, 10);
                                 </a>
                             </div>
                         <?php else: ?>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th scope="col">Assessment</th>
-                                            <th scope="col" class="text-center">Status</th>
-                                            <th scope="col" class="text-center">Best Score</th>
-                                            <th scope="col" class="text-center">Attempts</th>
-                                            <th scope="col" class="text-end">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($quizzes_by_section as $section_id => $section): ?>
-                                            <!-- Section Header -->
-                                            <tr class="table-light">
-                                                <td colspan="5" class="fw-bold"><?php echo htmlspecialchars($section['title']); ?></td>
-                                            </tr>
-                                            
-                                            <?php foreach ($section['quizzes'] as $quiz): ?>
-                                                <?php 
-                                                $has_passed = false;
-                                                $is_incomplete = false;
-                                                $status_class = "bg-secondary";
-                                                $status_text = "Not Started";
-                                                
-                                                if (!empty($quiz['attempts'])) {
-                                                    foreach ($quiz['attempts'] as $attempt) {
-                                                        if ($attempt['passed']) {
-                                                            $has_passed = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                    
-                                                    // Check if any attempt is incomplete (started but not ended)
-                                                    $is_incomplete = !empty($quiz['attempts'][0]['start_time']) && empty($quiz['attempts'][0]['end_time']);
-                                                    
-                                                    if ($has_passed) {
-                                                        $status_class = "bg-success";
-                                                        $status_text = "Passed";
-                                                    } else if ($is_incomplete) {
-                                                        $status_class = "bg-warning text-dark";
-                                                        $status_text = "In Progress";
-                                                    } else {
-                                                        $status_class = "bg-danger";
-                                                        $status_text = "Failed";
-                                                    }
-                                                }
-                                                
-                                                $attempts_remaining = $quiz['attempts_allowed'] - $quiz['attempts_used'];
-                                                ?>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="me-3">
-                                                                <i class="bi bi-clipboard-check fs-4 text-primary"></i>
-                                                            </div>
-                                                            <div>
-                                                                <div class="fw-medium"><?php echo htmlspecialchars($quiz['quiz_title']); ?></div>
-                                                                <div class="small text-muted">
-                                                                    Pass Mark: <?php echo $quiz['pass_mark']; ?>% • 
-                                                                    <?php echo $quiz['total_questions']; ?> questions • 
-                                                                    <?php echo $quiz['time_limit']; ?> min
-                                                                </div>
-                                                            </div>
+                            <style>
+                                .quiz-card {
+                                    transition: transform 0.2s, box-shadow 0.2s;
+                                    border: none;
+                                    border-radius: 8px;
+                                    overflow: hidden;
+                                    background-color: #ffffff;
+                                    margin-bottom: 1rem;
+                                    font-size: 0.95rem;
+                                }
+
+                                .quiz-card:hover {
+                                    transform: translateY(-3px);
+                                    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08) !important;
+                                }
+
+                                .pass-mark-sidebar {
+                                    background-color: #e9ecef;
+                                    border-right: 2px solid #dee2e6;
+                                    padding: 15px;
+                                    border-radius: 8px 0 0 8px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    text-align: center;
+                                }
+
+                                .pass-mark-sidebar h6 {
+                                    font-size: 0.85rem;
+                                    margin-bottom: 0.5rem;
+                                }
+
+                                .pass-mark-sidebar h3 {
+                                    font-size: 1.25rem;
+                                    margin-bottom: 0;
+                                }
+
+                                .pass-mark-sidebar p {
+                                    font-size: 0.75rem;
+                                    margin-top: 0.5rem;
+                                }
+
+                                .attempt-toggle {
+                                    cursor: pointer;
+                                    color: #007bff;
+                                    text-decoration: none;
+                                    font-size: 0.9rem;
+                                    font-weight: 500;
+                                }
+
+                                .attempt-toggle:hover {
+                                    text-decoration: underline;
+                                }
+
+                                .badge-passed {
+                                    background-color: #28a745;
+                                    font-size: 0.8rem;
+                                }
+
+                                .badge-failed {
+                                    background-color: #dc3545;
+                                    font-size: 0.8rem;
+                                }
+
+                                .badge-in-progress {
+                                    background-color: #ffc107;
+                                    color: #212529;
+                                    font-size: 0.8rem;
+                                }
+
+                                .attempt-card {
+                                    border: 1px solid #dee2e6;
+                                    border-radius: 6px;
+                                    padding: 10px;
+                                    background-color: #f8f9fa;
+                                    margin-bottom: 8px;
+                                    font-size: 0.85rem;
+                                    transition: background-color 0.2s;
+                                }
+
+                                .attempt-card:hover {
+                                    background-color: #e9ecef;
+                                }
+
+                                .section-header {
+                                    background-color: #f1f3f5;
+                                    padding: 8px 15px;
+                                    border-radius: 6px;
+                                    margin-bottom: 0.75rem;
+                                    font-size: 1.1rem;
+                                    font-weight: 600;
+                                }
+
+                                .card-body .small {
+                                    font-size: 0.8rem;
+                                }
+
+                                .btn-sm {
+                                    font-size: 0.8rem;
+                                    padding: 0.3rem 0.6rem;
+                                }
+
+                                @media (max-width: 768px) {
+                                    .pass-mark-sidebar {
+                                        border-right: none;
+                                        border-bottom: 2px solid #dee2e6;
+                                        border-radius: 8px 8px 0 0;
+                                        padding: 10px;
+                                    }
+
+                                    .quiz-card {
+                                        font-size: 0.9rem;
+                                    }
+
+                                    .attempt-card {
+                                        font-size: 0.8rem;
+                                    }
+                                }
+                            </style>
+
+                            <?php foreach ($quizzes_by_section as $section_id => $section): ?>
+                                <!-- Section Header -->
+                                <div class="section-header">
+                                    <i class="bi bi-folder-fill me-2 text-primary"></i>
+                                    <?php echo htmlspecialchars($section['title']); ?>
+                                </div>
+
+                                <?php foreach ($section['quizzes'] as $quiz): ?>
+                                    <?php
+                                    $has_passed = false;
+                                    $is_incomplete = false;
+                                    $status_class = "bg-secondary";
+                                    $status_text = "Not Started";
+
+                                    if (!empty($quiz['attempts'])) {
+                                        foreach ($quiz['attempts'] as $attempt) {
+                                            if ($attempt['passed']) {
+                                                $has_passed = true;
+                                                break;
+                                            }
+                                        }
+                                        $is_incomplete = !empty($quiz['attempts'][0]['start_time']) && empty($quiz['attempts'][0]['end_time']);
+                                        if ($has_passed) {
+                                            $status_class = "badge-passed";
+                                            $status_text = "Passed";
+                                        } else if ($is_incomplete) {
+                                            $status_class = "badge-in-progress";
+                                            $status_text = "In Progress";
+                                        } else {
+                                            $status_class = "badge-failed";
+                                            $status_text = "Failed";
+                                        }
+                                    }
+
+                                    $attempts_remaining = $quiz['attempts_allowed'] - $quiz['attempts_used'];
+                                    ?>
+                                    <div class="card quiz-card shadow-sm">
+                                        <div class="row g-0">
+                                            <!-- Pass Mark Sidebar -->
+                                            <div class="col-md-2 pass-mark-sidebar">
+                                                <div>
+                                                    <h6 class="text-muted mb-2">Pass Mark</h6>
+                                                    <h3 class="text-primary mb-0"><?php echo $quiz['pass_mark']; ?>%</h3>
+                                                    <p class="small text-muted mt-2">
+                                                        <i class="bi bi-clock me-1"></i><?php echo $quiz['time_limit']; ?> min
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <!-- Quiz Details -->
+                                            <div class="col-md-10">
+                                                <div class="card-body p-3">
+                                                    <h5 class="card-title mb-2" style="font-size: 1.1rem;">
+                                                        <i class="bi bi-clipboard-check me-2 text-primary"></i>
+                                                        <?php echo htmlspecialchars($quiz['quiz_title']); ?>
+                                                    </h5>
+                                                    <div class="row g-2 mb-2">
+                                                        <div class="col-6 col-md-4">
+                                                            <div class="small text-muted">Status</div>
+                                                            <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
                                                         </div>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <?php if (!empty($quiz['attempts'])): ?>
+                                                        <div class="col-6 col-md-4">
+                                                            <div class="small text-muted">Best Score</div>
                                                             <span class="<?php echo $has_passed ? 'text-success fw-bold' : 'text-danger'; ?>">
-                                                                <?php echo $quiz['highest_score']; ?>%
+                                                                <?php echo !empty($quiz['attempts']) ? $quiz['highest_score'] . '%' : '--'; ?>
                                                             </span>
-                                                        <?php else: ?>
-                                                            <span class="text-muted">--</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <div class="d-flex flex-column align-items-center">
+                                                        </div>
+                                                        <div class="col-12 col-md-4">
+                                                            <div class="small text-muted">Attempts</div>
                                                             <span><?php echo $quiz['attempts_used']; ?>/<?php echo $quiz['attempts_allowed']; ?></span>
                                                             <?php if ($attempts_remaining > 0 && !$has_passed): ?>
-                                                                <span class="badge bg-light text-dark mt-1">
-                                                                    <?php echo $attempts_remaining; ?> remaining
-                                                                </span>
+                                                                <span class="badge bg-light text-dark ms-1"><?php echo $attempts_remaining; ?> remaining</span>
                                                             <?php endif; ?>
                                                         </div>
-                                                    </td>
-                                                    <td class="text-end">
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <small class="text-muted">
+                                                            <?php echo $quiz['total_questions']; ?> questions
+                                                        </small>
+                                                    </div>
+                                                    <?php if (!empty($quiz['attempts'])): ?>
+                                                        <p class="text-muted mb-2">
+                                                            <a class="attempt-toggle" data-bs-toggle="collapse" href="#attempts-<?php echo $quiz['quiz_id']; ?>" role="button" aria-expanded="false" aria-controls="attempts-<?php echo $quiz['quiz_id']; ?>">
+                                                                View <?php echo count($quiz['attempts']); ?> Attempt(s) <i class="bi bi-chevron-down ms-1"></i>
+                                                            </a>
+                                                        </p>
+                                                        <div class="collapse" id="attempts-<?php echo $quiz['quiz_id']; ?>">
+                                                            <?php foreach ($quiz['attempts'] as $attempt): ?>
+                                                                <div class="attempt-card">
+                                                                    <div class="row g-2 align-items-center">
+                                                                        <div class="col-6 col-md-3">
+                                                                            <div class="small text-muted">Attempt #<?php echo $attempt['attempt_number']; ?></div>
+                                                                            <span class="badge <?php echo $attempt['passed'] ? 'badge-passed' : ($attempt['end_time'] ? 'badge-failed' : 'badge-in-progress'); ?>">
+                                                                                <?php echo $attempt['passed'] ? 'Passed' : ($attempt['end_time'] ? 'Failed' : 'In Progress'); ?>
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="col-6 col-md-3">
+                                                                            <div class="small text-muted">Score</div>
+                                                                            <span class="<?php echo $attempt['passed'] ? 'text-success' : 'text-danger'; ?>">
+                                                                                <?php echo $attempt['score']; ?>%
+                                                                            </span>
+                                                                            <div class="small text-muted">
+                                                                                <?php echo $attempt['correct_answers']; ?>/<?php echo $attempt['total_questions']; ?> correct
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-6 col-md-3">
+                                                                            <div class="small text-muted">Date</div>
+                                                                            <?php
+                                                                            $date = $attempt['end_time'] ?? $attempt['start_time'];
+                                                                            echo date('M j, Y - g:i A', strtotime($date));
+                                                                            ?>
+                                                                        </div>
+                                                                        <div class="col-6 col-md-3">
+                                                                            <div class="small text-muted">Time Spent</div>
+                                                                            <?php
+                                                                            if (!empty($attempt['time_spent'])) {
+                                                                                $minutes = floor($attempt['time_spent'] / 60);
+                                                                                $seconds = $attempt['time_spent'] % 60;
+                                                                                echo "{$minutes}m {$seconds}s";
+                                                                            } else {
+                                                                                echo '--';
+                                                                            }
+                                                                            ?>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <p class="text-muted">No attempts recorded for this quiz.</p>
+                                                    <?php endif; ?>
+                                                    <div class="mt-2">
                                                         <?php if (empty($quiz['attempts'])): ?>
                                                             <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="btn btn-sm btn-primary">
                                                                 <i class="bi bi-play-fill me-1"></i> Start
@@ -478,155 +746,137 @@ $recent_attempts = array_slice($all_attempts, 0, 10);
                                                                 <i class="bi bi-eye me-1"></i> Review
                                                             </a>
                                                         <?php endif; ?>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endforeach; ?>
+                            <script>
+                                // Toggle collapse icon for attempt details
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const toggles = document.querySelectorAll('.attempt-toggle');
+                                    toggles.forEach(toggle => {
+                                        toggle.addEventListener('click', function() {
+                                            const icon = this.querySelector('i');
+                                            icon.classList.toggle('bi-chevron-down');
+                                            icon.classList.toggle('bi-chevron-up');
+                                        });
+                                    });
+                                });
+                            </script>
                         <?php endif; ?>
                     </div>
                 </div>
-                
-                <!-- Attempt History -->
-                <?php if (!empty($recent_attempts)): ?>
-                    <div class="card border-0 shadow-sm mt-4">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0 fw-bold">Recent Attempt History</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th scope="col">Quiz</th>
-                                            <th scope="col">Section</th>
-                                            <th scope="col" class="text-center">Date</th>
-                                            <th scope="col" class="text-center">Score</th>
-                                            <th scope="col" class="text-center">Time Spent</th>
-                                            <th scope="col" class="text-center">Result</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($recent_attempts as $attempt): ?>
-                                            <tr>
-                                                <td>
-                                                    <div class="fw-medium"><?php echo htmlspecialchars($attempt['quiz_title']); ?></div>
-                                                    <div class="small text-muted">Attempt #<?php echo $attempt['attempt_number']; ?></div>
-                                                </td>
-                                                <td class="text-muted small">
-                                                    <?php echo htmlspecialchars($attempt['section_title']); ?>
-                                                </td>
-                                                <td class="text-center">
-                                                    <?php 
-                                                    $date = $attempt['end_time'] ?? $attempt['start_time'];
-                                                    echo date('M j, Y', strtotime($date)); 
-                                                    ?>
-                                                    <div class="small text-muted">
-                                                        <?php echo date('g:i A', strtotime($date)); ?>
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">
-                                                    <div class="fw-medium <?php echo $attempt['passed'] ? 'text-success' : 'text-danger'; ?>">
-                                                        <?php echo $attempt['score']; ?>%
-                                                    </div>
-                                                    <div class="small text-muted">
-                                                        <?php echo $attempt['correct_answers']; ?>/<?php echo $attempt['total_questions']; ?> correct
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">
-                                                    <?php 
-                                                    if (!empty($attempt['time_spent'])) {
-                                                        $minutes = floor($attempt['time_spent'] / 60);
-                                                        $seconds = $attempt['time_spent'] % 60;
-                                                        echo "{$minutes}m {$seconds}s";
-                                                    } else {
-                                                        echo "--";
-                                                    }
-                                                    ?>
-                                                </td>
-                                                <td class="text-center">
-                                                    <?php if (empty($attempt['end_time'])): ?>
-                                                        <span class="badge bg-warning text-dark">In Progress</span>
-                                                    <?php elseif ($attempt['passed']): ?>
-                                                        <span class="badge bg-success">Passed</span>
-                                                    <?php else: ?>
-                                                        <span class="badge bg-danger">Failed</span>
-                                                    <?php endif; ?>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <?php if (count($all_attempts) > 10): ?>
-                            <div class="card-footer bg-white text-center py-3">
-                                <button type="button" class="btn btn-sm btn-link text-decoration-none" data-bs-toggle="modal" data-bs-target="#allAttemptsModal">
-                                    View All Attempts (<?php echo count($all_attempts); ?>)
-                                </button>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                <?php endif; ?>
-                
-                <!-- Grading Guide -->
+
                 <div class="card border-0 shadow-sm mt-4">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0 fw-bold">Grading Guide</h5>
+                    <div class="card-header bg-gradient py-2" style="background: linear-gradient(90deg, #007bff, #0056b3); color: white;">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle-fill me-2"></i>Grading Guide</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6 class="fw-bold mb-3">Score Interpretation</h6>
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item px-0 d-flex align-items-center border-0 pb-2">
-                                        <span class="badge bg-success me-2">90-100%</span>
-                                        <span>Excellent</span>
-                                    </li>
-                                    <li class="list-group-item px-0 d-flex align-items-center border-0 pb-2">
-                                        <span class="badge bg-primary me-2">80-89%</span>
-                                        <span>Very Good</span>
-                                    </li>
-                                    <li class="list-group-item px-0 d-flex align-items-center border-0 pb-2">
-                                        <span class="badge bg-info text-dark me-2">70-79%</span>
-                                        <span>Good</span>
-                                    </li>
-                                    <li class="list-group-item px-0 d-flex align-items-center border-0 pb-2">
-                                        <span class="badge bg-warning text-dark me-2">60-69%</span>
-                                        <span>Satisfactory</span>
-                                    </li>
-                                    <li class="list-group-item px-0 d-flex align-items-center border-0">
-                                        <span class="badge bg-danger me-2">0-59%</span>
-                                        <span>Needs Improvement</span>
-                                    </li>
-                                </ul>
+                    <div class="card-body p-3">
+                        <style>
+                            .grading-card {
+                                background-color: #ffffff;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                font-size: 0.95rem;
+                            }
+
+                            .policy-item {
+                                border: 1px solid #dee2e6;
+                                border-radius: 6px;
+                                padding: 10px;
+                                margin-bottom: 8px;
+                                background-color: #f8f9fa;
+                                transition: transform 0.2s, box-shadow 0.2s;
+                                display: flex;
+                                align-items: center;
+                                animation: fadeIn 0.5s ease-in;
+                            }
+
+                            .policy-item:hover {
+                                transform: translateY(-2px);
+                                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                            }
+
+                            .policy-item i {
+                                font-size: 1.2rem;
+                                color: #28a745;
+                                margin-right: 10px;
+                            }
+
+                            .policy-item span {
+                                font-size: 0.9rem;
+                                color: #343a40;
+                            }
+
+                            .intro-text {
+                                font-size: 0.85rem;
+                                color: #6c757d;
+                                margin-bottom: 1rem;
+                            }
+
+                            @keyframes fadeIn {
+                                from {
+                                    opacity: 0;
+                                    transform: translateY(5px);
+                                }
+
+                                to {
+                                    opacity: 1;
+                                    transform: translateY(0);
+                                }
+                            }
+
+                            @media (max-width: 768px) {
+                                .grading-card {
+                                    font-size: 0.9rem;
+                                }
+
+                                .policy-item {
+                                    padding: 8px;
+                                    font-size: 0.85rem;
+                                }
+
+                                .policy-item i {
+                                    font-size: 1rem;
+                                }
+
+                                .policy-item span {
+                                    font-size: 0.8rem;
+                                }
+
+                                .intro-text {
+                                    font-size: 0.8rem;
+                                }
+                            }
+                        </style>
+
+                        <!-- Introductory Text -->
+                        <p class="intro-text">Understand how your quizzes are graded and the policies for achieving a certificate.</p>
+
+                        <!-- Assessment Policies -->
+                        <div class="grading-card">
+                            <div class="policy-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Quizzes can be attempted up to <strong><?php echo $max_attempts; ?></strong> times</span>
                             </div>
-                            <div class="col-md-6">
-                                <h6 class="fw-bold mb-3">Assessment Policies</h6>
-                                <ul class="list-unstyled">
-                                    <li class="mb-2">
-                                        <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                        Quizzes can be attempted up to <?php echo $max_attempts; ?> times
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                        Your highest score is recorded
-                                        </li>
-                                    <li class="mb-2">
-                                        <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                        Most quizzes require <?php echo $course['pass_mark'] ?? 70; ?>% to pass
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                        Incomplete attempts may be resumed
-                                    </li>
-                                    <li>
-                                        <i class="bi bi-check-circle-fill text-success me-2"></i>
-                                        All quizzes must be completed to earn a certificate
-                                    </li>
-                                </ul>
+                            <div class="policy-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Your <strong>highest score</strong> is recorded</span>
+                            </div>
+                            <div class="policy-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>Most quizzes require <strong><?php echo $course['pass_mark'] ?? 70; ?>%</strong> to pass</span>
+                            </div>
+                            <div class="policy-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span><strong>Incomplete attempts</strong> may be resumed</span>
+                            </div>
+                            <div class="policy-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span><strong>All quizzes</strong> must be completed to earn a certificate</span>
                             </div>
                         </div>
                     </div>
@@ -634,88 +884,88 @@ $recent_attempts = array_slice($all_attempts, 0, 10);
             </div>
         </div>
     </div>
-    
+
     <!-- Modal for All Attempts -->
     <?php if (count($all_attempts) > 10): ?>
-    <div class="modal fade" id="allAttemptsModal" tabindex="-1" aria-labelledby="allAttemptsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="allAttemptsModalLabel">All Quiz Attempts</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th scope="col">Quiz</th>
-                                    <th scope="col">Section</th>
-                                    <th scope="col" class="text-center">Date</th>
-                                    <th scope="col" class="text-center">Score</th>
-                                    <th scope="col" class="text-center">Time Spent</th>
-                                    <th scope="col" class="text-center">Result</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($all_attempts as $attempt): ?>
-                                    <tr>
-                                        <td>
-                                            <div class="fw-medium"><?php echo htmlspecialchars($attempt['quiz_title']); ?></div>
-                                            <div class="small text-muted">Attempt #<?php echo $attempt['attempt_number']; ?></div>
-                                        </td>
-                                        <td class="text-muted small">
-                                            <?php echo htmlspecialchars($attempt['section_title']); ?>
-                                        </td>
-                                        <td class="text-center">
-                                            <?php 
-                                            $date = $attempt['end_time'] ?? $attempt['start_time'];
-                                            echo date('M j, Y', strtotime($date)); 
-                                            ?>
-                                            <div class="small text-muted">
-                                                <?php echo date('g:i A', strtotime($date)); ?>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="fw-medium <?php echo $attempt['passed'] ? 'text-success' : 'text-danger'; ?>">
-                                                <?php echo $attempt['score']; ?>%
-                                            </div>
-                                            <div class="small text-muted">
-                                                <?php echo $attempt['correct_answers']; ?>/<?php echo $attempt['total_questions']; ?> correct
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <?php 
-                                            if (!empty($attempt['time_spent'])) {
-                                                $minutes = floor($attempt['time_spent'] / 60);
-                                                $seconds = $attempt['time_spent'] % 60;
-                                                echo "{$minutes}m {$seconds}s";
-                                            } else {
-                                                echo "--";
-                                            }
-                                            ?>
-                                        </td>
-                                        <td class="text-center">
-                                            <?php if (empty($attempt['end_time'])): ?>
-                                                <span class="badge bg-warning text-dark">In Progress</span>
-                                            <?php elseif ($attempt['passed']): ?>
-                                                <span class="badge bg-success">Passed</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-danger">Failed</span>
-                                            <?php endif; ?>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+        <div class="modal fade" id="allAttemptsModal" tabindex="-1" aria-labelledby="allAttemptsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="allAttemptsModalLabel">All Quiz Attempts</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <div class="modal-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th scope="col">Quiz</th>
+                                        <th scope="col">Section</th>
+                                        <th scope="col" class="text-center">Date</th>
+                                        <th scope="col" class="text-center">Score</th>
+                                        <th scope="col" class="text-center">Time Spent</th>
+                                        <th scope="col" class="text-center">Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($all_attempts as $attempt): ?>
+                                        <tr>
+                                            <td>
+                                                <div class="fw-medium"><?php echo htmlspecialchars($attempt['quiz_title']); ?></div>
+                                                <div class="small text-muted">Attempt #<?php echo $attempt['attempt_number']; ?></div>
+                                            </td>
+                                            <td class="text-muted small">
+                                                <?php echo htmlspecialchars($attempt['section_title']); ?>
+                                            </td>
+                                            <td class="text-center">
+                                                <?php
+                                                $date = $attempt['end_time'] ?? $attempt['start_time'];
+                                                echo date('M j, Y', strtotime($date));
+                                                ?>
+                                                <div class="small text-muted">
+                                                    <?php echo date('g:i A', strtotime($date)); ?>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="fw-medium <?php echo $attempt['passed'] ? 'text-success' : 'text-danger'; ?>">
+                                                    <?php echo $attempt['score']; ?>%
+                                                </div>
+                                                <div class="small text-muted">
+                                                    <?php echo $attempt['correct_answers']; ?>/<?php echo $attempt['total_questions']; ?> correct
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <?php
+                                                if (!empty($attempt['time_spent'])) {
+                                                    $minutes = floor($attempt['time_spent'] / 60);
+                                                    $seconds = $attempt['time_spent'] % 60;
+                                                    echo "{$minutes}m {$seconds}s";
+                                                } else {
+                                                    echo "--";
+                                                }
+                                                ?>
+                                            </td>
+                                            <td class="text-center">
+                                                <?php if (empty($attempt['end_time'])): ?>
+                                                    <span class="badge bg-warning text-dark">In Progress</span>
+                                                <?php elseif ($attempt['passed']): ?>
+                                                    <span class="badge bg-success">Passed</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-danger">Failed</span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     <?php endif; ?>
 </main>
 

@@ -188,21 +188,21 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
+                                                <tr data-student='{"name":"Jane Doe","course":"Intro to Programming","progress":"85%","grade":"88/100","engagement":"High","details":"Completed all modules, excels in assignments, active in discussions."}'>
                                                     <td>Jane Doe</td>
                                                     <td>Intro to Programming</td>
                                                     <td><div class="progress progress-bar"><div class="progress-bar bg-success" style="width: 85%"></div></div></td>
                                                     <td>88/100</td>
                                                     <td>High</td>
-                                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View Details</a></td>
+                                                    <td><button class="btn btn-sm btn-outline-primary view-details" data-bs-toggle="modal" data-bs-target="#studentDetailsModal">View Details</button></td>
                                                 </tr>
-                                                <tr>
+                                                <tr data-student='{"name":"John Smith","course":"Data Science","progress":"60%","grade":"75/100","engagement":"Medium","details":"Missed two assignments, needs support with advanced topics."}'>
                                                     <td>John Smith</td>
                                                     <td>Data Science</td>
                                                     <td><div class="progress progress-bar"><div class="progress-bar bg-warning" style="width: 60%"></div></div></td>
                                                     <td>75/100</td>
                                                     <td>Medium</td>
-                                                    <td><a href="#" class="btn btn-sm btn-outline-primary">View Details</a></td>
+                                                    <td><button class="btn btn-sm btn-outline-primary view-details" data-bs-toggle="modal" data-bs-target="#studentDetailsModal">View Details</button></td>
                                                 </tr>
                                                 <!-- More rows dynamically populated -->
                                             </tbody>
@@ -247,6 +247,31 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                 </div>
             </footer>
             <!-- End Footer -->
+
+            <!-- Student Details Modal -->
+            <div class="modal fade" id="studentDetailsModal" tabindex="-1" aria-labelledby="studentDetailsModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="studentDetailsModalLabel">Student Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <h6 id="modal-student-name"></h6>
+                            <p><strong>Course:</strong> <span id="modal-course"></span></p>
+                            <p><strong>Progress:</strong> <span id="modal-progress"></span></p>
+                            <p><strong>Average Grade:</strong> <span id="modal-grade"></span></p>
+                            <p><strong>Engagement:</strong> <span id="modal-engagement"></span></p>
+                            <p><strong>Details:</strong> <span id="modal-details"></span></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Modal -->
+
         </div>
         <!-- End Content Page -->
     </div>
@@ -261,7 +286,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     <script src="assets/js/vendor/apexcharts.min.js"></script>
     <script src="assets/js/vendor/jquery-jvectormap-1.2.2.min.js"></script>
     <script src="assets/js/vendor/jquery-jvectormap-world-mill-en.js"></script>
-    <!-- Custom JS for Charts -->
+    <!-- Custom JS for Charts and Modal -->
     <script>
         // Student Progress Chart
         var progressOptions = {
@@ -286,6 +311,22 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
         };
         var assessmentChart = new ApexCharts(document.querySelector("#assessment-performance-chart"), assessmentOptions);
         assessmentChart.render();
+
+        // Handle View Details Button Click
+        document.querySelectorAll('.view-details').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = this.closest('tr');
+                const studentData = JSON.parse(row.dataset.student);
+
+                // Populate modal fields
+                document.getElementById('modal-student-name').textContent = studentData.name;
+                document.getElementById('modal-course').textContent = studentData.course;
+                document.getElementById('modal-progress').textContent = studentData.progress;
+                document.getElementById('modal-grade').textContent = studentData.grade;
+                document.getElementById('modal-engagement').textContent = studentData.engagement;
+                document.getElementById('modal-details').textContent = studentData.details;
+            });
+        });
     </script>
 </body>
 </html>

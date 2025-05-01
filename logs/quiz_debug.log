@@ -1,0 +1,4 @@
+2025-05-01 17:21:04 - Request received - {"GET":{"quiz_id":"[object Object]","attempt_id":"undefined"},"SESSION":18}
+2025-05-01 17:21:04 - Invalid attempt_id (not numeric) - "undefined"
+2025-05-01 17:21:04 - Request received - {"GET":{"quiz_id":"[object Object]","attempt_id":"undefined"},"SESSION":18}
+2025-05-01 17:21:04 - Invalid attempt_id (not numeric) - "undefined"

@@ -36,7 +36,6 @@ $allow_access = true;
 $topic_id = isset($_GET['topic']) ? intval($_GET['topic']) : 0;
 $quiz_id = isset($_GET['quiz_id']) ? intval($_GET['quiz_id']) : 0;
 
-
 // Get section information
 $current_section_position = 0;
 $current_item_position = 0;
@@ -169,7 +168,6 @@ if (!$allow_access) {
     exit();
 }
 
-
 // Check if either topic or quiz_id is provided
 if (isset($_GET['topic']) && is_numeric($_GET['topic'])) {
     $topic_id = intval($_GET['topic']);
@@ -272,10 +270,6 @@ if ($topic_id) {
     $completion_status = $topic['completion_status'];
     $last_position = 0; // No position for quizzes
 }
-
-
-
-// Add this after your topic details query
 
 // Get student notes for this topic (if any)
 $notes_content = '';
@@ -475,7 +469,6 @@ $update_stmt->bind_param("ii", $topic_id, $enrollment_id);
 $update_stmt->execute();
 
 // Calculate section progress for the progress bar
-// Calculate section progress for the progress bar
 $section_progress_query = "SELECT 
                           COUNT(DISTINCT CASE WHEN p.completion_status = 'Completed' THEN st.topic_id END) as completed_topics,
                           COUNT(DISTINCT st.topic_id) as total_topics,
@@ -554,7 +547,6 @@ $stmt = $conn->prepare($update_enrollment);
 $stmt->bind_param("di", $course_percentage, $enrollment_id);
 $stmt->execute();
 
-
 // Helper function to get content type icon
 function getContentTypeIcon($content_type)
 {
@@ -606,7 +598,6 @@ function extractVimeoID($url)
 }
 
 // Handle topic completion (mark as completed)
-// Handle topic completion (mark as completed) with improved redirection
 if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     // Check if there's already a progress record
     $check_progress = "SELECT progress_id FROM progress WHERE enrollment_id = ? AND topic_id = ?";
@@ -662,34 +653,6 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     $stmt->bind_param("di", $completed_percentage, $enrollment_id);
     $stmt->execute();
 
-
-     
-    // Trigger badge evaluation for topic completion
-    // require_once '../backend/events/ProgressEvents.php';
-    // $progressEvents = new ProgressEvents();
-    // $badgeResults = $progressEvents->onTopicCompleted($user_id, $enrollment_id, $topic_id, $course_id);
-    
-    // Store badge results in session for notification
-    // if (!empty($badgeResults['section_badge']) && $badgeResults['section_badge']['success']) {
-    //     $_SESSION['section_badge_awarded'] = true;
-    // }
-    
-    // if (!empty($badgeResults['course_badge']) && $badgeResults['course_badge']['success']) {
-    //     $_SESSION['badge_awarded'] = true;
-    // }
-    
-    // if (!empty($badgeResults['streak_badge']) && $badgeResults['streak_badge']['success']) {
-    //     $_SESSION['streak_badge_awarded'] = true;
-    //     $_SESSION['streak_badge_tier'] = $badgeResults['streak_badge']['tier'] ?? 'bronze';
-    // }
-    
-    // // Store notification flag
-    // if (!empty($badgeResults)) {
-    //     $_SESSION['completion_notification'] = true;
-    // }
-    
-
-    // Check if course is now 100% complete
     // Check if course is now 100% complete
     if ($completed_percentage >= 100) {
         // Check if all quizzes have been passed
@@ -725,19 +688,13 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         if ($all_requirements_met) {
             // Include certificate and badge handlers
             require_once '../backend/certificates/CertificateHandler.php';
-            // require_once '../backend/badges/BadgeHandler.php';
 
             // Generate certificate
             $certificateHandler = new CertificateHandler();
             $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
 
-            // Award course completion badge
-            // $badgeHandler = new BadgeHandler();
-            // $badgeResult = $badgeHandler->awardCourseBadge($user_id, $course_id);
-
             // Store results for notification
             $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
-            // $_SESSION['badge_awarded'] = $badgeResult['success'] ?? false;
             $_SESSION['completion_notification'] = true;
         } else {
             // Store a notification that course is not fully complete
@@ -746,21 +703,6 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         }
     }
 
-
-    // Check if section is now completed
-    if ($remaining_topics == 0) {
-        // Include badge handler if not already included
-        // if (!class_exists('BadgeHandler')) {
-        //     require_once '../backend/badges/BadgeHandler.php';
-        // }
-
-        // // Award section completion badge
-        // $badgeHandler = new BadgeHandler();
-        // $sectionBadgeResult = $badgeHandler->awardSectionBadge($user_id, $course_id, $section_id);
-
-        // // Store result for notification
-        // $_SESSION['section_badge_awarded'] = $sectionBadgeResult['success'] ?? false;
-    }
     // Check if this section has any more uncompleted topics
     $remaining_topics_query = "SELECT COUNT(*) as remaining_count
                               FROM section_topics st
@@ -780,7 +722,7 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         header("Location: course-content.php?course_id=" . $course_id . "&topic=" . $next_topic_id);
     } else {
         // If all topics in this section are completed, go back to the course overview
-        header("Location: course-materials.php?course_id=" . $course_id . "&section=" . $section_id);
+        header("Location: course-materials.php?course_id=" . $course_id . "§ion=" . $section_id);
     }
     exit();
 }
@@ -790,8 +732,7 @@ ob_end_flush();
 // Close database connection
 // $stmt->close();
 // $conn->close();
-?>
-<?php
+
 // Helper functions for content display (place these at the top of the file, near the other helper functions)
 
 // Helper function to get content display based on content type
@@ -855,7 +796,7 @@ function getVideoDisplay($topic, $video_source)
         } else if (!empty($topic['video_url'])) {
             $video_path = $topic['video_url'];
         } else if (!empty($topic['video_file'])) {
-            $video_path = '../uploads/videos/' . $topic['video_file'];
+            $video_path = '../Uploads/videos/' . $topic['video_file'];
         }
 
         if (!empty($video_path)) {
@@ -900,7 +841,7 @@ function getDocumentDisplay($topic)
 
         // Check if it's a full URL or a relative path
         if (strpos($file_path, 'http') !== 0) {
-            $file_path = '../uploads/documents/' . $file_path;
+            $file_path = '../Uploads/documents/' . $file_path;
         }
 
         $html .= '<div class="card">';
@@ -1059,6 +1000,50 @@ function getLinkDisplay($topic)
     .review-answers .form-check-label {
         transition: all 0.2s ease;
     }
+
+    /* Quiz UI Styles */
+    .quiz-cont .card {
+        transition: all 0.2s ease;
+    }
+
+    .quiz-cont .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .quiz-cont .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.125rem;
+    }
+
+    #quizTimer {
+        font-weight: 500;
+    }
+
+    #timeRemaining {
+        color: #ff6b6b;
+        font-weight: bold;
+    }
+
+    .quiz-question {
+        padding: 1.5rem;
+        border-left: 4px solid transparent;
+        margin-bottom: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 0.375rem;
+    }
+
+    .quiz-question h5 {
+        margin-bottom: 1rem;
+    }
+
+    .form-check {
+        margin-bottom: 0.5rem;
+        padding-left: 2rem;
+    }
+
+    .form-check-input {
+        margin-left: -2rem;
+    }
 </style>
 
 <!-- Toast -->
@@ -1082,7 +1067,6 @@ function getLinkDisplay($topic)
     </div>
 </div>
 <!-- End Toast -->
-
 
 <!-- // Add condition for incomplete requirements notification -->
 <?php if (isset($_SESSION['incomplete_requirements']) && $_SESSION['incomplete_requirements']): ?>
@@ -1128,7 +1112,6 @@ function getLinkDisplay($topic)
         </div>
     </div>
     <!-- End Breadcrumb -->
-
 
     <!-- Content -->
     <div class="container content-space-t-1 content-space-b-lg-1">
@@ -1242,7 +1225,6 @@ function getLinkDisplay($topic)
                         </ul>
                     </div>
 
-
                     <?php
                     // Get the course requirements
                     $quiz_requirements_query = "SELECT
@@ -1353,7 +1335,6 @@ function getLinkDisplay($topic)
                         </ul>
                     </div>
 
-
                     <a class="link-sm link-secondary" href="#">
                         <i class="bi-flag me-2"></i> Report
                     </a>
@@ -1375,31 +1356,7 @@ function getLinkDisplay($topic)
                     <!-- Dynamic Content Display -->
                     <div class="content-container mb-5">
                         <?php if (isset($_GET['quiz_id'])): ?>
-                            <!-- QUIZ DISPLAY - No tabs, just the quiz -->
-                            <div class="quiz-cont">
-                                <?php
-                                // Fetch the quiz details
-                                $fetch_quiz = "SELECT * FROM section_quizzes WHERE quiz_id = ?";
-                                $stmt = $conn->prepare($fetch_quiz);
-                                $stmt->bind_param("i", $_GET['quiz_id']);
-                                $stmt->execute();
-                                $quiz_result = $stmt->get_result();
-
-                                if ($quiz_result->num_rows > 0) {
-                                    $quiz = $quiz_result->fetch_assoc();
-
-                                    // Set required variables for the quiz display component
-                                    $_SESSION['enrollment_id'] = $enrollment_id;
-                                    $quizId = $quiz['quiz_id'];
-                                    $topicContent = $quiz;
-
-                                    // Include the quiz display component
-                                    include '../includes/students/quiz-display.php';
-                                } else {
-                                    echo '<div class="alert alert-danger">Quiz not found</div>';
-                                }
-                                ?>
-                            </div>
+                            <?php include '../includes/students/quiz-handler.php'; ?>
                         <?php else: ?>
                             <!-- REGULAR CONTENT DISPLAY -->
                             <?php echo getContentDisplay($topic, $video_source, $content_type); ?>
@@ -1470,16 +1427,16 @@ function getLinkDisplay($topic)
                                 <div class="tab-pane fade <?php echo empty($topic['description']) ? 'show active' : ''; ?>" id="notes" role="tabpanel" aria-labelledby="notes-tab">
                                     <div class="row mb-4">
                                         <div class="col">
-                                            <h5><i class="bi-journal-text me-2"></i>My Notes</h5>
+                                            <h5><i class="bi bi-journal-text me-2"></i>My Notes</h5>
                                             <p class="text-muted">Take notes for this topic that will be saved for your future reference.</p>
                                         </div>
                                         <div class="col-auto">
                                             <div class="btn-group">
                                                 <button id="saveNotes" class="btn btn-primary">
-                                                    <i class="bi-save me-2"></i>Save Notes
+                                                    <i class="bi bi-save me-2"></i>Save Notes
                                                 </button>
                                                 <button id="printNotes" class="btn btn-outline-secondary">
-                                                    <i class="bi-printer me-2"></i>Print
+                                                    <i class="bi bi-printer me-2"></i>Print
                                                 </button>
                                             </div>
                                         </div>
@@ -1539,8 +1496,8 @@ function getLinkDisplay($topic)
                                                                 </div>
                                                             </div>
                                                             <div class="card-footer bg-transparent border-top-0">
-                                                                <a href="<?php echo '../uploads/resources/' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
-                                                                    <i class="bi-download me-2"></i> Download
+                                                                <a href="<?php echo '../Uploads/resources/' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
+                                                                    <i class="bi bi-download me-2"></i> Download
                                                                 </a>
                                                             </div>
                                                         </div>
@@ -1553,25 +1510,25 @@ function getLinkDisplay($topic)
 
                                 <div class="tab-pane fade" id="discussion" role="tabpanel" aria-labelledby="discussion-tab">
                                     <div class="d-flex justify-content-between align-items-center mb-4">
-                                        <h5><i class="bi-chat-left-text me-2"></i>Discussion</h5>
+                                        <h5><i class="bi bi-chat-left-text me-2"></i>Discussion</h5>
                                         <div class="d-flex gap-2">
                                             <button id="newDiscussionBtn" class="btn btn-sm btn-primary">
-                                                <i class="bi-plus-circle me-1"></i> New Discussion
+                                                <i class="bi bi-plus-circle me-1"></i> New Discussion
                                             </button>
                                             <button id="filterDiscussionsBtn" class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi-funnel me-1"></i> Filter
+                                                <i class="bi bi-funnel me-1"></i> Filter
                                             </button>
                                         </div>
                                     </div>
 
                                     <div class="p-4 bg-light rounded mb-4 text-center">
                                         <div class="mb-3">
-                                            <i class="bi-chat-square-text fs-1 text-primary"></i>
+                                            <i class="bi bi-chat-square-text fs-1 text-primary"></i>
                                         </div>
                                         <h5>No discussions yet</h5>
                                         <p class="text-muted">Be the first to start a discussion about this topic.</p>
                                         <button class="btn btn-primary">
-                                            <i class="bi-plus-circle me-2"></i>Start a Discussion
+                                            <i class="bi bi-plus-circle me-2"></i>Start a Discussion
                                         </button>
                                     </div>
                                 </div>
@@ -1580,37 +1537,24 @@ function getLinkDisplay($topic)
                         <?php endif; ?>
                     </div>
 
-
-
-                    <?php
-                    // Modify the Navigation Controls section to be conditional based on content type
-                    // This should be placed after the previous code block
-                    ?>
-
-                    <!-- Navigation Controls - Show differently for quizzes vs regular content -->
+                    <!-- Navigation Controls -->
                     <div class="d-flex justify-content-between align-items-center border-top pt-4 mt-4">
                         <?php if (isset($_GET['quiz_id'])): ?>
                             <!-- Quiz Navigation Controls -->
-                            <a href="course-materials.php?course_id=<?php echo $course_id; ?>&section=<?php echo $section_id; ?>"
+                            <a href="course-materials.php?course_id=<?php echo $course_id; ?>§ion=<?php echo $section_id; ?>"
                                 class="btn btn-outline-primary">
-                                <i class="bi-arrow-left me-1"></i> Back to Course Materials
+                                <i class="bi bi-arrow-left me-1"></i> Back to Course Materials
                             </a>
-
-                            <div>
-                                <!-- Quiz progress will be shown here by the quiz-display.php component -->
-                            </div>
-
-                            <!-- No "Next" button during quiz -->
                         <?php else: ?>
                             <!-- Regular Content Navigation Controls -->
                             <?php if ($prev_topic_id): ?>
                                 <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $prev_topic_id; ?>"
                                     class="btn btn-soft-primary">
-                                    <i class="bi-chevron-left me-1"></i> Previous Lesson
+                                    <i class="bi bi-chevron-left me-1"></i> Previous Lesson
                                 </a>
                             <?php else: ?>
                                 <button class="btn btn-soft-secondary" disabled>
-                                    <i class="bi-chevron-left me-1"></i> Previous Lesson
+                                    <i class="bi bi-chevron-left me-1"></i> Previous Lesson
                                 </button>
                             <?php endif; ?>
 
@@ -1619,29 +1563,28 @@ function getLinkDisplay($topic)
                                 <form method="post">
                                     <input type="hidden" name="mark_completed" value="1">
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="bi-check-circle me-1"></i> Mark as Completed
+                                        <i class="bi bi-check-circle me-1"></i> Mark as Completed
                                     </button>
                                 </form>
                             <?php else: ?>
                                 <button class="btn btn-success" disabled>
-                                    <i class="bi-check-circle me-1"></i> Completed
+                                    <i class="bi bi-check-circle me-1"></i> Completed
                                 </button>
                             <?php endif; ?>
 
                             <?php if ($next_topic_id): ?>
                                 <a href="course-content.php?course_id=<?php echo $course_id; ?>&topic=<?php echo $next_topic_id; ?>"
                                     class="btn btn-soft-primary">
-                                    Next Lesson <i class="bi-chevron-right ms-1"></i>
+                                    Next Lesson <i class="bi bi-chevron-right ms-1"></i>
                                 </a>
                             <?php else: ?>
                                 <button class="btn btn-soft-secondary" disabled>
-                                    Next Lesson <i class="bi-chevron-right ms-1"></i>
+                                    Next Lesson <i class="bi bi-chevron-right ms-1"></i>
                                 </button>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
-
-
+                    <!-- End Navigation Controls -->
                 </div>
             </div>
             <!-- End Col -->
@@ -1649,822 +1592,388 @@ function getLinkDisplay($topic)
         <!-- End Row -->
     </div>
     <!-- End Content -->
-
-    <!-- Add this inside the toast HTML -->
-    <?php if (isset($_SESSION['completion_notification']) && $_SESSION['completion_notification']): ?>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Get the toast element
-                const toast = document.getElementById('liveToast');
-                const toastHeader = toast.querySelector('.toast-header h5');
-                const toastBody = toast.querySelector('.toast-body');
-
-                <?php if (isset($_SESSION['certificate_generated']) && $_SESSION['certificate_generated']): ?>
-                    // Show certificate notification
-                    toastHeader.textContent = "Congratulations!";
-                    toastBody.innerHTML = "You've earned a certificate for completing this course! <a href='my-certifications.php'>View your certificates</a>";
-
-                    // Show the toast
-                    const bsToast = new bootstrap.Toast(toast);
-                    bsToast.show();
-                <?php endif; ?>
-
-                <?php /* if (isset($_SESSION['badge_awarded']) && $_SESSION['badge_awarded']): ?>
-                    // Show badge notification after small delay
-                    setTimeout(function() {
-                        toastHeader.textContent = "Badge Earned!";
-                        toastBody.innerHTML = "You've earned a course completion badge! <a href='my-badges.php'>View your badges</a>";
-
-                        // Show the toast
-                        const bsToast = new bootstrap.Toast(toast);
-                        bsToast.show();
-                    }, 3000); // 3 second delay after certificate notification
-                <?php endif; ?>
-
-                <?php if (isset($_SESSION['section_badge_awarded']) && $_SESSION['section_badge_awarded']): ?>
-                    // Show section badge notification
-                    setTimeout(function() {
-                        toastHeader.textContent = "Section Badge Earned!";
-                        toastBody.innerHTML = "You've earned a section completion badge! <a href='my-badges.php'>View your badges</a>";
-
-                        // Show the toast
-                        const bsToast = new bootstrap.Toast(toast);
-                        bsToast.show();
-                    }, 1500); 
-                <?php endif; */?>
-            });
-        </script>
-
-        <?php
-        // Clear notifications after displaying them
-        unset($_SESSION['completion_notification']);
-        unset($_SESSION['certificate_generated']);
-        // unset($_SESSION['badge_awarded']);
-        // unset($_SESSION['section_badge_awarded']);
-        ?>
-    <?php endif; ?>
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
-<?php
-// Near line 1639, find this JavaScript block and modify it to handle both topic and quiz contexts
-// Look for document.addEventListener('DOMContentLoaded', function() {
 
-// Replace the JavaScript code that's causing the error with this:
-?>
+<!-- ========== JavaScript ========== -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap components
+        const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+
+        const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
+        popovers.forEach(popover => new bootstrap.Popover(popover));
+
         // Notes functionality
         const saveNotesBtn = document.getElementById('saveNotes');
-        const personalNotes = document.getElementById('personalNotes');
+        const notesTextarea = document.getElementById('personalNotes');
         const notesStatus = document.getElementById('notesStatus');
-        const notesTab = document.getElementById('notes-tab');
+        const printNotesBtn = document.getElementById('printNotes');
 
-        // Check if we're in a quiz context
-        const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
-
-        // Only initialize these events for regular content, not quizzes
-        if (saveNotesBtn && personalNotes && !isQuiz) {
-            // Auto-save timer
-            let autoSaveTimer;
-
-            // Event for typing in notes
-            personalNotes.addEventListener('input', function() {
-                // Clear previous auto-save timer
-                clearTimeout(autoSaveTimer);
-
-                // Set new auto-save timer (save after 2 seconds of inactivity)
-                autoSaveTimer = setTimeout(function() {
-                    saveNotes(true); // true = auto-save
-                }, 2000);
-            });
-
-            // Save notes button click
+        if (saveNotesBtn && notesTextarea) {
             saveNotesBtn.addEventListener('click', function() {
-                saveNotes(false); // false = manual save
-            });
+                const notesContent = notesTextarea.value;
+                const topicId = <?php echo json_encode($topic_id); ?>;
+                const userId = <?php echo json_encode($user_id); ?>;
 
-            // Function to save notes
-            function saveNotes(isAutoSave) {
-                const notesContent = personalNotes.value.trim();
-                // Use proper conditional to set topicId only if it exists
-                const topicId = <?php echo !empty($topic_id) ? $topic_id : 'null'; ?>;
-                const videoPosition = 0; // Get current video position if needed
-
-                // Don't save if empty (unless clearing notes) or if topicId is null
-                if ((!notesContent && isAutoSave) || topicId === null) {
-                    return;
-                }
-
-                // Show saving indicator
-                if (!isAutoSave) {
-                    saveNotesBtn.disabled = true;
-                    saveNotesBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
-                }
-
-                // Send to server
-                fetch('../ajax/students/save-notes.php', {
+                // Perform AJAX request to save notes
+                fetch('../backend/save_notes.php', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Content-Type': 'application/json',
                         },
-                        body: `topic_id=${topicId}&note_content=${encodeURIComponent(notesContent)}&timestamp=${videoPosition}`
+                        body: JSON.stringify({
+                            user_id: userId,
+                            topic_id: topicId,
+                            content: notesContent
+                        })
                     })
                     .then(response => response.json())
                     .then(data => {
+                        notesStatus.style.display = 'block';
                         if (data.success) {
-                            // Update status
-                            notesStatus.innerHTML = isAutoSave ?
-                                '<div class="alert alert-info alert-dismissible fade show py-1 px-3" role="alert"><small>Notes auto-saved <i class="bi-check-circle ms-1"></i></small><button type="button" class="btn-close btn-close-sm p-1" data-bs-dismiss="alert" aria-label="Close"></button></div>' :
-                                '<div class="alert alert-success alert-dismissible fade show" role="alert">Notes saved successfully <i class="bi-check-circle ms-1"></i><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-                            notesStatus.style.display = 'block';
-
-                            // Add check icon to tab if not already there
-                            if (!notesTab.querySelector('.bi-check-circle-fill')) {
-                                notesTab.innerHTML += ' <i class="bi-check-circle-fill text-success ms-1 small"></i>';
-                            }
-
-                            // Auto-hide auto-save message
-                            if (isAutoSave) {
-                                setTimeout(() => {
-                                    const alert = notesStatus.querySelector('.alert');
-                                    if (alert) {
-                                        alert.classList.remove('show');
-                                        setTimeout(() => {
-                                            notesStatus.style.display = 'none';
-                                        }, 300);
-                                    }
-                                }, 3000);
+                            notesStatus.className = 'alert alert-success';
+                            notesStatus.textContent = 'Notes saved successfully!';
+                            const notesTab = document.querySelector('#notes-tab');
+                            if (!notesTab.querySelector('.bi-check-circle-fill') && notesContent.trim()) {
+                                notesTab.insertAdjacentHTML('beforeend', '<i class="bi bi-check-circle-fill text-success ms-1 small"></i>');
                             }
                         } else {
-                            // Show error
-                            notesStatus.innerHTML = `<div class="alert alert-danger alert-dismissible fade show" role="alert">Error saving notes: ${data.message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
-                            notesStatus.style.display = 'block';
+                            notesStatus.className = 'alert alert-danger';
+                            notesStatus.textContent = 'Failed to save notes: ' + (data.error || 'Unknown error');
                         }
+                        setTimeout(() => {
+                            notesStatus.style.display = 'none';
+                        }, 3000);
                     })
                     .catch(error => {
-                        console.error('Error saving notes:', error);
-                        notesStatus.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Error saving notes. Please try again.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
                         notesStatus.style.display = 'block';
-                    })
-                    .finally(() => {
-                        // Reset button state for manual save
-                        if (!isAutoSave) {
-                            saveNotesBtn.disabled = false;
-                            saveNotesBtn.innerHTML = '<i class="bi-save me-2"></i>Save Notes';
-                        }
+                        notesStatus.className = 'alert alert-danger';
+                        notesStatus.textContent = 'Error saving notes: ' + error.message;
+                        setTimeout(() => {
+                            notesStatus.style.display = 'none';
+                        }, 3000);
                     });
-            }
+            });
         }
 
-        // Print notes button
-        const printNotesBtn = document.getElementById('printNotes');
-        if (printNotesBtn && personalNotes && !isQuiz) {
+        if (printNotesBtn && notesTextarea) {
             printNotesBtn.addEventListener('click', function() {
-                const notesContent = personalNotes.value;
-                const topicTitle = '<?php echo isset($topic["content_title"]) ? addslashes(htmlspecialchars($topic["content_title"])) : ""; ?>';
-                const courseName = '<?php echo isset($course_title) ? addslashes(htmlspecialchars($course_title)) : ""; ?>';
-
+                const notesContent = notesTextarea.value;
                 const printWindow = window.open('', '_blank');
                 printWindow.document.write(`
                 <html>
-                <head>
-                    <title>My Notes: ${topicTitle}</title>
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            line-height: 1.6;
-                            padding: 30px;
-                            max-width: 800px;
-                            margin: 0 auto;
-                        }
-                        .header {
-                            border-bottom: 1px solid #ddd;
-                            padding-bottom: 10px;
-                            margin-bottom: 20px;
-                        }
-                        h1 {
-                            color: #333;
-                            font-size: 24px;
-                            margin-bottom: 5px;
-                        }
-                        h2 {
-                            color: #666;
-                            font-size: 18px;
-                            font-weight: normal;
-                            margin-top: 0;
-                        }
-                        .meta {
-                            color: #777;
-                            font-size: 14px;
-                            margin-bottom: 20px;
-                        }
-                        .notes-content {
-                            white-space: pre-wrap;
-                            font-size: 16px;
-                        }
-                        @media print {
-                            body {
-                                padding: 0;
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>${topicTitle}</h1>
-                        <h2>${courseName}</h2>
-                    </div>
-                    <div class="meta">
-                        <p>Notes taken by: <?php echo isset($_SESSION['first_name']) && isset($_SESSION['last_name']) ? htmlspecialchars($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) : "Student"; ?></p>
-                        <p>Date: ${new Date().toLocaleDateString()}</p>
-                    </div>
-                    <div class="notes-content">${notesContent.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
-                    <script>
-                        window.print();
-                        setTimeout(function() {
-                            window.close();
-                        }, 500);
-                    <\/script>
-                </body>
+                    <head>
+                        <title>Notes for <?php echo htmlspecialchars($topic_title); ?></title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            h1 { font-size: 24px; }
+                            .notes { white-space: pre-wrap; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Notes for <?php echo htmlspecialchars($topic_title); ?></h1>
+                        <div class="notes">${notesContent.replace(/</g, '<').replace(/>/g, '>')}</div>
+                    </body>
                 </html>
             `);
                 printWindow.document.close();
+                printWindow.print();
             });
         }
-    });
-</script>
 
-<?php
-// Add this JavaScript to handle quiz start/completion
-// This should be added near the other JavaScript code
-?>
-<script>
-    // Quiz-specific JavaScript
-    document.addEventListener('DOMContentLoaded', function() {
-        // Check if we're in a quiz context
+        // Quiz UI functionality
         const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
 
         if (isQuiz) {
-            // Find the quiz container
-            const quizContainer = document.querySelector('.quiz-cont');
+            const startQuizBtn = document.getElementById('confirmStartQuiz');
+            const quizOverview = document.querySelector('.quiz-cont .card');
+            const quizQuestions = document.getElementById('quizQuestions');
+            const sidebar = document.querySelector('.col-md-4.col-lg-3');
+            const contentColumn = document.querySelector('.col-md-8.col-lg-9');
+            const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
+            const startBtn = document.getElementById('startQuizBtn');
+            const timeLimit = <?php echo isset($quiz) ? (int)$quiz['time_limit'] : 0; ?>;
+            let timerInterval;
+            let attemptCount = parseInt(startBtn.dataset.currentAttempts) || 0;
+            const maxAttempts = parseInt(startBtn.dataset.maxAttempts) || 5;
 
-            // Listen for quiz start event
-            document.addEventListener('quizStarted', function() {
-                // Hide navigation when quiz starts
-                const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
-                if (navigationControls) {
-                    navigationControls.style.display = 'none';
-                }
+            // Check initial attempts and disable button if max reached
+            if (attemptCount >= maxAttempts) {
+                startBtn.disabled = true;
+                startBtn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>No Attempts Left';
+            }
 
-                // You could also hide the sidebar if needed
-                const sidebar = document.querySelector('.col-md-4.col-lg-3');
-                if (sidebar) {
-                    sidebar.style.display = 'none';
-                }
+            if (startQuizBtn) {
+                startQuizBtn.addEventListener('click', function() {
+                    // Hide the overview and show questions
+                    quizOverview.style.display = 'none';
+                    quizQuestions.style.display = 'block';
 
-                // Make the content column full width
-                const contentColumn = document.querySelector('.col-md-8.col-lg-9');
-                if (contentColumn) {
-                    contentColumn.classList.remove('col-md-8', 'col-lg-9');
-                    contentColumn.classList.add('col-12');
-                }
-            });
-
-            // Listen for quiz completion
-            document.addEventListener('quizCompleted', function(event) {
-                // Show navigation when quiz completes
-                const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
-                if (navigationControls) {
-                    navigationControls.style.display = 'flex';
-                }
-
-                // Show the sidebar again
-                const sidebar = document.querySelector('.col-md-4.col-lg-3');
-                if (sidebar) {
-                    sidebar.style.display = 'block';
-                }
-
-                // Restore original column width
-                const contentColumn = document.querySelector('.col-12');
-                if (contentColumn) {
-                    contentColumn.classList.remove('col-12');
-                    contentColumn.classList.add('col-md-8', 'col-lg-9');
-                }
-
-                // Update quiz completion status in sidebar
-                const quizItem = document.querySelector(`.nav-link[href*="quiz_id=<?php echo isset($_GET['quiz_id']) ? $_GET['quiz_id'] : ''; ?>"]`);
-                if (quizItem && quizItem.nextElementSibling) {
-                    quizItem.nextElementSibling.className = 'bi bi-check-circle-fill text-success ms-2 flex-shrink-0 mt-1';
-                }
-            });
-        }
-    });
-</script>
-<!-- // Add this JavaScript before the closing body tag -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Document ready: Initializing enhanced video player');
-
-        // Check if we're in a quiz context
-        const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
-
-        // Only run video tracking code if we're not in a quiz
-        if (!isQuiz) {
-            // Video tracking - only initialize these variables if not in quiz mode
-            const videoElements = document.querySelectorAll('video');
-            const courseId = <?php echo $course_id; ?>;
-            const topicId = <?php echo !empty($topic_id) ? $topic_id : 'null'; ?>;
-            const enrollmentId = <?php echo $enrollment_id; ?>;
-            const lastPosition = <?php echo $last_position ?? 0; ?>;
-
-            // Only proceed if we have a valid topicId
-            if (topicId !== null && videoElements.length > 0) {
-                // Video completion threshold (consider video watched at 95%)
-                const COMPLETION_THRESHOLD = 0.95;
-
-                // Function to mark topic as completed via AJAX
-                function markAsCompleted() {
-                    console.log('Marking topic as completed');
-
-                    // Show a small notification to the user
-                    function showToast(title, message) {
-                        // Get the existing toast element
-                        const toast = document.getElementById('liveToast');
-
-                        // Update the toast content
-                        toast.querySelector('.toast-header h5').textContent = title;
-                        toast.querySelector('.toast-body').textContent = message;
-
-                        // Show the toast
-                        toast.classList.remove('hide');
-                        toast.classList.add('show');
-
-                        // Hide the toast after 5 seconds
-                        setTimeout(() => {
-                            toast.classList.remove('show');
-                            toast.classList.add('hide');
-                        }, 5000);
+                    // Hide sidebar
+                    if (sidebar) {
+                        sidebar.style.display = 'none';
                     }
 
-                    // Call this function when you want to show the notification
-                    showToast("Topic Completed", "This topic has been marked as completed!");
+                    // Make content full width
+                    if (contentColumn) {
+                        contentColumn.classList.remove('col-md-8', 'col-lg-9');
+                        contentColumn.classList.add('col-12');
+                    }
 
-                    // Send AJAX request to mark as completed
-                    fetch('../ajax/students/mark-topic-completed.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
-                            body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log('Topic marked as completed:', data);
+                    // Hide navigation
+                    if (navigationControls) {
+                        navigationControls.style.display = 'none';
+                    }
 
-                            // Update UI to reflect completed status
-                            const completeButton = document.querySelector('form[method="post"] button[type="submit"]');
-                            if (completeButton) {
-                                const completedButton = document.createElement('button');
-                                completedButton.className = 'btn btn-success';
-                                completedButton.disabled = true;
-                                completedButton.innerHTML = '<i class="bi-check-circle me-1"></i> Completed';
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('startQuizModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
 
-                                // Replace the form with the completed button
-                                completeButton.closest('form').replaceWith(completedButton);
+                    // Load questions
+                    const questionContainer = document.getElementById('questionContainer');
+                    fetch('../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz['quiz_id']; ?>')
+                        .then(response => response.text())
+                        .then(html => {
+                            questionContainer.innerHTML = html;
+                            const submitBtn = document.getElementById('submitQuiz');
+                            submitBtn.disabled = true;
 
-                                // Update sidebar icon for this topic
-                                const sidebarItem = document.querySelector('.nav-link.active');
-                                if (sidebarItem) {
-                                    const sidebarIcon = sidebarItem.nextElementSibling;
-                                    if (sidebarIcon && sidebarIcon.classList.contains('bi')) {
-                                        sidebarIcon.className = 'bi bi-check-circle-fill text-success ms-2 flex-shrink-0 mt-1';
-                                    }
-                                }
-
-                                // Update progress bars
-                                updateProgressBars();
-                            }
+                            // Enable submit button when all questions are answered
+                            const radios = document.querySelectorAll('input[type="radio"]');
+                            radios.forEach(radio => {
+                                radio.addEventListener('change', checkAllAnswered);
+                            });
                         })
                         .catch(error => {
-                            console.error('Error marking topic as completed:', error);
-                        });
-                }
-
-                // Update progress bars after completion
-                function updateProgressBars() {
-                    // Calculate new percentages (simulating completion of one more item)
-                    const sectionProgressBar = document.querySelector('.nav-item:nth-of-type(2) .progress-bar');
-                    const courseProgressBar = document.querySelector('.nav-item:nth-of-type(4) .progress-bar');
-
-                    if (sectionProgressBar) {
-                        const sectionPercentageElem = document.querySelector('.nav-item:nth-of-type(2) .text-muted');
-                        let currentPercentage = parseInt(sectionPercentageElem.textContent);
-                        const sectionTopicsCount = <?php echo isset($section_progress['total_topics']) ? $section_progress['total_topics'] : 0; ?>;
-                        const completedTopics = <?php echo isset($section_progress['completed_topics']) ? $section_progress['completed_topics'] : 0; ?>;
-
-                        if (sectionTopicsCount > 0) {
-                            const newPercentage = Math.min(Math.ceil((completedTopics + 1) / sectionTopicsCount * 100), 100);
-                            sectionPercentageElem.textContent = newPercentage + '%';
-                            sectionProgressBar.style.width = newPercentage + '%';
-                        }
-                    }
-
-                    if (courseProgressBar) {
-                        const coursePercentageElem = document.querySelector('.nav-item:nth-of-type(4) .text-muted');
-                        let currentPercentage = parseInt(coursePercentageElem.textContent);
-                        const courseTopicsCount = <?php echo isset($course_progress['total_topics']) ? $course_progress['total_topics'] : 0; ?>;
-                        const completedTopics = <?php echo isset($course_progress['completed_topics']) ? $course_progress['completed_topics'] : 0; ?>;
-
-                        if (courseTopicsCount > 0) {
-                            const newPercentage = Math.min(Math.ceil((completedTopics + 1) / courseTopicsCount * 100), 100);
-                            coursePercentageElem.textContent = newPercentage + '%';
-                            courseProgressBar.style.width = newPercentage + '%';
-                        }
-                    }
-                }
-
-                // Handle HTML5 video
-                if (videoElements.length > 0) {
-                    const mainVideo = videoElements[0];
-                    console.log('HTML5 video player found');
-
-                    // Create poster image container for replay screen
-                    const videoContainer = mainVideo.closest('.ratio-16x9');
-                    if (videoContainer) {
-                        const posterContainer = document.createElement('div');
-                        posterContainer.className = 'video-poster-container position-absolute top-0 start-0 w-100 h-100 d-none';
-                        posterContainer.style.backgroundColor = '#000';
-                        posterContainer.style.zIndex = '2';
-
-                        // Add poster image (if available) or use a default
-                        const posterImage = document.createElement('img');
-                        posterImage.className = 'w-100 h-100 object-fit-contain opacity-50';
-                        posterImage.src = mainVideo.poster || '../uploads/video-poster.jpg';
-                        posterImage.alt = 'Video thumbnail';
-
-                        // Add replay button
-                        const replayButton = document.createElement('button');
-                        replayButton.className = 'btn btn-primary btn-lg position-absolute top-50 start-50 translate-middle';
-                        replayButton.innerHTML = '<i class="bi-arrow-repeat me-2"></i>Replay Video';
-                        replayButton.addEventListener('click', function() {
-                            posterContainer.classList.add('d-none');
-                            mainVideo.currentTime = 0;
-                            mainVideo.play().catch(e => console.error('Replay failed:', e));
+                            questionContainer.innerHTML = `
+                            <div class="alert alert-danger">Error loading questions: ${error.message}</div>
+                        `;
                         });
 
-                        // Add to container
-                        posterContainer.appendChild(posterImage);
-                        posterContainer.appendChild(replayButton);
-                        videoContainer.appendChild(posterContainer);
-                        videoContainer.style.position = 'relative';
-                    }
-
-                    // Set the video to the last position if available
-                    if (lastPosition > 0) {
-                        mainVideo.addEventListener('loadedmetadata', function() {
-                            // Only seek if the last position is within the video duration
-                            if (lastPosition < mainVideo.duration) {
-                                mainVideo.currentTime = lastPosition;
-                                console.log('Set video position to:', lastPosition);
+                    // Start timer if applicable
+                    if (timeLimit > 0) {
+                        let timeLeft = timeLimit * 60;
+                        const timeDisplay = document.getElementById('timeRemaining');
+                        timerInterval = setInterval(() => {
+                            let mins = Math.floor(timeLeft / 60);
+                            let secs = timeLeft % 60;
+                            timeDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                            timeLeft--;
+                            if (timeLeft < 0) {
+                                clearInterval(timerInterval);
+                                alert("Time's up! Submitting quiz...");
+                                submitQuiz();
                             }
-                        });
+                        }, 1000);
                     }
+                });
+            }
 
-                    // Track video progress
-                    let lastTrackedTime = 0;
-                    const TRACK_INTERVAL = 10; // Track every 10 seconds
-                    let videoCompleted = false;
+            // Check if all questions are answered
+            function checkAllAnswered() {
+                const questionGroups = document.querySelectorAll('.quiz-question');
+                let allAnswered = true;
+                questionGroups.forEach(group => {
+                    const checked = group.querySelector('input[type="radio"]:checked');
+                    if (!checked) allAnswered = false;
+                });
+                document.getElementById('submitQuiz').disabled = !allAnswered;
+            }
 
-                    mainVideo.addEventListener('timeupdate', function() {
-                        const currentTime = Math.floor(mainVideo.currentTime);
-                        const completionPercentage = mainVideo.currentTime / mainVideo.duration;
+            // Handle confirm submission
+            const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+            if (confirmSubmitBtn) {
+                confirmSubmitBtn.addEventListener('click', function() {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    submitQuiz();
+                });
+            }
 
-                        // Only track every TRACK_INTERVAL seconds to reduce server load
-                        if (currentTime - lastTrackedTime >= TRACK_INTERVAL) {
-                            lastTrackedTime = currentTime;
-                            trackVideoProgress(currentTime);
+            // Submit quiz function
+            function submitQuiz() {
+                const questionContainer = document.getElementById('questionContainer');
+                const quizTimer = document.getElementById('quizTimer');
+                const submitButtonWrapper = document.getElementById('submitButtonWrapper');
+
+                // Clear timer
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+
+                // Hide timer and submit button
+                if (quizTimer) quizTimer.style.display = 'none';
+                if (submitButtonWrapper) submitButtonWrapper.style.display = 'none';
+
+                // Increment attempt count
+                attemptCount++;
+                startBtn.dataset.currentAttempts = attemptCount;
+
+                // Update previous attempts list
+                const attemptsList = document.getElementById('attemptsList');
+                const newAttempt = `
+                <div class="border rounded p-3 bg-white shadow-sm d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">Attempt ${attemptCount}</div>
+                        <small class="text-muted">April 30, 2025 - ${new Date().toLocaleTimeString()}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fs-5 fw-semibold text-success">85% <span class="badge bg-success ms-2">Passed</span></div>
+                        <div class="small text-muted">17/20 · 09:13 mins</div>
+                    </div>
+                </div>
+            `;
+                attemptsList.insertAdjacentHTML('afterbegin', newAttempt);
+
+                // Keep only the last 5 attempts
+                const attempts = attemptsList.querySelectorAll('div');
+                if (attempts.length > 5) {
+                    attempts[attempts.length - 1].remove();
+                }
+
+                // Update button state if max attempts reached
+                if (attemptCount >= maxAttempts) {
+                    startBtn.disabled = true;
+                    startBtn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>No Attempts Left';
+                }
+
+                // Show hardcoded result summary
+                questionContainer.innerHTML = `
+                <div class="quiz-result-summary text-center p-4 border rounded bg-light">
+                    <div class="mb-3">
+                        <i class="bi bi-patch-check-fill text-success fs-1"></i>
+                        <h4 class="mt-2">Quiz Submitted Successfully</h4>
+                        <p class="text-muted">Well done! Here's how you performed.</p>
+                        <span class="badge bg-success text-center">Passed</span>
+                    </div>
+                    <div class="row justify-content-center g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 bg-white shadow-sm h-100">
+                                <p class="mb-1 text-muted">Score</p>
+                                <h3 class="text-success">85%</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 bg-white shadow-sm h-100">
+                                <p class="mb-1 text-muted">Correct Answers</p>
+                                <h5>17 / 20</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 bg-white shadow-sm h-100">
+                                <p class="mb-1 text-muted">Time Taken</p>
+                                <h5>09:13</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="returnToQuizOverview">
+                        <i class="bi bi-arrow-left-circle me-1"></i> Return to Quiz
+                    </button>
+                </div>
+            `;
+
+                // Add event listener for return button
+                const returnBtn = document.getElementById('returnToQuizOverview');
+                if (returnBtn) {
+                    returnBtn.addEventListener('click', function() {
+                        // Reset UI to quiz overview
+                        quizQuestions.style.display = 'none';
+                        quizOverview.style.display = 'block';
+
+                        // Restore sidebar
+                        if (sidebar) {
+                            sidebar.style.display = 'block';
                         }
 
-                        // Mark as completed if reached threshold and not already completed
-                        if (completionPercentage >= COMPLETION_THRESHOLD && !videoCompleted) {
-                            videoCompleted = true;
-                            markAsCompleted();
+                        // Restore content column width
+                        if (contentColumn) {
+                            contentColumn.classList.remove('col-12');
+                            contentColumn.classList.add('col-md-8', 'col-lg-9');
                         }
+
+                        // Restore navigation controls
+                        if (navigationControls) {
+                            navigationControls.style.display = 'flex';
+                        }
+
+                        // Start cooldown
+                        startCooldown();
                     });
-
-                    // Handle video ended
-                    mainVideo.addEventListener('ended', function() {
-                        console.log('Video ended');
-
-                        // Show replay screen
-                        const posterContainer = document.querySelector('.video-poster-container');
-                        if (posterContainer) {
-                            posterContainer.classList.remove('d-none');
-                        }
-
-                        // If not already marked as completed, mark it now
-                        if (!videoCompleted) {
-                            markAsCompleted();
-                        }
-                    });
-
-                    // Track video progress
-                    function trackVideoProgress(position) {
-                        // Use fetch API to send the progress to the server
-                        fetch('../ajax/students/track-video-progress.php', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                },
-                                body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId + '&position=' + position
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log('Progress tracked', data);
-                            })
-                            .catch(error => {
-                                console.error('Error tracking progress:', error);
-                            });
-                    }
-                }
-
-                // YouTube API integration
-                const youtubeIframes = document.querySelectorAll('iframe[src*="youtube.com"]');
-                let ytPlayer = null;
-
-                if (youtubeIframes.length > 0) {
-                    console.log('YouTube player found, loading YouTube API');
-                    // Load YouTube API
-                    const tag = document.createElement('script');
-                    tag.src = "https://www.youtube.com/iframe_api";
-                    const firstScriptTag = document.getElementsByTagName('script')[0];
-                    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-                    // Initialize YouTube players when API is ready
-                    window.onYouTubeIframeAPIReady = function() {
-                        console.log('YouTube API ready');
-                        youtubeIframes.forEach((iframe, index) => {
-                            // Get the original iframe src
-                            const originalSrc = iframe.src;
-
-                            // Extract video ID
-                            const videoIdMatch = originalSrc.match(/embed\/([^?]+)/);
-                            const videoId = videoIdMatch ? videoIdMatch[1] : null;
-
-                            if (!videoId) {
-                                console.error('Could not extract YouTube video ID');
-                                return;
-                            }
-
-                            // Replace the iframe with a div for the API to use
-                            const playerId = 'youtube-player-' + index;
-                            const playerDiv = document.createElement('div');
-                            playerDiv.id = playerId;
-
-                            iframe.parentNode.replaceChild(playerDiv, iframe);
-
-                            // Create poster container for replay
-                            const playerContainer = playerDiv.parentNode;
-                            const posterContainer = document.createElement('div');
-                            posterContainer.className = 'video-poster-container position-absolute top-0 start-0 w-100 h-100 d-none';
-                            posterContainer.style.backgroundColor = '#000';
-                            posterContainer.style.zIndex = '2';
-
-                            // Add poster image
-                            const posterImage = document.createElement('img');
-                            posterImage.className = 'w-100 h-100 object-fit-contain opacity-50';
-                            posterImage.src = "https://img.youtube.com/vi/" + videoId + "/maxresdefault.jpg";
-                            posterImage.alt = 'Video thumbnail';
-
-                            // Add replay button
-                            const replayButton = document.createElement('button');
-                            replayButton.className = 'btn btn-primary btn-lg position-absolute top-50 start-50 translate-middle';
-                            replayButton.innerHTML = '<i class="bi-arrow-repeat me-2"></i>Replay Video';
-                            replayButton.addEventListener('click', function() {
-                                posterContainer.classList.add('d-none');
-                                // Restart video
-                                ytPlayer.seekTo(0);
-                                ytPlayer.playVideo();
-                            });
-
-                            // Add to container
-                            posterContainer.appendChild(posterImage);
-                            posterContainer.appendChild(replayButton);
-
-                            // Make sure container has position relative
-                            if (playerContainer.style.position !== 'relative') {
-                                playerContainer.style.position = 'relative';
-                            }
-                            playerContainer.appendChild(posterContainer);
-
-                            // Create YouTube player
-                            ytPlayer = new YT.Player(playerId, {
-                                videoId: videoId,
-                                playerVars: {
-                                    'rel': 0, // Don't show related videos
-                                    'showinfo': 0, // Hide video info
-                                    'modestbranding': 1, // Hide YouTube logo
-                                    'fs': 1, // Show fullscreen button
-                                    'start': lastPosition // Start from last position
-                                },
-                                events: {
-                                    'onStateChange': function(event) {
-                                        // Track when video is paused or ended
-                                        if (event.data == YT.PlayerState.PAUSED) {
-                                            const currentTime = Math.floor(event.target.getCurrentTime());
-                                            trackVideoProgress(currentTime);
-                                        } else if (event.data == YT.PlayerState.ENDED) {
-                                            console.log('YouTube video ended');
-
-                                            // Show replay screen
-                                            posterContainer.classList.remove('d-none');
-
-                                            // Mark as completed
-                                            markAsCompleted();
-                                        }
-
-                                        // Check if video is near completion
-                                        if (event.data == YT.PlayerState.PLAYING) {
-                                            // Start checking progress
-                                            const checkProgress = setInterval(function() {
-                                                if (!ytPlayer) {
-                                                    clearInterval(checkProgress);
-                                                    return;
-                                                }
-
-                                                const duration = ytPlayer.getDuration();
-                                                const currentTime = ytPlayer.getCurrentTime();
-                                                const completionPercentage = currentTime / duration;
-
-                                                // If we're at or past the threshold, mark as completed
-                                                if (completionPercentage >= COMPLETION_THRESHOLD) {
-                                                    markAsCompleted();
-                                                    clearInterval(checkProgress);
-                                                }
-
-                                                // Stop checking if video isn't playing
-                                                if (ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
-                                                    clearInterval(checkProgress);
-                                                }
-                                            }, 5000); // Check every 5 seconds
-                                        }
-                                    }
-                                }
-                            });
-
-                            // Track video progress
-                            function trackVideoProgress(position) {
-                                fetch('../ajax/students/track-video-progress.php', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/x-www-form-urlencoded',
-                                        },
-                                        body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId + '&position=' + position
-                                    })
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        console.log('YouTube progress tracked', data);
-                                    })
-                                    .catch(error => {
-                                        console.error('Error tracking YouTube progress:', error);
-                                    });
-                            }
-                        });
-                    };
-                }
-
-                // Vimeo API integration
-                const vimeoIframes = document.querySelectorAll('iframe[src*="vimeo.com"]');
-                let vimeoPlayer = null;
-
-                if (vimeoIframes.length > 0) {
-                    console.log('Vimeo player found, loading Vimeo API');
-                    // Load Vimeo API
-                    const vimeoScript = document.createElement('script');
-                    vimeoScript.src = "https://player.vimeo.com/api/player.js";
-                    document.body.appendChild(vimeoScript);
-
-                    vimeoScript.onload = function() {
-                        vimeoIframes.forEach((iframe) => {
-                            // Create container for replay screen
-                            const playerContainer = iframe.parentNode;
-                            const posterContainer = document.createElement('div');
-                            posterContainer.className = 'video-poster-container position-absolute top-0 start-0 w-100 h-100 d-none';
-                            posterContainer.style.backgroundColor = '#000';
-                            posterContainer.style.zIndex = '2';
-
-                            // We'll add the poster image after getting it from the Vimeo API
-
-                            // Add replay button
-                            const replayButton = document.createElement('button');
-                            replayButton.className = 'btn btn-primary btn-lg position-absolute top-50 start-50 translate-middle';
-                            replayButton.innerHTML = '<i class="bi-arrow-repeat me-2"></i>Replay Video';
-                            replayButton.addEventListener('click', function() {
-                                posterContainer.classList.add('d-none');
-                                // Restart video
-                                vimeoPlayer.setCurrentTime(0);
-                                vimeoPlayer.play();
-                            });
-
-                            // Add to container
-                            posterContainer.appendChild(replayButton);
-
-                            // Make sure container has position relative
-                            if (playerContainer.style.position !== 'relative') {
-                                playerContainer.style.position = 'relative';
-                            }
-                            playerContainer.appendChild(posterContainer);
-
-                            // Initialize Vimeo player
-                            vimeoPlayer = new Vimeo.Player(iframe, {
-                                dnt: true // Do not track
-                            });
-
-                            // Get video metadata for poster image
-                            vimeoPlayer.getVideoTitle().then(function(title) {
-                                // Get the video thumbnail
-                                vimeoPlayer.getVideoThumbnails().then(function(thumbnails) {
-                                    if (thumbnails && thumbnails.length > 0) {
-                                        // Add poster image
-                                        const posterImage = document.createElement('img');
-                                        posterImage.className = 'w-100 h-100 object-fit-contain opacity-50';
-                                        posterImage.src = thumbnails[0].url;
-                                        posterImage.alt = title || 'Video thumbnail';
-                                        posterContainer.insertBefore(posterImage, replayButton);
-                                    }
-                                }).catch(function(error) {
-                                    console.error('Error getting Vimeo thumbnail:', error);
-                                });
-                            }).catch(function(error) {
-                                console.error('Error getting Vimeo title:', error);
-                            });
-
-                            // Set initial position
-                            if (lastPosition > 0) {
-                                vimeoPlayer.setCurrentTime(lastPosition);
-                            }
-
-                            // Completed flag
-                            let videoCompleted = false;
-
-                            // Track timeupdate
-                            let lastVimeoTrackedTime = 0;
-                            vimeoPlayer.on('timeupdate', function(data) {
-                                const currentTime = Math.floor(data.seconds);
-
-                                // Track every 10 seconds
-                                if (currentTime - lastVimeoTrackedTime >= 10) {
-                                    lastVimeoTrackedTime = currentTime;
-                                    trackVideoProgress(currentTime);
-                                }
-
-                                // Check completion
-                                const completionPercentage = data.seconds / data.duration;
-                                if (completionPercentage >= COMPLETION_THRESHOLD && !videoCompleted) {
-                                    videoCompleted = true;
-                                    markAsCompleted();
-                                }
-                            });
-
-                            // Handle end of video
-                            vimeoPlayer.on('ended', function() {
-                                console.log('Vimeo video ended');
-
-                                // Show replay screen
-                                posterContainer.classList.remove('d-none');
-
-                                // Mark as completed if not already done
-                                if (!videoCompleted) {
-                                    markAsCompleted();
-                                }
-                            });
-
-                            // Track video progress
-                            function trackVideoProgress(position) {
-                                fetch('../ajax/students/track-video-progress.php', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/x-www-form-urlencoded',
-                                        },
-                                        body: 'enrollment_id=' + enrollmentId + '&topic_id=' + topicId + '&position=' + position
-                                    })
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        console.log('Vimeo progress tracked', data);
-                                    })
-                                    .catch(error => {
-                                        console.error('Error tracking Vimeo progress:', error);
-                                    });
-                            }
-                        });
-                    };
                 }
             }
+
+            // Cooldown function
+            function startCooldown() {
+                let cooldownTime = 10; // 10 seconds for testing
+                const cooldownTimer = document.getElementById('cooldownTimer');
+                const cooldownSeconds = document.getElementById('cooldownSeconds');
+                startBtn.disabled = true;
+                cooldownTimer.style.display = 'block';
+                cooldownSeconds.textContent = cooldownTime;
+
+                const cooldownInterval = setInterval(() => {
+                    cooldownTime--;
+                    cooldownSeconds.textContent = cooldownTime;
+                    if (cooldownTime <= 0) {
+                        clearInterval(cooldownInterval);
+                        cooldownTimer.style.display = 'none';
+                        if (attemptCount < maxAttempts) {
+                            startBtn.disabled = false;
+                            startBtn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Quiz';
+                        }
+                        // No else needed, as button state is already set in submitQuiz if max attempts reached
+                    }
+                }, 1000);
+            }
         }
+
+        // Video progress tracking (if video content)
+        <?php if ($content_type === 'video' && !empty($video_source) && $video_source['provider'] === 'HTML5'): ?>
+            const video = document.querySelector('video');
+            if (video) {
+                video.addEventListener('timeupdate', function() {
+                    const currentTime = video.currentTime;
+                    const duration = video.duration;
+                    if (duration && currentTime >= duration * 0.9 && !video.dataset.progressSent) {
+                        video.dataset.progressSent = 'true';
+                        fetch('../backend/update_video_progress.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                enrollment_id: <?php echo $enrollment_id; ?>,
+                                topic_id: <?php echo $topic_id; ?>,
+                                status: 'In Progress'
+                            })
+                        });
+                    }
+                });
+
+                video.addEventListener('ended', function() {
+                    fetch('../backend/update_video_progress.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            enrollment_id: <?php echo $enrollment_id; ?>,
+                            topic_id: <?php echo $topic_id; ?>,
+                            status: 'Completed'
+                        })
+                    });
+                });
+            }
+        <?php endif; ?>
     });
 </script>
-
-<script src="../assets/js/fixed-quiz-submission.js"></script>
+<!-- ========== END JavaScript ========== -->
 
 <?php
 // Include footer
