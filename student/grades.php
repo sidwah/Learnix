@@ -598,175 +598,175 @@ $recent_attempts = array_slice($all_attempts, 0, 10);
                                 }
                             </style>
 
-                            <?php foreach ($quizzes_by_section as $section_id => $section): ?>
-                                <!-- Section Header -->
-                                <div class="section-header">
-                                    <i class="bi bi-folder-fill me-2 text-primary"></i>
-                                    <?php echo htmlspecialchars($section['title']); ?>
-                                </div>
+<?php foreach ($quizzes_by_section as $section_id => $section): ?>
+    <!-- Section Header -->
+    <div class="section-header">
+        <i class="bi bi-folder-fill me-2 text-primary"></i>
+        <?php echo htmlspecialchars($section['title']); ?>
+    </div>
 
-                                <?php foreach ($section['quizzes'] as $quiz): ?>
-                                    <?php
-                                    $has_passed = false;
-                                    $is_incomplete = false;
-                                    $status_class = "bg-secondary";
-                                    $status_text = "Not Started";
+    <?php foreach ($section['quizzes'] as $quiz): ?>
+        <?php
+        $has_passed = false;
+        $is_incomplete = false;
+        $status_class = "bg-secondary";
+        $status_text = "Not Started";
 
-                                    if (!empty($quiz['attempts'])) {
-                                        foreach ($quiz['attempts'] as $attempt) {
-                                            if ($attempt['passed']) {
-                                                $has_passed = true;
-                                                break;
-                                            }
-                                        }
-                                        $is_incomplete = !empty($quiz['attempts'][0]['start_time']) && empty($quiz['attempts'][0]['end_time']);
-                                        if ($has_passed) {
-                                            $status_class = "badge-passed";
-                                            $status_text = "Passed";
-                                        } else if ($is_incomplete) {
-                                            $status_class = "badge-in-progress";
-                                            $status_text = "In Progress";
-                                        } else {
-                                            $status_class = "badge-failed";
-                                            $status_text = "Failed";
-                                        }
-                                    }
+        if (!empty($quiz['attempts'])) {
+            // Get the latest attempt (highest attempt_number)
+            usort($quiz['attempts'], function ($a, $b) {
+                return $b['attempt_number'] <=> $a['attempt_number'];
+            });
+            $latest_attempt = $quiz['attempts'][0];
 
-                                    $attempts_remaining = $quiz['attempts_allowed'] - $quiz['attempts_used'];
-                                    ?>
-                                    <div class="card quiz-card shadow-sm">
-                                        <div class="row g-0">
-                                            <!-- Pass Mark Sidebar -->
-                                            <div class="col-md-2 pass-mark-sidebar">
-                                                <div>
-                                                    <h6 class="text-muted mb-2">Pass Mark</h6>
-                                                    <h3 class="text-primary mb-0"><?php echo $quiz['pass_mark']; ?>%</h3>
-                                                    <p class="small text-muted mt-2">
-                                                        <i class="bi bi-clock me-1"></i><?php echo $quiz['time_limit']; ?> min
-                                                    </p>
+            if (!empty($latest_attempt['start_time']) && empty($latest_attempt['end_time'])) {
+                $is_incomplete = true;
+                $status_class = "badge-in-progress";
+                $status_text = "In Progress";
+            } elseif (!empty($latest_attempt['end_time'])) {
+                // Attempt is completed
+                $status_class = $latest_attempt['passed'] ? "badge-passed" : "badge-failed";
+                $status_text = $latest_attempt['passed'] ? "Passed" : "Failed";
+                if ($latest_attempt['passed']) {
+                    $has_passed = true;
+                }
+            }
+        }
+
+        $attempts_remaining = $quiz['attempts_allowed'] - $quiz['attempts_used'];
+        ?>
+        <div class="card quiz-card shadow-sm">
+            <div class="row g-0">
+                <!-- Pass Mark Sidebar -->
+                <div class="col-md-2 pass-mark-sidebar">
+                    <div>
+                        <h6 class="text-muted mb-2">Pass Mark</h6>
+                        <h3 class="text-primary mb-0"><?php echo $quiz['pass_mark']; ?>%</h3>
+                        <p class="small text-muted mt-2">
+                            <i class="bi bi-clock me-1"></i><?php echo $quiz['time_limit']; ?> min
+                        </p>
+                    </div>
+                </div>
+                <!-- Quiz Details -->
+                <div class="col-md-10">
+                    <div class="card-body p-3">
+                        <h5 class="card-title mb-2" style="font-size: 1.1rem;">
+                            <i class="bi bi-clipboard-check me-2 text-primary"></i>
+                            <?php echo htmlspecialchars($quiz['quiz_title']); ?>
+                        </h5>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 col-md-4">
+                                <div class="small text-muted">Status</div>
+                                <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="small text-muted">Best Score</div>
+                                <span class="<?php echo $has_passed ? 'text-success fw-bold' : 'text-danger'; ?>">
+                                    <?php echo !empty($quiz['attempts']) ? $quiz['highest_score'] . '%' : '--'; ?>
+                                </span>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <div class="small text-muted">Attempts</div>
+                                <span><?php echo $quiz['attempts_used']; ?>/<?php echo $quiz['attempts_allowed']; ?></span>
+                                <?php if ($attempts_remaining > 0 && !$has_passed): ?>
+                                    <span class="badge bg-light text-dark ms-1"><?php echo $attempts_remaining; ?> remaining</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <?php echo $quiz['total_questions']; ?> questions
+                            </small>
+                        </div>
+                        <?php if (!empty($quiz['attempts'])): ?>
+                            <p class="text-muted mb-2">
+                                <a class="attempt-toggle" data-bs-toggle="collapse" href="#attempts-<?php echo $quiz['quiz_id']; ?>" role="button" aria-expanded="false" aria-controls="attempts-<?php echo $quiz['quiz_id']; ?>">
+                                    View <?php echo count($quiz['attempts']); ?> Attempt(s) <i class="bi bi-chevron-down ms-1"></i>
+                                </a>
+                            </p>
+                            <div class="collapse" id="attempts-<?php echo $quiz['quiz_id']; ?>">
+                                <?php foreach ($quiz['attempts'] as $attempt): ?>
+                                    <div class="attempt-card">
+                                        <div class="row g-2 align-items-center">
+                                            <div class="col-6 col-md-3">
+                                                <div class="small text-muted">Attempt #<?php echo $attempt['attempt_number']; ?></div>
+                                                <span class="badge <?php echo $attempt['passed'] ? 'badge-passed' : ($attempt['end_time'] ? 'badge-failed' : 'badge-in-progress'); ?>">
+                                                    <?php echo $attempt['passed'] ? 'Passed' : ($attempt['end_time'] ? 'Failed' : 'In Progress'); ?>
+                                                </span>
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <div class="small text-muted">Score</div>
+                                                <span class="<?php echo $attempt['passed'] ? 'text-success' : 'text-danger'; ?>">
+                                                    <?php echo $attempt['score']; ?>%
+                                                </span>
+                                                <div class="small text-muted">
+                                                    <?php echo $attempt['correct_answers']; ?>/<?php echo $attempt['total_questions']; ?> correct
                                                 </div>
                                             </div>
-                                            <!-- Quiz Details -->
-                                            <div class="col-md-10">
-                                                <div class="card-body p-3">
-                                                    <h5 class="card-title mb-2" style="font-size: 1.1rem;">
-                                                        <i class="bi bi-clipboard-check me-2 text-primary"></i>
-                                                        <?php echo htmlspecialchars($quiz['quiz_title']); ?>
-                                                    </h5>
-                                                    <div class="row g-2 mb-2">
-                                                        <div class="col-6 col-md-4">
-                                                            <div class="small text-muted">Status</div>
-                                                            <span class="badge <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
-                                                        </div>
-                                                        <div class="col-6 col-md-4">
-                                                            <div class="small text-muted">Best Score</div>
-                                                            <span class="<?php echo $has_passed ? 'text-success fw-bold' : 'text-danger'; ?>">
-                                                                <?php echo !empty($quiz['attempts']) ? $quiz['highest_score'] . '%' : '--'; ?>
-                                                            </span>
-                                                        </div>
-                                                        <div class="col-12 col-md-4">
-                                                            <div class="small text-muted">Attempts</div>
-                                                            <span><?php echo $quiz['attempts_used']; ?>/<?php echo $quiz['attempts_allowed']; ?></span>
-                                                            <?php if ($attempts_remaining > 0 && !$has_passed): ?>
-                                                                <span class="badge bg-light text-dark ms-1"><?php echo $attempts_remaining; ?> remaining</span>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </div>
-                                                    <div class="mb-2">
-                                                        <small class="text-muted">
-                                                            <?php echo $quiz['total_questions']; ?> questions
-                                                        </small>
-                                                    </div>
-                                                    <?php if (!empty($quiz['attempts'])): ?>
-                                                        <p class="text-muted mb-2">
-                                                            <a class="attempt-toggle" data-bs-toggle="collapse" href="#attempts-<?php echo $quiz['quiz_id']; ?>" role="button" aria-expanded="false" aria-controls="attempts-<?php echo $quiz['quiz_id']; ?>">
-                                                                View <?php echo count($quiz['attempts']); ?> Attempt(s) <i class="bi bi-chevron-down ms-1"></i>
-                                                            </a>
-                                                        </p>
-                                                        <div class="collapse" id="attempts-<?php echo $quiz['quiz_id']; ?>">
-                                                            <?php foreach ($quiz['attempts'] as $attempt): ?>
-                                                                <div class="attempt-card">
-                                                                    <div class="row g-2 align-items-center">
-                                                                        <div class="col-6 col-md-3">
-                                                                            <div class="small text-muted">Attempt #<?php echo $attempt['attempt_number']; ?></div>
-                                                                            <span class="badge <?php echo $attempt['passed'] ? 'badge-passed' : ($attempt['end_time'] ? 'badge-failed' : 'badge-in-progress'); ?>">
-                                                                                <?php echo $attempt['passed'] ? 'Passed' : ($attempt['end_time'] ? 'Failed' : 'In Progress'); ?>
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="col-6 col-md-3">
-                                                                            <div class="small text-muted">Score</div>
-                                                                            <span class="<?php echo $attempt['passed'] ? 'text-success' : 'text-danger'; ?>">
-                                                                                <?php echo $attempt['score']; ?>%
-                                                                            </span>
-                                                                            <div class="small text-muted">
-                                                                                <?php echo $attempt['correct_answers']; ?>/<?php echo $attempt['total_questions']; ?> correct
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-6 col-md-3">
-                                                                            <div class="small text-muted">Date</div>
-                                                                            <?php
-                                                                            $date = $attempt['end_time'] ?? $attempt['start_time'];
-                                                                            echo date('M j, Y - g:i A', strtotime($date));
-                                                                            ?>
-                                                                        </div>
-                                                                        <div class="col-6 col-md-3">
-                                                                            <div class="small text-muted">Time Spent</div>
-                                                                            <?php
-                                                                            if (!empty($attempt['time_spent'])) {
-                                                                                $minutes = floor($attempt['time_spent'] / 60);
-                                                                                $seconds = $attempt['time_spent'] % 60;
-                                                                                echo "{$minutes}m {$seconds}s";
-                                                                            } else {
-                                                                                echo '--';
-                                                                            }
-                                                                            ?>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            <?php endforeach; ?>
-                                                        </div>
-                                                    <?php else: ?>
-                                                        <p class="text-muted">No attempts recorded for this quiz.</p>
-                                                    <?php endif; ?>
-                                                    <div class="mt-2">
-                                                        <?php if (empty($quiz['attempts'])): ?>
-                                                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="btn btn-sm btn-primary">
-                                                                <i class="bi bi-play-fill me-1"></i> Start
-                                                            </a>
-                                                        <?php elseif ($is_incomplete): ?>
-                                                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="btn btn-sm btn-warning">
-                                                                <i class="bi bi-arrow-right me-1"></i> Continue
-                                                            </a>
-                                                        <?php elseif (!$has_passed && $attempts_remaining > 0): ?>
-                                                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="btn btn-sm btn-outline-primary">
-                                                                <i class="bi bi-arrow-clockwise me-1"></i> Retry
-                                                            </a>
-                                                        <?php else: ?>
-                                                            <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="btn btn-sm btn-outline-secondary">
-                                                                <i class="bi bi-eye me-1"></i> Review
-                                                            </a>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
+                                            <div class="col-6 col-md-3">
+                                                <div class="small text-muted">Date</div>
+                                                <?php
+                                                $date = $attempt['end_time'] ?? $attempt['start_time'];
+                                                echo date('M j, Y - g:i A', strtotime($date));
+                                                ?>
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <div class="small text-muted">Time Spent</div>
+                                                <?php
+                                                if (!empty($attempt['time_spent'])) {
+                                                    $minutes = floor($attempt['time_spent'] / 60);
+                                                    $seconds = $attempt['time_spent'] % 60;
+                                                    echo "{$minutes}m {$seconds}s";
+                                                } else {
+                                                    echo '--';
+                                                }
+                                                ?>
                                             </div>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
-                            <?php endforeach; ?>
-                            <script>
-                                // Toggle collapse icon for attempt details
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    const toggles = document.querySelectorAll('.attempt-toggle');
-                                    toggles.forEach(toggle => {
-                                        toggle.addEventListener('click', function() {
-                                            const icon = this.querySelector('i');
-                                            icon.classList.toggle('bi-chevron-down');
-                                            icon.classList.toggle('bi-chevron-up');
-                                        });
-                                    });
-                                });
-                            </script>
+                            </div>
+                        <?php else: ?>
+                            <p class="text-muted">No attempts recorded for this quiz.</p>
                         <?php endif; ?>
+                        <div class="mt-2">
+                            <?php if (empty($quiz['attempts'])): ?>
+                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-play-fill me-1"></i> Start
+                                </a>
+                            <?php elseif ($is_incomplete): ?>
+                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-arrow-right me-1"></i> Continue
+                                </a>
+                            <?php elseif (!$has_passed && $attempts_remaining > 0): ?>
+                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> Retry
+                                </a>
+                            <?php else: ?>
+                                <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye me-1"></i> Review
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    <?php endforeach; ?>
+    <script>
+        // Toggle collapse icon for attempt details
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggles = document.querySelectorAll('.attempt-toggle');
+            toggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const icon = this.querySelector('i');
+                    icon.classList.toggle('bi-chevron-down');
+                    icon.classList.toggle('bi-chevron-up');
+                });
+            });
+        });
+    </script>
+<?php endif; ?>
                     </div>
                 </div>
 

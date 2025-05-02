@@ -1425,28 +1425,28 @@ function getLinkDisplay($topic)
                                         </div>
 
                                         <div class="text-center">
-                                            <?php if ($active_attempt && $remaining_time > 0): ?>
-                                                <div id="activeAttempt" class="mb-3 text-muted" data-time-remaining="<?php echo $remaining_time; ?>">
-                                                    Active Attempt: <span id="remainingTime"><?php echo $remaining_time; ?> remaining (<?php echo gmdate('i:s', $remaining_time); ?>)</span>
-                                                </div>
-                                                <button class="btn btn-success btn-lg me-2" id="resumeQuizBtn" data-bs-toggle="modal" data-bs-target="#resumeQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>" data-remaining-time="<?php echo $remaining_time; ?>">
-                                                    <i class="bi bi-play-circle me-2"></i>Resume Quiz
-                                                </button>
-                                                <button class="btn btn-danger btn-lg" id="forfeitQuizBtn" data-bs-toggle="modal" data-bs-target="#forfeitQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>">
-                                                    <i class="bi bi-x-circle me-2"></i>Forfeit Quiz
-                                                </button>
-                                            <?php elseif (!empty($attempts)): ?>
-                                                <button class="btn btn-info btn-lg me-2" id="reviewLastAttemptBtn" data-bs-toggle="modal" data-bs-target="#reviewAttemptModal" data-attempt-id="<?php echo $attempts[0]['attempt_id']; ?>" data-attempt-number="<?php echo $attempts[0]['attempt_number']; ?>">
-                                                    <i class="bi bi-eye-fill me-2"></i>Review Last Attempt
-                                                </button>
-                                                <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
-                                                    <i class="bi bi-play-circle me-2"></i>Start Quiz
-                                                </button>
-                                            <?php else: ?>
-                                                <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
-                                                    <i class="bi bi-play-circle me-2"></i>Start Quiz
-                                                </button>
-                                            <?php endif; ?>
+                                        <?php if ($active_attempt && $remaining_time > 0): ?>
+    <div id="activeAttempt" class="mb-3 text-muted" data-time-remaining="<?php echo $remaining_time; ?>">
+        Active Attempt: <span id="remainingTime"><?php echo gmdate('i:s', $remaining_time); ?> sec remaining</span>
+    </div>
+    <button class="btn btn-success btn-lg me-2" id="resumeQuizBtn" data-bs-toggle="modal" data-bs-target="#resumeQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>" data-remaining-time="<?php echo $remaining_time; ?>">
+        <i class="bi bi-play-circle me-2"></i>Resume Quiz
+    </button>
+    <button class="btn btn-danger btn-lg" id="forfeitQuizBtn" data-bs-toggle="modal" data-bs-target="#forfeitQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>">
+        <i class="bi bi-x-circle me-2"></i>Forfeit Quiz
+    </button>
+<?php elseif (!empty($attempts)): ?>
+    <button class="btn btn-info btn-lg me-2" id="reviewLastAttemptBtn" data-bs-toggle="modal" data-bs-target="#reviewAttemptModal" data-attempt-id="<?php echo $attempts[0]['attempt_id']; ?>" data-attempt-number="<?php echo $attempts[0]['attempt_number']; ?>">
+        <i class="bi bi-eye-fill me-2"></i>Review Last Attempt
+    </button>
+    <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
+        <i class="bi bi-play-circle me-2"></i>Start Quiz
+    </button>
+<?php else: ?>
+    <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
+        <i class="bi bi-play-circle me-2"></i>Start Quiz
+    </button>
+<?php endif; ?>
                                             <div id="cooldownTimer" class="mt-2 text-muted" style="display: none;">
                                                 Cooldown: <span id="cooldownSeconds">10</span>s
                                             </div>
@@ -2421,46 +2421,46 @@ if (isQuiz) {
         <?php endif; ?>
     });
 
-    // Real-time countdown timer for active attempt and modal
-    function startCountdown() {
-        const activeAttemptDiv = document.getElementById('activeAttempt');
-        const activeTimer = document.getElementById('remainingTime');
-        const modalTimer = document.getElementById('modalRemainingTime');
+   // Real-time countdown timer for active attempt and modal
+function startCountdown() {
+    const activeAttemptDiv = document.getElementById('activeAttempt');
+    const activeTimer = document.getElementById('remainingTime');
+    const modalTimer = document.getElementById('modalRemainingTime');
 
-        if (activeAttemptDiv && activeTimer) {
-            let timeRemaining = parseInt(activeAttemptDiv.getAttribute('data-time-remaining')) || 0;
+    if (activeAttemptDiv && activeTimer) {
+        let timeRemaining = parseInt(activeAttemptDiv.getAttribute('data-time-remaining')) || 0;
 
-            const countdown = setInterval(() => {
-                if (timeRemaining <= 0) {
-                    clearInterval(countdown);
-                    activeTimer.textContent = 'Time is up!';
-                    if (modalTimer) {
-                        modalTimer.textContent = 'Time is up!';
-                    }
-                    // Optionally auto-submit the quiz if time is up
-                    const quizQuestionsDiv = document.getElementById('quizQuestions');
-                    if (quizQuestionsDiv && quizQuestionsDiv.style.display !== 'none') {
-                        submitQuiz(true); // Auto-submit if quiz is active
-                    }
-                    return;
-                }
-
-                const minutes = Math.floor(timeRemaining / 60);
-                const seconds = timeRemaining % 60;
-                const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-
-                // Update active attempt timer
-                activeTimer.textContent = `${timeRemaining} remaining (${formattedTime})`;
-
-                // Update modal timer
+        const countdown = setInterval(() => {
+            if (timeRemaining <= 0) {
+                clearInterval(countdown);
+                activeTimer.textContent = 'Time is up!';
                 if (modalTimer) {
-                    modalTimer.textContent = `${formattedTime}`;
+                    modalTimer.textContent = 'Time is up!';
                 }
+                // Optionally auto-submit the quiz if time is up
+                const quizQuestionsDiv = document.getElementById('quizQuestions');
+                if (quizQuestionsDiv && quizQuestionsDiv.style.display !== 'none') {
+                    submitQuiz(true); // Auto-submit if quiz is active
+                }
+                return;
+            }
 
-                timeRemaining--;
-            }, 1000);
-        }
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const formattedTime = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            // Update active attempt timer
+            activeTimer.textContent = `${formattedTime} sec remaining`;
+
+            // Update modal timer
+            if (modalTimer) {
+                modalTimer.textContent = `${formattedTime} sec remaining`;
+            }
+
+            timeRemaining--;
+        }, 1000);
     }
+}
 
     // Start the countdown when the page loads
     document.addEventListener('DOMContentLoaded', startCountdown);

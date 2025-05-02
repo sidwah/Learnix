@@ -5,7 +5,7 @@ require_once '../../backend/session_start.php';
 require_once '../../backend/config.php';
 
 // Suppress warnings to ensure clean JSON output
-error_reporting(0);
+error_reporting(E_ERROR | E_PARSE);
 
 header('Content-Type: application/json');
 
@@ -68,74 +68,73 @@ try {
     $earned_points = 0;
 
     // Process each question, even if no answer was submitted
-  // Process each question, even if no answer was submitted
-foreach ($questions as $question) {
-    $question_id = (int)$question['question_id'];
-    $points = (int)$question['points'];
-    $total_points += $points;
+    foreach ($questions as $question) {
+        $question_id = (int)$question['question_id'];
+        $points = (int)$question['points'];
+        $total_points += $points;
 
-    $student_answer_id = isset($answers[$question_id]) ? (int)$answers[$question_id] : 0;
-    $is_correct = 0;
-    $points_awarded = 0;
-    $answer_text = 'Not answered';
+        $student_answer_id = isset($answers[$question_id]) ? (int)$answers[$question_id] : 0;
+        $is_correct = 0;
+        $points_awarded = 0;
+        $answer_text = 'Not answered';
 
-    if ($student_answer_id > 0) {
-        // Get correct answers
-        $query = "SELECT answer_id, is_correct FROM quiz_answers WHERE question_id = ?";
-        $stmt = mysqli_prepare($conn, $query);
-        mysqli_stmt_bind_param($stmt, 'i', $question_id);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $correct_answers = [];
-        while ($row = mysqli_fetch_assoc($result)) {
-            if ($row['is_correct']) {
-                $correct_answers[] = $row['answer_id'];
+        if ($student_answer_id > 0) {
+            // Get correct answers
+            $query = "SELECT answer_id, is_correct FROM quiz_answers WHERE question_id = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('i', $question_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $correct_answers = [];
+            while ($row = $result->fetch_assoc()) {
+                if ($row['is_correct']) {
+                    $correct_answers[] = $row['answer_id'];
+                }
             }
+            $stmt->close();
+
+            // Check if the answer is correct
+            $is_correct = in_array($student_answer_id, $correct_answers) ? 1 : 0;
+            $points_awarded = $is_correct ? $points : 0;
+            $earned_points += $points_awarded;
+
+            // Fetch the answer text for the student's selected answer
+            $query = "SELECT answer_text FROM quiz_answers WHERE answer_id = ? AND question_id = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('ii', $student_answer_id, $question_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $answer_row = $result->fetch_assoc();
+            $answer_text = $answer_row['answer_text'] ?? 'Not answered';
+            $stmt->close();
         }
-        mysqli_stmt_close($stmt);
 
-        // Check if the answer is correct
-        $is_correct = in_array($student_answer_id, $correct_answers) ? 1 : 0;
-        $points_awarded = $is_correct ? $points : 0;
-        $earned_points += $points_awarded;
-
-        // Fetch the answer text for the student's selected answer
-        $query = "SELECT answer_text FROM quiz_answers WHERE answer_id = ? AND question_id = ?";
-        $stmt = mysqli_prepare($conn, $query);
-        mysqli_stmt_bind_param($stmt, 'ii', $student_answer_id, $question_id);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $answer_row = mysqli_fetch_assoc($result);
-        $answer_text = $answer_row['answer_text'] ?? 'Not answered';
-        mysqli_stmt_close($stmt);
-    }
-
-    // Save student response
-    $query = "INSERT INTO student_question_responses (attempt_id, question_id, answer_text, is_correct, points_awarded) 
-              VALUES (?, ?, ?, ?, ?)";
-    $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, 'iisid', $attempt_id, $question_id, $answer_text, $is_correct, $points_awarded);
-    $success = mysqli_stmt_execute($stmt);
-    if (!$success) {
-        error_log("Failed to insert student response for question $question_id: " . mysqli_error($conn));
-    } else {
-        error_log("Successfully inserted response for question $question_id: answer_text=$answer_text, is_correct=$is_correct");
-    }
-    $response_id = mysqli_insert_id($conn);
-    mysqli_stmt_close($stmt);
-
-    // Save answer selection (for multiple-choice)
-    if ($student_answer_id > 0) {
-        $query = "INSERT INTO student_answer_selections (response_id, answer_id) VALUES (?, ?)";
-        $stmt = mysqli_prepare($conn, $query);
-        mysqli_stmt_bind_param($stmt, 'ii', $response_id, $student_answer_id);
-        $success = mysqli_stmt_execute($stmt);
+        // Save student response
+        $query = "INSERT INTO student_question_responses (attempt_id, question_id, answer_text, is_correct, points_awarded) 
+                  VALUES (?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param('iisid', $attempt_id, $question_id, $answer_text, $is_correct, $points_awarded);
+        $success = $stmt->execute();
         if (!$success) {
-            error_log("Failed to insert answer selection for response $response_id: " . mysqli_error($conn));
+            error_log("Failed to insert student response for question $question_id: " . $conn->error);
+        } else {
+            error_log("Successfully inserted response for question $question_id: answer_text=$answer_text, is_correct=$is_correct");
         }
-        mysqli_stmt_close($stmt);
+        $response_id = $conn->insert_id;
+        $stmt->close();
+
+        // Save answer selection (for multiple-choice)
+        if ($student_answer_id > 0) {
+            $query = "INSERT INTO student_answer_selections (response_id, answer_id) VALUES (?, ?)";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('ii', $response_id, $student_answer_id);
+            $success = $stmt->execute();
+            if (!$success) {
+                error_log("Failed to insert answer selection for response $response_id: " . $conn->error);
+            }
+            $stmt->close();
+        }
     }
-}
 
     // Calculate score and update attempt
     $score = $total_points > 0 ? ($earned_points / $total_points) * 100 : 0;
@@ -144,13 +143,14 @@ foreach ($questions as $question) {
     $start_time = $active_attempt['start_time'] ?? null;
     $time_spent = $start_time ? (time() - strtotime($start_time)) : 0;
 
+    // Update attempt with end_time and other details
     $query = "UPDATE student_quiz_attempts 
-              SET score = ?, passed = ?, is_completed = 1, time_spent = ? 
+              SET score = ?, passed = ?, is_completed = 1, time_spent = ?, end_time = NOW() 
               WHERE attempt_id = ?";
-    $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, 'diii', $score, $passed, $time_spent, $attempt_id);
-    $success = mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param('diii', $score, $passed, $time_spent, $attempt_id);
+    $success = $stmt->execute();
+    $stmt->close();
 
     if ($success) {
         echo json_encode([
@@ -167,5 +167,5 @@ foreach ($questions as $question) {
     echo json_encode(['error' => 'An error occurred: ' . $e->getMessage()]);
 }
 
-mysqli_close($conn);
+$conn->close();
 ?>
