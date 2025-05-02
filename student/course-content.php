@@ -1921,431 +1921,465 @@ function getLinkDisplay($topic)
         }
 
         // Quiz UI functionality
-        const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
-        if (isQuiz) {
-            const quizOverview = document.querySelector('.quiz-cont .card');
-            const quizQuestions = document.getElementById('quizQuestions');
-            const quizResult = document.getElementById('quiz-result');
-            const sidebar = document.querySelector('.col-md-4.col-lg-3');
-            const contentColumn = document.querySelector('.col-md-8.col-lg-9');
-            const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
-            const startQuizBtn = document.getElementById('startQuizBtn');
-            const confirmStartQuizBtn = document.getElementById('confirmStartQuiz');
-            const resumeQuizBtn = document.getElementById('resumeQuizBtn');
-            const confirmResumeQuizBtn = document.getElementById('confirmResumeQuiz');
-            const forfeitQuizBtn = document.getElementById('forfeitQuizBtn');
-            const confirmForfeitQuizBtn = document.getElementById('confirmForfeitQuiz');
-            const timeLimit = <?php echo isset($quiz) ? (int)$quiz['time_limit'] : 0; ?>;
-            let timerInterval;
+       // Quiz UI functionality
+const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
+if (isQuiz) {
+    const userId = <?php echo $user_id; ?>;
+    if (userId === 0) {
+        console.error('User ID is not set. Autosave will not run.');
+    }
 
-            // Function to format seconds into MM:SS
-            function formatTime(seconds) {
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    const quizOverview = document.querySelector('.quiz-cont .card');
+    const quizQuestions = document.getElementById('quizQuestions');
+    const quizResult = document.getElementById('quiz-result');
+    const sidebar = document.querySelector('.col-md-4.col-lg-3');
+    const contentColumn = document.querySelector('.col-md-8.col-lg-9');
+    const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
+    const startQuizBtn = document.getElementById('startQuizBtn');
+    const confirmStartQuizBtn = document.getElementById('confirmStartQuiz');
+    const resumeQuizBtn = document.getElementById('resumeQuizBtn');
+    const confirmResumeQuizBtn = document.getElementById('confirmResumeQuiz');
+    const forfeitQuizBtn = document.getElementById('forfeitQuizBtn');
+    const confirmForfeitQuizBtn = document.getElementById('confirmForfeitQuiz');
+    const timeLimit = <?php echo isset($quiz) ? (int)$quiz['time_limit'] : 0; ?>;
+    let timerInterval;
+    let autosaveInterval;
+
+    // Function to format seconds into MM:SS
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    // Collect answers from the quiz questions
+    function collectAnswers() {
+        const questions = document.querySelectorAll('.quiz-question');
+        const answers = {};
+        questions.forEach(question => {
+            const questionId = question.getAttribute('data-question-id');
+            const selectedAnswer = question.querySelector('input[type="radio"]:checked');
+            if (questionId && selectedAnswer) {
+                answers[questionId] = selectedAnswer.value;
+            } else {
+                console.log(`No selection for question ${questionId}:`, question.innerHTML); // Debug missing selections
             }
+        });
+        return answers;
+    }
 
-            // Start or resume quiz
-            function startOrResumeQuiz(attemptId = null, remainingTime = timeLimit * 60) {
-                if (!quizOverview || !quizQuestions) {
-                    console.error('Quiz UI elements missing');
-                    return;
-                }
-
-                // Hide overview and show questions
-                quizOverview.style.display = 'none';
-                quizQuestions.style.display = 'block';
-
-                // Hide sidebar
-                if (sidebar) {
-                    sidebar.style.display = 'none';
-                }
-
-                // Make content full width
-                if (contentColumn) {
-                    contentColumn.classList.remove('col-md-8', 'col-lg-9');
-                    contentColumn.classList.add('col-12');
-                }
-
-                // Hide navigation
-                if (navigationControls) {
-                    navigationControls.style.display = 'none';
-                }
-
-                // Load questions
-                const questionContainer = document.getElementById('questionContainer');
-                const submitButtonWrapper = document.getElementById('submitButtonWrapper');
-                const submitBtn = document.getElementById('submitQuiz');
-                if (!questionContainer || !submitButtonWrapper || !submitBtn) {
-                    console.error('Question container, submit button wrapper, or submit button missing');
-                    return;
-                }
-
-                submitButtonWrapper.style.display = 'block';
-                submitBtn.disabled = false;
-
-                // Fetch questions
-                fetch(`../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz_id; ?>&attempt_id=${attemptId || ''}`)
-                    .then(response => response.text())
-                    .then(html => {
-                        questionContainer.innerHTML = html;
-                        console.log(attemptId ? 'Resumed quiz' : 'Started new quiz');
-                    })
-                    .catch(error => {
-                        console.error('Error loading questions:', error);
-                        showError('Failed to load quiz questions. Please try again.');
-                    });
-
-                // Start timer if applicable
-                if (timeLimit > 0) {
-                    let timeLeft = remainingTime;
-                    const timeDisplay = document.getElementById('timeRemaining');
-                    if (!timeDisplay) {
-                        console.error('Time display element missing');
-                        return;
-                    }
-                    timeDisplay.textContent = formatTime(timeLeft);
-                    timerInterval = setInterval(() => {
-                        timeLeft--;
-                        timeDisplay.textContent = formatTime(timeLeft);
-                        if (timeLeft <= 0) {
-                            clearInterval(timerInterval);
-                            submitQuiz(true); // Auto-submit
-                        }
-                    }, 1000);
-                }
-            }
-
-            // Start Quiz
-            if (startQuizBtn && confirmStartQuizBtn) {
-                startQuizBtn.addEventListener('click', function() {
-                    const maxAttempts = parseInt(this.getAttribute('data-max-attempts')) || 0;
-                    const currentAttempts = parseInt(this.getAttribute('data-current-attempts')) || 0;
-                    if (maxAttempts > 0 && currentAttempts >= maxAttempts) {
-                        alert('You have reached the maximum number of attempts for this quiz.');
-                        return;
-                    }
-                });
-
-                confirmStartQuizBtn.addEventListener('click', function() {
-                    // Use the quiz_id and course_id from the PHP context
-                    const quizId = <?php echo isset($quiz_id) ? (int)$quiz_id : 0; ?>;
-                    const courseId = <?php echo isset($course_id) ? (int)$course_id : 0; ?>;
-                    if (!quizId || !courseId) {
-                        console.error('Quiz ID or Course ID is missing', {
-                            quizId,
-                            courseId
-                        });
-                        return;
-                    }
-
-                    // Create a new attempt
-                    fetch('../includes/students/quiz-handler.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded'
-                            },
-                            body: `action=start_quiz&quiz_id=${quizId}&course_id=${courseId}`
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! Status: ${response.status}`);
-                            }
-                            return response.text(); // Get raw response for debugging
-                        })
-                        .then(text => {
-                            console.log('Raw response:', text); // Debug raw response
-                            try {
-                                const data = JSON.parse(text);
-                                if (data.success) {
-                                    // Close modal
-                                    const modal = bootstrap.Modal.getInstance(document.getElementById('startQuizModal'));
-                                    modal.hide();
-                                    startOrResumeQuiz(data.attempt_id || null);
-                                } else {
-                                    console.error('Failed to start quiz:', data.error || 'Unknown error');
-                                }
-                            } catch (e) {
-                                console.error('Failed to parse JSON:', e, 'Raw text:', text);
-                                throw new Error('Invalid JSON response');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error starting quiz:', error);
-                        });
-                });
-            }
-
-            // Resume Quiz
-            if (resumeQuizBtn && confirmResumeQuizBtn) {
-                confirmResumeQuizBtn.addEventListener('click', function() {
-                    const attemptId = resumeQuizBtn.getAttribute('data-attempt-id');
-                    const remainingTime = parseInt(resumeQuizBtn.getAttribute('data-remaining-time'));
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('resumeQuizModal'));
-                    modal.hide();
-                    startOrResumeQuiz(attemptId, remainingTime);
-                });
-            }
-
-            // Forfeit Quiz
-            if (forfeitQuizBtn && confirmForfeitQuizBtn) {
-                confirmForfeitQuizBtn.addEventListener('click', function() {
-                    const attemptId = forfeitQuizBtn.getAttribute('data-attempt-id');
-                    const questions = document.querySelectorAll('.quiz-question'); // Changed from '.question' to '.quiz-question'
-                    const answers = {};
-                    questions.forEach(question => {
-                        const questionId = question.getAttribute('data-question-id');
-                        const selectedAnswer = question.querySelector('input[type="radio"]:checked');
-                        if (questionId && selectedAnswer) {
-                            answers[questionId] = selectedAnswer.value;
-                        } else {
-                            console.log(`No selection for question ${questionId}:`, question.innerHTML); // Debug missing selections
-                        }
-                    });
-
-                    console.log('Forfeiting answers:', answers); // Debug log
-
-                    fetch('../includes/students/submit-quiz.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded'
-                            },
-                            body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&forfeit=true&attempt_id=${attemptId}`
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! Status: ${response.status}`);
-                            }
-                            return response.text();
-                        })
-                        .then(text => {
-                            console.log('Raw response:', text);
-                            const data = JSON.parse(text);
-                            if (data.error) {
-                                alert('Error: ' + data.error);
-                                return;
-                            }
-
-                            const modal = bootstrap.Modal.getInstance(document.getElementById('forfeitQuizModal'));
-                            modal.hide();
-                            displayQuizResults(data);
-                            resetQuizUI();
-                            queueNotification(
-                                'Quiz Forfeited',
-                                `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been forfeited.`
-                            );
-                        })
-                        .catch(error => {
-                            console.error('AJAX error:', error);
-                            alert('An error occurred while forfeiting the quiz.');
-                        });
-                });
-            }
-
-
-            // Handle quiz submission
-            const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
-            if (confirmSubmitBtn) {
-                confirmSubmitBtn.addEventListener('click', function() {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
-                    modal.hide();
-                    submitQuiz();
-                });
-            }
-
-            function submitQuiz(isAutoSubmit = false) {
-                const questions = document.querySelectorAll('.quiz-question'); // Changed from '.question' to '.quiz-question'
-                const answers = {};
-
-                questions.forEach(question => {
-                    const questionId = question.getAttribute('data-question-id');
-                    const selectedAnswer = question.querySelector('input[type="radio"]:checked');
-                    if (questionId && selectedAnswer) {
-                        answers[questionId] = selectedAnswer.value;
-                    } else {
-                        console.log(`No selection for question ${questionId}:`, question.innerHTML); // Debug missing selections
-                    }
-                });
-
-                console.log('Submitting answers:', answers); // Debug log
-
-                fetch('../includes/students/submit-quiz.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&is_auto_submit=${isAutoSubmit ? 'true' : 'false'}`
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! Status: ${response.status}`);
-                        }
-                        return response.text();
-                    })
-                    .then(text => {
-                        console.log('Raw response:', text);
-                        const data = JSON.parse(text);
-                        if (data.error) {
-                            alert('Error: ' + data.error);
-                            return;
-                        }
-
-                        displayQuizResults(data);
-                        if (timerInterval) clearInterval(timerInterval);
-                        resetQuizUI();
-                        queueNotification(
-                            isAutoSubmit ? 'Quiz Auto-Submitted' : 'Quiz Submitted',
-                            `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been ${isAutoSubmit ? 'automatically submitted' : 'submitted'}.`
-                        );
-                    })
-                    .catch(error => {
-                        console.error('AJAX error:', error);
-                        alert('An error occurred while submitting the quiz.');
-                    });
-            }
-
-            // Display quiz results
-            function displayQuizResults(data) {
-                const resultDiv = document.getElementById('quiz-result');
-                document.getElementById('score').textContent = data.score;
-                document.getElementById('pass-status').textContent = data.passed ? 'You passed!' : 'You did not pass.';
-                document.getElementById('badges-earned').textContent = data.badges_earned.length > 0 ?
-                    'Badges Earned: ' + data.badges_earned.join(', ') :
-                    'No badges earned.';
-                resultDiv.style.display = 'block';
-            }
-
-            // Reset quiz UI to overview
-            function resetQuizUI() {
-                if (!quizQuestions || !quizOverview) {
-                    console.error('Quiz UI elements missing on return');
-                    return;
-                }
-
-                quizQuestions.style.display = 'none';
-                quizOverview.style.display = 'block';
-                quizResult.style.display = 'none';
-
-                if (sidebar) {
-                    sidebar.style.display = 'block';
-                }
-
-                if (contentColumn) {
-                    contentColumn.classList.remove('col-12');
-                    contentColumn.classList.add('col-md-8', 'col-lg-9');
-                }
-
-                if (navigationControls) {
-                    navigationControls.style.display = 'flex';
-                }
-
-                // Reload the page to refresh attempt status
-                window.location.reload();
-            }
-
-            // Show error message
-            function showError(message) {
-                const questionContainer = document.getElementById('questionContainer');
-                if (questionContainer) {
-                    questionContainer.innerHTML = `
-                    <div class="alert alert-danger">${message}</div>
-                `;
-                }
-            }
-
-            // Queue notification
-            function queueNotification(title, message) {
-                // Send to backend
-                fetch('../includes/students/queue-notification.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user_id: <?php echo $user_id; ?>,
-                        notification_type: 'quiz_update',
-                        message: message
-                    })
-                });
-
-                // Show in toast
-                const toast = document.getElementById('liveToast');
-                const toastHeader = toast.querySelector('.toast-header h5');
-                const toastBody = toast.querySelector('.toast-body');
-                if (toast && toastHeader && toastBody) {
-                    toastHeader.textContent = title;
-                    toastBody.textContent = message;
-                    const bsToast = new bootstrap.Toast(toast);
-                    bsToast.show();
-                }
-            }
-            // Review Attempt Modal Handling
-            const reviewModal = document.getElementById('reviewAttemptModal');
-            if (reviewModal) {
-                reviewModal.addEventListener('show.bs.modal', function(event) {
-                    const attemptItem = event.relatedTarget;
-                    const attemptId = attemptItem.getAttribute('data-attempt-id');
-                    const attemptNumber = attemptItem.getAttribute('data-attempt-number');
-                    const reviewContent = document.getElementById('reviewContent');
-                    const modalTitle = document.getElementById('reviewAttemptModalLabel');
-
-                    // Update modal title
-                    modalTitle.textContent = `Review Attempt #${attemptNumber}`;
-
-                    fetch(`../includes/students/review-attempt.php?attempt_id=${attemptId}`)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('Fetch response:', data); // Debug log
-                            if (data.error) {
-                                reviewContent.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
-                                return;
-                            }
-
-                            let html = '';
-                            data.responses.forEach((response, index) => {
-                                const isCorrect = response.is_correct;
-                                const showCorrect = data.show_correct_answers;
-                                const correctAnswers = response.correct_answers || [];
-
-                                html += `
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">Question ${index + 1}: ${response.question_text}</h6>
-                        <span class="badge ${isCorrect ? 'bg-success' : 'bg-danger'}">
-                            ${isCorrect ? 'Correct' : 'Incorrect'}
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <p><strong>Your Answer:</strong> ${response.student_answer || 'Not answered'}</p>
-            `;
-
-                                if (!isCorrect && showCorrect) {
-                                    html += `
-                    <p><strong>Correct Answer:</strong> ${correctAnswers.join(', ') || 'N/A'}</p>
-                `;
-                                }
-
-                                html += `
-                    </div>
-                </div>
-            `;
-                            });
-
-                            reviewContent.innerHTML = html || '<div class="alert alert-warning">No responses found for this attempt.</div>';
-                        })
-                        .catch(error => {
-                            console.error('Error loading attempt review:', error);
-                            reviewContent.innerHTML = `<div class="alert alert-danger">Failed to load attempt details. Please try again. Error: ${error.message}</div>`;
-                        });
-                });
-            }
+    // Autosave function to update student_quiz_attempts
+    function autosaveQuiz(attemptId) {
+        if (userId === 0) {
+            console.error('Cannot autosave: User ID is not set.');
+            return;
         }
+
+        const answers = collectAnswers();
+        if (Object.keys(answers).length === 0) return; // No answers to save
+
+        console.log('Autosaving with user_id:', userId);
+        fetch('../includes/students/autosave-quiz.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `attempt_id=${attemptId}&quiz_id=<?php echo $quiz_id; ?>&user_id=${userId}&answered_questions=${encodeURIComponent(JSON.stringify(answers))}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Answers autosaved:', answers);
+                queueNotification('Autosave', 'Your quiz progress has been autosaved.');
+            } else {
+                console.error('Autosave failed:', data.error || 'Unknown error');
+            }
+        })
+        .catch(error => {
+            console.error('Autosave error:', error);
+        });
+    }
+
+    // Start or resume quiz
+    function startOrResumeQuiz(attemptId = null, remainingTime = timeLimit * 60) {
+        if (!quizOverview || !quizQuestions) {
+            console.error('Quiz UI elements missing');
+            return;
+        }
+
+        // Hide overview and show questions
+        quizOverview.style.display = 'none';
+        quizQuestions.style.display = 'block';
+
+        // Hide sidebar
+        if (sidebar) {
+            sidebar.style.display = 'none';
+        }
+
+        // Make content full width
+        if (contentColumn) {
+            contentColumn.classList.remove('col-md-8', 'col-lg-9');
+            contentColumn.classList.add('col-12');
+        }
+
+        // Hide navigation
+        if (navigationControls) {
+            navigationControls.style.display = 'none';
+        }
+
+        // Load questions
+        const questionContainer = document.getElementById('questionContainer');
+        const submitButtonWrapper = document.getElementById('submitButtonWrapper');
+        const submitBtn = document.getElementById('submitQuiz');
+        if (!questionContainer || !submitButtonWrapper || !submitBtn) {
+            console.error('Question container, submit button wrapper, or submit button missing');
+            return;
+        }
+
+        submitButtonWrapper.style.display = 'block';
+        submitBtn.disabled = false;
+
+        // Fetch questions
+        fetch(`../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz_id; ?>&attempt_id=${attemptId || ''}`)
+            .then(response => response.text())
+            .then(html => {
+                questionContainer.innerHTML = html;
+                console.log(attemptId ? 'Resumed quiz' : 'Started new quiz');
+            })
+            .catch(error => {
+                console.error('Error loading questions:', error);
+                showError('Failed to load quiz questions. Please try again.');
+            });
+
+        // Start timer if applicable
+        if (timeLimit > 0) {
+            let timeLeft = remainingTime;
+            const timeDisplay = document.getElementById('timeRemaining');
+            if (!timeDisplay) {
+                console.error('Time display element missing');
+                return;
+            }
+            timeDisplay.textContent = formatTime(timeLeft);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = formatTime(timeLeft);
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    clearInterval(autosaveInterval); // Stop autosave
+                    submitQuiz(true); // Auto-submit
+                }
+            }, 1000);
+        }
+
+        // Start autosave if attemptId exists
+        if (attemptId) {
+            autosaveInterval = setInterval(() => {
+                autosaveQuiz(attemptId);
+            }, 3000); // Autosave every 3 seconds
+        }
+    }
+
+    // Start Quiz
+    if (startQuizBtn && confirmStartQuizBtn) {
+        startQuizBtn.addEventListener('click', function() {
+            const maxAttempts = parseInt(this.getAttribute('data-max-attempts')) || 0;
+            const currentAttempts = parseInt(this.getAttribute('data-current-attempts')) || 0;
+            if (maxAttempts > 0 && currentAttempts >= maxAttempts) {
+                alert('You have reached the maximum number of attempts for this quiz.');
+                return;
+            }
+        });
+
+        confirmStartQuizBtn.addEventListener('click', function() {
+            const quizId = <?php echo isset($quiz_id) ? (int)$quiz_id : 0; ?>;
+            const courseId = <?php echo isset($course_id) ? (int)$course_id : 0; ?>;
+            if (!quizId || !courseId) {
+                console.error('Quiz ID or Course ID is missing', { quizId, courseId });
+                return;
+            }
+
+            // Create a new attempt
+            fetch('../includes/students/quiz-handler.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `action=start_quiz&quiz_id=${quizId}&course_id=${courseId}`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(text => {
+                console.log('Raw response:', text);
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('startQuizModal'));
+                        modal.hide();
+                        startOrResumeQuiz(data.attempt_id || null);
+                    } else {
+                        console.error('Failed to start quiz:', data.error || 'Unknown error');
+                    }
+                } catch (e) {
+                    console.error('Failed to parse JSON:', e, 'Raw text:', text);
+                    throw new Error('Invalid JSON response');
+                }
+            })
+            .catch(error => {
+                console.error('Error starting quiz:', error);
+            });
+        });
+    }
+
+    // Resume Quiz
+    if (resumeQuizBtn && confirmResumeQuizBtn) {
+        confirmResumeQuizBtn.addEventListener('click', function() {
+            const attemptId = resumeQuizBtn.getAttribute('data-attempt-id');
+            const remainingTime = parseInt(resumeQuizBtn.getAttribute('data-remaining-time'));
+            const modal = bootstrap.Modal.getInstance(document.getElementById('resumeQuizModal'));
+            modal.hide();
+            startOrResumeQuiz(attemptId, remainingTime);
+        });
+    }
+
+    // Forfeit Quiz
+    if (forfeitQuizBtn && confirmForfeitQuizBtn) {
+        confirmForfeitQuizBtn.addEventListener('click', function() {
+            const attemptId = forfeitQuizBtn.getAttribute('data-attempt-id');
+            const answers = collectAnswers();
+
+            // Autosave before forfeiting
+            autosaveQuiz(attemptId);
+
+            fetch('../includes/students/submit-quiz.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&forfeit=true&attempt_id=${attemptId}`
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(text => {
+                console.log('Raw response:', text);
+                const data = JSON.parse(text);
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                clearInterval(autosaveInterval); // Stop autosave
+                const modal = bootstrap.Modal.getInstance(document.getElementById('forfeitQuizModal'));
+                modal.hide();
+                displayQuizResults(data);
+                resetQuizUI();
+                queueNotification(
+                    'Quiz Forfeited',
+                    `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been forfeited.`
+                );
+            })
+            .catch(error => {
+                console.error('AJAX error:', error);
+                alert('An error occurred while forfeiting the quiz.');
+            });
+        });
+    }
+
+    // Handle quiz submission
+    const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+    if (confirmSubmitBtn) {
+        confirmSubmitBtn.addEventListener('click', function() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
+            modal.hide();
+            submitQuiz();
+        });
+    }
+
+    function submitQuiz(isAutoSubmit = false) {
+        const answers = collectAnswers();
+
+        fetch('../includes/students/submit-quiz.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&is_auto_submit=${isAutoSubmit ? 'true' : 'false'}`
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(text => {
+            console.log('Raw response:', text);
+            const data = JSON.parse(text);
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+
+            clearInterval(autosaveInterval); // Stop autosave
+            displayQuizResults(data);
+            if (timerInterval) clearInterval(timerInterval);
+            resetQuizUI();
+            queueNotification(
+                isAutoSubmit ? 'Quiz Auto-Submitted' : 'Quiz Submitted',
+                `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been ${isAutoSubmit ? 'automatically submitted' : 'submitted'}.`
+            );
+        })
+        .catch(error => {
+            console.error('AJAX error:', error);
+            alert('An error occurred while submitting the quiz.');
+        });
+    }
+
+    // Display quiz results
+    function displayQuizResults(data) {
+        const resultDiv = document.getElementById('quiz-result');
+        document.getElementById('score').textContent = data.score;
+        document.getElementById('pass-status').textContent = data.passed ? 'You passed!' : 'You did not pass.';
+        document.getElementById('badges-earned').textContent = data.badges_earned.length > 0 ?
+            'Badges Earned: ' + data.badges_earned.join(', ') :
+            'No badges earned.';
+        resultDiv.style.display = 'block';
+    }
+
+    // Reset quiz UI to overview
+    function resetQuizUI() {
+        if (!quizQuestions || !quizOverview) {
+            console.error('Quiz UI elements missing on return');
+            return;
+        }
+
+        quizQuestions.style.display = 'none';
+        quizOverview.style.display = 'block';
+        quizResult.style.display = 'none';
+
+        if (sidebar) {
+            sidebar.style.display = 'block';
+        }
+
+        if (contentColumn) {
+            contentColumn.classList.remove('col-12');
+            contentColumn.classList.add('col-md-8', 'col-lg-9');
+        }
+
+        if (navigationControls) {
+            navigationControls.style.display = 'flex';
+        }
+
+        // Reload the page to refresh attempt status
+        window.location.reload();
+    }
+
+    // Show error message
+    function showError(message) {
+        const questionContainer = document.getElementById('questionContainer');
+        if (questionContainer) {
+            questionContainer.innerHTML = `
+                <div class="alert alert-danger">${message}</div>
+            `;
+        }
+    }
+
+    // Queue notification
+    function queueNotification(title, message) {
+        fetch('../includes/students/queue-notification.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: <?php echo $user_id; ?>,
+                notification_type: 'quiz_update',
+                message: message
+            })
+        });
+
+        const toast = document.getElementById('liveToast');
+        const toastHeader = toast.querySelector('.toast-header h5');
+        const toastBody = toast.querySelector('.toast-body');
+        if (toast && toastHeader && toastBody) {
+            toastHeader.textContent = title;
+            toastBody.textContent = message;
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+    }
+
+    // Review Attempt Modal Handling
+    const reviewModal = document.getElementById('reviewAttemptModal');
+    if (reviewModal) {
+        reviewModal.addEventListener('show.bs.modal', function(event) {
+            const attemptItem = event.relatedTarget;
+            const attemptId = attemptItem.getAttribute('data-attempt-id');
+            const attemptNumber = attemptItem.getAttribute('data-attempt-number');
+            const reviewContent = document.getElementById('reviewContent');
+            const modalTitle = document.getElementById('reviewAttemptModalLabel');
+
+            modalTitle.textContent = `Review Attempt #${attemptNumber}`;
+
+            fetch(`../includes/students/review-attempt.php?attempt_id=${attemptId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Fetch response:', data);
+                    if (data.error) {
+                        reviewContent.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                        return;
+                    }
+
+                    let html = '';
+                    data.responses.forEach((response, index) => {
+                        const isCorrect = response.is_correct;
+                        const showCorrect = data.show_correct_answers;
+                        const correctAnswers = response.correct_answers || [];
+
+                        html += `
+                            <div class="card mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Question ${index + 1}: ${response.question_text}</h6>
+                                    <span class="badge ${isCorrect ? 'bg-success' : 'bg-danger'}">
+                                        ${isCorrect ? 'Correct' : 'Incorrect'}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Your Answer:</strong> ${response.student_answer || 'Not answered'}</p>
+                        `;
+
+                        if (!isCorrect && showCorrect) {
+                            html += `
+                                    <p><strong>Correct Answer:</strong> ${correctAnswers.join(', ') || 'N/A'}</p>
+                                `;
+                        }
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    reviewContent.innerHTML = html || '<div class="alert alert-warning">No responses found for this attempt.</div>';
+                })
+                .catch(error => {
+                    console.error('Error loading attempt review:', error);
+                    reviewContent.innerHTML = `<div class="alert alert-danger">Failed to load attempt details. Please try again. Error: ${error.message}</div>`;
+                });
+        });
+    }
+}
 
         // Video progress tracking (unchanged)
         <?php if ($content_type === 'video' && !empty($video_source) && $video_source['provider'] === 'HTML5'): ?>
