@@ -10,6 +10,10 @@ if (!isset($_GET['quiz_id']) || !is_numeric($_GET['quiz_id'])) {
 $quiz_id = intval($_GET['quiz_id']);
 $user_id = $_SESSION['user_id'] ?? 0;
 
+// Default shuffle settings (adjust these as needed)
+$shuffle_questions = true; // Set to true to shuffle questions, false to keep original order
+$shuffle_answers = true;   // Set to true to shuffle answers, false to keep original order
+
 // Query questions
 $questions_query = "SELECT question_id, question_text FROM quiz_questions WHERE quiz_id = ?";
 $questions_stmt = $conn->prepare($questions_query);
@@ -25,6 +29,12 @@ if ($result->num_rows === 0) {
     echo '<div class="alert alert-info">No questions found.</div>';
     $questions_stmt->close();
     exit;
+}
+
+// Fetch all questions into an array for shuffling
+$questions = $result->fetch_all(MYSQLI_ASSOC);
+if ($shuffle_questions) {
+    shuffle($questions);
 }
 
 // Fetch in-progress answers from student_quiz_attempts if resuming
@@ -51,11 +61,12 @@ if ($attempt_id && $user_id) {
     $attempt_stmt->close();
 }
 
-while ($question = $result->fetch_assoc()) {
+// Process each question
+foreach ($questions as $question) {
     echo '<div class="quiz-question" data-question-id="' . $question['question_id'] . '">';
     echo '<h5>' . htmlspecialchars($question['question_text']) . '</h5>';
 
-    // Fetch answers
+    // Fetch and shuffle answers
     $answers_query = "SELECT answer_id, answer_text FROM quiz_answers WHERE question_id = ?";
     $answers_stmt = $conn->prepare($answers_query);
     if (!$answers_stmt) {
@@ -65,9 +76,14 @@ while ($question = $result->fetch_assoc()) {
     }
     $answers_stmt->bind_param("i", $question['question_id']);
     $answers_stmt->execute();
-    $answers = $answers_stmt->get_result();
+    $answers_result = $answers_stmt->get_result();
 
-    while ($answer = $answers->fetch_assoc()) {
+    $answers = $answers_result->fetch_all(MYSQLI_ASSOC);
+    if ($shuffle_answers) {
+        shuffle($answers);
+    }
+
+    foreach ($answers as $answer) {
         $is_checked = isset($in_progress_answers[$question['question_id']]) && $in_progress_answers[$question['question_id']] == $answer['answer_id'] ? 'checked' : '';
         echo '<div class="form-check">';
         echo '<input class="form-check-input" type="radio" name="question_' . $question['question_id'] . '" id="answer_' . $answer['answer_id'] . '" value="' . $answer['answer_id'] . '" ' . $is_checked . '>';
