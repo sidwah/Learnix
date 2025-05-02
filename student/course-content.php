@@ -1353,189 +1353,427 @@ function getLinkDisplay($topic)
                         <?php endif; ?>
                     </div>
 
-                    <!-- Dynamic Content Display -->
-                    <div class="content-container mb-5">
-                        <?php if (isset($_GET['quiz_id'])): ?>
-                            <?php include '../includes/students/quiz-handler.php'; ?>
+<!-- Dynamic Content Display -->
+<div class="content-container mb-5">
+    <?php if (isset($_GET['quiz_id'])): ?>
+        <?php
+        // Include quiz-handler.php and ensure variables are available
+        $quiz_id = (int)$_GET['quiz_id'];
+        $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
+        $course_id = isset($_GET['course_id']) ? (int)$_GET['course_id'] : 0;
+
+        if (!$user_id || !$quiz_id || !$course_id) {
+            echo '<div class="alert alert-danger">Required parameters are missing.</div>';
+        } else {
+            // Include quiz-handler.php
+            include '../includes/students/quiz-handler.php';
+
+            // Fallback values if queries fail
+            $quiz = $quiz ?? ['quiz_title' => 'Unknown Quiz', 'instruction' => '', 'time_limit' => 0, 'pass_mark' => 0];
+            $question_count = $question_count ?? 0;
+            $current_attempts = $current_attempts ?? 0;
+            $max_attempts = $max_attempts ?? 0;
+            $active_attempt = $active_attempt ?? null;
+            $remaining_time = $remaining_time ?? null;
+        }
+        ?>
+
+        <!-- Quiz UI -->
+        <div class="quiz-cont">
+            <!-- Quiz Overview Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h3>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($quiz['instruction'])): ?>
+                        <div class="mb-4">
+                            <h5><i class="bi bi-info-circle me-2"></i>Instructions</h5>
+                            <p class="text-muted"><?php echo nl2br(htmlspecialchars($quiz['instruction'])); ?></p>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <i class="bi bi-clock fs-3 text-primary"></i>
+                                <h6 class="mt-2 mb-1">Time Limit</h6>
+                                <p class="mb-0"><?php echo $quiz['time_limit'] > 0 ? $quiz['time_limit'] . ' minutes' : 'No time limit'; ?></p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <i class="bi bi-check-circle fs-3 text-primary"></i>
+                                <h6 class="mt-2 mb-1">Pass Mark</h6>
+                                <p class="mb-0"><?php echo isset($quiz['pass_mark']) ? $quiz['pass_mark'] . '%' : 'N/A'; ?></p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <i class="bi bi-question-circle fs-3 text-primary"></i>
+                                <h6 class="mt-2 mb-1">Questions</h6>
+                                <p class="mb-0"><?php echo $question_count > 0 ? $question_count : 'N/A'; ?></p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <i class="bi bi-arrow-repeat fs-3 text-primary"></i>
+                                <h6 class="mt-2 mb-1">Attempts</h6>
+                                <p class="mb-0"><?php echo $current_attempts . ' of ' . ($max_attempts > 0 ? $max_attempts : 'Unlimited'); ?></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <?php if ($active_attempt && $remaining_time > 0): ?>
+                            <div id="activeAttempt" class="mb-3 text-muted" data-time-remaining="<?php echo $remaining_time; ?>">
+                                Active Attempt: <span id="remainingTime"><?php echo $remaining_time; ?> remaining (<?php echo gmdate('i:s', $remaining_time); ?>)</span>
+                            </div>
+                            <button class="btn btn-success btn-lg me-2" id="resumeQuizBtn" data-bs-toggle="modal" data-bs-target="#resumeQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>" data-remaining-time="<?php echo $remaining_time; ?>">
+                                <i class="bi bi-play-circle me-2"></i>Resume Quiz
+                            </button>
+                            <button class="btn btn-danger btn-lg" id="forfeitQuizBtn" data-bs-toggle="modal" data-bs-target="#forfeitQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>">
+                                <i class="bi bi-x-circle me-2"></i>Forfeit Quiz
+                            </button>
+                        <?php elseif (!empty($attempts)): ?>
+                            <button class="btn btn-info btn-lg me-2" id="reviewLastAttemptBtn" data-bs-toggle="modal" data-bs-target="#reviewAttemptModal" data-attempt-id="<?php echo $attempts[0]['attempt_id']; ?>" data-attempt-number="<?php echo $attempts[0]['attempt_number']; ?>">
+                                <i class="bi bi-eye-fill me-2"></i>Review Last Attempt
+                            </button>
+                            <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
+                                <i class="bi bi-play-circle me-2"></i>Start Quiz
+                            </button>
                         <?php else: ?>
-                            <!-- REGULAR CONTENT DISPLAY -->
-                            <?php echo getContentDisplay($topic, $video_source, $content_type); ?>
+                            <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
+                                <i class="bi bi-play-circle me-2"></i>Start Quiz
+                            </button>
+                        <?php endif; ?>
+                        <div id="cooldownTimer" class="mt-2 text-muted" style="display: none;">
+                            Cooldown: <span id="cooldownSeconds">10</span>s
+                        </div>
+                    </div>
 
-                            <!-- Nav Scroller for tabs - Only shown for regular content -->
-                            <div class="js-nav-scroller hs-nav-scroller-horizontal">
-                                <span class="hs-nav-scroller-arrow-prev" style="display: none;">
-                                    <a class="hs-nav-scroller-arrow-link" href="javascript:;">
-                                        <i class="bi-chevron-left"></i>
-                                    </a>
-                                </span>
+                    <!-- Include Previous Attempts -->
+                    <?php include '../includes/students/previous-attempts.php'; ?>
+                </div>
+            </div>
 
-                                <span class="hs-nav-scroller-arrow-next" style="display: none;">
-                                    <a class="hs-nav-scroller-arrow-link" href="javascript:;">
-                                        <i class="bi-chevron-right"></i>
-                                    </a>
-                                </span>
-
-                                <!-- Nav -->
-                                <ul class="nav nav-segment nav-fill mb-7" id="featuresTab" role="tablist">
-                                    <?php if (!empty($topic['description'])): ?>
-                                        <li class="nav-item" role="presentation">
-                                            <a class="nav-link active" href="#description" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" role="tab" aria-controls="description" aria-selected="true" style="min-width: 7rem;">Description</a>
-                                        </li>
-                                    <?php endif; ?>
-
-                                    <!-- Notes tab (always show) -->
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link <?php echo empty($topic['description']) ? 'active' : ''; ?>"
-                                            href="#notes" id="notes-tab" data-bs-toggle="tab"
-                                            data-bs-target="#notes" role="tab"
-                                            aria-controls="notes"
-                                            aria-selected="<?php echo empty($topic['description']) ? 'true' : 'false'; ?>"
-                                            style="min-width: 7rem;">
-                                            Notes
-                                            <?php if ($notes_exist): ?>
-                                                <i class="bi-check-circle-fill text-success ms-1 small"></i>
-                                            <?php endif; ?>
-                                        </a>
-                                    </li>
-
-                                    <?php if (!empty($resources)): ?>
-                                        <li class="nav-item" role="presentation">
-                                            <a class="nav-link" href="#resources" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources" role="tab" aria-controls="resources" aria-selected="false" style="min-width: 7rem;">Resources</a>
-                                        </li>
-                                    <?php endif; ?>
-
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link" href="#discussion" id="discussion-tab" data-bs-toggle="tab" data-bs-target="#discussion" role="tab" aria-controls="discussion" aria-selected="false" style="min-width: 7rem;">Discussion</a>
-                                    </li>
-                                </ul>
-                                <!-- End Nav -->
-                            </div>
-                            <!-- End Nav Scroller -->
-
-                            <!-- Tab Content - Only for regular content -->
-                            <div class="tab-content" id="pills-tabContent">
-                                <?php if (!empty($topic['description'])): ?>
-                                    <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
-                                        <h5><?php echo htmlspecialchars($topic['content_title']); ?></h5>
-                                        <div class="content-description">
-                                            <?php echo $topic['description']; ?>
-                                        </div>
-                                    </div>
+            <!-- Start Quiz Modal -->
+            <div class="modal fade" id="startQuizModal" tabindex="-1" aria-labelledby="startQuizModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Start <?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you ready to start the quiz?</p>
+                            <ul class="list-unstyled">
+                                <?php if ($quiz['time_limit'] > 0): ?>
+                                    <li><i class="bi bi-clock me-2"></i><?php echo $quiz['time_limit']; ?> min limit</li>
                                 <?php endif; ?>
+                                <li><i class="bi bi-check-circle me-2"></i><?php echo isset($quiz['pass_mark']) ? $quiz['pass_mark'] . '%' : 'N/A'; ?> to pass</li>
+                                <li><i class="bi bi-exclamation-circle me-2"></i>No pausing or rewinding allowed</li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button class="btn btn-primary" id="confirmStartQuiz"><i class="bi bi-play-circle me-2"></i>Start Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                                <!-- Notes Tab -->
-                                <div class="tab-pane fade <?php echo empty($topic['description']) ? 'show active' : ''; ?>" id="notes" role="tabpanel" aria-labelledby="notes-tab">
-                                    <div class="row mb-4">
-                                        <div class="col">
-                                            <h5><i class="bi bi-journal-text me-2"></i>My Notes</h5>
-                                            <p class="text-muted">Take notes for this topic that will be saved for your future reference.</p>
-                                        </div>
-                                        <div class="col-auto">
-                                            <div class="btn-group">
-                                                <button id="saveNotes" class="btn btn-primary">
-                                                    <i class="bi bi-save me-2"></i>Save Notes
-                                                </button>
-                                                <button id="printNotes" class="btn btn-outline-secondary">
-                                                    <i class="bi bi-printer me-2"></i>Print
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+            <!-- Resume Quiz Modal -->
+            <div class="modal fade" id="resumeQuizModal" tabindex="-1" aria-labelledby="resumeQuizModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="resumeQuizModalLabel">Resume <?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>You have an active quiz attempt with <span id="modalRemainingTime"><?php echo $remaining_time ? gmdate('i:s', $remaining_time) : '0:00'; ?></span> remaining.</p>
+                            <p>Would you like to resume where you left off?</p>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-exclamation-circle me-2"></i>Time will continue counting down immediately.</li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button class="btn btn-success" id="confirmResumeQuiz"><i class="bi bi-play-circle me-2"></i>Resume Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                                    <div class="form-group mb-3">
-                                        <textarea id="personalNotes" class="form-control" style="min-height: 200px" placeholder="Start typing your notes here..."><?php echo htmlspecialchars($notes_content); ?></textarea>
-                                    </div>
+            <!-- Forfeit Quiz Modal -->
+            <div class="modal fade" id="forfeitQuizModal" tabindex="-1" aria-labelledby="forfeitQuizModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="forfeitQuizModalLabel">Forfeit <?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to forfeit this quiz attempt?</p>
+                            <p>Your attempt will be submitted with the score based on answers provided so far.</p>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-exclamation-circle me-2"></i>This action cannot be undone.</li>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button class="btn btn-danger" id="confirmForfeitQuiz"><i class="bi bi-x-circle me-2"></i>Submit and Forfeit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                                    <?php if ($notes_exist): ?>
-                                        <div class="text-muted small">
-                                            Last updated: <?php echo date('F j, Y, g:i a', strtotime($notes_updated)); ?>
-                                        </div>
-                                    <?php endif; ?>
+            <!-- Confirm Submission Modal -->
+            <div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-labelledby="confirmSubmitLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="confirmSubmitLabel">Submit Quiz</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to submit this quiz?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="type" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="confirmSubmitBtn">Yes, Submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                                    <div id="notesStatus" class="mt-2" style="display: none;"></div>
-                                </div>
-
-                                <?php if (!empty($resources)): ?>
-                                    <div class="tab-pane fade" id="resources" role="tabpanel" aria-labelledby="resources-tab">
-                                        <h4 class="mb-3">Additional Resources</h4>
-                                        <div class="list-group">
-                                            <div class="row g-3">
-                                                <?php foreach ($resources as $resource): ?>
-                                                    <?php
-                                                    $resource_path = $resource['resource_path'];
-                                                    $resource_name = basename($resource_path);
-                                                    $resource_ext = strtolower(pathinfo($resource_path, PATHINFO_EXTENSION));
-
-                                                    // Determine icon based on file extension
-                                                    $icon_class = 'bi-file-earmark';
-                                                    if (in_array($resource_ext, ['pdf'])) {
-                                                        $icon_class = 'bi-file-earmark-pdf';
-                                                    } elseif (in_array($resource_ext, ['doc', 'docx'])) {
-                                                        $icon_class = 'bi-file-earmark-word';
-                                                    } elseif (in_array($resource_ext, ['xls', 'xlsx'])) {
-                                                        $icon_class = 'bi-file-earmark-excel';
-                                                    } elseif (in_array($resource_ext, ['ppt', 'pptx'])) {
-                                                        $icon_class = 'bi-file-earmark-ppt';
-                                                    } elseif (in_array($resource_ext, ['jpg', 'jpeg', 'png', 'gif'])) {
-                                                        $icon_class = 'bi-file-earmark-image';
-                                                    } elseif (in_array($resource_ext, ['zip', 'rar'])) {
-                                                        $icon_class = 'bi-file-earmark-zip';
-                                                    }
-                                                    ?>
-                                                    <div class="col-md-6">
-                                                        <div class="card h-100">
-                                                            <div class="card-body">
-                                                                <div class="d-flex align-items-center">
-                                                                    <div class="flex-shrink-0">
-                                                                        <i class="<?php echo $icon_class; ?> fs-2 text-primary"></i>
-                                                                    </div>
-                                                                    <div class="flex-grow-1 ms-3">
-                                                                        <h6 class="card-title mb-0"><?php echo htmlspecialchars($resource_name); ?></h6>
-                                                                        <p class="card-text small text-muted"><?php echo strtoupper($resource_ext); ?> file</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="card-footer bg-transparent border-top-0">
-                                                                <a href="<?php echo '../Uploads/resources/' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
-                                                                    <i class="bi bi-download me-2"></i> Download
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-
-                                <div class="tab-pane fade" id="discussion" role="tabpanel" aria-labelledby="discussion-tab">
-                                    <div class="d-flex justify-content-between align-items-center mb-4">
-                                        <h5><i class="bi bi-chat-left-text me-2"></i>Discussion</h5>
-                                        <div class="d-flex gap-2">
-                                            <button id="newDiscussionBtn" class="btn btn-sm btn-primary">
-                                                <i class="bi bi-plus-circle me-1"></i> New Discussion
-                                            </button>
-                                            <button id="filterDiscussionsBtn" class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-funnel me-1"></i> Filter
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div class="p-4 bg-light rounded mb-4 text-center">
-                                        <div class="mb-3">
-                                            <i class="bi bi-chat-square-text fs-1 text-primary"></i>
-                                        </div>
-                                        <h5>No discussions yet</h5>
-                                        <p class="text-muted">Be the first to start a discussion about this topic.</p>
-                                        <button class="btn btn-primary">
-                                            <i class="bi bi-plus-circle me-2"></i>Start a Discussion
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- End Tab Content -->
+            <!-- Quiz Questions Area -->
+            <div id="quizQuestions" class="card shadow-sm mt-4" style="display: none;">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h3>
+                    <div id="quizTimer" class="fs-5">
+                        <?php if ($quiz['time_limit'] > 0): ?>
+                            Time Left: <span id="timeRemaining"><?php echo $active_attempt ? gmdate('i:s', $remaining_time) : ($quiz['time_limit'] . ':00'); ?></span>
                         <?php endif; ?>
                     </div>
+                </div>
+                <div class="card-body">
+                    <div id="questionContainer">
+                        <div class="alert alert-info text-center">Click "Start Quiz" or "Resume Quiz" to load questions.</div>
+                    </div>
+                    <div class="text-end mt-4" id="submitButtonWrapper" style="display: block;">
+                        <button class="btn btn-primary" id="submitQuiz" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
+                            <i class="bi bi-send me-2"></i>Submit Quiz
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Results Area -->
+            <div id="quiz-result" style="display: none;" class="mt-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title">Quiz Results</h4>
+                        <p>Your score: <span id="score"></span>%</p>
+                        <p id="pass-status"></p>
+                        <p id="badges-earned"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blinking CSS for Attempt Reset -->
+            <style>
+                @keyframes blink {
+                    50% {
+                        opacity: 0;
+                    }
+                }
+
+                .blink {
+                    animation: blink 0.5s step-end infinite;
+                }
+            </style>
+        </div>
+    <?php else: ?>
+        <!-- REGULAR CONTENT DISPLAY -->
+        <?php echo getContentDisplay($topic, $video_source, $content_type); ?>
+
+        <!-- Nav Scroller for tabs - Only shown for regular content -->
+        <div class="js-nav-scroller hs-nav-scroller-horizontal">
+            <span class="hs-nav-scroller-arrow-prev" style="display: none;">
+                <a class="hs-nav-scroller-arrow-link" href="javascript:;">
+                    <i class="bi-chevron-left"></i>
+                </a>
+            </span>
+
+            <span class="hs-nav-scroller-arrow-next" style="display: none;">
+                <a class="hs-nav-scroller-arrow-link" href="javascript:;">
+                    <i class="bi-chevron-right"></i>
+                </a>
+            </span>
+
+            <!-- Nav -->
+            <ul class="nav nav-segment nav-fill mb-7" id="featuresTab" role="tablist">
+                <?php if (!empty($topic['description'])): ?>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link active" href="#description" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" role="tab" aria-controls="description" aria-selected="true" style="min-width: 7rem;">Description</a>
+                    </li>
+                <?php endif; ?>
+
+                <!-- Notes tab (always show) -->
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link <?php echo empty($topic['description']) ? 'active' : ''; ?>"
+                        href="#notes" id="notes-tab" data-bs-toggle="tab"
+                        data-bs-target="#notes" role="tab"
+                        aria-controls="notes"
+                        aria-selected="<?php echo empty($topic['description']) ? 'true' : 'false'; ?>"
+                        style="min-width: 7rem;">
+                        Notes
+                        <?php if ($notes_exist): ?>
+                            <i class="bi-check-circle-fill text-success ms-1 small"></i>
+                        <?php endif; ?>
+                    </a>
+                </li>
+
+                <?php if (!empty($resources)): ?>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link" href="#resources" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources" role="tab" aria-controls="resources" aria-selected="false" style="min-width: 7rem;">Resources</a>
+                    </li>
+                <?php endif; ?>
+
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" href="#discussion" id="discussion-tab" data-bs-toggle="tab" data-bs-target="#discussion" role="tab" aria-controls="discussion" aria-selected="false" style="min-width: 7rem;">Discussion</a>
+                </li>
+            </ul>
+            <!-- End Nav -->
+        </div>
+        <!-- End Nav Scroller -->
+
+        <!-- Tab Content - Only for regular content -->
+        <div class="tab-content" id="pills-tabContent">
+            <?php if (!empty($topic['description'])): ?>
+                <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+                    <h5><?php echo htmlspecialchars($topic['content_title']); ?></h5>
+                    <div class="content-description">
+                        <?php echo $topic['description']; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Notes Tab -->
+            <div class="tab-pane fade <?php echo empty($topic['description']) ? 'show active' : ''; ?>" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+                <div class="row mb-4">
+                    <div class="col">
+                        <h5><i class="bi bi-journal-text me-2"></i>My Notes</h5>
+                        <p class="text-muted">Take notes for this topic that will be saved for your future reference.</p>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group">
+                            <button id="saveNotes" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>Save Notes
+                            </button>
+                            <button id="printNotes" class="btn btn-outline-secondary">
+                                <i class="bi bi-printer me-2"></i>Print
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <textarea id="personalNotes" class="form-control" style="min-height: 200px" placeholder="Start typing your notes here..."><?php echo htmlspecialchars($notes_content); ?></textarea>
+                </div>
+
+                <?php if ($notes_exist): ?>
+                    <div class="text-muted small">
+                        Last updated: <?php echo date('F j, Y, g:i a', strtotime($notes_updated)); ?>
+                    </div>
+                <?php endif; ?>
+
+                <div id="notesStatus" class="mt-2" style="display: none;"></div>
+            </div>
+
+            <?php if (!empty($resources)): ?>
+                <div class="tab-pane fade" id="resources" role="tabpanel" aria-labelledby="resources-tab">
+                    <h4 class="mb-3">Additional Resources</h4>
+                    <div class="list-group">
+                        <div class="row g-3">
+                            <?php foreach ($resources as $resource): ?>
+                                <?php
+                                $resource_path = $resource['resource_path'];
+                                $resource_name = basename($resource_path);
+                                $resource_ext = strtolower(pathinfo($resource_path, PATHINFO_EXTENSION));
+
+                                // Determine icon based on file extension
+                                $icon_class = 'bi-file-earmark';
+                                if (in_array($resource_ext, ['pdf'])) {
+                                    $icon_class = 'bi-file-earmark-pdf';
+                                } elseif (in_array($resource_ext, ['doc', 'docx'])) {
+                                    $icon_class = 'bi-file-earmark-word';
+                                } elseif (in_array($resource_ext, ['xls', 'xlsx'])) {
+                                    $icon_class = 'bi-file-earmark-excel';
+                                } elseif (in_array($resource_ext, ['ppt', 'pptx'])) {
+                                    $icon_class = 'bi-file-earmark-ppt';
+                                } elseif (in_array($resource_ext, ['jpg', 'jpeg', 'png', 'gif'])) {
+                                    $icon_class = 'bi-file-earmark-image';
+                                } elseif (in_array($resource_ext, ['zip', 'rar'])) {
+                                    $icon_class = 'bi-file-earmark-zip';
+                                }
+                                ?>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    <i class="<?php echo $icon_class; ?> fs-2 text-primary"></i>
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <h6 class="card-title mb-0"><?php echo htmlspecialchars($resource_name); ?></h6>
+                                                    <p class="card-text small text-muted"><?php echo strtoupper($resource_ext); ?> file</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-transparent border-top-0">
+                                            <a href="<?php echo '../Uploads/resources/' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
+                                                <i class="bi bi-download me-2"></i> Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div class="tab-pane fade" id="discussion" role="tabpanel" aria-labelledby="discussion-tab">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5><i class="bi bi-chat-left-text me-2"></i>Discussion</h5>
+                    <div class="d-flex gap-2">
+                        <button id="newDiscussionBtn" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i> New Discussion
+                        </button>
+                        <button id="filterDiscussionsBtn" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-funnel me-1"></i> Filter
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-light rounded mb-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-chat-square-text fs-1 text-primary"></i>
+                    </div>
+                    <h5>No discussions yet</h5>
+                    <p class="text-muted">Be the first to start a discussion about this topic.</p>
+                    <button class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>Start a Discussion
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- End Tab Content -->
+    <?php endif; ?>
+</div>
 
                     <!-- Navigation Controls -->
                     <div class="d-flex justify-content-between align-items-center border-top pt-4 mt-4">
@@ -1597,71 +1835,71 @@ function getLinkDisplay($topic)
 
 <!-- ========== JavaScript ========== -->
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bootstrap components
-    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap components
+        const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
 
-    const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
-    popovers.forEach(popover => new bootstrap.Popover(popover));
+        const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
+        popovers.forEach(popover => new bootstrap.Popover(popover));
 
-    // Notes functionality (unchanged)
-    const saveNotesBtn = document.getElementById('saveNotes');
-    const notesTextarea = document.getElementById('personalNotes');
-    const notesStatus = document.getElementById('notesStatus');
-    const printNotesBtn = document.getElementById('printNotes');
+        // Notes functionality (unchanged)
+        const saveNotesBtn = document.getElementById('saveNotes');
+        const notesTextarea = document.getElementById('personalNotes');
+        const notesStatus = document.getElementById('notesStatus');
+        const printNotesBtn = document.getElementById('printNotes');
 
-    if (saveNotesBtn && notesTextarea) {
-        saveNotesBtn.addEventListener('click', function() {
-            const notesContent = notesTextarea.value;
-            const topicId = <?php echo json_encode($topic_id); ?>;
-            const userId = <?php echo json_encode($user_id); ?>;
+        if (saveNotesBtn && notesTextarea) {
+            saveNotesBtn.addEventListener('click', function() {
+                const notesContent = notesTextarea.value;
+                const topicId = <?php echo json_encode($topic_id); ?>;
+                const userId = <?php echo json_encode($user_id); ?>;
 
-            fetch('../backend/save_notes.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    user_id: userId,
-                    topic_id: topicId,
-                    content: notesContent
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                notesStatus.style.display = 'block';
-                if (data.success) {
-                    notesStatus.className = 'alert alert-success';
-                    notesStatus.textContent = 'Notes saved successfully!';
-                    const notesTab = document.querySelector('#notes-tab');
-                    if (!notesTab.querySelector('.bi-check-circle-fill') && notesContent.trim()) {
-                        notesTab.insertAdjacentHTML('beforeend', '<i class="bi bi-check-circle-fill text-success ms-1 small"></i>');
-                    }
-                } else {
-                    notesStatus.className = 'alert alert-danger';
-                    notesStatus.textContent = 'Failed to save notes: ' + (data.error || 'Unknown error');
-                }
-                setTimeout(() => {
-                    notesStatus.style.display = 'none';
-                }, 3000);
-            })
-            .catch(error => {
-                notesStatus.style.display = 'block';
-                notesStatus.className = 'alert alert-danger';
-                notesStatus.textContent = 'Error saving notes: ' + error.message;
-                setTimeout(() => {
-                    notesStatus.style.display = 'none';
-                }, 3000);
+                fetch('../backend/save_notes.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            topic_id: topicId,
+                            content: notesContent
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        notesStatus.style.display = 'block';
+                        if (data.success) {
+                            notesStatus.className = 'alert alert-success';
+                            notesStatus.textContent = 'Notes saved successfully!';
+                            const notesTab = document.querySelector('#notes-tab');
+                            if (!notesTab.querySelector('.bi-check-circle-fill') && notesContent.trim()) {
+                                notesTab.insertAdjacentHTML('beforeend', '<i class="bi-check-circle-fill text-success ms-1 small"></i>');
+                            }
+                        } else {
+                            notesStatus.className = 'alert alert-danger';
+                            notesStatus.textContent = 'Failed to save notes: ' + (data.error || 'Unknown error');
+                        }
+                        setTimeout(() => {
+                            notesStatus.style.display = 'none';
+                        }, 3000);
+                    })
+                    .catch(error => {
+                        notesStatus.style.display = 'block';
+                        notesStatus.className = 'alert alert-danger';
+                        notesStatus.textContent = 'Error saving notes: ' + error.message;
+                        setTimeout(() => {
+                            notesStatus.style.display = 'none';
+                        }, 3000);
+                    });
             });
-        });
-    }
+        }
 
-    if (printNotesBtn && notesTextarea) {
-        printNotesBtn.addEventListener('click', function() {
-            const notesContent = notesTextarea.value;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
+        if (printNotesBtn && notesTextarea) {
+            printNotesBtn.addEventListener('click', function() {
+                const notesContent = notesTextarea.value;
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
                 <html>
                     <head>
                         <title>Notes for <?php echo htmlspecialchars($topic_title); ?></title>
@@ -1677,509 +1915,462 @@ function getLinkDisplay($topic)
                     </body>
                 </html>
             `);
-            printWindow.document.close();
-            printWindow.print();
-        });
-    }
-
-    // Quiz UI functionality
-    const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
-    if (isQuiz) {
-        const startQuizBtn = document.getElementById('confirmStartQuiz');
-        const resumeQuizBtn = document.getElementById('confirmResumeQuiz');
-        const forfeitQuizBtn = document.getElementById('confirmForfeitQuiz');
-        const quizOverview = document.querySelector('.quiz-cont .card');
-        const quizQuestions = document.getElementById('quizQuestions');
-        const sidebar = document.querySelector('.col-md-4.col-lg-3');
-        const contentColumn = document.querySelector('.col-md-8.col-lg-9');
-        const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
-        const startBtn = document.getElementById('startQuizBtn');
-        const resumeBtn = document.getElementById('resumeQuizBtn');
-        const forfeitBtn = document.getElementById('forfeitQuizBtn');
-        const timeLimit = <?php echo isset($quiz) ? (int)$quiz['time_limit'] : 0; ?>;
-        let timerInterval;
-        let attemptStatus = {
-            current_attempts: parseInt(startBtn?.dataset.currentAttempts) || 0,
-            attempts_allowed: parseInt(startBtn?.dataset.maxAttempts) || 5,
-            cooldown_end_time: null
-        };
-
-        // Fetch attempt status on page load
-        fetch('../includes/students/check-attempt-status.php?quiz_id=<?php echo $quiz['quiz_id']; ?>&user_id=<?php echo $user_id; ?>')
-            .then(response => response.json())
-            .then(data => {
-                attemptStatus = {
-                    current_attempts: data.current_attempts,
-                    attempts_allowed: data.attempts_allowed,
-                    cooldown_end_time: data.cooldown_end_time ? new Date(data.cooldown_end_time).getTime() : null
-                };
-                if (startBtn) {
-                    startBtn.dataset.currentAttempts = attemptStatus.current_attempts;
-                }
-                updateAttemptUI();
-            })
-            .catch(error => {
-                console.error('Error fetching attempt status:', error);
-                showError('Failed to load quiz status. Please try again.');
+                printWindow.document.close();
+                printWindow.print();
             });
-
-        // Update attempt UI
-        function updateAttemptUI() {
-            const attemptInfo = document.getElementById('attemptInfo');
-            const cooldownTimer = document.getElementById('cooldownTimer');
-            if (!attemptInfo || !cooldownTimer) return;
-
-            attemptInfo.textContent = `Attempts remaining: ${attemptStatus.attempts_allowed - attemptStatus.current_attempts}/${attemptStatus.attempts_allowed}`;
-
-            if (attemptStatus.current_attempts >= attemptStatus.attempts_allowed && attemptStatus.cooldown_end_time) {
-                if (startBtn) {
-                    startBtn.disabled = true;
-                    startBtn.innerHTML = '<i class="bi bi-lock-fill me-2"></i>Attempts Exhausted';
-                }
-                startCooldownTimer();
-            } else if (startBtn && !resumeBtn?.style.display && !forfeitBtn?.style.display) {
-                startBtn.disabled = false;
-                startBtn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Start Quiz';
-            }
         }
 
-        // Start cooldown timer
-        function startCooldownTimer() {
-            const cooldownTimer = document.getElementById('cooldownTimer');
-            if (!cooldownTimer || !attemptStatus.cooldown_end_time) return;
+        // Quiz UI functionality
+        const isQuiz = <?php echo isset($_GET['quiz_id']) ? 'true' : 'false'; ?>;
+        if (isQuiz) {
+            const quizOverview = document.querySelector('.quiz-cont .card');
+            const quizQuestions = document.getElementById('quizQuestions');
+            const quizResult = document.getElementById('quiz-result');
+            const sidebar = document.querySelector('.col-md-4.col-lg-3');
+            const contentColumn = document.querySelector('.col-md-8.col-lg-9');
+            const navigationControls = document.querySelector('.d-flex.justify-content-between.align-items-center.border-top');
+            const startQuizBtn = document.getElementById('startQuizBtn');
+            const confirmStartQuizBtn = document.getElementById('confirmStartQuiz');
+            const resumeQuizBtn = document.getElementById('resumeQuizBtn');
+            const confirmResumeQuizBtn = document.getElementById('confirmResumeQuiz');
+            const forfeitQuizBtn = document.getElementById('forfeitQuizBtn');
+            const confirmForfeitQuizBtn = document.getElementById('confirmForfeitQuiz');
+            const timeLimit = <?php echo isset($quiz) ? (int)$quiz['time_limit'] : 0; ?>;
+            let timerInterval;
 
-            const updateTimer = () => {
-                const now = Date.now();
-                const timeLeft = attemptStatus.cooldown_end_time - now;
-                if (timeLeft <= 0) {
-                    // Reset attempts
-                    fetch('../includes/students/reset-attempt-cycle.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            quiz_id: <?php echo $quiz['quiz_id']; ?>,
-                            user_id: <?php echo $user_id; ?>
-                        })
+            // Function to format seconds into MM:SS
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+
+            // Start or resume quiz
+            function startOrResumeQuiz(attemptId = null, remainingTime = timeLimit * 60) {
+                if (!quizOverview || !quizQuestions) {
+                    console.error('Quiz UI elements missing');
+                    return;
+                }
+
+                // Hide overview and show questions
+                quizOverview.style.display = 'none';
+                quizQuestions.style.display = 'block';
+
+                // Hide sidebar
+                if (sidebar) {
+                    sidebar.style.display = 'none';
+                }
+
+                // Make content full width
+                if (contentColumn) {
+                    contentColumn.classList.remove('col-md-8', 'col-lg-9');
+                    contentColumn.classList.add('col-12');
+                }
+
+                // Hide navigation
+                if (navigationControls) {
+                    navigationControls.style.display = 'none';
+                }
+
+                // Load questions
+                const questionContainer = document.getElementById('questionContainer');
+                const submitButtonWrapper = document.getElementById('submitButtonWrapper');
+                const submitBtn = document.getElementById('submitQuiz');
+                if (!questionContainer || !submitButtonWrapper || !submitBtn) {
+                    console.error('Question container, submit button wrapper, or submit button missing');
+                    return;
+                }
+
+                submitButtonWrapper.style.display = 'block';
+                submitBtn.disabled = false;
+
+                // Fetch questions
+                fetch(`../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz_id; ?>&attempt_id=${attemptId || ''}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        questionContainer.innerHTML = html;
+                        console.log(attemptId ? 'Resumed quiz' : 'Started new quiz');
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        attemptStatus.current_attempts = 0;
-                        attemptStatus.cooldown_end_time = null;
-                        if (startBtn) {
-                            startBtn.dataset.currentAttempts = 0;
-                        }
-                        updateAttemptUI();
-                        // Queue notification
-                        queueNotification('New Attempt Cycle Available', `You can now attempt <?php echo addslashes($quiz['quiz_title']); ?> again!`);
+                    .catch(error => {
+                        console.error('Error loading questions:', error);
+                        showError('Failed to load quiz questions. Please try again.');
                     });
-                    cooldownTimer.style.display = 'none';
-                } else {
-                    const hours = Math.floor(timeLeft / 3600000);
-                    const minutes = Math.floor((timeLeft % 3600000) / 60000);
-                    const seconds = Math.floor((timeLeft % 60000) / 1000);
-                    cooldownTimer.textContent = `Next attempt in: ${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                    cooldownTimer.style.display = 'block';
-                    setTimeout(updateTimer, 1000);
+
+                // Start timer if applicable
+                if (timeLimit > 0) {
+                    let timeLeft = remainingTime;
+                    const timeDisplay = document.getElementById('timeRemaining');
+                    if (!timeDisplay) {
+                        console.error('Time display element missing');
+                        return;
+                    }
+                    timeDisplay.textContent = formatTime(timeLeft);
+                    timerInterval = setInterval(() => {
+                        timeLeft--;
+                        timeDisplay.textContent = formatTime(timeLeft);
+                        if (timeLeft <= 0) {
+                            clearInterval(timerInterval);
+                            submitQuiz(true); // Auto-submit
+                        }
+                    }, 1000);
                 }
-            };
-            updateTimer();
-        }
-
-        // Function to start/resume quiz
-        function startOrResumeQuiz(isResume = false) {
-            if (!quizOverview || !quizQuestions) {
-                console.error('Quiz UI elements missing');
-                return;
             }
 
-            // Hide overview and show questions
-            quizOverview.style.display = 'none';
-            quizQuestions.style.display = 'block';
-
-            // Hide sidebar
-            if (sidebar) {
-                sidebar.style.display = 'none';
-            }
-
-            // Make content full width
-            if (contentColumn) {
-                contentColumn.classList.remove('col-md-8', 'col-lg-9');
-                contentColumn.classList.add('col-12');
-            }
-
-            // Hide navigation
-            if (navigationControls) {
-                navigationControls.style.display = 'none';
-            }
-
-            // Close modal
-            const modalId = isResume ? 'resumeQuizModal' : 'startQuizModal';
-            const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
-            if (modal) {
-                modal.hide();
-            }
-
-            // Load questions
-            const questionContainer = document.getElementById('questionContainer');
-            const submitButtonWrapper = document.getElementById('submitButtonWrapper');
-            const submitBtn = document.getElementById('submitQuiz');
-            if (!questionContainer || !submitButtonWrapper || !submitBtn) {
-                console.error('Question container, submit button wrapper, or submit button missing');
-                return;
-            }
-
-            submitButtonWrapper.style.display = 'block';
-            submitBtn.disabled = false;
-
-            // Placeholder: Fetch questions (and previous answers for resume)
-            const fetchUrl = isResume
-                ? `../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz['quiz_id']; ?>&attempt_id=${resumeBtn?.dataset.attemptId}`
-                : `../includes/students/quiz-questions.php?quiz_id=<?php echo $quiz['quiz_id']; ?>`;
-            fetch(fetchUrl)
-                .then(response => response.text())
-                .then(html => {
-                    questionContainer.innerHTML = html;
-                    console.log(isResume ? 'Resumed quiz with previous answers' : 'Started new quiz');
-                })
-                .catch(error => {
-                    console.error('Error loading questions:', error);
-                    showError('Failed to load quiz questions. Please try again.');
+            // Start Quiz
+            if (startQuizBtn && confirmStartQuizBtn) {
+                startQuizBtn.addEventListener('click', function() {
+                    const maxAttempts = parseInt(this.getAttribute('data-max-attempts')) || 0;
+                    const currentAttempts = parseInt(this.getAttribute('data-current-attempts')) || 0;
+                    if (maxAttempts > 0 && currentAttempts >= maxAttempts) {
+                        alert('You have reached the maximum number of attempts for this quiz.');
+                        return;
+                    }
                 });
 
-            // Start timer if applicable
-            if (timeLimit > 0) {
-                let timeLeft = isResume ? parseInt(resumeBtn?.dataset.remainingTime) : timeLimit * 60;
-                const timeDisplay = document.getElementById('timeRemaining');
-                if (!timeDisplay) {
-                    console.error('Time display element missing');
-                    return;
-                }
-                timerInterval = setInterval(() => {
-                    let mins = Math.floor(timeLeft / 60);
-                    let secs = timeLeft % 60;
-                    timeDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-                    timeLeft--;
-                    if (timeLeft < 0) {
-                        clearInterval(timerInterval);
-                        submitQuiz(true); // Auto-submit
+                confirmStartQuizBtn.addEventListener('click', function() {
+                    // Use the quiz_id and course_id from the PHP context
+                    const quizId = <?php echo isset($quiz_id) ? (int)$quiz_id : 0; ?>;
+                    const courseId = <?php echo isset($course_id) ? (int)$course_id : 0; ?>;
+                    if (!quizId || !courseId) {
+                        console.error('Quiz ID or Course ID is missing', {
+                            quizId,
+                            courseId
+                        });
+                        return;
                     }
-                }, 1000);
-            }
-        }
 
-        // Start quiz
-        if (startQuizBtn) {
-            startQuizBtn.addEventListener('click', function() {
-                startOrResumeQuiz(false);
-            });
-        }
-
-        // Resume quiz
-        if (resumeQuizBtn) {
-            resumeQuizBtn.addEventListener('click', function() {
-                startOrResumeQuiz(true);
-            });
-        }
-
-        // Forfeit quiz
-        if (forfeitQuizBtn) {
-            forfeitQuizBtn.addEventListener('click', function() {
-                const attemptId = forfeitBtn?.dataset.attemptId;
-                if (!attemptId) {
-                    console.error('Attempt ID missing for forfeit');
-                    return;
-                }
-
-                // Placeholder: Submit attempt and queue notification
-                fetch('../includes/students/forfeit-quiz.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        attempt_id: attemptId,
-                        user_id: <?php echo json_encode($user_id); ?>,
-                        quiz_id: <?php echo $quiz['quiz_id']; ?>
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        console.log('Quiz forfeited successfully');
-                        // Close modal
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('forfeitQuizModal'));
-                        if (modal) {
-                            modal.hide();
-                        }
-                        // Update attempt status
-                        attemptStatus.current_attempts++;
-                        if (startBtn) {
-                            startBtn.dataset.currentAttempts = attemptStatus.current_attempts;
-                        }
-                        updateAttemptUI();
-                        resetQuizUI();
-                        queueNotification('Quiz Forfeited', `Your attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been forfeited.`);
-                    } else {
-                        showError('Failed to forfeit quiz: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error forfeiting quiz:', error);
-                    showError('Error forfeiting quiz. Please try again.');
+                    // Create a new attempt
+                    fetch('../includes/students/quiz-handler.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: `action=start_quiz&quiz_id=${quizId}&course_id=${courseId}`
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.text(); // Get raw response for debugging
+                        })
+                        .then(text => {
+                            console.log('Raw response:', text); // Debug raw response
+                            try {
+                                const data = JSON.parse(text);
+                                if (data.success) {
+                                    // Close modal
+                                    const modal = bootstrap.Modal.getInstance(document.getElementById('startQuizModal'));
+                                    modal.hide();
+                                    startOrResumeQuiz(data.attempt_id || null);
+                                } else {
+                                    console.error('Failed to start quiz:', data.error || 'Unknown error');
+                                }
+                            } catch (e) {
+                                console.error('Failed to parse JSON:', e, 'Raw text:', text);
+                                throw new Error('Invalid JSON response');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error starting quiz:', error);
+                        });
                 });
-            });
-        }
+            }
 
-        // Handle confirm submission
-        const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
-        if (confirmSubmitBtn) {
-            confirmSubmitBtn.addEventListener('click', function() {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
-                if (modal) {
+            // Resume Quiz
+            if (resumeQuizBtn && confirmResumeQuizBtn) {
+                confirmResumeQuizBtn.addEventListener('click', function() {
+                    const attemptId = resumeQuizBtn.getAttribute('data-attempt-id');
+                    const remainingTime = parseInt(resumeQuizBtn.getAttribute('data-remaining-time'));
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('resumeQuizModal'));
                     modal.hide();
-                }
-                submitQuiz();
-            });
-        }
+                    startOrResumeQuiz(attemptId, remainingTime);
+                });
+            }
 
-        // Submit quiz function
-        function submitQuiz(isAutoSubmit = false) {
-            const questionContainer = document.getElementById('questionContainer');
-            const quizTimer = document.getElementById('quizTimer');
-            const submitButtonWrapper = document.getElementById('submitButtonWrapper');
+// Forfeit Quiz
+if (forfeitQuizBtn && confirmForfeitQuizBtn) {
+    confirmForfeitQuizBtn.addEventListener('click', function() {
+        const attemptId = forfeitQuizBtn.getAttribute('data-attempt-id');
+        const questions = document.querySelectorAll('.quiz-question'); // Changed from '.question' to '.quiz-question'
+        const answers = {};
+        questions.forEach(question => {
+            const questionId = question.getAttribute('data-question-id');
+            const selectedAnswer = question.querySelector('input[type="radio"]:checked');
+            if (questionId && selectedAnswer) {
+                answers[questionId] = selectedAnswer.value;
+            } else {
+                console.log(`No selection for question ${questionId}:`, question.innerHTML); // Debug missing selections
+            }
+        });
 
-            if (!questionContainer || !submitButtonWrapper) {
-                console.error('Question container or submit button wrapper missing');
+        console.log('Forfeiting answers:', answers); // Debug log
+
+        fetch('../includes/students/submit-quiz.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&forfeit=true&attempt_id=${attemptId}`
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(text => {
+            console.log('Raw response:', text);
+            const data = JSON.parse(text);
+            if (data.error) {
+                alert('Error: ' + data.error);
                 return;
             }
 
-            // Clear timer
-            if (timerInterval) {
-                clearInterval(timerInterval);
-            }
-
-            // Hide timer and submit button
-            if (quizTimer) quizTimer.style.display = 'none';
-            submitButtonWrapper.style.display = 'none';
-
-            // Update attempt count
-            attemptStatus.current_attempts++;
-            if (startBtn) {
-                startBtn.dataset.currentAttempts = attemptStatus.current_attempts;
-            }
-
-            // Placeholder: Submit quiz answers to backend
-            /*
-            fetch('../includes/students/submit-quiz.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    quiz_id: <?php echo $quiz['quiz_id']; ?>,
-                    user_id: <?php echo $user_id; ?>,
-                    attempt_id: resumeBtn?.dataset.attemptId || null,
-                    answers: collectAnswers() // Function to collect answers (to be implemented)
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Update UI with actual results
-                showQuizResults(data);
-            })
-            .catch(error => {
-                showError('Failed to submit quiz. Please try again.');
-            });
-            */
-
-            // Update attempts list (hardcoded for now)
-            const attemptsList = document.getElementById('attemptsList');
-            if (attemptsList) {
-                const newAttempt = `
-                    <div class="border rounded p-3 bg-white shadow-sm d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-bold">Attempt ${attemptStatus.current_attempts}</div>
-                            <small class="text-muted">May 1, 2025 - ${new Date().toLocaleTimeString()}</small>
-                        </div>
-                        <div class="text-end">
-                            <div class="fs-5 fw-semibold text-success">85% <span class="badge bg-success ms-2">Passed</span></div>
-                            <div class="small text-muted">17/20 · 09:13 mins</div>
-                        </div>
-                    </div>
-                `;
-                attemptsList.insertAdjacentHTML('afterbegin', newAttempt);
-
-                // Keep only the last 5 attempts
-                const attempts = attemptsList.querySelectorAll('div');
-                if (attempts.length > 5) {
-                    attempts[attempts.length - 1].remove();
-                }
-            }
-
-            // Update attempt UI
-            updateAttemptUI();
-
-            // Show hardcoded result summary (to be replaced with backend data)
-            questionContainer.innerHTML = `
-                <div class="quiz-result-summary text-center p-4 border rounded bg-light">
-                    <div class="mb-3">
-                        <i class="bi bi-patch-check-fill text-success fs-1"></i>
-                        <h4 class="mt-2">Quiz ${isAutoSubmit ? 'Auto-Submitted' : 'Submitted'} Successfully</h4>
-                        <p class="text-muted">Well done! Here's how you performed.</p>
-                        <span class="badge bg-success text-center">Passed</span>
-                    </div>
-                    <div class="row justify-content-center g-3 mb-4">
-                        <div class="col-md-4">
-                            <div class="border rounded p-3 bg-white shadow-sm h-100">
-                                <p class="mb-1 text-muted">Score</p>
-                                <h3 class="text-success">85%</h3>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border rounded p-3 bg-white shadow-sm h-100">
-                                <p class="mb-1 text-muted">Correct Answers</p>
-                                <h5>17 / 20</h5>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border rounded p-3 bg-white shadow-sm h-100">
-                                <p class="mb-1 text-muted">Time Taken</p>
-                                <h5>09:13</h5>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" id="returnToQuizOverview">
-                        <i class="bi bi-arrow-left-circle me-1"></i> Return to Quiz
-                    </button>
-                </div>
-            `;
-
-            // Queue notification
+            const modal = bootstrap.Modal.getInstance(document.getElementById('forfeitQuizModal'));
+            modal.hide();
+            displayQuizResults(data);
+            resetQuizUI();
             queueNotification(
-                isAutoSubmit ? 'Quiz Auto-Submitted' : 'Quiz Submitted',
-                `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been ${isAutoSubmit ? 'automatically submitted due to time expiration' : 'submitted'}.`
+                'Quiz Forfeited',
+                `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been forfeited.`
             );
+        })
+        .catch(error => {
+            console.error('AJAX error:', error);
+            alert('An error occurred while forfeiting the quiz.');
+        });
+    });
+}            
 
-            // Add event listener for return button
-            const returnBtn = document.getElementById('returnToQuizOverview');
-            if (returnBtn) {
-                returnBtn.addEventListener('click', resetQuizUI);
+
+// Handle quiz submission
+            const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+            if (confirmSubmitBtn) {
+                confirmSubmitBtn.addEventListener('click', function() {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
+                    modal.hide();
+                    submitQuiz();
+                });
             }
+
+            function submitQuiz(isAutoSubmit = false) {
+    const questions = document.querySelectorAll('.quiz-question'); // Changed from '.question' to '.quiz-question'
+    const answers = {};
+
+    questions.forEach(question => {
+        const questionId = question.getAttribute('data-question-id');
+        const selectedAnswer = question.querySelector('input[type="radio"]:checked');
+        if (questionId && selectedAnswer) {
+            answers[questionId] = selectedAnswer.value;
+        } else {
+            console.log(`No selection for question ${questionId}:`, question.innerHTML); // Debug missing selections
+        }
+    });
+
+    console.log('Submitting answers:', answers); // Debug log
+
+    fetch('../includes/students/submit-quiz.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&is_auto_submit=${isAutoSubmit ? 'true' : 'false'}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.text();
+    })
+    .then(text => {
+        console.log('Raw response:', text);
+        const data = JSON.parse(text);
+        if (data.error) {
+            alert('Error: ' + data.error);
+            return;
         }
 
-        // Show quiz results (placeholder for backend data)
-        function showQuizResults(data) {
-            const questionContainer = document.getElementById('questionContainer');
-            if (!questionContainer) return;
+        displayQuizResults(data);
+        if (timerInterval) clearInterval(timerInterval);
+        resetQuizUI();
+        queueNotification(
+            isAutoSubmit ? 'Quiz Auto-Submitted' : 'Quiz Submitted',
+            `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been ${isAutoSubmit ? 'automatically submitted' : 'submitted'}.`
+        );
+    })
+    .catch(error => {
+        console.error('AJAX error:', error);
+        alert('An error occurred while submitting the quiz.');
+    });
+}
 
-            questionContainer.innerHTML = `
-                <div class="quiz-result-summary text-center p-4 border rounded bg-light">
-                    <div class="mb-3">
-                        <i class="bi bi-patch-check-fill ${data.passed ? 'text-success' : 'text-danger'} fs-1"></i>
-                        <h4 class="mt-2">Quiz ${data.is_auto_submit ? 'Auto-Submitted' : 'Submitted'} Successfully</h4>
-                        <p class="text-muted">Here's how you performed.</p>
-                        <span class="badge bg-${data.passed ? 'success' : 'danger'} text-center">${data.passed ? 'Passed' : 'Failed'}</span>
-                    </div>
-                    <div class="row justify-content-center g-3 mb-4">
-                        <div class="col-md-4">
-                            <div class="border rounded p-3 bg-white shadow-sm h-100">
-                                <p class="mb-1 text-muted">Score</p>
-                                <h3 class="${data.passed ? 'text-success' : 'text-danger'}">${data.score}%</h3>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border rounded p-3 bg-white shadow-sm h-100">
-                                <p class="mb-1 text-muted">Correct Answers</p>
-                                <h5>${data.correct} / ${data.total}</h5>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border rounded p-3 bg-white shadow-sm h-100">
-                                <p class="mb-1 text-muted">Time Taken</p>
-                                <h5>${data.time_taken}</h5>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" id="returnToQuizOverview">
-                        <i class="bi bi-arrow-left-circle me-1"></i> Return to Quiz
-                    </button>
-                </div>
-            `;
-            const returnBtn = document.getElementById('returnToQuizOverview');
-            if (returnBtn) {
-                returnBtn.addEventListener('click', resetQuizUI);
-            }
-        }
-
-        // Reset quiz UI to overview
-        function resetQuizUI() {
-            if (!quizQuestions || !quizOverview) {
-                console.error('Quiz UI elements missing on return');
-                return;
+            // Display quiz results
+            function displayQuizResults(data) {
+                const resultDiv = document.getElementById('quiz-result');
+                document.getElementById('score').textContent = data.score;
+                document.getElementById('pass-status').textContent = data.passed ? 'You passed!' : 'You did not pass.';
+                document.getElementById('badges-earned').textContent = data.badges_earned.length > 0 ?
+                    'Badges Earned: ' + data.badges_earned.join(', ') :
+                    'No badges earned.';
+                resultDiv.style.display = 'block';
             }
 
-            quizQuestions.style.display = 'none';
-            quizOverview.style.display = 'block';
+            // Reset quiz UI to overview
+            function resetQuizUI() {
+                if (!quizQuestions || !quizOverview) {
+                    console.error('Quiz UI elements missing on return');
+                    return;
+                }
 
-            if (sidebar) {
-                sidebar.style.display = 'block';
+                quizQuestions.style.display = 'none';
+                quizOverview.style.display = 'block';
+                quizResult.style.display = 'none';
+
+                if (sidebar) {
+                    sidebar.style.display = 'block';
+                }
+
+                if (contentColumn) {
+                    contentColumn.classList.remove('col-12');
+                    contentColumn.classList.add('col-md-8', 'col-lg-9');
+                }
+
+                if (navigationControls) {
+                    navigationControls.style.display = 'flex';
+                }
+
+                // Reload the page to refresh attempt status
+                window.location.reload();
             }
 
-            if (contentColumn) {
-                contentColumn.classList.remove('col-12');
-                contentColumn.classList.add('col-md-8', 'col-lg-9');
-            }
-
-            if (navigationControls) {
-                navigationControls.style.display = 'flex';
-            }
-        }
-
-        // Show error message
-        function showError(message) {
-            const questionContainer = document.getElementById('questionContainer');
-            if (questionContainer) {
-                questionContainer.innerHTML = `
+            // Show error message
+            function showError(message) {
+                const questionContainer = document.getElementById('questionContainer');
+                if (questionContainer) {
+                    questionContainer.innerHTML = `
                     <div class="alert alert-danger">${message}</div>
                 `;
+                }
+            }
+
+            // Queue notification
+            function queueNotification(title, message) {
+                // Send to backend
+                fetch('../includes/students/queue-notification.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: <?php echo $user_id; ?>,
+                        notification_type: 'quiz_update',
+                        message: message
+                    })
+                });
+
+                // Show in toast
+                const toast = document.getElementById('liveToast');
+                const toastHeader = toast.querySelector('.toast-header h5');
+                const toastBody = toast.querySelector('.toast-body');
+                if (toast && toastHeader && toastBody) {
+                    toastHeader.textContent = title;
+                    toastBody.textContent = message;
+                    const bsToast = new bootstrap.Toast(toast);
+                    bsToast.show();
+                }
+            }
+            // Review Attempt Modal Handling
+            const reviewModal = document.getElementById('reviewAttemptModal');
+            if (reviewModal) {
+                reviewModal.addEventListener('show.bs.modal', function(event) {
+                    const attemptItem = event.relatedTarget;
+                    const attemptId = attemptItem.getAttribute('data-attempt-id');
+                    const attemptNumber = attemptItem.getAttribute('data-attempt-number');
+                    const reviewContent = document.getElementById('reviewContent');
+                    const modalTitle = document.getElementById('reviewAttemptModalLabel');
+
+                    // Update modal title
+                    modalTitle.textContent = `Review Attempt #${attemptNumber}`;
+
+                    fetch(`../includes/students/review-attempt.php?attempt_id=${attemptId}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Fetch response:', data); // Debug log
+        if (data.error) {
+            reviewContent.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            return;
+        }
+
+        let html = '';
+        data.responses.forEach((response, index) => {
+            const isCorrect = response.is_correct;
+            const showCorrect = data.show_correct_answers;
+            const correctAnswers = response.correct_answers || [];
+
+            html += `
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Question ${index + 1}: ${response.question_text}</h6>
+                        <span class="badge ${isCorrect ? 'bg-success' : 'bg-danger'}">
+                            ${isCorrect ? 'Correct' : 'Incorrect'}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Your Answer:</strong> ${response.student_answer || 'Not answered'}</p>
+            `;
+
+            if (!isCorrect && showCorrect) {
+                html += `
+                    <p><strong>Correct Answer:</strong> ${correctAnswers.join(', ') || 'N/A'}</p>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        reviewContent.innerHTML = html || '<div class="alert alert-warning">No responses found for this attempt.</div>';
+    })
+    .catch(error => {
+        console.error('Error loading attempt review:', error);
+        reviewContent.innerHTML = `<div class="alert alert-danger">Failed to load attempt details. Please try again. Error: ${error.message}</div>`;
+    });
+                });
             }
         }
 
-        // Queue notification
-        function queueNotification(title, message) {
-            // Placeholder: Send to backend
-            /*
-            fetch('../includes/students/queue-notification.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: <?php echo $user_id; ?>,
-                    notification_type: 'quiz_update',
-                    message: message
-                })
-            });
-            */
+        // Video progress tracking (unchanged)
+        <?php if ($content_type === 'video' && !empty($video_source) && $video_source['provider'] === 'HTML5'): ?>
+            const video = document.querySelector('video');
+            if (video) {
+                video.addEventListener('timeupdate', function() {
+                    const currentTime = video.currentTime;
+                    const duration = video.duration;
+                    if (duration && currentTime >= duration * 0.9 && !video.dataset.progressSent) {
+                        video.dataset.progressSent = 'true';
+                        fetch('../backend/update_video_progress.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                enrollment_id: <?php echo $enrollment_id; ?>,
+                                topic_id: <?php echo $topic_id; ?>,
+                                status: 'In Progress'
+                            })
+                        });
+                    }
+                });
 
-            // Show in toast
-            const toast = document.getElementById('liveToast');
-            const toastHeader = toast.querySelector('.toast-header h5');
-            const toastBody = toast.querySelector('.toast-body');
-            if (toast && toastHeader && toastBody) {
-                toastHeader.textContent = title;
-                toastBody.textContent = message;
-                const bsToast = new bootstrap.Toast(toast);
-                bsToast.show();
-            }
-        }
-    }
-
-    // Video progress tracking (unchanged)
-    <?php if ($content_type === 'video' && !empty($video_source) && $video_source['provider'] === 'HTML5'): ?>
-        const video = document.querySelector('video');
-        if (video) {
-            video.addEventListener('timeupdate', function() {
-                const currentTime = video.currentTime;
-                const duration = video.duration;
-                if (duration && currentTime >= duration * 0.9 && !video.dataset.progressSent) {
-                    video.dataset.progressSent = 'true';
+                video.addEventListener('ended', function() {
                     fetch('../backend/update_video_progress.php', {
                         method: 'POST',
                         headers: {
@@ -2188,28 +2379,57 @@ function getLinkDisplay($topic)
                         body: JSON.stringify({
                             enrollment_id: <?php echo $enrollment_id; ?>,
                             topic_id: <?php echo $topic_id; ?>,
-                            status: 'In Progress'
+                            status: 'Completed'
                         })
                     });
-                }
-            });
-
-            video.addEventListener('ended', function() {
-                fetch('../backend/update_video_progress.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        enrollment_id: <?php echo $enrollment_id; ?>,
-                        topic_id: <?php echo $topic_id; ?>,
-                        status: 'Completed'
-                    })
                 });
-            });
-        }
-    <?php endif; ?>
-});
+            }
+        <?php endif; ?>
+    });
+
+    // Real-time countdown timer for active attempt and modal
+function startCountdown() {
+    const activeAttemptDiv = document.getElementById('activeAttempt');
+    const activeTimer = document.getElementById('remainingTime');
+    const modalTimer = document.getElementById('modalRemainingTime');
+
+    if (activeAttemptDiv && activeTimer) {
+        let timeRemaining = parseInt(activeAttemptDiv.getAttribute('data-time-remaining')) || 0;
+
+        const countdown = setInterval(() => {
+            if (timeRemaining <= 0) {
+                clearInterval(countdown);
+                activeTimer.textContent = 'Time is up!';
+                if (modalTimer) {
+                    modalTimer.textContent = 'Time is up!';
+                }
+                // Optionally auto-submit the quiz if time is up
+                const quizQuestionsDiv = document.getElementById('quizQuestions');
+                if (quizQuestionsDiv && quizQuestionsDiv.style.display !== 'none') {
+                    submitQuiz(true); // Auto-submit if quiz is active
+                }
+                return;
+            }
+
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            // Update active attempt timer
+            activeTimer.textContent = `${timeRemaining} remaining (${formattedTime})`;
+
+            // Update modal timer
+            if (modalTimer) {
+                modalTimer.textContent = `${formattedTime}`;
+            }
+
+            timeRemaining--;
+        }, 1000);
+    }
+}
+
+// Start the countdown when the page loads
+document.addEventListener('DOMContentLoaded', startCountdown);
 </script>
 <!-- ========== END JavaScript ========== -->
 

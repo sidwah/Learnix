@@ -1,9 +1,20 @@
 <?php
-// includes/student/quiz-handler.php
+// includes/students/quiz-handler.php
 
-// Assumes session and config are already included in course-content.php
-if (!isset($quiz_id) || !isset($user_id) || !isset($course_id)) {
-    die("Required parameters are missing.");
+// Start session and include config (absolute path from project root)
+require_once dirname(__DIR__, 2) . '/backend/session_start.php';
+require_once dirname(__DIR__, 2) . '/backend/config.php';
+
+// Rest of the file remains the same...
+// Get required parameters
+$quiz_id = isset($_POST['quiz_id']) ? (int)$_POST['quiz_id'] : (isset($_GET['quiz_id']) ? (int)$_GET['quiz_id'] : 0);
+$user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+$course_id = isset($_POST['course_id']) ? (int)$_POST['course_id'] : (isset($_GET['course_id']) ? (int)$_GET['course_id'] : 0);
+
+if (!$quiz_id || !$user_id || !$course_id) {
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Required parameters are missing.']);
+    exit;
 }
 
 // Fetch quiz details
@@ -14,10 +25,11 @@ $stmt->execute();
 $quiz_result = $stmt->get_result();
 
 if ($quiz_result->num_rows === 0) {
-    echo '<div class="alert alert-danger">Quiz not found</div>';
-    return;
+    $quiz = ['quiz_title' => 'Unknown Quiz', 'instruction' => '', 'time_limit' => 0, 'pass_mark' => 0, 'attempts_allowed' => 0];
+} else {
+    $quiz = $quiz_result->fetch_assoc();
 }
-$quiz = $quiz_result->fetch_assoc();
+$stmt->close();
 
 // Fetch total number of attempts for current attempts
 $attempt_count_query = "SELECT COUNT(*) as attempt_count 
@@ -27,24 +39,43 @@ $stmt = $conn->prepare($attempt_count_query);
 $stmt->bind_param("ii", $user_id, $quiz_id);
 $stmt->execute();
 $attempt_count_result = $stmt->get_result();
-$current_attempts = $attempt_count_result->fetch_assoc()['attempt_count'];
+$current_attempts = $attempt_count_result->fetch_assoc()['attempt_count'] ?? 0;
+$stmt->close();
 
-// Fetch previous attempts (last 5 for display)
-$attempts_query = "SELECT attempt_id, attempt_number, score, passed, time_spent, start_time 
-                   FROM student_quiz_attempts 
-                   WHERE user_id = ? AND quiz_id = ? 
-                   ORDER BY attempt_number DESC 
-                   LIMIT 5";
+// Fetch previous attempts (last 5 for display) with answered questions count
+$attempts_query = "SELECT 
+    sqa.attempt_id, 
+    sqa.attempt_number, 
+    sqa.score, 
+    sqa.passed, 
+    sqa.time_spent, 
+    sqa.start_time,
+    (SELECT COUNT(*) 
+     FROM student_question_responses sqr 
+     WHERE sqr.attempt_id = sqa.attempt_id 
+     AND sqr.answer_text != 'Not answered') as answered_questions,
+    (SELECT COUNT(*) 
+     FROM quiz_questions qq 
+     WHERE qq.quiz_id = sqa.quiz_id) as total_questions
+FROM student_quiz_attempts sqa
+WHERE sqa.user_id = ? AND sqa.quiz_id = ?
+ORDER BY sqa.attempt_number DESC 
+LIMIT 5";
 $stmt = $conn->prepare($attempts_query);
 $stmt->bind_param("ii", $user_id, $quiz_id);
 $stmt->execute();
 $attempts_result = $stmt->get_result();
-$attempts = $attempts_result->fetch_all(MYSQLI_ASSOC);
+$attempts = $attempts_result->fetch_all(MYSQLI_ASSOC) ?? [];
+$stmt->close();
+
+// Debug: Log the attempts array to see the answered_questions count
+error_log("Attempts Data in quiz-handler.php: " . print_r($attempts, true));
+
 
 // Set max attempts from quiz data
-$max_attempts = $quiz['attempts_allowed'];
+$max_attempts = isset($quiz['attempts_allowed']) ? (int)$quiz['attempts_allowed'] : 0;
 
-// Fetch question count
+// Fetch total question count
 $question_count_query = "SELECT COUNT(*) as question_count 
                         FROM quiz_questions 
                         WHERE quiz_id = ?";
@@ -52,7 +83,8 @@ $stmt = $conn->prepare($question_count_query);
 $stmt->bind_param("i", $quiz_id);
 $stmt->execute();
 $question_count_result = $stmt->get_result();
-$question_count = $question_count_result->fetch_assoc()['question_count'];
+$question_count = $question_count_result->fetch_assoc()['question_count'] ?? 0;
+$stmt->close();
 
 // Check for active (incomplete) attempt
 $active_attempt_query = "SELECT attempt_id, start_time, time_spent 
@@ -64,6 +96,7 @@ $stmt->bind_param("ii", $user_id, $quiz_id);
 $stmt->execute();
 $active_attempt_result = $stmt->get_result();
 $active_attempt = $active_attempt_result->num_rows > 0 ? $active_attempt_result->fetch_assoc() : null;
+$stmt->close();
 
 // Calculate remaining time for active attempt
 $remaining_time = null;
@@ -74,222 +107,66 @@ if ($active_attempt && $quiz['time_limit'] > 0) {
     $remaining_time = $time_limit_seconds - $elapsed_time;
     
     if ($remaining_time <= 0) {
-        // Placeholder: Auto-submit expired attempt and send notification
-        /*
-        UPDATE student_quiz_attempts 
-        SET is_completed = 1, end_time = NOW(), 
-            time_spent = ?, score = COALESCE((
-                SELECT SUM(points_awarded) 
-                FROM student_question_responses 
-                WHERE attempt_id = ? AND points_awarded IS NOT NULL
-            ), 0)
-        WHERE attempt_id = ?;
-
-        INSERT INTO user_notifications (user_id, notification_type, message, is_read, created_at)
-        VALUES (?, 'quiz_submission', 
-                CONCAT('Your quiz attempt for ', ?, ' has been automatically submitted due to time expiration with a score of ', ?), 
-                0, NOW());
-        */
         $active_attempt = null; // Clear active attempt
     }
 }
+
+// Handle quiz start action (if POST request)
+// Handle quiz start action (if POST request)
+if (isset($_POST['action']) && $_POST['action'] === 'start_quiz') {
+    header('Content-Type: application/json');
+    
+    // Debug: Log the incoming request
+    error_log("Start Quiz Request: quiz_id=$quiz_id, user_id=$user_id, course_id=$course_id");
+
+    if ($current_attempts >= $max_attempts) {
+        echo json_encode(['success' => false, 'error' => 'Maximum attempts reached']);
+        exit;
+    }
+
+    if (!$active_attempt) {
+        // Step 1: Fetch the next attempt number
+        $query = "SELECT COALESCE(MAX(attempt_number), 0) + 1 as next_attempt_number 
+                  FROM student_quiz_attempts 
+                  WHERE user_id = ? AND quiz_id = ?";
+        $stmt = $conn->prepare($query);
+        if (!$stmt) {
+            error_log("Prepare failed for attempt number query: " . $conn->error);
+            echo json_encode(['success' => false, 'error' => 'Database error: Failed to prepare statement']);
+            exit;
+        }
+        $stmt->bind_param("ii", $user_id, $quiz_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $next_attempt_number = $row['next_attempt_number'] ?? 1;
+        $stmt->close();
+
+        // Step 2: Insert the new attempt with the calculated attempt number
+        $query = "INSERT INTO student_quiz_attempts (user_id, quiz_id, attempt_number, start_time) 
+                  VALUES (?, ?, ?, NOW())";
+        $stmt = $conn->prepare($query);
+        if (!$stmt) {
+            error_log("Prepare failed for insert query: " . $conn->error);
+            echo json_encode(['success' => false, 'error' => 'Database error: Failed to prepare statement']);
+            exit;
+        }
+        $stmt->bind_param("iii", $user_id, $quiz_id, $next_attempt_number);
+        $success = $stmt->execute();
+        $new_attempt_id = $stmt->insert_id;
+        $stmt->close();
+
+        if ($success) {
+            error_log("New attempt started: attempt_id=$new_attempt_id");
+            echo json_encode(['success' => true, 'attempt_id' => $new_attempt_id]);
+        } else {
+            error_log("Insert failed: " . $stmt->error);
+            echo json_encode(['success' => false, 'error' => 'Failed to start quiz']);
+        }
+    } else {
+        echo json_encode(['success' => true, 'attempt_id' => $active_attempt['attempt_id']]);
+    }
+    exit;
+}
+
 ?>
-
-<!-- Quiz UI -->
-<div class="quiz-cont">
-    <!-- Quiz Overview Card -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title']); ?></h3>
-        </div>
-        <div class="card-body">
-            <?php if (!empty($quiz['instruction'])): ?>
-                <div class="mb-4">
-                    <h5><i class="bi bi-info-circle me-2"></i>Instructions</h5>
-                    <p class="text-muted"><?php echo nl2br(htmlspecialchars($quiz['instruction'])); ?></p>
-                </div>
-            <?php endif; ?>
-
-            <div class="row g-3 mb-4">
-                <div class="col-md-3">
-                    <div class="p-3 bg-light rounded text-center">
-                        <i class="bi bi-clock fs-3 text-primary"></i>
-                        <h6 class="mt-2 mb-1">Time Limit</h6>
-                        <p class="mb-0"><?php echo $quiz['time_limit'] > 0 ? $quiz['time_limit'] . ' minutes' : 'No time limit'; ?></p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3 bg-light rounded text-center">
-                        <i class="bi bi-check-circle fs-3 text-primary"></i>
-                        <h6 class="mt-2 mb-1">Pass Mark</h6>
-                        <p class="mb-0"><?php echo $quiz['pass_mark']; ?>%</p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3 bg-light rounded text-center">
-                        <i class="bi bi-question-circle fs-3 text-primary"></i>
-                        <h6 class="mt-2 mb-1">Questions</h6>
-                        <p class="mb-0"><?php echo $question_count; ?></p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3 bg-light rounded text-center">
-                        <i class="bi bi-arrow-repeat fs-3 text-primary"></i>
-                        <h6 class="mt-2 mb-1">Attempts</h6>
-                        <p class="mb-0"><?php echo $current_attempts . ' of ' . $max_attempts; ?></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-center">
-                <?php if ($active_attempt && $remaining_time > 0): ?>
-                    <div class="mb-3 text-muted">
-                        Active Attempt: <span id="remainingTime"><?php echo gmdate('i:s', $remaining_time); ?></span> remaining
-                    </div>
-                    <button class="btn btn-success btn-lg me-2" id="resumeQuizBtn" data-bs-toggle="modal" data-bs-target="#resumeQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>" data-remaining-time="<?php echo $remaining_time; ?>">
-                        <i class="bi bi-play-circle me-2"></i>Resume Quiz
-                    </button>
-                    <button class="btn btn-danger btn-lg" id="forfeitQuizBtn" data-bs-toggle="modal" data-bs-target="#forfeitQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>">
-                        <i class="bi bi-x-circle me-2"></i>Forfeit Quiz
-                    </button>
-                <?php else: ?>
-                    <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
-                        <i class="bi bi-play-circle me-2"></i>Start Quiz
-                    </button>
-                <?php endif; ?>
-                <div id="cooldownTimer" class="mt-2 text-muted" style="display: none;">
-                    Cooldown: <span id="cooldownSeconds">10</span>s
-                </div>
-            </div>
-
-            <!-- Include Previous Attempts -->
-            <?php include 'previous-attempts.php'; ?>
-        </div>
-    </div>
-
-    <!-- Start Quiz Modal -->
-    <div class="modal fade" id="startQuizModal" tabindex="-1" aria-labelledby="startQuizModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Start <?php echo htmlspecialchars($quiz['quiz_title']); ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you ready to start the quiz?</p>
-                    <ul class="list-unstyled">
-                        <?php if ($quiz['time_limit'] > 0): ?>
-                            <li><i class="bi bi-clock me-2"></i><?php echo $quiz['time_limit']; ?> min limit</li>
-                        <?php endif; ?>
-                        <li><i class="bi bi-check-circle me-2"></i><?php echo $quiz['pass_mark']; ?>% to pass</li>
-                        <li><i class="bi bi-exclamation-circle me-2"></i>No pausing or rewinding allowed</li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-primary" id="confirmStartQuiz"><i class="bi bi-play-circle me-2"></i>Start Now</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Resume Quiz Modal -->
-    <div class="modal fade" id="resumeQuizModal" tabindex="-1" aria-labelledby="resumeQuizModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="resumeQuizModalLabel">Resume <?php echo htmlspecialchars($quiz['quiz_title']); ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>You have an active quiz attempt with <span id="modalRemainingTime"><?php echo $remaining_time ? gmdate('i:s', $remaining_time) : '0:00'; ?></span> remaining.</p>
-                    <p>Would you like to resume where you left off?</p>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-exclamation-circle me-2"></i>Time will continue counting down immediately.</li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-success" id="confirmResumeQuiz"><i class="bi bi-play-circle me-2"></i>Resume Now</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Forfeit Quiz Modal -->
-    <div class="modal fade" id="forfeitQuizModal" tabindex="-1" aria-labelledby="forfeitQuizModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="forfeitQuizModalLabel">Forfeit <?php echo htmlspecialchars($quiz['quiz_title']); ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to forfeit this quiz attempt?</p>
-                    <p>Your attempt will be submitted with the score based on answers provided so far.</p>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-exclamation-circle me-2"></i>This action cannot be undone.</li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-danger" id="confirmForfeitQuiz"><i class="bi bi-x-circle me-2"></i>Submit and Forfeit</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Confirm Submission Modal -->
-    <div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-labelledby="confirmSubmitLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="confirmSubmitLabel">Submit Quiz</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to submit this quiz?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmSubmitBtn">Yes, Submit</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quiz Questions Area -->
-    <div id="quizQuestions" class="card shadow-sm mt-4" style="display: none;">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title']); ?></h3>
-            <div id="quizTimer" class="fs-5">
-                <?php if ($quiz['time_limit'] > 0): ?>
-                    Time Left: <span id="timeRemaining"><?php echo $active_attempt ? gmdate('i:s', $remaining_time) : ($quiz['time_limit'] . ':00'); ?></span>
-                <?php endif; ?>
-            </div>
-        </div>
-        <div class="card-body">
-            <div id="questionContainer">
-                <div class="alert alert-info text-center">Click "Start Quiz" or "Resume Quiz" to load questions.</div>
-            </div>
-            <div class="text-end mt-4" id="submitButtonWrapper" style="display: block;">
-                <button class="btn btn-primary" id="submitQuiz" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
-                    <i class="bi bi-send me-2"></i>Submit Quiz
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Blinking CSS for Attempt Reset -->
-    <style>
-        @keyframes blink {
-            50% {
-                opacity: 0;
-            }
-        }
-
-        .blink {
-            animation: blink 0.5s step-end infinite;
-        }
-    </style>
-</div>
