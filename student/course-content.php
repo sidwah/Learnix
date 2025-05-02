@@ -1353,427 +1353,427 @@ function getLinkDisplay($topic)
                         <?php endif; ?>
                     </div>
 
-<!-- Dynamic Content Display -->
-<div class="content-container mb-5">
-    <?php if (isset($_GET['quiz_id'])): ?>
-        <?php
-        // Include quiz-handler.php and ensure variables are available
-        $quiz_id = (int)$_GET['quiz_id'];
-        $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
-        $course_id = isset($_GET['course_id']) ? (int)$_GET['course_id'] : 0;
+                    <!-- Dynamic Content Display -->
+                    <div class="content-container mb-5">
+                        <?php if (isset($_GET['quiz_id'])): ?>
+                            <?php
+                            // Include quiz-handler.php and ensure variables are available
+                            $quiz_id = (int)$_GET['quiz_id'];
+                            $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0;
+                            $course_id = isset($_GET['course_id']) ? (int)$_GET['course_id'] : 0;
 
-        if (!$user_id || !$quiz_id || !$course_id) {
-            echo '<div class="alert alert-danger">Required parameters are missing.</div>';
-        } else {
-            // Include quiz-handler.php
-            include '../includes/students/quiz-handler.php';
+                            if (!$user_id || !$quiz_id || !$course_id) {
+                                echo '<div class="alert alert-danger">Required parameters are missing.</div>';
+                            } else {
+                                // Include quiz-handler.php
+                                include '../includes/students/quiz-handler.php';
 
-            // Fallback values if queries fail
-            $quiz = $quiz ?? ['quiz_title' => 'Unknown Quiz', 'instruction' => '', 'time_limit' => 0, 'pass_mark' => 0];
-            $question_count = $question_count ?? 0;
-            $current_attempts = $current_attempts ?? 0;
-            $max_attempts = $max_attempts ?? 0;
-            $active_attempt = $active_attempt ?? null;
-            $remaining_time = $remaining_time ?? null;
-        }
-        ?>
+                                // Fallback values if queries fail
+                                $quiz = $quiz ?? ['quiz_title' => 'Unknown Quiz', 'instruction' => '', 'time_limit' => 0, 'pass_mark' => 0];
+                                $question_count = $question_count ?? 0;
+                                $current_attempts = $current_attempts ?? 0;
+                                $max_attempts = $max_attempts ?? 0;
+                                $active_attempt = $active_attempt ?? null;
+                                $remaining_time = $remaining_time ?? null;
+                            }
+                            ?>
 
-        <!-- Quiz UI -->
-        <div class="quiz-cont">
-            <!-- Quiz Overview Card -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h3>
-                </div>
-                <div class="card-body">
-                    <?php if (!empty($quiz['instruction'])): ?>
-                        <div class="mb-4">
-                            <h5><i class="bi bi-info-circle me-2"></i>Instructions</h5>
-                            <p class="text-muted"><?php echo nl2br(htmlspecialchars($quiz['instruction'])); ?></p>
-                        </div>
-                    <?php endif; ?>
+                            <!-- Quiz UI -->
+                            <div class="quiz-cont">
+                                <!-- Quiz Overview Card -->
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-primary text-white">
+                                        <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <?php if (!empty($quiz['instruction'])): ?>
+                                            <div class="mb-4">
+                                                <h5><i class="bi bi-info-circle me-2"></i>Instructions</h5>
+                                                <p class="text-muted"><?php echo nl2br(htmlspecialchars($quiz['instruction'])); ?></p>
+                                            </div>
+                                        <?php endif; ?>
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-3">
-                            <div class="p-3 bg-light rounded text-center">
-                                <i class="bi bi-clock fs-3 text-primary"></i>
-                                <h6 class="mt-2 mb-1">Time Limit</h6>
-                                <p class="mb-0"><?php echo $quiz['time_limit'] > 0 ? $quiz['time_limit'] . ' minutes' : 'No time limit'; ?></p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="p-3 bg-light rounded text-center">
-                                <i class="bi bi-check-circle fs-3 text-primary"></i>
-                                <h6 class="mt-2 mb-1">Pass Mark</h6>
-                                <p class="mb-0"><?php echo isset($quiz['pass_mark']) ? $quiz['pass_mark'] . '%' : 'N/A'; ?></p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="p-3 bg-light rounded text-center">
-                                <i class="bi bi-question-circle fs-3 text-primary"></i>
-                                <h6 class="mt-2 mb-1">Questions</h6>
-                                <p class="mb-0"><?php echo $question_count > 0 ? $question_count : 'N/A'; ?></p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="p-3 bg-light rounded text-center">
-                                <i class="bi bi-arrow-repeat fs-3 text-primary"></i>
-                                <h6 class="mt-2 mb-1">Attempts</h6>
-                                <p class="mb-0"><?php echo $current_attempts . ' of ' . ($max_attempts > 0 ? $max_attempts : 'Unlimited'); ?></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="text-center">
-                        <?php if ($active_attempt && $remaining_time > 0): ?>
-                            <div id="activeAttempt" class="mb-3 text-muted" data-time-remaining="<?php echo $remaining_time; ?>">
-                                Active Attempt: <span id="remainingTime"><?php echo $remaining_time; ?> remaining (<?php echo gmdate('i:s', $remaining_time); ?>)</span>
-                            </div>
-                            <button class="btn btn-success btn-lg me-2" id="resumeQuizBtn" data-bs-toggle="modal" data-bs-target="#resumeQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>" data-remaining-time="<?php echo $remaining_time; ?>">
-                                <i class="bi bi-play-circle me-2"></i>Resume Quiz
-                            </button>
-                            <button class="btn btn-danger btn-lg" id="forfeitQuizBtn" data-bs-toggle="modal" data-bs-target="#forfeitQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>">
-                                <i class="bi bi-x-circle me-2"></i>Forfeit Quiz
-                            </button>
-                        <?php elseif (!empty($attempts)): ?>
-                            <button class="btn btn-info btn-lg me-2" id="reviewLastAttemptBtn" data-bs-toggle="modal" data-bs-target="#reviewAttemptModal" data-attempt-id="<?php echo $attempts[0]['attempt_id']; ?>" data-attempt-number="<?php echo $attempts[0]['attempt_number']; ?>">
-                                <i class="bi bi-eye-fill me-2"></i>Review Last Attempt
-                            </button>
-                            <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
-                                <i class="bi bi-play-circle me-2"></i>Start Quiz
-                            </button>
-                        <?php else: ?>
-                            <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
-                                <i class="bi bi-play-circle me-2"></i>Start Quiz
-                            </button>
-                        <?php endif; ?>
-                        <div id="cooldownTimer" class="mt-2 text-muted" style="display: none;">
-                            Cooldown: <span id="cooldownSeconds">10</span>s
-                        </div>
-                    </div>
-
-                    <!-- Include Previous Attempts -->
-                    <?php include '../includes/students/previous-attempts.php'; ?>
-                </div>
-            </div>
-
-            <!-- Start Quiz Modal -->
-            <div class="modal fade" id="startQuizModal" tabindex="-1" aria-labelledby="startQuizModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Start <?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Are you ready to start the quiz?</p>
-                            <ul class="list-unstyled">
-                                <?php if ($quiz['time_limit'] > 0): ?>
-                                    <li><i class="bi bi-clock me-2"></i><?php echo $quiz['time_limit']; ?> min limit</li>
-                                <?php endif; ?>
-                                <li><i class="bi bi-check-circle me-2"></i><?php echo isset($quiz['pass_mark']) ? $quiz['pass_mark'] . '%' : 'N/A'; ?> to pass</li>
-                                <li><i class="bi bi-exclamation-circle me-2"></i>No pausing or rewinding allowed</li>
-                            </ul>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button class="btn btn-primary" id="confirmStartQuiz"><i class="bi bi-play-circle me-2"></i>Start Now</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Resume Quiz Modal -->
-            <div class="modal fade" id="resumeQuizModal" tabindex="-1" aria-labelledby="resumeQuizModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="resumeQuizModalLabel">Resume <?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>You have an active quiz attempt with <span id="modalRemainingTime"><?php echo $remaining_time ? gmdate('i:s', $remaining_time) : '0:00'; ?></span> remaining.</p>
-                            <p>Would you like to resume where you left off?</p>
-                            <ul class="list-unstyled">
-                                <li><i class="bi bi-exclamation-circle me-2"></i>Time will continue counting down immediately.</li>
-                            </ul>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button class="btn btn-success" id="confirmResumeQuiz"><i class="bi bi-play-circle me-2"></i>Resume Now</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Forfeit Quiz Modal -->
-            <div class="modal fade" id="forfeitQuizModal" tabindex="-1" aria-labelledby="forfeitQuizModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="forfeitQuizModalLabel">Forfeit <?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Are you sure you want to forfeit this quiz attempt?</p>
-                            <p>Your attempt will be submitted with the score based on answers provided so far.</p>
-                            <ul class="list-unstyled">
-                                <li><i class="bi bi-exclamation-circle me-2"></i>This action cannot be undone.</li>
-                            </ul>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button class="btn btn-danger" id="confirmForfeitQuiz"><i class="bi bi-x-circle me-2"></i>Submit and Forfeit</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Confirm Submission Modal -->
-            <div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-labelledby="confirmSubmitLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="confirmSubmitLabel">Submit Quiz</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            Are you sure you want to submit this quiz?
-                        </div>
-                        <div class="modal-footer">
-                            <button type="type" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="confirmSubmitBtn">Yes, Submit</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quiz Questions Area -->
-            <div id="quizQuestions" class="card shadow-sm mt-4" style="display: none;">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h3>
-                    <div id="quizTimer" class="fs-5">
-                        <?php if ($quiz['time_limit'] > 0): ?>
-                            Time Left: <span id="timeRemaining"><?php echo $active_attempt ? gmdate('i:s', $remaining_time) : ($quiz['time_limit'] . ':00'); ?></span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div id="questionContainer">
-                        <div class="alert alert-info text-center">Click "Start Quiz" or "Resume Quiz" to load questions.</div>
-                    </div>
-                    <div class="text-end mt-4" id="submitButtonWrapper" style="display: block;">
-                        <button class="btn btn-primary" id="submitQuiz" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
-                            <i class="bi bi-send me-2"></i>Submit Quiz
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quiz Results Area -->
-            <div id="quiz-result" style="display: none;" class="mt-4">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h4 class="card-title">Quiz Results</h4>
-                        <p>Your score: <span id="score"></span>%</p>
-                        <p id="pass-status"></p>
-                        <p id="badges-earned"></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Blinking CSS for Attempt Reset -->
-            <style>
-                @keyframes blink {
-                    50% {
-                        opacity: 0;
-                    }
-                }
-
-                .blink {
-                    animation: blink 0.5s step-end infinite;
-                }
-            </style>
-        </div>
-    <?php else: ?>
-        <!-- REGULAR CONTENT DISPLAY -->
-        <?php echo getContentDisplay($topic, $video_source, $content_type); ?>
-
-        <!-- Nav Scroller for tabs - Only shown for regular content -->
-        <div class="js-nav-scroller hs-nav-scroller-horizontal">
-            <span class="hs-nav-scroller-arrow-prev" style="display: none;">
-                <a class="hs-nav-scroller-arrow-link" href="javascript:;">
-                    <i class="bi-chevron-left"></i>
-                </a>
-            </span>
-
-            <span class="hs-nav-scroller-arrow-next" style="display: none;">
-                <a class="hs-nav-scroller-arrow-link" href="javascript:;">
-                    <i class="bi-chevron-right"></i>
-                </a>
-            </span>
-
-            <!-- Nav -->
-            <ul class="nav nav-segment nav-fill mb-7" id="featuresTab" role="tablist">
-                <?php if (!empty($topic['description'])): ?>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link active" href="#description" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" role="tab" aria-controls="description" aria-selected="true" style="min-width: 7rem;">Description</a>
-                    </li>
-                <?php endif; ?>
-
-                <!-- Notes tab (always show) -->
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link <?php echo empty($topic['description']) ? 'active' : ''; ?>"
-                        href="#notes" id="notes-tab" data-bs-toggle="tab"
-                        data-bs-target="#notes" role="tab"
-                        aria-controls="notes"
-                        aria-selected="<?php echo empty($topic['description']) ? 'true' : 'false'; ?>"
-                        style="min-width: 7rem;">
-                        Notes
-                        <?php if ($notes_exist): ?>
-                            <i class="bi-check-circle-fill text-success ms-1 small"></i>
-                        <?php endif; ?>
-                    </a>
-                </li>
-
-                <?php if (!empty($resources)): ?>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link" href="#resources" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources" role="tab" aria-controls="resources" aria-selected="false" style="min-width: 7rem;">Resources</a>
-                    </li>
-                <?php endif; ?>
-
-                <li class="nav-item" role="presentation">
-                    <a class="nav-link" href="#discussion" id="discussion-tab" data-bs-toggle="tab" data-bs-target="#discussion" role="tab" aria-controls="discussion" aria-selected="false" style="min-width: 7rem;">Discussion</a>
-                </li>
-            </ul>
-            <!-- End Nav -->
-        </div>
-        <!-- End Nav Scroller -->
-
-        <!-- Tab Content - Only for regular content -->
-        <div class="tab-content" id="pills-tabContent">
-            <?php if (!empty($topic['description'])): ?>
-                <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
-                    <h5><?php echo htmlspecialchars($topic['content_title']); ?></h5>
-                    <div class="content-description">
-                        <?php echo $topic['description']; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <!-- Notes Tab -->
-            <div class="tab-pane fade <?php echo empty($topic['description']) ? 'show active' : ''; ?>" id="notes" role="tabpanel" aria-labelledby="notes-tab">
-                <div class="row mb-4">
-                    <div class="col">
-                        <h5><i class="bi bi-journal-text me-2"></i>My Notes</h5>
-                        <p class="text-muted">Take notes for this topic that will be saved for your future reference.</p>
-                    </div>
-                    <div class="col-auto">
-                        <div class="btn-group">
-                            <button id="saveNotes" class="btn btn-primary">
-                                <i class="bi bi-save me-2"></i>Save Notes
-                            </button>
-                            <button id="printNotes" class="btn btn-outline-secondary">
-                                <i class="bi bi-printer me-2"></i>Print
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group mb-3">
-                    <textarea id="personalNotes" class="form-control" style="min-height: 200px" placeholder="Start typing your notes here..."><?php echo htmlspecialchars($notes_content); ?></textarea>
-                </div>
-
-                <?php if ($notes_exist): ?>
-                    <div class="text-muted small">
-                        Last updated: <?php echo date('F j, Y, g:i a', strtotime($notes_updated)); ?>
-                    </div>
-                <?php endif; ?>
-
-                <div id="notesStatus" class="mt-2" style="display: none;"></div>
-            </div>
-
-            <?php if (!empty($resources)): ?>
-                <div class="tab-pane fade" id="resources" role="tabpanel" aria-labelledby="resources-tab">
-                    <h4 class="mb-3">Additional Resources</h4>
-                    <div class="list-group">
-                        <div class="row g-3">
-                            <?php foreach ($resources as $resource): ?>
-                                <?php
-                                $resource_path = $resource['resource_path'];
-                                $resource_name = basename($resource_path);
-                                $resource_ext = strtolower(pathinfo($resource_path, PATHINFO_EXTENSION));
-
-                                // Determine icon based on file extension
-                                $icon_class = 'bi-file-earmark';
-                                if (in_array($resource_ext, ['pdf'])) {
-                                    $icon_class = 'bi-file-earmark-pdf';
-                                } elseif (in_array($resource_ext, ['doc', 'docx'])) {
-                                    $icon_class = 'bi-file-earmark-word';
-                                } elseif (in_array($resource_ext, ['xls', 'xlsx'])) {
-                                    $icon_class = 'bi-file-earmark-excel';
-                                } elseif (in_array($resource_ext, ['ppt', 'pptx'])) {
-                                    $icon_class = 'bi-file-earmark-ppt';
-                                } elseif (in_array($resource_ext, ['jpg', 'jpeg', 'png', 'gif'])) {
-                                    $icon_class = 'bi-file-earmark-image';
-                                } elseif (in_array($resource_ext, ['zip', 'rar'])) {
-                                    $icon_class = 'bi-file-earmark-zip';
-                                }
-                                ?>
-                                <div class="col-md-6">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <div class="d-flex align-items-center">
-                                                <div class="flex-shrink-0">
-                                                    <i class="<?php echo $icon_class; ?> fs-2 text-primary"></i>
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-md-3">
+                                                <div class="p-3 bg-light rounded text-center">
+                                                    <i class="bi bi-clock fs-3 text-primary"></i>
+                                                    <h6 class="mt-2 mb-1">Time Limit</h6>
+                                                    <p class="mb-0"><?php echo $quiz['time_limit'] > 0 ? $quiz['time_limit'] . ' minutes' : 'No time limit'; ?></p>
                                                 </div>
-                                                <div class="flex-grow-1 ms-3">
-                                                    <h6 class="card-title mb-0"><?php echo htmlspecialchars($resource_name); ?></h6>
-                                                    <p class="card-text small text-muted"><?php echo strtoupper($resource_ext); ?> file</p>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="p-3 bg-light rounded text-center">
+                                                    <i class="bi bi-check-circle fs-3 text-primary"></i>
+                                                    <h6 class="mt-2 mb-1">Pass Mark</h6>
+                                                    <p class="mb-0"><?php echo isset($quiz['pass_mark']) ? $quiz['pass_mark'] . '%' : 'N/A'; ?></p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="p-3 bg-light rounded text-center">
+                                                    <i class="bi bi-question-circle fs-3 text-primary"></i>
+                                                    <h6 class="mt-2 mb-1">Questions</h6>
+                                                    <p class="mb-0"><?php echo $question_count > 0 ? $question_count : 'N/A'; ?></p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="p-3 bg-light rounded text-center">
+                                                    <i class="bi bi-arrow-repeat fs-3 text-primary"></i>
+                                                    <h6 class="mt-2 mb-1">Attempts</h6>
+                                                    <p class="mb-0"><?php echo $current_attempts . ' of ' . ($max_attempts > 0 ? $max_attempts : 'Unlimited'); ?></p>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="card-footer bg-transparent border-top-0">
-                                            <a href="<?php echo '../Uploads/resources/' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
-                                                <i class="bi bi-download me-2"></i> Download
-                                            </a>
+
+                                        <div class="text-center">
+                                            <?php if ($active_attempt && $remaining_time > 0): ?>
+                                                <div id="activeAttempt" class="mb-3 text-muted" data-time-remaining="<?php echo $remaining_time; ?>">
+                                                    Active Attempt: <span id="remainingTime"><?php echo $remaining_time; ?> remaining (<?php echo gmdate('i:s', $remaining_time); ?>)</span>
+                                                </div>
+                                                <button class="btn btn-success btn-lg me-2" id="resumeQuizBtn" data-bs-toggle="modal" data-bs-target="#resumeQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>" data-remaining-time="<?php echo $remaining_time; ?>">
+                                                    <i class="bi bi-play-circle me-2"></i>Resume Quiz
+                                                </button>
+                                                <button class="btn btn-danger btn-lg" id="forfeitQuizBtn" data-bs-toggle="modal" data-bs-target="#forfeitQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>">
+                                                    <i class="bi bi-x-circle me-2"></i>Forfeit Quiz
+                                                </button>
+                                            <?php elseif (!empty($attempts)): ?>
+                                                <button class="btn btn-info btn-lg me-2" id="reviewLastAttemptBtn" data-bs-toggle="modal" data-bs-target="#reviewAttemptModal" data-attempt-id="<?php echo $attempts[0]['attempt_id']; ?>" data-attempt-number="<?php echo $attempts[0]['attempt_number']; ?>">
+                                                    <i class="bi bi-eye-fill me-2"></i>Review Last Attempt
+                                                </button>
+                                                <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
+                                                    <i class="bi bi-play-circle me-2"></i>Start Quiz
+                                                </button>
+                                            <?php else: ?>
+                                                <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
+                                                    <i class="bi bi-play-circle me-2"></i>Start Quiz
+                                                </button>
+                                            <?php endif; ?>
+                                            <div id="cooldownTimer" class="mt-2 text-muted" style="display: none;">
+                                                Cooldown: <span id="cooldownSeconds">10</span>s
+                                            </div>
+                                        </div>
+
+                                        <!-- Include Previous Attempts -->
+                                        <?php include '../includes/students/previous-attempts.php'; ?>
+                                    </div>
+                                </div>
+
+                                <!-- Start Quiz Modal -->
+                                <div class="modal fade" id="startQuizModal" tabindex="-1" aria-labelledby="startQuizModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Start <?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you ready to start the quiz?</p>
+                                                <ul class="list-unstyled">
+                                                    <?php if ($quiz['time_limit'] > 0): ?>
+                                                        <li><i class="bi bi-clock me-2"></i><?php echo $quiz['time_limit']; ?> min limit</li>
+                                                    <?php endif; ?>
+                                                    <li><i class="bi bi-check-circle me-2"></i><?php echo isset($quiz['pass_mark']) ? $quiz['pass_mark'] . '%' : 'N/A'; ?> to pass</li>
+                                                    <li><i class="bi bi-exclamation-circle me-2"></i>No pausing or rewinding allowed</li>
+                                                </ul>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button class="btn btn-primary" id="confirmStartQuiz"><i class="bi bi-play-circle me-2"></i>Start Now</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
 
-            <div class="tab-pane fade" id="discussion" role="tabpanel" aria-labelledby="discussion-tab">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5><i class="bi bi-chat-left-text me-2"></i>Discussion</h5>
-                    <div class="d-flex gap-2">
-                        <button id="newDiscussionBtn" class="btn btn-sm btn-primary">
-                            <i class="bi bi-plus-circle me-1"></i> New Discussion
-                        </button>
-                        <button id="filterDiscussionsBtn" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-funnel me-1"></i> Filter
-                        </button>
-                    </div>
-                </div>
+                                <!-- Resume Quiz Modal -->
+                                <div class="modal fade" id="resumeQuizModal" tabindex="-1" aria-labelledby="resumeQuizModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="resumeQuizModalLabel">Resume <?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>You have an active quiz attempt with <span id="modalRemainingTime"><?php echo $remaining_time ? gmdate('i:s', $remaining_time) : '0:00'; ?></span> remaining.</p>
+                                                <p>Would you like to resume where you left off?</p>
+                                                <ul class="list-unstyled">
+                                                    <li><i class="bi bi-exclamation-circle me-2"></i>Time will continue counting down immediately.</li>
+                                                </ul>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button class="btn btn-success" id="confirmResumeQuiz"><i class="bi bi-play-circle me-2"></i>Resume Now</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                <div class="p-4 bg-light rounded mb-4 text-center">
-                    <div class="mb-3">
-                        <i class="bi bi-chat-square-text fs-1 text-primary"></i>
+                                <!-- Forfeit Quiz Modal -->
+                                <div class="modal fade" id="forfeitQuizModal" tabindex="-1" aria-labelledby="forfeitQuizModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="forfeitQuizModalLabel">Forfeit <?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Are you sure you want to forfeit this quiz attempt?</p>
+                                                <p>Your attempt will be submitted with the score based on answers provided so far.</p>
+                                                <ul class="list-unstyled">
+                                                    <li><i class="bi bi-exclamation-circle me-2"></i>This action cannot be undone.</li>
+                                                </ul>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button class="btn btn-danger" id="confirmForfeitQuiz"><i class="bi bi-x-circle me-2"></i>Submit and Forfeit</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Confirm Submission Modal -->
+                                <div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-labelledby="confirmSubmitLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="confirmSubmitLabel">Submit Quiz</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to submit this quiz?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="type" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="button" class="btn btn-primary" id="confirmSubmitBtn">Yes, Submit</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quiz Questions Area -->
+                                <div id="quizQuestions" class="card shadow-sm mt-4" style="display: none;">
+                                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                        <h3 class="mb-0"><?php echo htmlspecialchars($quiz['quiz_title'] ?? 'Unknown Quiz'); ?></h3>
+                                        <div id="quizTimer" class="fs-5">
+                                            <?php if ($quiz['time_limit'] > 0): ?>
+                                                Time Left: <span id="timeRemaining"><?php echo $active_attempt ? gmdate('i:s', $remaining_time) : ($quiz['time_limit'] . ':00'); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="questionContainer">
+                                            <div class="alert alert-info text-center">Click "Start Quiz" or "Resume Quiz" to load questions.</div>
+                                        </div>
+                                        <div class="text-end mt-4" id="submitButtonWrapper" style="display: block;">
+                                            <button class="btn btn-primary" id="submitQuiz" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
+                                                <i class="bi bi-send me-2"></i>Submit Quiz
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quiz Results Area -->
+                                <div id="quiz-result" style="display: none;" class="mt-4">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <h4 class="card-title">Quiz Results</h4>
+                                            <p>Your score: <span id="score"></span>%</p>
+                                            <p id="pass-status"></p>
+                                            <p id="badges-earned"></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Blinking CSS for Attempt Reset -->
+                                <style>
+                                    @keyframes blink {
+                                        50% {
+                                            opacity: 0;
+                                        }
+                                    }
+
+                                    .blink {
+                                        animation: blink 0.5s step-end infinite;
+                                    }
+                                </style>
+                            </div>
+                        <?php else: ?>
+                            <!-- REGULAR CONTENT DISPLAY -->
+                            <?php echo getContentDisplay($topic, $video_source, $content_type); ?>
+
+                            <!-- Nav Scroller for tabs - Only shown for regular content -->
+                            <div class="js-nav-scroller hs-nav-scroller-horizontal">
+                                <span class="hs-nav-scroller-arrow-prev" style="display: none;">
+                                    <a class="hs-nav-scroller-arrow-link" href="javascript:;">
+                                        <i class="bi-chevron-left"></i>
+                                    </a>
+                                </span>
+
+                                <span class="hs-nav-scroller-arrow-next" style="display: none;">
+                                    <a class="hs-nav-scroller-arrow-link" href="javascript:;">
+                                        <i class="bi-chevron-right"></i>
+                                    </a>
+                                </span>
+
+                                <!-- Nav -->
+                                <ul class="nav nav-segment nav-fill mb-7" id="featuresTab" role="tablist">
+                                    <?php if (!empty($topic['description'])): ?>
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link active" href="#description" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" role="tab" aria-controls="description" aria-selected="true" style="min-width: 7rem;">Description</a>
+                                        </li>
+                                    <?php endif; ?>
+
+                                    <!-- Notes tab (always show) -->
+                                    <li class="nav-item" role="presentation">
+                                        <a class="nav-link <?php echo empty($topic['description']) ? 'active' : ''; ?>"
+                                            href="#notes" id="notes-tab" data-bs-toggle="tab"
+                                            data-bs-target="#notes" role="tab"
+                                            aria-controls="notes"
+                                            aria-selected="<?php echo empty($topic['description']) ? 'true' : 'false'; ?>"
+                                            style="min-width: 7rem;">
+                                            Notes
+                                            <?php if ($notes_exist): ?>
+                                                <i class="bi-check-circle-fill text-success ms-1 small"></i>
+                                            <?php endif; ?>
+                                        </a>
+                                    </li>
+
+                                    <?php if (!empty($resources)): ?>
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link" href="#resources" id="resources-tab" data-bs-toggle="tab" data-bs-target="#resources" role="tab" aria-controls="resources" aria-selected="false" style="min-width: 7rem;">Resources</a>
+                                        </li>
+                                    <?php endif; ?>
+
+                                    <li class="nav-item" role="presentation">
+                                        <a class="nav-link" href="#discussion" id="discussion-tab" data-bs-toggle="tab" data-bs-target="#discussion" role="tab" aria-controls="discussion" aria-selected="false" style="min-width: 7rem;">Discussion</a>
+                                    </li>
+                                </ul>
+                                <!-- End Nav -->
+                            </div>
+                            <!-- End Nav Scroller -->
+
+                            <!-- Tab Content - Only for regular content -->
+                            <div class="tab-content" id="pills-tabContent">
+                                <?php if (!empty($topic['description'])): ?>
+                                    <div class="tab-pane fade show active" id="description" role="tabpanel" aria-labelledby="description-tab">
+                                        <h5><?php echo htmlspecialchars($topic['content_title']); ?></h5>
+                                        <div class="content-description">
+                                            <?php echo $topic['description']; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <!-- Notes Tab -->
+                                <div class="tab-pane fade <?php echo empty($topic['description']) ? 'show active' : ''; ?>" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+                                    <div class="row mb-4">
+                                        <div class="col">
+                                            <h5><i class="bi bi-journal-text me-2"></i>My Notes</h5>
+                                            <p class="text-muted">Take notes for this topic that will be saved for your future reference.</p>
+                                        </div>
+                                        <div class="col-auto">
+                                            <div class="btn-group">
+                                                <button id="saveNotes" class="btn btn-primary">
+                                                    <i class="bi bi-save me-2"></i>Save Notes
+                                                </button>
+                                                <button id="printNotes" class="btn btn-outline-secondary">
+                                                    <i class="bi bi-printer me-2"></i>Print
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group mb-3">
+                                        <textarea id="personalNotes" class="form-control" style="min-height: 200px" placeholder="Start typing your notes here..."><?php echo htmlspecialchars($notes_content); ?></textarea>
+                                    </div>
+
+                                    <?php if ($notes_exist): ?>
+                                        <div class="text-muted small">
+                                            Last updated: <?php echo date('F j, Y, g:i a', strtotime($notes_updated)); ?>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div id="notesStatus" class="mt-2" style="display: none;"></div>
+                                </div>
+
+                                <?php if (!empty($resources)): ?>
+                                    <div class="tab-pane fade" id="resources" role="tabpanel" aria-labelledby="resources-tab">
+                                        <h4 class="mb-3">Additional Resources</h4>
+                                        <div class="list-group">
+                                            <div class="row g-3">
+                                                <?php foreach ($resources as $resource): ?>
+                                                    <?php
+                                                    $resource_path = $resource['resource_path'];
+                                                    $resource_name = basename($resource_path);
+                                                    $resource_ext = strtolower(pathinfo($resource_path, PATHINFO_EXTENSION));
+
+                                                    // Determine icon based on file extension
+                                                    $icon_class = 'bi-file-earmark';
+                                                    if (in_array($resource_ext, ['pdf'])) {
+                                                        $icon_class = 'bi-file-earmark-pdf';
+                                                    } elseif (in_array($resource_ext, ['doc', 'docx'])) {
+                                                        $icon_class = 'bi-file-earmark-word';
+                                                    } elseif (in_array($resource_ext, ['xls', 'xlsx'])) {
+                                                        $icon_class = 'bi-file-earmark-excel';
+                                                    } elseif (in_array($resource_ext, ['ppt', 'pptx'])) {
+                                                        $icon_class = 'bi-file-earmark-ppt';
+                                                    } elseif (in_array($resource_ext, ['jpg', 'jpeg', 'png', 'gif'])) {
+                                                        $icon_class = 'bi-file-earmark-image';
+                                                    } elseif (in_array($resource_ext, ['zip', 'rar'])) {
+                                                        $icon_class = 'bi-file-earmark-zip';
+                                                    }
+                                                    ?>
+                                                    <div class="col-md-6">
+                                                        <div class="card h-100">
+                                                            <div class="card-body">
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="flex-shrink-0">
+                                                                        <i class="<?php echo $icon_class; ?> fs-2 text-primary"></i>
+                                                                    </div>
+                                                                    <div class="flex-grow-1 ms-3">
+                                                                        <h6 class="card-title mb-0"><?php echo htmlspecialchars($resource_name); ?></h6>
+                                                                        <p class="card-text small text-muted"><?php echo strtoupper($resource_ext); ?> file</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="card-footer bg-transparent border-top-0">
+                                                                <a href="<?php echo '../Uploads/resources/' . htmlspecialchars($resource_path); ?>" class="btn btn-sm btn-soft-primary w-100" download>
+                                                                    <i class="bi bi-download me-2"></i> Download
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="tab-pane fade" id="discussion" role="tabpanel" aria-labelledby="discussion-tab">
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <h5><i class="bi bi-chat-left-text me-2"></i>Discussion</h5>
+                                        <div class="d-flex gap-2">
+                                            <button id="newDiscussionBtn" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-plus-circle me-1"></i> New Discussion
+                                            </button>
+                                            <button id="filterDiscussionsBtn" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-funnel me-1"></i> Filter
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-4 bg-light rounded mb-4 text-center">
+                                        <div class="mb-3">
+                                            <i class="bi bi-chat-square-text fs-1 text-primary"></i>
+                                        </div>
+                                        <h5>No discussions yet</h5>
+                                        <p class="text-muted">Be the first to start a discussion about this topic.</p>
+                                        <button class="btn btn-primary">
+                                            <i class="bi bi-plus-circle me-2"></i>Start a Discussion
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End Tab Content -->
+                        <?php endif; ?>
                     </div>
-                    <h5>No discussions yet</h5>
-                    <p class="text-muted">Be the first to start a discussion about this topic.</p>
-                    <button class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>Start a Discussion
-                    </button>
-                </div>
-            </div>
-        </div>
-        <!-- End Tab Content -->
-    <?php endif; ?>
-</div>
 
                     <!-- Navigation Controls -->
                     <div class="d-flex justify-content-between align-items-center border-top pt-4 mt-4">
@@ -2088,63 +2088,63 @@ function getLinkDisplay($topic)
                 });
             }
 
-// Forfeit Quiz
-if (forfeitQuizBtn && confirmForfeitQuizBtn) {
-    confirmForfeitQuizBtn.addEventListener('click', function() {
-        const attemptId = forfeitQuizBtn.getAttribute('data-attempt-id');
-        const questions = document.querySelectorAll('.quiz-question'); // Changed from '.question' to '.quiz-question'
-        const answers = {};
-        questions.forEach(question => {
-            const questionId = question.getAttribute('data-question-id');
-            const selectedAnswer = question.querySelector('input[type="radio"]:checked');
-            if (questionId && selectedAnswer) {
-                answers[questionId] = selectedAnswer.value;
-            } else {
-                console.log(`No selection for question ${questionId}:`, question.innerHTML); // Debug missing selections
+            // Forfeit Quiz
+            if (forfeitQuizBtn && confirmForfeitQuizBtn) {
+                confirmForfeitQuizBtn.addEventListener('click', function() {
+                    const attemptId = forfeitQuizBtn.getAttribute('data-attempt-id');
+                    const questions = document.querySelectorAll('.quiz-question'); // Changed from '.question' to '.quiz-question'
+                    const answers = {};
+                    questions.forEach(question => {
+                        const questionId = question.getAttribute('data-question-id');
+                        const selectedAnswer = question.querySelector('input[type="radio"]:checked');
+                        if (questionId && selectedAnswer) {
+                            answers[questionId] = selectedAnswer.value;
+                        } else {
+                            console.log(`No selection for question ${questionId}:`, question.innerHTML); // Debug missing selections
+                        }
+                    });
+
+                    console.log('Forfeiting answers:', answers); // Debug log
+
+                    fetch('../includes/students/submit-quiz.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&forfeit=true&attempt_id=${attemptId}`
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.text();
+                        })
+                        .then(text => {
+                            console.log('Raw response:', text);
+                            const data = JSON.parse(text);
+                            if (data.error) {
+                                alert('Error: ' + data.error);
+                                return;
+                            }
+
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('forfeitQuizModal'));
+                            modal.hide();
+                            displayQuizResults(data);
+                            resetQuizUI();
+                            queueNotification(
+                                'Quiz Forfeited',
+                                `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been forfeited.`
+                            );
+                        })
+                        .catch(error => {
+                            console.error('AJAX error:', error);
+                            alert('An error occurred while forfeiting the quiz.');
+                        });
+                });
             }
-        });
-
-        console.log('Forfeiting answers:', answers); // Debug log
-
-        fetch('../includes/students/submit-quiz.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&forfeit=true&attempt_id=${attemptId}`
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.text();
-        })
-        .then(text => {
-            console.log('Raw response:', text);
-            const data = JSON.parse(text);
-            if (data.error) {
-                alert('Error: ' + data.error);
-                return;
-            }
-
-            const modal = bootstrap.Modal.getInstance(document.getElementById('forfeitQuizModal'));
-            modal.hide();
-            displayQuizResults(data);
-            resetQuizUI();
-            queueNotification(
-                'Quiz Forfeited',
-                `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been forfeited.`
-            );
-        })
-        .catch(error => {
-            console.error('AJAX error:', error);
-            alert('An error occurred while forfeiting the quiz.');
-        });
-    });
-}            
 
 
-// Handle quiz submission
+            // Handle quiz submission
             const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
             if (confirmSubmitBtn) {
                 confirmSubmitBtn.addEventListener('click', function() {
@@ -2155,55 +2155,55 @@ if (forfeitQuizBtn && confirmForfeitQuizBtn) {
             }
 
             function submitQuiz(isAutoSubmit = false) {
-    const questions = document.querySelectorAll('.quiz-question'); // Changed from '.question' to '.quiz-question'
-    const answers = {};
+                const questions = document.querySelectorAll('.quiz-question'); // Changed from '.question' to '.quiz-question'
+                const answers = {};
 
-    questions.forEach(question => {
-        const questionId = question.getAttribute('data-question-id');
-        const selectedAnswer = question.querySelector('input[type="radio"]:checked');
-        if (questionId && selectedAnswer) {
-            answers[questionId] = selectedAnswer.value;
-        } else {
-            console.log(`No selection for question ${questionId}:`, question.innerHTML); // Debug missing selections
-        }
-    });
+                questions.forEach(question => {
+                    const questionId = question.getAttribute('data-question-id');
+                    const selectedAnswer = question.querySelector('input[type="radio"]:checked');
+                    if (questionId && selectedAnswer) {
+                        answers[questionId] = selectedAnswer.value;
+                    } else {
+                        console.log(`No selection for question ${questionId}:`, question.innerHTML); // Debug missing selections
+                    }
+                });
 
-    console.log('Submitting answers:', answers); // Debug log
+                console.log('Submitting answers:', answers); // Debug log
 
-    fetch('../includes/students/submit-quiz.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&is_auto_submit=${isAutoSubmit ? 'true' : 'false'}`
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.text();
-    })
-    .then(text => {
-        console.log('Raw response:', text);
-        const data = JSON.parse(text);
-        if (data.error) {
-            alert('Error: ' + data.error);
-            return;
-        }
+                fetch('../includes/students/submit-quiz.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `quiz_id=<?php echo $quiz_id; ?>&answers=${encodeURIComponent(JSON.stringify(answers))}&is_auto_submit=${isAutoSubmit ? 'true' : 'false'}`
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.text();
+                    })
+                    .then(text => {
+                        console.log('Raw response:', text);
+                        const data = JSON.parse(text);
+                        if (data.error) {
+                            alert('Error: ' + data.error);
+                            return;
+                        }
 
-        displayQuizResults(data);
-        if (timerInterval) clearInterval(timerInterval);
-        resetQuizUI();
-        queueNotification(
-            isAutoSubmit ? 'Quiz Auto-Submitted' : 'Quiz Submitted',
-            `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been ${isAutoSubmit ? 'automatically submitted' : 'submitted'}.`
-        );
-    })
-    .catch(error => {
-        console.error('AJAX error:', error);
-        alert('An error occurred while submitting the quiz.');
-    });
-}
+                        displayQuizResults(data);
+                        if (timerInterval) clearInterval(timerInterval);
+                        resetQuizUI();
+                        queueNotification(
+                            isAutoSubmit ? 'Quiz Auto-Submitted' : 'Quiz Submitted',
+                            `Your quiz attempt for <?php echo addslashes($quiz['quiz_title']); ?> has been ${isAutoSubmit ? 'automatically submitted' : 'submitted'}.`
+                        );
+                    })
+                    .catch(error => {
+                        console.error('AJAX error:', error);
+                        alert('An error occurred while submitting the quiz.');
+                    });
+            }
 
             // Display quiz results
             function displayQuizResults(data) {
@@ -2294,26 +2294,26 @@ if (forfeitQuizBtn && confirmForfeitQuizBtn) {
                     modalTitle.textContent = `Review Attempt #${attemptNumber}`;
 
                     fetch(`../includes/students/review-attempt.php?attempt_id=${attemptId}`)
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Fetch response:', data); // Debug log
-        if (data.error) {
-            reviewContent.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
-            return;
-        }
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Fetch response:', data); // Debug log
+                            if (data.error) {
+                                reviewContent.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                                return;
+                            }
 
-        let html = '';
-        data.responses.forEach((response, index) => {
-            const isCorrect = response.is_correct;
-            const showCorrect = data.show_correct_answers;
-            const correctAnswers = response.correct_answers || [];
+                            let html = '';
+                            data.responses.forEach((response, index) => {
+                                const isCorrect = response.is_correct;
+                                const showCorrect = data.show_correct_answers;
+                                const correctAnswers = response.correct_answers || [];
 
-            html += `
+                                html += `
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">Question ${index + 1}: ${response.question_text}</h6>
@@ -2325,24 +2325,24 @@ if (forfeitQuizBtn && confirmForfeitQuizBtn) {
                         <p><strong>Your Answer:</strong> ${response.student_answer || 'Not answered'}</p>
             `;
 
-            if (!isCorrect && showCorrect) {
-                html += `
+                                if (!isCorrect && showCorrect) {
+                                    html += `
                     <p><strong>Correct Answer:</strong> ${correctAnswers.join(', ') || 'N/A'}</p>
                 `;
-            }
+                                }
 
-            html += `
+                                html += `
                     </div>
                 </div>
             `;
-        });
+                            });
 
-        reviewContent.innerHTML = html || '<div class="alert alert-warning">No responses found for this attempt.</div>';
-    })
-    .catch(error => {
-        console.error('Error loading attempt review:', error);
-        reviewContent.innerHTML = `<div class="alert alert-danger">Failed to load attempt details. Please try again. Error: ${error.message}</div>`;
-    });
+                            reviewContent.innerHTML = html || '<div class="alert alert-warning">No responses found for this attempt.</div>';
+                        })
+                        .catch(error => {
+                            console.error('Error loading attempt review:', error);
+                            reviewContent.innerHTML = `<div class="alert alert-danger">Failed to load attempt details. Please try again. Error: ${error.message}</div>`;
+                        });
                 });
             }
         }
@@ -2388,48 +2388,48 @@ if (forfeitQuizBtn && confirmForfeitQuizBtn) {
     });
 
     // Real-time countdown timer for active attempt and modal
-function startCountdown() {
-    const activeAttemptDiv = document.getElementById('activeAttempt');
-    const activeTimer = document.getElementById('remainingTime');
-    const modalTimer = document.getElementById('modalRemainingTime');
+    function startCountdown() {
+        const activeAttemptDiv = document.getElementById('activeAttempt');
+        const activeTimer = document.getElementById('remainingTime');
+        const modalTimer = document.getElementById('modalRemainingTime');
 
-    if (activeAttemptDiv && activeTimer) {
-        let timeRemaining = parseInt(activeAttemptDiv.getAttribute('data-time-remaining')) || 0;
+        if (activeAttemptDiv && activeTimer) {
+            let timeRemaining = parseInt(activeAttemptDiv.getAttribute('data-time-remaining')) || 0;
 
-        const countdown = setInterval(() => {
-            if (timeRemaining <= 0) {
-                clearInterval(countdown);
-                activeTimer.textContent = 'Time is up!';
+            const countdown = setInterval(() => {
+                if (timeRemaining <= 0) {
+                    clearInterval(countdown);
+                    activeTimer.textContent = 'Time is up!';
+                    if (modalTimer) {
+                        modalTimer.textContent = 'Time is up!';
+                    }
+                    // Optionally auto-submit the quiz if time is up
+                    const quizQuestionsDiv = document.getElementById('quizQuestions');
+                    if (quizQuestionsDiv && quizQuestionsDiv.style.display !== 'none') {
+                        submitQuiz(true); // Auto-submit if quiz is active
+                    }
+                    return;
+                }
+
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                // Update active attempt timer
+                activeTimer.textContent = `${timeRemaining} remaining (${formattedTime})`;
+
+                // Update modal timer
                 if (modalTimer) {
-                    modalTimer.textContent = 'Time is up!';
+                    modalTimer.textContent = `${formattedTime}`;
                 }
-                // Optionally auto-submit the quiz if time is up
-                const quizQuestionsDiv = document.getElementById('quizQuestions');
-                if (quizQuestionsDiv && quizQuestionsDiv.style.display !== 'none') {
-                    submitQuiz(true); // Auto-submit if quiz is active
-                }
-                return;
-            }
 
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
-            const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-
-            // Update active attempt timer
-            activeTimer.textContent = `${timeRemaining} remaining (${formattedTime})`;
-
-            // Update modal timer
-            if (modalTimer) {
-                modalTimer.textContent = `${formattedTime}`;
-            }
-
-            timeRemaining--;
-        }, 1000);
+                timeRemaining--;
+            }, 1000);
+        }
     }
-}
 
-// Start the countdown when the page loads
-document.addEventListener('DOMContentLoaded', startCountdown);
+    // Start the countdown when the page loads
+    document.addEventListener('DOMContentLoaded', startCountdown);
 </script>
 <!-- ========== END JavaScript ========== -->
 
