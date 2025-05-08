@@ -1,4 +1,4 @@
-<?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/department/header.php'; ?>
 <!-- Toast Notification -->
 <div id="liveToast" class="position-fixed toast hide" role="alert" aria-live="assertive" aria-atomic="true" style="top: 20px; right: 20px; z-index: 1000;">
     <div class="toast-header">
@@ -30,7 +30,7 @@
             "offset": 80
            }'>
 
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -1174,4 +1174,4 @@
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>

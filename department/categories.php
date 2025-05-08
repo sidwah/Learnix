@@ -1,4 +1,4 @@
-<?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/department/header.php'; ?>
 <?php include '../includes/toast.php'; ?>
 
 <!-- ========== MAIN CONTENT ========== -->
@@ -10,7 +10,7 @@
             "offset": 80
            }'>
 
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -79,12 +79,12 @@
                         <div class="d-flex align-items-center">
                             <h5 class="mb-0 me-3">Subcategories List</h5>
                             <div class="dropdown ms-3">
-                            <div class="d-flex align-items-center me-3">
-    <select id="categoryFilter" class="form-select form-select-sm" style="width: auto;">
-        <option value="all">All Categories</option>
-        <!-- Categories will be populated dynamically -->
-    </select>
-</div>
+                                <div class="d-flex align-items-center me-3">
+                                    <select id="categoryFilter" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="all">All Categories</option>
+                                        <!-- Categories will be populated dynamically -->
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSubcategoryModal">
@@ -483,50 +483,50 @@
                 }
 
                 // Function to load categories for dropdowns and filters
-              // Function to load categories for dropdowns and filters
-function loadCategoriesForDropdown() {
-    fetch("../backend/courses/fetch_categories.php")
-        .then(response => response.json())
-        .then(data => {
-            // Populate add subcategory dropdown
-            let addDropdown = document.getElementById("add_subcategory_category");
-            if (addDropdown) {
-                addDropdown.innerHTML = '<option value="">Select Parent Category</option>';
-                data.forEach(category => {
-                    addDropdown.innerHTML += `<option value="${category.category_id}">${category.name}</option>`;
-                });
-            }
-            
-            // Populate edit subcategory dropdown
-            let editDropdown = document.getElementById("edit_subcategory_category");
-            if (editDropdown) {
-                editDropdown.innerHTML = '<option value="">Select Parent Category</option>';
-                data.forEach(category => {
-                    editDropdown.innerHTML += `<option value="${category.category_id}">${category.name}</option>`;
-                });
-            }
-            
-            // Populate filter dropdown
-            let filterDropdown = document.getElementById("categoryFilter");
-            if (filterDropdown) {
-                // Keep the "All Categories" option and add the rest
-                let html = '<option value="all">All Categories</option>';
-                data.forEach(category => {
-                    html += `<option value="${category.category_id}">${category.name}</option>`;
-                });
-                filterDropdown.innerHTML = html;
-                
-                // Add change event listener to filter
-                filterDropdown.addEventListener('change', function() {
-                    const categoryId = this.value;
-                    filterSubcategories(categoryId);
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Failed to fetch categories for dropdown: ', error);
-        });
-}
+                // Function to load categories for dropdowns and filters
+                function loadCategoriesForDropdown() {
+                    fetch("../backend/courses/fetch_categories.php")
+                        .then(response => response.json())
+                        .then(data => {
+                            // Populate add subcategory dropdown
+                            let addDropdown = document.getElementById("add_subcategory_category");
+                            if (addDropdown) {
+                                addDropdown.innerHTML = '<option value="">Select Parent Category</option>';
+                                data.forEach(category => {
+                                    addDropdown.innerHTML += `<option value="${category.category_id}">${category.name}</option>`;
+                                });
+                            }
+
+                            // Populate edit subcategory dropdown
+                            let editDropdown = document.getElementById("edit_subcategory_category");
+                            if (editDropdown) {
+                                editDropdown.innerHTML = '<option value="">Select Parent Category</option>';
+                                data.forEach(category => {
+                                    editDropdown.innerHTML += `<option value="${category.category_id}">${category.name}</option>`;
+                                });
+                            }
+
+                            // Populate filter dropdown
+                            let filterDropdown = document.getElementById("categoryFilter");
+                            if (filterDropdown) {
+                                // Keep the "All Categories" option and add the rest
+                                let html = '<option value="all">All Categories</option>';
+                                data.forEach(category => {
+                                    html += `<option value="${category.category_id}">${category.name}</option>`;
+                                });
+                                filterDropdown.innerHTML = html;
+
+                                // Add change event listener to filter
+                                filterDropdown.addEventListener('change', function() {
+                                    const categoryId = this.value;
+                                    filterSubcategories(categoryId);
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Failed to fetch categories for dropdown: ', error);
+                        });
+                }
 
                 // Function to filter subcategories by category
                 function filterSubcategories(categoryId) {
@@ -814,4 +814,4 @@ function loadCategoriesForDropdown() {
 <!-- ========== END MAIN CONTENT ========== -->
 
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>

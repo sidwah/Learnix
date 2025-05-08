@@ -1,4 +1,4 @@
-<?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/department/header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -8,7 +8,7 @@
             "offset": 80
            }'>
 
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -620,156 +620,156 @@
             }
 
             function viewRequestDetails(requestId) {
-    // Show loading overlay
-    createOverlay("Loading verification details...");
+                // Show loading overlay
+                createOverlay("Loading verification details...");
 
-    // Fetch request details from the backend
-    fetch(`../backend/admin/instructor-verification.php?action=get_request_details&verification_id=${requestId}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Remove loading overlay
-            removeOverlay();
-
-            if (data.success) {
-                const request = data.data;
-
-                // Set modal data
-                document.getElementById("modalInstructorName").textContent = request.name;
-                document.getElementById("modalInstructorEmail").textContent = request.email;
-                document.getElementById("modalInstructorJoined").textContent = "Joined: " + formatDate(request.joinDate);
-
-                // Set avatar - always use profile picture instead of initials
-                const avatarContainer = document.getElementById("modalInstructorAvatar");
-                if (request.profilePic === 'default.png') {
-                    // Use default profile image instead of initials
-                    avatarContainer.innerHTML = `<img src="../assets/img/160x160/img1.jpg" alt="Default Profile" class="avatar-img">`;
-                } else {
-                    avatarContainer.innerHTML = `<img src="../uploads/instructor-profile/${request.profilePic}" alt="Profile" class="avatar-img">`;
-                }
-
-                // Display credentials properly with formatting
-                document.getElementById("modalCredentials").innerHTML = `<p class="mb-0">${request.credentials}</p>`;
-
-                // Set current status
-                const statusBadge = document.getElementById("modalCurrentStatus");
-                statusBadge.className = "badge";
-
-                switch (request.status) {
-                    case "pending":
-                        statusBadge.classList.add("bg-warning");
-                        statusBadge.textContent = "Pending";
-                        break;
-                    case "approved":
-                        statusBadge.classList.add("bg-success");
-                        statusBadge.textContent = "Verified";
-                        break;
-                    case "rejected":
-                        statusBadge.classList.add("bg-danger");
-                        statusBadge.textContent = "Rejected";
-                        break;
-                }
-
-                // Show rejection reason if exists
-                const reasonSection = document.getElementById("modalRejectionReason");
-
-                if (request.status === "rejected" && request.rejectionReason) {
-                    reasonSection.classList.remove("d-none");
-                    reasonSection.querySelector("p").textContent = request.rejectionReason;
-                } else {
-                    reasonSection.classList.add("d-none");
-                }
-
-                // Generate document previews
-                const documentsContainer = document.getElementById("modalDocuments");
-                documentsContainer.innerHTML = "";
-
-                if (request.documents && request.documents.length > 0) {
-                    request.documents.forEach((doc, index) => {
-                        // Determine file type and display appropriate icon
-                        const fileExt = doc.path.split('.').pop().toLowerCase();
-                        let fileIcon = 'bi-file-earmark-text';
-                        let fileType = 'Document';
-
-                        if (['pdf'].includes(fileExt)) {
-                            fileIcon = 'bi-file-earmark-pdf';
-                            fileType = 'PDF';
-                        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
-                            fileIcon = 'bi-file-earmark-image';
-                            fileType = 'Image';
-                        } else if (['doc', 'docx'].includes(fileExt)) {
-                            fileIcon = 'bi-file-earmark-word';
-                            fileType = 'Word Document';
-                        } else if (['xls', 'xlsx'].includes(fileExt)) {
-                            fileIcon = 'bi-file-earmark-excel';
-                            fileType = 'Excel Document';
-                        } else if (['ppt', 'pptx'].includes(fileExt)) {
-                            fileIcon = 'bi-file-earmark-slides';
-                            fileType = 'PowerPoint';
+                // Fetch request details from the backend
+                fetch(`../backend/admin/instructor-verification.php?action=get_request_details&verification_id=${requestId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
                         }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Remove loading overlay
+                        removeOverlay();
 
-                        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
+                        if (data.success) {
+                            const request = data.data;
 
-                        // Check if file exists (safely)
-                        let documentExists = true;
-                        if (typeof doc.exists === 'boolean') {
-                            documentExists = doc.exists;
-                        }
+                            // Set modal data
+                            document.getElementById("modalInstructorName").textContent = request.name;
+                            document.getElementById("modalInstructorEmail").textContent = request.email;
+                            document.getElementById("modalInstructorJoined").textContent = "Joined: " + formatDate(request.joinDate);
 
-                        let documentPreview;
-                        if (!documentExists) {
-                            // Show missing file warning
-                            documentPreview = `
+                            // Set avatar - always use profile picture instead of initials
+                            const avatarContainer = document.getElementById("modalInstructorAvatar");
+                            if (request.profilePic === 'default.png') {
+                                // Use default profile image instead of initials
+                                avatarContainer.innerHTML = `<img src="../assets/img/160x160/img1.jpg" alt="Default Profile" class="avatar-img">`;
+                            } else {
+                                avatarContainer.innerHTML = `<img src="../uploads/instructor-profile/${request.profilePic}" alt="Profile" class="avatar-img">`;
+                            }
+
+                            // Display credentials properly with formatting
+                            document.getElementById("modalCredentials").innerHTML = `<p class="mb-0">${request.credentials}</p>`;
+
+                            // Set current status
+                            const statusBadge = document.getElementById("modalCurrentStatus");
+                            statusBadge.className = "badge";
+
+                            switch (request.status) {
+                                case "pending":
+                                    statusBadge.classList.add("bg-warning");
+                                    statusBadge.textContent = "Pending";
+                                    break;
+                                case "approved":
+                                    statusBadge.classList.add("bg-success");
+                                    statusBadge.textContent = "Verified";
+                                    break;
+                                case "rejected":
+                                    statusBadge.classList.add("bg-danger");
+                                    statusBadge.textContent = "Rejected";
+                                    break;
+                            }
+
+                            // Show rejection reason if exists
+                            const reasonSection = document.getElementById("modalRejectionReason");
+
+                            if (request.status === "rejected" && request.rejectionReason) {
+                                reasonSection.classList.remove("d-none");
+                                reasonSection.querySelector("p").textContent = request.rejectionReason;
+                            } else {
+                                reasonSection.classList.add("d-none");
+                            }
+
+                            // Generate document previews
+                            const documentsContainer = document.getElementById("modalDocuments");
+                            documentsContainer.innerHTML = "";
+
+                            if (request.documents && request.documents.length > 0) {
+                                request.documents.forEach((doc, index) => {
+                                    // Determine file type and display appropriate icon
+                                    const fileExt = doc.path.split('.').pop().toLowerCase();
+                                    let fileIcon = 'bi-file-earmark-text';
+                                    let fileType = 'Document';
+
+                                    if (['pdf'].includes(fileExt)) {
+                                        fileIcon = 'bi-file-earmark-pdf';
+                                        fileType = 'PDF';
+                                    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
+                                        fileIcon = 'bi-file-earmark-image';
+                                        fileType = 'Image';
+                                    } else if (['doc', 'docx'].includes(fileExt)) {
+                                        fileIcon = 'bi-file-earmark-word';
+                                        fileType = 'Word Document';
+                                    } else if (['xls', 'xlsx'].includes(fileExt)) {
+                                        fileIcon = 'bi-file-earmark-excel';
+                                        fileType = 'Excel Document';
+                                    } else if (['ppt', 'pptx'].includes(fileExt)) {
+                                        fileIcon = 'bi-file-earmark-slides';
+                                        fileType = 'PowerPoint';
+                                    }
+
+                                    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
+
+                                    // Check if file exists (safely)
+                                    let documentExists = true;
+                                    if (typeof doc.exists === 'boolean') {
+                                        documentExists = doc.exists;
+                                    }
+
+                                    let documentPreview;
+                                    if (!documentExists) {
+                                        // Show missing file warning
+                                        documentPreview = `
                                 <div class="card-img-top d-flex flex-column align-items-center justify-content-center bg-soft-danger" 
                                     style="height: 160px;">
                                     <i class="bi-exclamation-triangle-fill display-4 text-danger"></i>
                                     <p class="small text-danger mt-2">File not found</p>
                                 </div>`;
-                        } else if (isImage) {
-                            documentPreview = `
+                                    } else if (isImage) {
+                                        documentPreview = `
                                 <img src="../backend/admin/instructor-verification.php?action=download_document&path=${encodeURIComponent(doc.path)}" 
                                     class="card-img-top cursor-pointer view-document-modal" 
                                     data-document-path="${doc.path}" alt="Document ${index+1}" 
                                     style="height: 160px; object-fit: cover;">`;
-                        } else {
-                            documentPreview = `
+                                    } else {
+                                        documentPreview = `
                                 <div class="card-img-top cursor-pointer view-document-modal d-flex align-items-center justify-content-center bg-soft-primary" 
                                     style="height: 160px;" data-document-path="${doc.path}">
                                     <i class="${fileIcon} display-4"></i>
                                 </div>`;
-                        }
+                                    }
 
-                        // Format file size if available
-                        let fileSizeText = '';
-                        if (typeof doc.size === 'number' && doc.size > 0) {
-                            if (doc.size < 1024) {
-                                fileSizeText = `${doc.size} bytes`;
-                            } else if (doc.size < 1024 * 1024) {
-                                fileSizeText = `${(doc.size / 1024).toFixed(1)} KB`;
-                            } else {
-                                fileSizeText = `${(doc.size / (1024 * 1024)).toFixed(1)} MB`;
-                            }
-                        }
+                                    // Format file size if available
+                                    let fileSizeText = '';
+                                    if (typeof doc.size === 'number' && doc.size > 0) {
+                                        if (doc.size < 1024) {
+                                            fileSizeText = `${doc.size} bytes`;
+                                        } else if (doc.size < 1024 * 1024) {
+                                            fileSizeText = `${(doc.size / 1024).toFixed(1)} KB`;
+                                        } else {
+                                            fileSizeText = `${(doc.size / (1024 * 1024)).toFixed(1)} MB`;
+                                        }
+                                    }
 
-                        // Use direct PHP handler for document downloads
-                        const downloadPath = `../backend/admin/instructor-verification.php?action=download_document&path=${encodeURIComponent(doc.path)}`;
+                                    // Use direct PHP handler for document downloads
+                                    const downloadPath = `../backend/admin/instructor-verification.php?action=download_document&path=${encodeURIComponent(doc.path)}`;
 
-                        // Determine if file buttons should be enabled
-                        const previewBtn = documentExists ?
-                            `<button class="btn btn-xs btn-soft-primary view-document-modal" 
+                                    // Determine if file buttons should be enabled
+                                    const previewBtn = documentExists ?
+                                        `<button class="btn btn-xs btn-soft-primary view-document-modal" 
                                 data-document-path="${doc.path}">Preview</button>` :
-                            `<button class="btn btn-xs btn-soft-primary" disabled>Preview</button>`;
+                                        `<button class="btn btn-xs btn-soft-primary" disabled>Preview</button>`;
 
-                        const downloadBtn = documentExists ?
-                            `<a href="${downloadPath}" class="btn btn-xs btn-soft-success" 
+                                    const downloadBtn = documentExists ?
+                                        `<a href="${downloadPath}" class="btn btn-xs btn-soft-success" 
                                 download="${doc.path}">Download</a>` :
-                            `<button class="btn btn-xs btn-soft-success" disabled>Download</button>`;
+                                        `<button class="btn btn-xs btn-soft-success" disabled>Download</button>`;
 
-                        documentsContainer.innerHTML += `
+                                    documentsContainer.innerHTML += `
                             <div class="col-md-4 mb-3">
                                 <div class="card h-100">
                                     ${documentPreview}
@@ -787,54 +787,55 @@
                                 </div>
                             </div>
                         `;
+                                });
+
+                                // Attach event listeners for document previews
+                                document.querySelectorAll(".view-document-modal").forEach(img => {
+                                    img.addEventListener("click", function() {
+                                        const docPath = this.getAttribute("data-document-path");
+                                        viewDocumentByPath(docPath);
+                                    });
+                                });
+                            } else {
+                                documentsContainer.innerHTML = `<div class="col-12"><p class="text-muted">No documents uploaded</p></div>`;
+                            }
+
+                            // Show/hide admin action section based on status
+                            const adminActionSection = document.getElementById("adminActionSection");
+                            const submitButton = document.getElementById("submitVerificationAction");
+
+                            if (request.status === "pending") {
+                                adminActionSection.classList.remove("d-none");
+                                submitButton.classList.remove("d-none"); // Show submit button
+                                // Reset radio buttons and textarea
+                                document.getElementById("approveRadio").checked = false;
+                                document.getElementById("rejectRadio").checked = false;
+                                document.getElementById("rejectionReasonField").classList.add("d-none");
+                                document.getElementById("rejectionReason").value = "";
+                            } else {
+                                adminActionSection.classList.add("d-none");
+                                submitButton.classList.add("d-none"); // Hide submit button for approved/rejected requests
+                            }
+
+                            // Store request ID on submit button
+                            document.getElementById("submitVerificationAction").setAttribute("data-id", requestId);
+
+                            // Show modal
+                            const verificationModal = new bootstrap.Modal(document.getElementById("verificationModal"));
+                            verificationModal.show();
+                        } else {
+                            showAlert('danger', `Error: ${data.message}`);
+                        }
+                    })
+                    .catch(error => {
+                        // Remove loading overlay
+                        removeOverlay();
+
+                        console.error("Error fetching request details:", error);
+                        showAlert('danger', "An error occurred while fetching request details. Please try again.");
                     });
-
-                    // Attach event listeners for document previews
-                    document.querySelectorAll(".view-document-modal").forEach(img => {
-                        img.addEventListener("click", function() {
-                            const docPath = this.getAttribute("data-document-path");
-                            viewDocumentByPath(docPath);
-                        });
-                    });
-                } else {
-                    documentsContainer.innerHTML = `<div class="col-12"><p class="text-muted">No documents uploaded</p></div>`;
-                }
-
-                // Show/hide admin action section based on status
-                const adminActionSection = document.getElementById("adminActionSection");
-                const submitButton = document.getElementById("submitVerificationAction");
-
-                if (request.status === "pending") {
-                    adminActionSection.classList.remove("d-none");
-                    submitButton.classList.remove("d-none"); // Show submit button
-                    // Reset radio buttons and textarea
-                    document.getElementById("approveRadio").checked = false;
-                    document.getElementById("rejectRadio").checked = false;
-                    document.getElementById("rejectionReasonField").classList.add("d-none");
-                    document.getElementById("rejectionReason").value = "";
-                } else {
-                    adminActionSection.classList.add("d-none");
-                    submitButton.classList.add("d-none"); // Hide submit button for approved/rejected requests
-                }
-
-                // Store request ID on submit button
-                document.getElementById("submitVerificationAction").setAttribute("data-id", requestId);
-
-                // Show modal
-                const verificationModal = new bootstrap.Modal(document.getElementById("verificationModal"));
-                verificationModal.show();
-            } else {
-                showAlert('danger', `Error: ${data.message}`);
             }
-        })
-        .catch(error => {
-            // Remove loading overlay
-            removeOverlay();
 
-            console.error("Error fetching request details:", error);
-            showAlert('danger', "An error occurred while fetching request details. Please try again.");
-        });
-}
             function viewDocument(requestId, docIndex) {
                 // Show loading overlay
                 createOverlay("Loading document...");
@@ -1328,4 +1329,4 @@
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>

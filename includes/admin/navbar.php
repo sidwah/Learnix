@@ -162,7 +162,7 @@
                         <div class="dropdown-divider"></div>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="../backend/auth/admin/logout.php">
+                        <a class="dropdown-item" href="../backend/signout.php">
                             <i class="bx bx-power-off me-2"></i>
                             <span class="align-middle">Sign Out</span>
                         </a>

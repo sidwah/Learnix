@@ -1,4 +1,4 @@
-<?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/department/header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -8,7 +8,7 @@
             "offset": 80
            }'>
 
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -17,10 +17,10 @@
     </div>
     <!-- End Content -->
 
-    
+
 
 
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>

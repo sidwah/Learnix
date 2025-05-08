@@ -1,4 +1,4 @@
-<?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/department/header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -8,7 +8,7 @@
             "offset": 80
            }'>
 
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -263,7 +263,7 @@
                                     <div class="avatar avatar-xs avatar-circle me-2">
                                         <img class="avatar-img" src="../assets/img/160x160/img4.jpg" alt="User">
                                     </div>
-                                    <span>admin@example.com</span>
+                                    <span>department@example.com</span>
                                 </div>
                             </td>
                             <td>192.168.1.10</td>
@@ -491,7 +491,7 @@
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>
 
 <!-- JS Implementing Plugins -->
 <script src="../assets/js/vendor.min.js"></script>

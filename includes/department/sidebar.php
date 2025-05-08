@@ -146,7 +146,7 @@ if (!$result) {
 
       <li class="nav-item my-2 my-lg-5"></li>
 
-      <!-- Payments & Earnings -->
+      <!-- Payments & Earnings
       <li class="nav-item">
         <span class="nav-subtitle">Payments & Earnings</span>
       </li>
@@ -157,7 +157,7 @@ if (!$result) {
         <a class="nav-link" href="instructor-earnings.php">Instructor Earnings</a>
       </li>
 
-      <li class="nav-item my-2 my-lg-5"></li>
+      <li class="nav-item my-2 my-lg-5"></li> -->
 
       <!-- Announcements & Notifications -->
       <li class="nav-item">

@@ -1,4 +1,4 @@
-<?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/department/header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -8,7 +8,7 @@
             "offset": 80
            }'>
 
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -435,7 +435,7 @@
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>
 
 <!-- JS Implementing Plugins -->
 <script src="../assets/js/vendor.min.js"></script>
@@ -465,11 +465,11 @@
                     status: document.querySelector('input[name="faqStatus"]:checked').value
                 };
                 console.log('Adding new FAQ:', formData);
-                
+
                 // Close the modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addFAQModal'));
                 modal.hide();
-                
+
                 // Show success message
                 alert('FAQ added successfully!');
             } else {
@@ -490,11 +490,11 @@
                     status: document.querySelector('input[name="editFaqStatus"]:checked').value
                 };
                 console.log('Updating FAQ:', formData);
-                
+
                 // Close the modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editFAQModal'));
                 modal.hide();
-                
+
                 // Show success message
                 alert('FAQ updated successfully!');
             } else {
@@ -509,7 +509,7 @@
                     // Here you would typically make an AJAX call to delete the FAQ
                     // For demo purposes, we'll just log the action
                     console.log('FAQ deleted');
-                    
+
                     // Show success message
                     alert('FAQ deleted successfully!');
                 }

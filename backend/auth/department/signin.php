@@ -198,7 +198,7 @@ try {
     // Add MFA preference column to department_staff table if it doesn't exist
     $checkMfaColumn = $conn->prepare("SHOW COLUMNS FROM department_staff LIKE 'mfa_enabled'");
     $checkMfaColumn->execute();
-    if ($checkMfaColumn->rowCount() == 0) {
+    if ($checkMfaColumn->get_result()->num_rows == 0) {
         $addMfaColumn = $conn->prepare("ALTER TABLE department_staff ADD COLUMN mfa_enabled TINYINT(1) DEFAULT 1");
         $addMfaColumn->execute();
     }

@@ -4,9 +4,13 @@ require_once '../../backend/config.php';
 
 // Check if admin is logged in
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
+// Check if the user is signed in and is a department staff member
+if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || !isset($_SESSION['department_id']) || !isset($_SESSION['role']) || !in_array($_SESSION['role'], ['department_head', 'department_secretary'])) {
+    // Log unauthorized access attempt for security auditing
+    error_log("Unauthorized access attempt to protected page: " . $_SERVER['REQUEST_URI'] . " | IP: " . $_SERVER['REMOTE_ADDR']);
+
+    // Redirect unauthorized users to the sign-in page
+    header('Location: signin.php');
     exit;
 }
 
@@ -30,7 +34,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 try {
     $courseId = intval($_GET['id']);
-    
+
     // Fetch course information with instructor details
     $courseQuery = "
         SELECT 
@@ -69,12 +73,12 @@ try {
         WHERE 
             c.course_id = ?
     ";
-    
+
     $stmt = $conn->prepare($courseQuery);
     $stmt->bind_param('i', $courseId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 0) {
         $response['status'] = 'error';
         $response['message'] = 'Course not found';
@@ -82,13 +86,13 @@ try {
         echo json_encode($response);
         exit;
     }
-    
+
     $response['course'] = $result->fetch_assoc();
-    
+
     // Format dates
     $createdDate = new DateTime($response['course']['created_at']);
     $response['course']['formatted_created_date'] = $createdDate->format('F j, Y');
-    
+
     // Fetch learning outcomes
     $outcomesQuery = "
         SELECT outcome_id, outcome_text
@@ -96,17 +100,17 @@ try {
         WHERE course_id = ?
         ORDER BY outcome_id
     ";
-    
+
     $stmt = $conn->prepare($outcomesQuery);
     $stmt->bind_param('i', $courseId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     $response['outcomes'] = [];
     while ($row = $result->fetch_assoc()) {
         $response['outcomes'][] = $row;
     }
-    
+
     // Fetch requirements
     $requirementsQuery = "
         SELECT requirement_id, requirement_text
@@ -114,17 +118,17 @@ try {
         WHERE course_id = ?
         ORDER BY requirement_id
     ";
-    
+
     $stmt = $conn->prepare($requirementsQuery);
     $stmt->bind_param('i', $courseId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     $response['requirements'] = [];
     while ($row = $result->fetch_assoc()) {
         $response['requirements'][] = $row;
     }
-    
+
     // Fetch course sections and topics
     $sectionsQuery = "
         SELECT 
@@ -149,18 +153,18 @@ try {
         ORDER BY 
             s.position, t.position
     ";
-    
+
     $stmt = $conn->prepare($sectionsQuery);
     $stmt->bind_param('i', $courseId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     $sections = [];
     $sectionMap = [];
-    
+
     while ($row = $result->fetch_assoc()) {
         $sectionId = $row['section_id'];
-        
+
         if (!isset($sectionMap[$sectionId])) {
             $sectionMap[$sectionId] = count($sections);
             $sections[] = [
@@ -171,9 +175,9 @@ try {
                 'quizzes' => []
             ];
         }
-        
+
         $sectionIndex = $sectionMap[$sectionId];
-        
+
         // Add topic if it exists
         if ($row['topic_id']) {
             $sections[$sectionIndex]['topics'][] = [
@@ -183,7 +187,7 @@ try {
                 'is_previewable' => $row['is_previewable']
             ];
         }
-        
+
         // Add quiz if it exists and isn't already added
         if ($row['quiz_id']) {
             $quizExists = false;
@@ -193,7 +197,7 @@ try {
                     break;
                 }
             }
-            
+
             if (!$quizExists) {
                 $sections[$sectionIndex]['quizzes'][] = [
                     'quiz_id' => $row['quiz_id'],
@@ -203,9 +207,9 @@ try {
             }
         }
     }
-    
+
     $response['sections'] = $sections;
-    
+
     // Fetch review requests
     $reviewQuery = "
         SELECT 
@@ -230,25 +234,25 @@ try {
         ORDER BY 
             r.created_at DESC
     ";
-    
+
     $stmt = $conn->prepare($reviewQuery);
     $stmt->bind_param('i', $courseId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     $response['review_history'] = [];
     while ($row = $result->fetch_assoc()) {
         $createdDate = new DateTime($row['created_at']);
         $row['formatted_created_date'] = $createdDate->format('F j, Y g:i A');
-        
+
         if ($row['updated_at']) {
             $updatedDate = new DateTime($row['updated_at']);
             $row['formatted_updated_date'] = $updatedDate->format('F j, Y g:i A');
         }
-        
+
         $response['review_history'][] = $row;
     }
-    
+
     // Fetch course resources
     $resourcesQuery = "
         SELECT 
@@ -266,19 +270,19 @@ try {
         WHERE 
             s.course_id = ?
     ";
-    
+
     $stmt = $conn->prepare($resourcesQuery);
     $stmt->bind_param('i', $courseId);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     $response['resources'] = [];
     while ($row = $result->fetch_assoc()) {
         // Get file info
         $filePath = '../../uploads/resources/' . $row['resource_path'];
         $fileInfo = pathinfo($filePath);
         $fileSize = file_exists($filePath) ? filesize($filePath) : 0;
-        
+
         // Format file size
         if ($fileSize < 1024) {
             $formattedSize = $fileSize . ' B';
@@ -287,15 +291,14 @@ try {
         } else {
             $formattedSize = round($fileSize / (1024 * 1024), 1) . ' MB';
         }
-        
+
         $row['file_name'] = $fileInfo['basename'];
         $row['file_extension'] = isset($fileInfo['extension']) ? strtoupper($fileInfo['extension']) : '';
         $row['file_size'] = $formattedSize;
         $row['download_url'] = '../uploads/resources/' . $row['resource_path'];
-        
+
         $response['resources'][] = $row;
     }
-    
 } catch (Exception $e) {
     $response['status'] = 'error';
     $response['message'] = 'Error fetching course details: ' . $e->getMessage();
@@ -304,4 +307,3 @@ try {
 // Return JSON response
 header('Content-Type: application/json');
 echo json_encode($response);
-?>

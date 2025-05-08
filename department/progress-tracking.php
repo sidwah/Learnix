@@ -1,4 +1,4 @@
-<?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/department/header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -7,7 +7,7 @@
             "target": ".navbar-nav .active",
             "offset": 80
            }'>
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -163,14 +163,17 @@
                     cursor: pointer;
                     user-select: none;
                 }
+
                 .sort-icon {
                     font-size: 14px;
                     margin-left: 5px;
                     color: gray;
                 }
+
                 #searchInput {
                     max-width: 200px;
                 }
+
                 .progress-bar {
                     transition: width 0.3s ease-in-out;
                 }
@@ -401,7 +404,11 @@
             }
 
             function formatDate(dateString) {
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                const options = {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                };
                 return new Date(dateString).toLocaleDateString(undefined, options);
             }
 
@@ -420,7 +427,7 @@
                     const statusBadge = progress >= 100 ?
                         `<span class="badge bg-success">Completed</span>` :
                         `<span class="badge bg-warning">Active</span>`;
-                    
+
                     const quizScore = enrollment.avg_quiz_score ? `${enrollment.avg_quiz_score}%` : 'N/A';
                     const certificateStatus = enrollment.certificate_id ?
                         `<span class="badge bg-info">Issued</span>` :
@@ -541,8 +548,8 @@
                             topicProgress.innerHTML = "";
                             if (enrollment.topics && enrollment.topics.length > 0) {
                                 enrollment.topics.forEach(topic => {
-                                    const status = topic.completion_status === 'completed' ? 
-                                        `<span class="badge bg-success">Completed</span>` : 
+                                    const status = topic.completion_status === 'completed' ?
+                                        `<span class="badge bg-success">Completed</span>` :
                                         `<span class="badge bg-warning">In Progress</span>`;
                                     topicProgress.innerHTML += `
                                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -614,9 +621,9 @@
                 formData.append('action', 'issue_certificate');
 
                 fetch('../backend/admin/progress-tracking.php', {
-                    method: 'POST',
-                    body: formData
-                })
+                        method: 'POST',
+                        body: formData
+                    })
                     .then(response => response.json())
                     .then(data => {
                         removeOverlay();
@@ -713,4 +720,4 @@
 </main>
 <!-- ========== END MAIN CONTENT ========== -->
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>

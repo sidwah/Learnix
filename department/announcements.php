@@ -1,5 +1,5 @@
-<!-- admin/announcements.php  -->
-<?php include '../includes/admin-header.php'; ?>
+<!-- department/announcements.php  -->
+<?php include '../includes/department/header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -9,7 +9,7 @@
             "offset": 80
            }'>
 
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -337,10 +337,10 @@
                                     <td>
                                         <a class="d-flex align-items-center" href="#">
                                             <div class="avatar avatar-circle">
-                                                <img class="avatar-img" src="../assets/img/160x160/img10.jpg" alt="Admin User">
+                                                <img class="avatar-img" src="../assets/img/160x160/img10.jpg" alt="department User">
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <span class="d-block fs-6 text-body">Admin</span>
+                                                <span class="d-block fs-6 text-body">department</span>
                                             </div>
                                         </a>
                                     </td>
@@ -391,10 +391,10 @@
                                     <td>
                                         <a class="d-flex align-items-center" href="#">
                                             <div class="avatar avatar-circle">
-                                                <img class="avatar-img" src="../assets/img/160x160/img9.jpg" alt="Admin User">
+                                                <img class="avatar-img" src="../assets/img/160x160/img9.jpg" alt="department User">
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <span class="d-block fs-6 text-body">Admin</span>
+                                                <span class="d-block fs-6 text-body">department</span>
                                             </div>
                                         </a>
                                     </td>
@@ -445,10 +445,10 @@
                                     <td>
                                         <a class="d-flex align-items-center" href="#">
                                             <div class="avatar avatar-circle">
-                                                <img class="avatar-img" src="../assets/img/160x160/img8.jpg" alt="Admin User">
+                                                <img class="avatar-img" src="../assets/img/160x160/img8.jpg" alt="department User">
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <span class="d-block fs-6 text-body">Admin</span>
+                                                <span class="d-block fs-6 text-body">department</span>
                                             </div>
                                         </a>
                                     </td>
@@ -557,10 +557,10 @@
                                     <td>
                                         <a class="d-flex align-items-center" href="#">
                                             <div class="avatar avatar-circle">
-                                                <img class="avatar-img" src="../assets/img/160x160/img10.jpg" alt="Admin User">
+                                                <img class="avatar-img" src="../assets/img/160x160/img10.jpg" alt="department User">
                                             </div>
                                             <div class="flex-grow-1 ms-3">
-                                                <span class="d-block fs-6 text-body">Admin</span>
+                                                <span class="d-block fs-6 text-body">department</span>
                                             </div>
                                         </a>
                                     </td>
@@ -1326,4 +1326,4 @@
     });
 </script>
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>

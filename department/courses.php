@@ -1,9 +1,9 @@
-<?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/department/header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
     <nav class=" navbar navbar-expand-lg navbar-sidebar navbar-vertical navbar-light bg-white border-end">
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -405,7 +405,7 @@
     `;
 
         // Fetch courses data
-        fetch('../ajax/admin/fetch_courses.php')
+        fetch('../ajax/department/fetch_courses.php')
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -442,7 +442,7 @@
     // Function to load course statistics
     // Function to load course statistics
     function loadCourseStats() {
-        fetch('../ajax/admin/fetch_course_stats.php')
+        fetch('../ajax/department/fetch_course_stats.php')
             .then(response => response.json())
             .then(data => {
                 // Update dashboard cards with stats
@@ -463,35 +463,35 @@
     }
 
     // Function to display courses in the table
-// Function to display courses with pagination
-function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
-    const tableBody = document.querySelector('tbody');
-    tableBody.innerHTML = '';
+    // Function to display courses with pagination
+    function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
+        const tableBody = document.querySelector('tbody');
+        tableBody.innerHTML = '';
 
-    // Filter courses based on status and search term
-    const filteredCourses = courses.filter(course => {
-        const matchesStatus = filterStatus === 'all' ||
-            (filterStatus === 'published' && course.status === 'Published' && course.approval_status === 'Approved' && !course.is_suspended) ||
-            (filterStatus === 'pending' && course.approval_status === 'Pending') ||
-            (filterStatus === 'rejected' && course.approval_status === 'Rejected') ||
-            (filterStatus === 'suspended' && course.is_suspended);
+        // Filter courses based on status and search term
+        const filteredCourses = courses.filter(course => {
+            const matchesStatus = filterStatus === 'all' ||
+                (filterStatus === 'published' && course.status === 'Published' && course.approval_status === 'Approved' && !course.is_suspended) ||
+                (filterStatus === 'pending' && course.approval_status === 'Pending') ||
+                (filterStatus === 'rejected' && course.approval_status === 'Rejected') ||
+                (filterStatus === 'suspended' && course.is_suspended);
 
-        const matchesSearch = searchTerm === '' ||
-            course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            course.instructor_name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearch = searchTerm === '' ||
+                course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                course.instructor_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-        return matchesStatus && matchesSearch;
-    });
+            return matchesStatus && matchesSearch;
+        });
 
-    // Calculate pagination
-    const totalItems = filteredCourses.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-    const paginatedCourses = filteredCourses.slice(startIndex, endIndex);
+        // Calculate pagination
+        const totalItems = filteredCourses.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+        const paginatedCourses = filteredCourses.slice(startIndex, endIndex);
 
-    if (paginatedCourses.length === 0) {
-        tableBody.innerHTML = `
+        if (paginatedCourses.length === 0) {
+            tableBody.innerHTML = `
             <tr>
                 <td colspan="6" class="text-center py-4">
                     <div class="alert alert-info">
@@ -500,21 +500,21 @@ function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
                 </td>
             </tr>
         `;
-        updatePaginationControls(totalPages, 0);
-        return;
-    }
+            updatePaginationControls(totalPages, 0);
+            return;
+        }
 
-    // Create table rows for each course
-    paginatedCourses.forEach(course => {
-        const thumbnailPath = course.thumbnail ? `../uploads/thumbnails/${course.thumbnail}` : '../assets/img/300x200/img1.jpg';
+        // Create table rows for each course
+        paginatedCourses.forEach(course => {
+            const thumbnailPath = course.thumbnail ? `../uploads/thumbnails/${course.thumbnail}` : '../assets/img/300x200/img1.jpg';
 
-        // Determine course status display
-        let statusBadge = '';
-        let actionButtons = '';
+            // Determine course status display
+            let statusBadge = '';
+            let actionButtons = '';
 
-        if (course.is_suspended) {
-            statusBadge = `<span class="badge bg-secondary">Suspended</span>`;
-            actionButtons = `
+            if (course.is_suspended) {
+                statusBadge = `<span class="badge bg-secondary">Suspended</span>`;
+                actionButtons = `
                 <button class="btn btn-sm btn-soft-primary view-course" data-course-id="${course.course_id}">
                     <i class="bi-eye"></i>
                 </button>
@@ -524,9 +524,9 @@ function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
                     <i class="bi-arrow-counterclockwise"></i>
                 </button>
             `;
-        } else if (course.status === 'Published' && course.approval_status === 'Approved') {
-            statusBadge = `<span class="badge bg-success">Published</span>`;
-            actionButtons = `
+            } else if (course.status === 'Published' && course.approval_status === 'Approved') {
+                statusBadge = `<span class="badge bg-success">Published</span>`;
+                actionButtons = `
                 <button class="btn btn-sm btn-soft-primary view-course" data-course-id="${course.course_id}">
                     <i class="bi-eye"></i>
                 </button>
@@ -536,9 +536,9 @@ function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
                     <i class="bi-pause-fill"></i>
                 </button>
             `;
-        } else if (course.approval_status === 'Pending') {
-            statusBadge = `<span class="badge bg-warning">Pending</span>`;
-            actionButtons = `
+            } else if (course.approval_status === 'Pending') {
+                statusBadge = `<span class="badge bg-warning">Pending</span>`;
+                actionButtons = `
                 <button class="btn btn-sm btn-soft-primary view-course" data-course-id="${course.course_id}">
                     <i class="bi-eye"></i>
                 </button>
@@ -553,9 +553,9 @@ function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
                     <i class="bi-x-lg"></i>
                 </button>
             `;
-        } else if (course.approval_status === 'Rejected') {
-            statusBadge = `<span class="badge bg-danger">Rejected</span>`;
-            actionButtons = `
+            } else if (course.approval_status === 'Rejected') {
+                statusBadge = `<span class="badge bg-danger">Rejected</span>`;
+                actionButtons = `
                 <button class="btn btn-sm btn-soft-primary view-course" data-course-id="${course.course_id}">
                     <i class="bi-eye"></i>
                 </button>
@@ -565,16 +565,16 @@ function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
                     <i class="bi-check-lg"></i>
                 </button>
             `;
-        }
+            }
 
-        // Create enrollment badge
-        const enrollmentCount = parseInt(course.enrollment_count) || 0;
-        const enrollmentBadge = enrollmentCount > 0 ?
-            `<span class="badge bg-soft-info text-info">${enrollmentCount} students</span>` :
-            `<span class="badge bg-soft-secondary text-secondary">0 students</span>`;
+            // Create enrollment badge
+            const enrollmentCount = parseInt(course.enrollment_count) || 0;
+            const enrollmentBadge = enrollmentCount > 0 ?
+                `<span class="badge bg-soft-info text-info">${enrollmentCount} students</span>` :
+                `<span class="badge bg-soft-secondary text-secondary">0 students</span>`;
 
-        // Add table row
-        tableBody.innerHTML += `
+            // Add table row
+            tableBody.innerHTML += `
             <tr data-course-id="${course.course_id}">
                 <td>
                     <div class="d-flex align-items-center">
@@ -601,98 +601,98 @@ function displayCourses(courses, filterStatus = 'all', searchTerm = '') {
                 </td>
             </tr>
         `;
-    });
+        });
 
-    // Update pagination controls
-    updatePaginationControls(totalPages, totalItems);
-    
-    // Re-attach event listeners to buttons
-    attachEventListeners();
-}
+        // Update pagination controls
+        updatePaginationControls(totalPages, totalItems);
 
-// Function to update pagination controls
-function updatePaginationControls(totalPages, totalItems) {
-    const paginationNumbers = document.getElementById('paginationNumbers');
-    const prevButton = document.getElementById('prevPage');
-    const nextButton = document.getElementById('nextPage');
-    
-    // Clear existing pagination numbers
-    paginationNumbers.innerHTML = '';
-    
-    // Update previous button state
-    prevButton.disabled = currentPage === 1;
-    
-    // Update next button state
-    nextButton.disabled = currentPage === totalPages || totalPages === 0;
-    
-    // Show current page and total pages
-    const pageInfo = document.createElement('span');
-    pageInfo.className = 'mx-2';
-    // pageInfo.textContent = `Page ${currentPage} of ${totalPages} (${totalItems} items)`;
-    paginationNumbers.appendChild(pageInfo);
-    
-    // Add page number buttons (optional - for direct page navigation)
-    if (totalPages > 1) {
-        const maxVisiblePages = 5; // Maximum number of page buttons to show
-        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-        
-        // Adjust if we're at the end
-        if (endPage - startPage + 1 < maxVisiblePages) {
-            startPage = Math.max(1, endPage - maxVisiblePages + 1);
-        }
-        
-        // Add "First" button if needed
-        if (startPage > 1) {
-            const firstButton = document.createElement('button');
-            firstButton.className = 'btn btn-sm btn-outline-primary mx-1';
-            firstButton.textContent = '1';
-            firstButton.addEventListener('click', () => {
-                currentPage = 1;
-                loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
-            });
-            paginationNumbers.appendChild(firstButton);
-            
-            if (startPage > 2) {
-                const ellipsis = document.createElement('span');
-                ellipsis.className = 'mx-1';
-                ellipsis.textContent = '...';
-                paginationNumbers.appendChild(ellipsis);
+        // Re-attach event listeners to buttons
+        attachEventListeners();
+    }
+
+    // Function to update pagination controls
+    function updatePaginationControls(totalPages, totalItems) {
+        const paginationNumbers = document.getElementById('paginationNumbers');
+        const prevButton = document.getElementById('prevPage');
+        const nextButton = document.getElementById('nextPage');
+
+        // Clear existing pagination numbers
+        paginationNumbers.innerHTML = '';
+
+        // Update previous button state
+        prevButton.disabled = currentPage === 1;
+
+        // Update next button state
+        nextButton.disabled = currentPage === totalPages || totalPages === 0;
+
+        // Show current page and total pages
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'mx-2';
+        // pageInfo.textContent = `Page ${currentPage} of ${totalPages} (${totalItems} items)`;
+        paginationNumbers.appendChild(pageInfo);
+
+        // Add page number buttons (optional - for direct page navigation)
+        if (totalPages > 1) {
+            const maxVisiblePages = 5; // Maximum number of page buttons to show
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            // Adjust if we're at the end
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
             }
-        }
-        
-        // Add page number buttons
-        for (let i = startPage; i <= endPage; i++) {
-            const pageButton = document.createElement('button');
-            pageButton.className = `btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1`;
-            pageButton.textContent = i;
-            pageButton.addEventListener('click', () => {
-                currentPage = i;
-                loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
-            });
-            paginationNumbers.appendChild(pageButton);
-        }
-        
-        // Add "Last" button if needed
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) {
-                const ellipsis = document.createElement('span');
-                ellipsis.className = 'mx-1';
-                ellipsis.textContent = '...';
-                paginationNumbers.appendChild(ellipsis);
+
+            // Add "First" button if needed
+            if (startPage > 1) {
+                const firstButton = document.createElement('button');
+                firstButton.className = 'btn btn-sm btn-outline-primary mx-1';
+                firstButton.textContent = '1';
+                firstButton.addEventListener('click', () => {
+                    currentPage = 1;
+                    loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
+                });
+                paginationNumbers.appendChild(firstButton);
+
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'mx-1';
+                    ellipsis.textContent = '...';
+                    paginationNumbers.appendChild(ellipsis);
+                }
             }
-            
-            const lastButton = document.createElement('button');
-            lastButton.className = 'btn btn-sm btn-outline-primary mx-1';
-            lastButton.textContent = totalPages;
-            lastButton.addEventListener('click', () => {
-                currentPage = totalPages;
-                loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
-            });
-            paginationNumbers.appendChild(lastButton);
+
+            // Add page number buttons
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.className = `btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'} mx-1`;
+                pageButton.textContent = i;
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
+                });
+                paginationNumbers.appendChild(pageButton);
+            }
+
+            // Add "Last" button if needed
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'mx-1';
+                    ellipsis.textContent = '...';
+                    paginationNumbers.appendChild(ellipsis);
+                }
+
+                const lastButton = document.createElement('button');
+                lastButton.className = 'btn btn-sm btn-outline-primary mx-1';
+                lastButton.textContent = totalPages;
+                lastButton.addEventListener('click', () => {
+                    currentPage = totalPages;
+                    loadCourses(document.getElementById('statusFilter').value, document.getElementById('searchInput').value);
+                });
+                paginationNumbers.appendChild(lastButton);
+            }
         }
     }
-}
 
     // Function to attach event listeners to buttons
     function attachEventListeners() {
@@ -776,7 +776,7 @@ function updatePaginationControls(totalPages, totalItems) {
 
     // Function to restore a suspended course
     function restoreCourse(courseId) {
-        fetch('../ajax/admin/restore_course.php', {
+        fetch('../ajax/department/restore_course.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -822,7 +822,7 @@ function updatePaginationControls(totalPages, totalItems) {
         modal.show();
 
         // Fetch course details from the server
-        fetch(`../ajax/admin/fetch_course_details.php?id=${courseId}`)
+        fetch(`../ajax/department/fetch_course_details.php?id=${courseId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -1001,7 +1001,7 @@ function updatePaginationControls(totalPages, totalItems) {
 
     // Function to approve a course
     function approveCourse(courseId) {
-        fetch('../ajax/admin/approve_course.php', {
+        fetch('../ajax/department/approve_course.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1040,7 +1040,7 @@ function updatePaginationControls(totalPages, totalItems) {
 
         console.log('Request payload:', formData.toString());
 
-        fetch('../ajax/admin/reject_course.php', {
+        fetch('../ajax/department/reject_course.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1085,10 +1085,10 @@ function updatePaginationControls(totalPages, totalItems) {
                 showToast('danger', 'Failed to reject course. Please try again.');
             });
     }
-   
+
     // Function to suspend a course
     function suspendCourse(courseId) {
-        fetch('../ajax/admin/suspend_course.php', {
+        fetch('../ajax/department/suspend_course.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1340,4 +1340,4 @@ function updatePaginationControls(totalPages, totalItems) {
     });
 </script>
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>

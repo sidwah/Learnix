@@ -1,4 +1,4 @@
-<?php include '../includes/admin-header.php'; ?>
+<?php include '../includes/department/header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -8,7 +8,7 @@
             "offset": 80
            }'>
 
-        <?php include '../includes/admin-sidebar.php'; ?>
+        <?php include '../includes/department/sidebar.php'; ?>
     </nav>
     <!-- End Navbar -->
 
@@ -216,12 +216,12 @@
                             <?php
                             // Get all tickets for the current admin
                             $tickets = getAdminTickets();
-                            
+
                             if ($tickets && count($tickets) > 0) {
                                 foreach ($tickets as $ticket) {
                                     $statusClass = '';
                                     $statusBadge = '';
-                                    
+
                                     switch ($ticket['status']) {
                                         case 'open':
                                             $statusClass = 'bg-soft-primary text-primary';
@@ -239,10 +239,10 @@
                                             $statusClass = 'bg-soft-secondary text-secondary';
                                             $statusBadge = 'Unknown';
                                     }
-                                    
+
                                     $priorityClass = '';
                                     $priorityBadge = '';
-                                    
+
                                     switch ($ticket['priority']) {
                                         case 'high':
                                             $priorityClass = 'bg-soft-danger text-danger';
@@ -297,10 +297,10 @@
                                             </div>
                                         </td>
                                     </tr>
-                            <?php
+                                <?php
                                 }
                             } else {
-                            ?>
+                                ?>
                                 <tr>
                                     <td colspan="7" class="text-center">
                                         <div class="p-4">
@@ -343,12 +343,12 @@
                             <?php
                             // Get open tickets for the current admin
                             $openTickets = getAdminTicketsByStatus('open');
-                            
+
                             if ($openTickets && count($openTickets) > 0) {
                                 foreach ($openTickets as $ticket) {
                                     $priorityClass = '';
                                     $priorityBadge = '';
-                                    
+
                                     switch ($ticket['priority']) {
                                         case 'high':
                                             $priorityClass = 'bg-soft-danger text-danger';
@@ -395,10 +395,10 @@
                                             </div>
                                         </td>
                                     </tr>
-                            <?php
+                                <?php
                                 }
                             } else {
-                            ?>
+                                ?>
                                 <tr>
                                     <td colspan="5" class="text-center">
                                         <div class="p-4">
@@ -435,7 +435,7 @@
                             <?php
                             // Get in-progress tickets for the current admin
                             $inProgressTickets = getAdminTicketsByStatus('in-progress');
-                            
+
                             if ($inProgressTickets && count($inProgressTickets) > 0) {
                                 // Similar loop to show tickets as in the All Tickets tab
                                 foreach ($inProgressTickets as $ticket) {
@@ -480,7 +480,7 @@
                             <?php
                             // Get resolved tickets for the current admin
                             $resolvedTickets = getAdminTicketsByStatus('resolved');
-                            
+
                             if ($resolvedTickets && count($resolvedTickets) > 0) {
                                 // Similar loop to show tickets as in the All Tickets tab
                                 foreach ($resolvedTickets as $ticket) {
@@ -521,7 +521,7 @@
                 <div class="modal-body">
                     <form id="newTicketForm" action="process-ticket.php" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="create">
-                        
+
                         <div class="mb-3">
                             <label for="ticketSubject" class="form-label">Subject</label>
                             <input type="text" class="form-control" id="ticketSubject" name="subject" required>
@@ -582,7 +582,7 @@
                     <form id="updateStatusForm" action="process-ticket.php" method="post">
                         <input type="hidden" name="action" value="update_status">
                         <input type="hidden" name="ticket_id" id="statusTicketId" value="">
-                        
+
                         <div class="mb-3">
                             <label for="newStatus" class="form-label">New Status</label>
                             <select class="form-select" id="newStatus" name="status" required>
@@ -619,7 +619,7 @@
                     <form id="replyTicketForm" action="process-ticket.php" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="reply">
                         <input type="hidden" name="ticket_id" id="replyTicketId" value="">
-                        
+
                         <div class="mb-3">
                             <label for="replyMessage" class="form-label">Message</label>
                             <textarea class="form-control" id="replyMessage" name="message" rows="5" required></textarea>
@@ -667,9 +667,9 @@
                     <form id="closeTicketForm" action="process-ticket.php" method="post">
                         <input type="hidden" name="action" value="close">
                         <input type="hidden" name="ticket_id" id="closeTicketId" value="">
-                        
+
                         <p>Are you sure you want to close this ticket? This action will mark the ticket as resolved.</p>
-                        
+
                         <div class="mb-3">
                             <label for="closeComment" class="form-label">Closing Comment (optional)</label>
                             <textarea class="form-control" id="closeComment" name="comment" rows="3"></textarea>
@@ -803,36 +803,42 @@
 <script>
     // Support functions to get ticket counts
     <?php
-    function getOpenTicketsCount() {
+    function getOpenTicketsCount()
+    {
         // In a real application, this would query the database to count open tickets
         // For demonstration purposes, we'll return a placeholder value
         return 5;
     }
 
-    function getInProgressTicketsCount() {
+    function getInProgressTicketsCount()
+    {
         // In a real application, this would query the database to count in-progress tickets
         // For demonstration purposes, we'll return a placeholder value
         return 3;
     }
 
-    function getResolvedTicketsCount() {
+    function getResolvedTicketsCount()
+    {
         // In a real application, this would query the database to count resolved tickets
         // For demonstration purposes, we'll return a placeholder value
         return 12;
     }
 
-    function getAllTicketsCount() {
+    function getAllTicketsCount()
+    {
         // Sum of all ticket counts
         return getOpenTicketsCount() + getInProgressTicketsCount() + getResolvedTicketsCount();
     }
 
-    function getAverageResponseTime() {
+    function getAverageResponseTime()
+    {
         // In a real application, this would calculate the average response time from the database
         // For demonstration purposes, we'll return a placeholder value
         return 4.2;
     }
 
-    function getAdminTickets() {
+    function getAdminTickets()
+    {
         // In a real application, this would fetch tickets from the database
         // For demonstration purposes, we'll create sample data
         return [
@@ -879,18 +885,19 @@
         ];
     }
 
-    function getAdminTicketsByStatus($status) {
+    function getAdminTicketsByStatus($status)
+    {
         // In a real application, this would fetch tickets with specific status
         // For demonstration, we'll filter the sample data
         $allTickets = getAdminTickets();
         $filteredTickets = [];
-        
+
         foreach ($allTickets as $ticket) {
             if ($ticket['status'] === $status) {
                 $filteredTickets[] = $ticket;
             }
         }
-        
+
         return $filteredTickets;
     }
     ?>
@@ -930,7 +937,7 @@
         // Toggle status update in reply modal
         var updateTicketStatusCheckbox = document.getElementById('updateTicketStatus');
         var statusUpdateContainer = document.getElementById('statusUpdateContainer');
-        
+
         if (updateTicketStatusCheckbox && statusUpdateContainer) {
             updateTicketStatusCheckbox.addEventListener('change', function() {
                 if (this.checked) {
@@ -943,4 +950,4 @@
     });
 </script>
 
-<?php include '../includes/admin-footer.php'; ?>
+<?php include '../includes/department/footer.php'; ?>

@@ -1,5 +1,5 @@
 <?php
-// admin-footer.php - Updated version with dark mode support
+// department/footer.php - Updated version with dark mode support
 ?>
 <!-- ========== FOOTER SCRIPTS ========== -->
 <!-- JS Implementing Plugins -->

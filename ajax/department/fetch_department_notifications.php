@@ -1,12 +1,16 @@
 <?php
-// ajax/admin/fetch_admin_notifications.php
+// ajax/department/fetch_department_notifications.php
 require_once '../../backend/session_start.php';
 require_once '../../backend/config.php';
 
 // Ensure only admins can access this endpoint
-if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['role'] !== 'admin') {
-    http_response_code(403);
-    echo json_encode(['error' => 'Unauthorized access']);
+// Check if the user is signed in and is a department staff member
+if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || !isset($_SESSION['department_id']) || !isset($_SESSION['role']) || !in_array($_SESSION['role'], ['department_head', 'department_secretary'])) {
+    // Log unauthorized access attempt for security auditing
+    error_log("Unauthorized access attempt to protected page: " . $_SERVER['REQUEST_URI'] . " | IP: " . $_SERVER['REMOTE_ADDR']);
+
+    // Redirect unauthorized users to the sign-in page
+    header('Location: signin.php');
     exit;
 }
 
@@ -38,7 +42,7 @@ $admin_id = $_SESSION['user_id'];
 
 try {
     $conn = new mysqli('localhost', 'root', 'root', 'learnix_db');
-    
+
     if ($conn->connect_error) {
         throw new Exception("Database connection failed: " . $conn->connect_error);
     }
@@ -58,15 +62,15 @@ try {
                           AND is_deleted = 0
                           ORDER BY created_at DESC 
                           LIMIT 50";
-    
+
     $stmt = $conn->prepare($notificationQuery);
     $stmt->bind_param("i", $admin_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     while ($row = $result->fetch_assoc()) {
         $category = 'other';
-        
+
         // Determine category based on notification type
         if (strpos($row['type'], 'report') !== false) {
             $category = 'reports';
@@ -75,12 +79,12 @@ try {
         } elseif (strpos($row['type'], 'message') !== false) {
             $category = 'messages';
         }
-        
+
         // Format created_at as a relative time
         $time = new DateTime($row['created_at']);
         $now = new DateTime();
         $interval = $now->diff($time);
-        
+
         if ($interval->days > 0) {
             $timeAgo = $interval->days . ' day' . ($interval->days > 1 ? 's' : '') . ' ago';
         } elseif ($interval->h > 0) {
@@ -90,7 +94,7 @@ try {
         } else {
             $timeAgo = 'Just now';
         }
-        
+
         // Add to response
         $response['notifications'][$category][] = [
             'id' => 'notification-' . $row['notification_id'],
@@ -104,18 +108,18 @@ try {
             'related_type' => $row['related_type'],
             'actions' => getActionsForNotification($row['type'], $row['related_id'], $row['related_type'])
         ];
-        
+
         if (!$row['is_read']) {
             $response['counts'][$category]++;
             $response['counts']['total']++;
         }
     }
-    
+
     // Check if we need to group notifications (more than 7 in a category)
     foreach ($response['notifications'] as $category => $notifications) {
         $response['shouldGroup'][$category] = count($notifications) > 7;
     }
-    
+
     // 2. Fetch pending issue reports not yet in notifications
     $pendingReportsQuery = "SELECT 
                               ir.id, 
@@ -136,26 +140,26 @@ try {
                               AND un.user_id = ?
                               AND un.is_deleted = 0
                             )";
-    
+
     $stmt = $conn->prepare($pendingReportsQuery);
     $stmt->bind_param("i", $admin_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     // Add these as new notifications and also create notifications in the database
     $insertNotificationStmt = $conn->prepare("INSERT INTO user_notifications 
                                             (user_id, type, title, message, related_id, related_type, is_deleted) 
                                             VALUES (?, ?, ?, ?, ?, ?, 0)");
-    
+
     while ($row = $result->fetch_assoc()) {
         // Create title based on issue type
         $issueTypeTitle = ucfirst($row['issue_type']);
         $title = "New {$issueTypeTitle} Issue Report";
-        
+
         // Create message with user name
         $userFullName = $row['first_name'] . ' ' . $row['last_name'];
         $message = "User {$userFullName} reported an issue: " . (strlen($row['description']) > 100 ? substr($row['description'], 0, 100) . '...' : $row['description']);
-        
+
         // Insert into notifications
         $type = 'report_' . strtolower($row['issue_type']);
         $related_id = $row['id'];
@@ -163,12 +167,12 @@ try {
         $insertNotificationStmt->bind_param("isssss", $admin_id, $type, $title, $message, $related_id, $related_type);
         $insertNotificationStmt->execute();
         $notification_id = $conn->insert_id;
-        
+
         // Format created_at as a relative time
         $time = new DateTime($row['created_at']);
         $now = new DateTime();
         $interval = $now->diff($time);
-        
+
         if ($interval->days > 0) {
             $timeAgo = $interval->days . ' day' . ($interval->days > 1 ? 's' : '') . ' ago';
         } elseif ($interval->h > 0) {
@@ -178,7 +182,7 @@ try {
         } else {
             $timeAgo = 'Just now';
         }
-        
+
         // Add to response
         $response['notifications']['reports'][] = [
             'id' => 'notification-' . $notification_id,
@@ -204,11 +208,11 @@ try {
                 ]
             ]
         ];
-        
+
         $response['counts']['reports']++;
         $response['counts']['total']++;
     }
-    
+
     // 3. Check for course submissions needing approval
     $courseSubmissionsQuery = "SELECT 
                                  c.course_id, 
@@ -228,17 +232,17 @@ try {
                                  AND un.user_id = ?
                                  AND un.is_deleted = 0
                                )";
-    
+
     $stmt = $conn->prepare($courseSubmissionsQuery);
     $stmt->bind_param("i", $admin_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     while ($row = $result->fetch_assoc()) {
         // Create notification
         $title = "New Course Submission";
         $message = "Instructor {$row['first_name']} {$row['last_name']} has submitted a new course: \"{$row['title']}\" for review.";
-        
+
         // Insert into notifications
         $type = 'report_course_submission';
         $related_id = $row['course_id'];
@@ -246,12 +250,12 @@ try {
         $insertNotificationStmt->bind_param("isssss", $admin_id, $type, $title, $message, $related_id, $related_type);
         $insertNotificationStmt->execute();
         $notification_id = $conn->insert_id;
-        
+
         // Format created_at as a relative time
         $time = new DateTime($row['created_at']);
         $now = new DateTime();
         $interval = $now->diff($time);
-        
+
         if ($interval->days > 0) {
             $timeAgo = $interval->days . ' day' . ($interval->days > 1 ? 's' : '') . ' ago';
         } elseif ($interval->h > 0) {
@@ -261,7 +265,7 @@ try {
         } else {
             $timeAgo = 'Just now';
         }
-        
+
         // Add to response
         $response['notifications']['reports'][] = [
             'id' => 'notification-' . $notification_id,
@@ -287,11 +291,11 @@ try {
                 ]
             ]
         ];
-        
+
         $response['counts']['reports']++;
         $response['counts']['total']++;
     }
-    
+
     // 4. Check for instructor verification requests
     $verificationRequestsQuery = "SELECT 
                                     ivr.verification_id, 
@@ -311,17 +315,17 @@ try {
                                     AND un.user_id = ?
                                     AND un.is_deleted = 0
                                   )";
-    
+
     $stmt = $conn->prepare($verificationRequestsQuery);
     $stmt->bind_param("i", $admin_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     while ($row = $result->fetch_assoc()) {
         // Create notification
         $title = "Instructor Verification Request";
         $message = "{$row['first_name']} {$row['last_name']} ({$row['email']}) has requested instructor verification.";
-        
+
         // Insert into notifications
         $type = 'report_instructor_verification';
         $related_id = $row['verification_id'];
@@ -329,12 +333,12 @@ try {
         $insertNotificationStmt->bind_param("isssss", $admin_id, $type, $title, $message, $related_id, $related_type);
         $insertNotificationStmt->execute();
         $notification_id = $conn->insert_id;
-        
+
         // Format created_at as a relative time
         $time = new DateTime($row['submitted_at']);
         $now = new DateTime();
         $interval = $now->diff($time);
-        
+
         if ($interval->days > 0) {
             $timeAgo = $interval->days . ' day' . ($interval->days > 1 ? 's' : '') . ' ago';
         } elseif ($interval->h > 0) {
@@ -344,7 +348,7 @@ try {
         } else {
             $timeAgo = 'Just now';
         }
-        
+
         // Add to response
         $response['notifications']['reports'][] = [
             'id' => 'notification-' . $notification_id,
@@ -370,18 +374,17 @@ try {
                 ]
             ]
         ];
-        
+
         $response['counts']['reports']++;
         $response['counts']['total']++;
     }
-    
+
     // Check if we need to group notifications after adding new ones
     foreach ($response['notifications'] as $category => $notifications) {
         $response['shouldGroup'][$category] = count($notifications) > 7;
     }
-    
+
     $response['success'] = true;
-    
 } catch (Exception $e) {
     $response['error'] = $e->getMessage();
 } finally {
@@ -391,9 +394,10 @@ try {
 }
 
 // Helper function to generate actions for different notification types
-function getActionsForNotification($type, $relatedId, $relatedType) {
+function getActionsForNotification($type, $relatedId, $relatedType)
+{
     $actions = [];
-    
+
     if (strpos($type, 'report_') === 0) {
         if ($relatedType === 'issue_report') {
             $actions = [
@@ -464,7 +468,7 @@ function getActionsForNotification($type, $relatedId, $relatedType) {
             ]
         ];
     }
-    
+
     return $actions;
 }
 
