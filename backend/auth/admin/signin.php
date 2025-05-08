@@ -23,7 +23,7 @@ function generateVerificationCode() {
 }
 
 // Function to send verification email
-function sendVerificationEmail($email, $firstName, $verificationCode, $role) {
+function sendVerificationEmail($email, $verificationCode) {
     $mail = new PHPMailer(true);
 
     try {
@@ -42,11 +42,8 @@ function sendVerificationEmail($email, $firstName, $verificationCode, $role) {
 
         // Email content
         $mail->isHTML(true);
-        $mail->Subject = 'Your Learnix Department Verification Code';
-        
-        // Role-specific greeting
-        $roleTitle = ($role == 'department_head') ? 'Department Head' : 'Department Secretary';
-        
+        $mail->Subject = 'Your Learnix Admin Verification Code';
+        $mail->isHTML(true);
         $mail->Body = "
         <!DOCTYPE html>
         <html lang='en'>
@@ -137,8 +134,8 @@ function sendVerificationEmail($email, $firstName, $verificationCode, $role) {
                     <h1>LEARNIX</h1>
                 </div>
                 <div class='content'>
-                    <p class='info'>Hello $firstName,</p>
-                    <p class='info'>You've requested to sign in to your Learnix $roleTitle account. For security purposes, please verify your identity by entering the code below:</p>
+                    <p class='info'>Hello Admin,</p>
+                    <p class='info'>You've requested to sign in to your Learnix Admin account. For security purposes, please verify your identity by entering the code below:</p>
                     
                     <div class='verification-code'>$verificationCode</div>
                     
@@ -168,10 +165,9 @@ function sendVerificationEmail($email, $firstName, $verificationCode, $role) {
     }
 }
 
-// Make sure necessary tables exist
+// Make sure login_attempts table exists
 try {
-    // Create lockout tracking table if it doesn't exist
-    $createLockoutTable = $conn->prepare("CREATE TABLE IF NOT EXISTS department_lockouts (
+    $createTable = $conn->prepare("CREATE TABLE IF NOT EXISTS admin_lockouts (
         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         email VARCHAR(255) NOT NULL,
         lockout_until DATETIME NOT NULL,
@@ -180,30 +176,9 @@ try {
         UNIQUE KEY email (email),
         KEY lockout_until (lockout_until)
     )");
-    $createLockoutTable->execute();
-    
-    // Create verification codes table if it doesn't exist
-    $createVerificationTable = $conn->prepare("CREATE TABLE IF NOT EXISTS department_verification_codes (
-        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        email VARCHAR(255) NOT NULL,
-        code VARCHAR(6) NOT NULL,
-        expiry_time DATETIME NOT NULL,
-        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-        KEY email (email),
-        KEY code (code),
-        KEY expiry_time (expiry_time)
-    )");
-    $createVerificationTable->execute();
-    
-    // Add MFA preference column to department_staff table if it doesn't exist
-    $checkMfaColumn = $conn->prepare("SHOW COLUMNS FROM department_staff LIKE 'mfa_enabled'");
-    $checkMfaColumn->execute();
-    if ($checkMfaColumn->rowCount() == 0) {
-        $addMfaColumn = $conn->prepare("ALTER TABLE department_staff ADD COLUMN mfa_enabled TINYINT(1) DEFAULT 1");
-        $addMfaColumn->execute();
-    }
+    $createTable->execute();
 } catch (Exception $e) {
-    error_log("Error setting up tables: " . $e->getMessage());
+    error_log("Error creating admin_lockouts table: " . $e->getMessage());
 }
 
 // Handle resend code request
@@ -216,45 +191,42 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['resend']) && isset($_
         exit;
     }
     
-    // Check if user exists and is a department staff
-    $sql = "SELECT u.user_id, u.first_name, u.role FROM users u 
-            WHERE u.email = ? AND (u.role = 'department_head' OR u.role = 'department_secretary')";
+    // Check if user exists and is an admin
+    $sql = "SELECT user_id FROM users WHERE email = ? AND role = 'admin'";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "s", $email);
     mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
+    mysqli_stmt_store_result($stmt);
     
-    if ($row = mysqli_fetch_assoc($result)) {
-        $firstName = $row['first_name'];
-        $role = $row['role'];
-        
-        // Generate a new verification code
-        $verificationCode = generateVerificationCode();
-        $expiryTime = date('Y-m-d H:i:s', strtotime('+10 minutes'));
-        
-        // Delete any existing verification codes for this user
-        $deleteSQL = "DELETE FROM department_verification_codes WHERE email = ?";
-        $deleteStmt = mysqli_prepare($conn, $deleteSQL);
-        mysqli_stmt_bind_param($deleteStmt, "s", $email);
-        mysqli_stmt_execute($deleteStmt);
-        
-        // Insert new verification code
-        $insertSQL = "INSERT INTO department_verification_codes (email, code, expiry_time) VALUES (?, ?, ?)";
-        $insertStmt = mysqli_prepare($conn, $insertSQL);
-        mysqli_stmt_bind_param($insertStmt, "sss", $email, $verificationCode, $expiryTime);
-        
-        if (mysqli_stmt_execute($insertStmt)) {
-            // Send verification email
-            if (sendVerificationEmail($email, $firstName, $verificationCode, $role)) {
-                echo json_encode(["status" => "success", "message" => "Verification code sent"]);
-            } else {
-                echo json_encode(["status" => "error", "message" => "Failed to send verification email"]);
-            }
+    if (mysqli_stmt_num_rows($stmt) === 0) {
+        echo json_encode(["status" => "error", "message" => "User not found"]);
+        exit;
+    }
+    
+    // Generate a new verification code
+    $verificationCode = generateVerificationCode();
+    $expiryTime = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+    
+    // Delete any existing verification codes for this user
+    $deleteSQL = "DELETE FROM admin_verification_codes WHERE email = ?";
+    $deleteStmt = mysqli_prepare($conn, $deleteSQL);
+    mysqli_stmt_bind_param($deleteStmt, "s", $email);
+    mysqli_stmt_execute($deleteStmt);
+    
+    // Insert new verification code
+    $insertSQL = "INSERT INTO admin_verification_codes (email, code, expiry_time) VALUES (?, ?, ?)";
+    $insertStmt = mysqli_prepare($conn, $insertSQL);
+    mysqli_stmt_bind_param($insertStmt, "sss", $email, $verificationCode, $expiryTime);
+    
+    if (mysqli_stmt_execute($insertStmt)) {
+        // Send verification email
+        if (sendVerificationEmail($email, $verificationCode)) {
+            echo json_encode(["status" => "success", "message" => "Verification code sent"]);
         } else {
-            echo json_encode(["status" => "error", "message" => "Failed to generate verification code"]);
+            echo json_encode(["status" => "error", "message" => "Failed to send verification email"]);
         }
     } else {
-        echo json_encode(["status" => "error", "message" => "User not found"]);
+        echo json_encode(["status" => "error", "message" => "Failed to generate verification code"]);
     }
     
     exit;
@@ -273,7 +245,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $ip = $_SERVER['REMOTE_ADDR'];
 
     // Check for account lockout
-    $checkLockout = $conn->prepare("SELECT lockout_until, attempts FROM department_lockouts WHERE email = ? AND lockout_until > NOW()");
+    $checkLockout = $conn->prepare("SELECT lockout_until, attempts FROM admin_lockouts WHERE email = ? AND lockout_until > NOW()");
     $checkLockout->bind_param("s", $email);
     $checkLockout->execute();
     $lockoutResult = $checkLockout->get_result();
@@ -293,14 +265,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     if (!empty($email) && !empty($password)) {
-        // Get user details including department staff info and MFA preference
-        $sql = "SELECT u.user_id, u.email, u.password_hash, u.first_name, u.last_name, u.role, 
-                       d.staff_id, d.department_id, d.mfa_enabled, dept.name as department_name  
-                FROM users u
-                JOIN department_staff d ON u.user_id = d.user_id
-                JOIN departments dept ON d.department_id = dept.department_id
-                WHERE u.email = ? AND (u.role = 'department_head' OR u.role = 'department_secretary')";
-                
+        $sql = "SELECT user_id, email, password_hash FROM users WHERE email = ? AND role = 'admin'";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
@@ -309,79 +274,42 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($row = mysqli_fetch_assoc($result)) {
             if (password_verify($password, $row['password_hash'])) {
                 // Reset failed attempts on successful login
-                $resetLockout = $conn->prepare("DELETE FROM department_lockouts WHERE email = ?");
+                $resetLockout = $conn->prepare("DELETE FROM admin_lockouts WHERE email = ?");
                 $resetLockout->bind_param("s", $email);
                 $resetLockout->execute();
                 
-                // Check if MFA is enabled for this user
-                $mfaEnabled = (bool)$row['mfa_enabled'];
+                // Credentials are valid, now generate and send verification code
+                $verificationCode = generateVerificationCode();
+                $expiryTime = date('Y-m-d H:i:s', strtotime('+10 minutes'));
                 
-                if ($mfaEnabled) {
-                    // Generate and send verification code
-                    $verificationCode = generateVerificationCode();
-                    $expiryTime = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+                // Store the verification code in database
+                // First, delete any existing codes for this user
+                $deleteSQL = "DELETE FROM admin_verification_codes WHERE email = ?";
+                $deleteStmt = mysqli_prepare($conn, $deleteSQL);
+                mysqli_stmt_bind_param($deleteStmt, "s", $email);
+                mysqli_stmt_execute($deleteStmt);
+                
+                // Insert new verification code
+                $insertSQL = "INSERT INTO admin_verification_codes (email, code, expiry_time) VALUES (?, ?, ?)";
+                $insertStmt = mysqli_prepare($conn, $insertSQL);
+                mysqli_stmt_bind_param($insertStmt, "sss", $email, $verificationCode, $expiryTime);
+                
+                if (mysqli_stmt_execute($insertStmt)) {
+                    // Store user_id in session but mark as not fully authenticated
+                    $_SESSION['temp_user_id'] = $row['user_id'];
                     
-                    // Store the verification code in database
-                    // First, delete any existing codes for this user
-                    $deleteSQL = "DELETE FROM department_verification_codes WHERE email = ?";
-                    $deleteStmt = mysqli_prepare($conn, $deleteSQL);
-                    mysqli_stmt_bind_param($deleteStmt, "s", $email);
-                    mysqli_stmt_execute($deleteStmt);
-                    
-                    // Insert new verification code
-                    $insertSQL = "INSERT INTO department_verification_codes (email, code, expiry_time) VALUES (?, ?, ?)";
-                    $insertStmt = mysqli_prepare($conn, $insertSQL);
-                    mysqli_stmt_bind_param($insertStmt, "sss", $email, $verificationCode, $expiryTime);
-                    
-                    if (mysqli_stmt_execute($insertStmt)) {
-                        // Store user data in session but mark as not fully authenticated
-                        $_SESSION['temp_user_id'] = $row['user_id'];
-                        
-                        // Send verification email
-                        if (sendVerificationEmail($email, $row['first_name'], $verificationCode, $row['role'])) {
-                            echo json_encode([
-                                "status" => "success", 
-                                "message" => "Verification code sent", 
-                                "requireVerification" => true
-                            ]);
-                        } else {
-                            echo json_encode(["status" => "error", "message" => "Failed to send verification email"]);
-                        }
+                    // Send verification email
+                    if (sendVerificationEmail($email, $verificationCode)) {
+                        echo json_encode([
+                            "status" => "success", 
+                            "message" => "Verification code sent", 
+                            "requireVerification" => true
+                        ]);
                     } else {
-                        echo json_encode(["status" => "error", "message" => "Failed to generate verification code"]);
+                        echo json_encode(["status" => "error", "message" => "Failed to send verification email"]);
                     }
                 } else {
-                    // MFA is disabled, complete login immediately
-                    // Create session data
-                    $_SESSION['user_id'] = $row['user_id'];
-                    $_SESSION['email'] = $row['email'];
-                    $_SESSION['first_name'] = $row['first_name'];
-                    $_SESSION['last_name'] = $row['last_name'];
-                    $_SESSION['role'] = $row['role'];
-                    $_SESSION['staff_id'] = $row['staff_id'];
-                    $_SESSION['department_id'] = $row['department_id'];
-                    $_SESSION['department_name'] = $row['department_name'];
-                    $_SESSION['signin'] = true;
-                    
-                    // Regenerate session ID for security
-                    session_regenerate_id(true);
-                    
-                    // Set last login timestamp
-                    $updateLogin = $conn->prepare("UPDATE users SET updated_at = NOW() WHERE user_id = ?");
-                    $updateLogin->bind_param("i", $row['user_id']);
-                    $updateLogin->execute();
-
-                    echo json_encode([
-                        "status" => "success",
-                        "message" => "Login successful",
-                        "requireVerification" => false,
-                        "user" => [
-                            "first_name" => $row['first_name'],
-                            "last_name" => $row['last_name'],
-                            "role" => $row['role'],
-                            "department" => $row['department_name']
-                        ]
-                    ]);
+                    echo json_encode(["status" => "error", "message" => "Failed to generate verification code"]);
                 }
             } else {
                 // Invalid password - increment failed attempts
@@ -397,7 +325,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 ]);
             }
         } else {
-            echo json_encode(["status" => "error", "message" => "User not found or not a department staff member"]);
+            echo json_encode(["status" => "error", "message" => "User not found"]);
         }
         mysqli_stmt_close($stmt);
     } else {
@@ -410,7 +338,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 // Function to handle failed login attempts
 function handleFailedLoginAttempt($conn, $email, $maxAttempts, $lockoutDuration) {
     // Check if entry exists
-    $checkStmt = $conn->prepare("SELECT attempts FROM department_lockouts WHERE email = ?");
+    $checkStmt = $conn->prepare("SELECT attempts FROM admin_lockouts WHERE email = ?");
     $checkStmt->bind_param("s", $email);
     $checkStmt->execute();
     $result = $checkStmt->get_result();
@@ -423,17 +351,17 @@ function handleFailedLoginAttempt($conn, $email, $maxAttempts, $lockoutDuration)
         // If max attempts reached, set lockout time
         if ($newAttempts >= $maxAttempts) {
             $lockoutUntil = date('Y-m-d H:i:s', strtotime("+{$lockoutDuration} minutes"));
-            $updateStmt = $conn->prepare("UPDATE department_lockouts SET attempts = ?, lockout_until = ? WHERE email = ?");
+            $updateStmt = $conn->prepare("UPDATE admin_lockouts SET attempts = ?, lockout_until = ? WHERE email = ?");
             $updateStmt->bind_param("iss", $newAttempts, $lockoutUntil, $email);
         } else {
-            $updateStmt = $conn->prepare("UPDATE department_lockouts SET attempts = ? WHERE email = ?");
+            $updateStmt = $conn->prepare("UPDATE admin_lockouts SET attempts = ? WHERE email = ?");
             $updateStmt->bind_param("is", $newAttempts, $email);
         }
         $updateStmt->execute();
     } else {
         // Create new record
         $attempts = 1;
-        $insertStmt = $conn->prepare("INSERT INTO department_lockouts (email, attempts, lockout_until) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))");
+        $insertStmt = $conn->prepare("INSERT INTO admin_lockouts (email, attempts, lockout_until) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 HOUR))");
         $insertStmt->bind_param("si", $email, $attempts);
         $insertStmt->execute();
     }
@@ -441,7 +369,7 @@ function handleFailedLoginAttempt($conn, $email, $maxAttempts, $lockoutDuration)
 
 // Function to get attempt information
 function getAttemptInfo($conn, $email, $maxAttempts) {
-    $stmt = $conn->prepare("SELECT attempts FROM department_lockouts WHERE email = ?");
+    $stmt = $conn->prepare("SELECT attempts FROM admin_lockouts WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();

@@ -42,35 +42,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
     
     // Get user details for email
-    $getUserSql = "SELECT u.first_name, u.last_name, u.role, d.department_id, dept.name as department_name
-                  FROM users u
-                  JOIN department_staff d ON u.user_id = d.user_id
-                  JOIN departments dept ON d.department_id = dept.department_id
-                  WHERE u.email = ? AND (u.role = 'department_head' OR u.role = 'department_secretary')";
+    $getUserSql = "SELECT first_name, last_name FROM users WHERE email = ? AND role = 'admin'";
     $getUserStmt = mysqli_prepare($conn, $getUserSql);
     mysqli_stmt_bind_param($getUserStmt, "s", $email);
     mysqli_stmt_execute($getUserStmt);
     $result = mysqli_stmt_get_result($getUserStmt);
     
     if (mysqli_num_rows($result) == 0) {
-        echo json_encode(["status" => "error", "message" => "User not found or not a department staff member"]);
+        echo json_encode(["status" => "error", "message" => "User not found"]);
         exit;
     }
     
     $userDetails = mysqli_fetch_assoc($result);
     $firstName = $userDetails['first_name'];
     $lastName = $userDetails['last_name'];
-    $role = $userDetails['role'];
-    $departmentName = $userDetails['department_name'];
     
     // Hash the new password
     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
     
     // Update the password in the database
-    $sql = "UPDATE users u
-           JOIN department_staff d ON u.user_id = d.user_id
-           SET u.password_hash = ? 
-           WHERE u.email = ? AND (u.role = 'department_head' OR u.role = 'department_secretary')";
+    $sql = "UPDATE users SET password_hash = ? WHERE email = ? AND role = 'admin'";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "ss", $passwordHash, $email);
     
@@ -78,19 +69,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Password updated successfully
         
         // Clear any reset codes
-        $clearCodesSql = "DELETE FROM department_reset_codes WHERE email = ?";
+        $clearCodesSql = "DELETE FROM admin_reset_codes WHERE email = ?";
         $clearCodesStmt = mysqli_prepare($conn, $clearCodesSql);
         mysqli_stmt_bind_param($clearCodesStmt, "s", $email);
         mysqli_stmt_execute($clearCodesStmt);
         
         // Clear any reset attempts
-        $clearAttemptsSql = "DELETE FROM department_reset_attempts WHERE email = ?";
+        $clearAttemptsSql = "DELETE FROM admin_reset_attempts WHERE email = ?";
         $clearAttemptsStmt = mysqli_prepare($conn, $clearAttemptsSql);
         mysqli_stmt_bind_param($clearAttemptsStmt, "s", $email);
         mysqli_stmt_execute($clearAttemptsStmt);
         
         // Clear any reset lockouts
-        $clearLockoutsSql = "DELETE FROM department_reset_lockouts WHERE email = ?";
+        $clearLockoutsSql = "DELETE FROM admin_reset_lockouts WHERE email = ?";
         $clearLockoutsStmt = mysqli_prepare($conn, $clearLockoutsSql);
         mysqli_stmt_bind_param($clearLockoutsStmt, "s", $email);
         mysqli_stmt_execute($clearLockoutsStmt);
@@ -107,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Get user_id if not already in session
         $user_id = $_SESSION['reset_user_id'] ?? null;
         if ($user_id === null) {
-            $getUserIdSql = "SELECT user_id FROM users WHERE email = ? AND (role = 'department_head' OR role = 'department_secretary')";
+            $getUserIdSql = "SELECT user_id FROM users WHERE email = ? AND role = 'admin'";
             $getUserIdStmt = mysqli_prepare($conn, $getUserIdSql);
             mysqli_stmt_bind_param($getUserIdStmt, "s", $email);
             mysqli_stmt_execute($getUserIdStmt);
@@ -122,15 +113,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         mysqli_stmt_close($resetLogStmt);
         
         // Send email notification
-        $emailSent = sendPasswordResetEmail($email, $firstName, $lastName, $role, $departmentName);
+        $emailSent = sendPasswordResetEmail($email, $firstName, $lastName);
         
         // Clear the reset session variables
         unset($_SESSION['reset_verified']);
         unset($_SESSION['reset_email']);
         unset($_SESSION['reset_user_id']);
-        unset($_SESSION['reset_role']);
-        unset($_SESSION['reset_staff_id']);
-        unset($_SESSION['reset_department_id']);
         unset($_SESSION['reset_time']);
         
         if ($emailSent) {
@@ -150,11 +138,8 @@ mysqli_close($conn);
 /**
  * Send an email notification about the password reset.
  */
-function sendPasswordResetEmail($email, $firstName, $lastName, $role, $departmentName) {
+function sendPasswordResetEmail($email, $firstName, $lastName) {
     $mail = new PHPMailer(true);
-    
-    // Format role for email display
-    $roleTitle = ($role == 'department_head') ? 'Department Head' : 'Department Secretary';
     
     try {
         // SMTP Server settings
@@ -170,19 +155,14 @@ function sendPasswordResetEmail($email, $firstName, $lastName, $role, $departmen
         $mail->setFrom('no-reply@learnix.com', 'Learnix');
         $mail->addAddress($email);
         $mail->isHTML(true);
-        $mail->Subject = 'Your Department Portal Password Has Been Reset';
+        $mail->Subject = 'Your Password Has Been Reset';
         $mail->Body = "
         <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;\">
             <div style=\"text-align: center; margin-bottom: 20px;\">
                 <h2 style=\"color: #333;\">Password Reset Confirmation</h2>
             </div>
             <p>Hi {$firstName} {$lastName},</p>
-            <p>This email confirms that your password has been successfully reset for your Learnix Department Portal account.</p>
-            <p><strong>Account Details:</strong></p>
-            <ul>
-                <li>Role: {$roleTitle}</li>
-                <li>Department: {$departmentName}</li>
-            </ul>
+            <p>This email confirms that your password has been successfully reset.</p>
             <p>If you did not initiate this password reset, please contact our support team immediately to secure your account.</p>
             <p>Thank you for using Learnix!</p>
             <div style=\"margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;\">
