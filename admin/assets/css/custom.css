@@ -1,0 +1,221 @@
+
+/* Base Elements */
+body {
+    background-color: var(--body-bg);
+    color: var(--text-color);
+  }
+  
+  .bg-body {
+    background-color: var(--body-bg) !important;
+  }
+  
+  .bg-white, .bg-light {
+    background-color: var(--content-bg) !important;
+  }
+  
+  .text-muted {
+    color: var(--text-muted) !important;
+  }
+  
+  h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    color: var(--heading-color);
+  }
+  
+  hr, .border, .border-top, .border-bottom, .border-left, .border-right {
+    border-color: var(--divider-color) !important;
+  }
+  
+  /* Layout Components */
+  .layout-wrapper, .layout-container, .layout-page, .content-wrapper {
+    background-color: var(--body-bg);
+  }
+  
+  .layout-menu {
+    background-color: var(--sidebar-bg) !important;
+    border-right-color: var(--divider-color) !important;
+  }
+  
+  .navbar-expand-lg, .app-brand, .layout-navbar {
+    background-color: var(--navbar-bg) !important;
+    border-color: var(--divider-color) !important;
+  }
+  
+  .menu-vertical .menu-item.active > .menu-link {
+    background-color: var(--menu-item-active) !important;
+  }
+  
+  .menu-vertical .menu-item .menu-link:hover {
+    background-color: var(--menu-item-hover) !important;
+  }
+  
+  .menu-link {
+    color: var(--text-color) !important;
+  }
+  
+  .menu-link i {
+    color: var(--text-color) !important;
+  }
+  
+  /* Cards */
+  .card {
+    background-color: var(--card-bg);
+    border-color: var(--card-border);
+  }
+  
+  .card-header {
+    background-color: var(--card-bg);
+    border-bottom-color: var(--divider-color);
+  }
+  
+  .card-footer {
+    background-color: var(--card-bg);
+    border-top-color: var(--divider-color);
+  }
+  
+  /* Tables */
+  .table {
+    color: var(--text-color);
+    border-color: var(--table-border);
+  }
+  
+  .table thead th {
+    background-color: var(--table-head-bg);
+    color: var(--text-color);
+    border-color: var(--table-border);
+  }
+  
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--table-stripe-bg);
+  }
+  
+  .table-hover tbody tr:hover {
+    background-color: var(--table-hover-bg);
+  }
+  
+  .dataTables_wrapper .dataTables_length, 
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info, 
+  .dataTables_wrapper .dataTables_processing, 
+  .dataTables_wrapper .dataTables_paginate {
+    color: var(--text-color) !important;
+  }
+  
+  /* Form Controls */
+  .form-control, .form-select, .form-check-input, .input-group-text {
+    background-color: var(--input-bg);
+    color: var(--input-color);
+    border-color: var(--input-border);
+  }
+  
+  .form-control:focus, .form-select:focus, .form-check-input:focus {
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 0.25rem rgba(105, 108, 255, 0.1);
+  }
+  
+  .form-control::placeholder {
+    color: var(--text-muted);
+  }
+  
+  /* Buttons */
+  .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  .btn-primary:hover, .btn-primary:focus {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+  
+  .btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  .btn-outline-primary:hover, .btn-outline-primary:focus {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  /* Add similar styling for other button variants */
+  
+  /* Dropdown Menus */
+  .dropdown-menu {
+    background-color: var(--card-bg);
+    border-color: var(--divider-color);
+  }
+  
+  .dropdown-item {
+    color: var(--text-color);
+  }
+  
+  .dropdown-item:hover, .dropdown-item:focus {
+    background-color: var(--menu-item-hover);
+    color: var(--text-color);
+  }
+  
+  /* Modal */
+  .modal-content {
+    background-color: var(--card-bg);
+    border-color: var(--divider-color);
+  }
+  
+  .modal-header, .modal-footer {
+    border-color: var(--divider-color);
+  }
+  
+  /* Pagination */
+  .pagination .page-link {
+    background-color: var(--content-bg);
+    border-color: var(--divider-color);
+    color: var(--text-color);
+  }
+  
+  .pagination .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+  }
+  
+  /* Badges */
+  .badge.bg-label-primary {
+    background-color: rgba(var(--primary-color-rgb), 0.16) !important;
+    color: var(--primary-color) !important;
+  }
+  
+  /* Add similar styles for other badge variants */
+  
+  /* Tooltips and Popovers */
+  .tooltip .tooltip-inner {
+    background-color: var(--tooltip-bg);
+    color: var(--tooltip-color);
+  }
+  
+  .popover {
+    background-color: var(--card-bg);
+    border-color: var(--divider-color);
+  }
+  
+  .popover-header {
+    background-color: var(--table-head-bg);
+    border-bottom-color: var(--divider-color);
+  }
+  
+  /* Charts */
+  .apexcharts-grid line {
+    stroke: var(--chart-grid) !important;
+  }
+  
+  .apexcharts-text tspan {
+    fill: var(--chart-text) !important;
+  }
+  
+  .apexcharts-legend-text {
+    color: var(--text-color) !important;
+  }
+  
+  /* Activity Timeline */
+  .timeline-vertical .timeline-item {
+    border-left-color: var(--divider-color) !important;
+  }
+  

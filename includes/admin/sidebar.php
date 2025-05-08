@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin Sidebar Component for Learnix LMS - Fixed version
+ * Admin Sidebar Component for Learnix LMS - Fixed version with Finance section
  * 
  * Usage: include 'includes/admin/sidebar.php';
  */
@@ -62,9 +62,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </ul>
         </li>
 
-        <!-- Rest of the sidebar remains the same -->
-       <!-- User Management -->
-       <li class="menu-header small text-uppercase">
+        <!-- User Management -->
+        <li class="menu-header small text-uppercase">
             <span class="menu-header-text">User Management</span>
         </li>
         <li class="menu-item <?php echo (strpos($currentPage, 'instructors') !== false) ? 'active open' : ''; ?>">
@@ -83,7 +82,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="Invite New">Invite New</div>
                     </a>
                 </li>
-               
             </ul>
         </li>
 
@@ -157,6 +155,34 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <li class="menu-item <?php echo ($currentPage == 'reports-revenue.php') ? 'active' : ''; ?>">
                     <a href="reports-revenue.php" class="menu-link">
                         <div data-i18n="Revenue Reports">Revenue Reports</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Finance Management -->
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">Finance Management</span>
+        </li>
+        <li class="menu-item <?php echo (strpos($currentPage, 'finance') !== false) ? 'active open' : ''; ?>">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+            <span class="menu-icon" style="font-weight: bold;">₵</span>
+                <div data-i18n="Finance">Finance</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item <?php echo ($currentPage == 'finance-transactions.php') ? 'active' : ''; ?>" data-menu-slug="finance-transactions.php">
+                    <a href="finance-transactions.php" class="menu-link">
+                        <div data-i18n="Transactions">Transactions</div>
+                    </a>
+                </li>
+                <!-- <li class="menu-item <?php // echo ($currentPage == 'finance-refunds.php') ? 'active' : ''; ?>" data-menu-slug="finance-refunds.php">
+                    <a href="finance-refunds.php" class="menu-link">
+                        <div data-i18n="Refunds">Refunds</div>
+                    </a>
+                </li> -->
+                <li class="menu-item <?php echo ($currentPage == 'finance-reports.php') ? 'active' : ''; ?>" data-menu-slug="finance-reports.php">
+                    <a href="finance-reports.php" class="menu-link">
+                        <div data-i18n="Financial Reports">Financial Reports</div>
                     </a>
                 </li>
             </ul>

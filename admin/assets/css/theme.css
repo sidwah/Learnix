@@ -1,0 +1,221 @@
+/**
+ * Learnix Theme CSS
+ * Add this to assets/css/theme.css
+ */
+
+/* Apply CSS Variables to Elements */
+
+/* Base Elements */
+body {
+    background-color: var(--body-bg);
+    color: var(--text-color);
+  }
+  
+  .bg-body {
+    background-color: var(--body-bg) !important;
+  }
+  
+  .bg-white {
+    background-color: var(--content-bg) !important;
+  }
+  
+  .text-muted {
+    color: var(--text-muted) !important;
+  }
+  
+  h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    color: var(--heading-color);
+  }
+  
+  /* Layout Elements */
+  .layout-wrapper {
+    background-color: var(--body-bg);
+  }
+  
+  .layout-container {
+    background-color: var(--body-bg);
+  }
+  
+  .content-wrapper {
+    background-color: var(--body-bg);
+  }
+  
+  /* Navbar */
+  .layout-navbar {
+    background-color: var(--navbar-bg) !important;
+    border-color: var(--border-color) !important;
+  }
+  
+  .bg-navbar-theme {
+    background-color: var(--navbar-bg) !important;
+  }
+  
+  .navbar-detached {
+    box-shadow: 0 0 15px 0 var(--shadow-color);
+  }
+  
+  /* Sidebar Menu */
+  .bg-menu-theme {
+    background-color: var(--sidebar-bg) !important;
+  }
+  
+  .layout-menu {
+    background-color: var(--sidebar-bg) !important;
+    border-right: 1px solid var(--border-color);
+  }
+  
+  .menu-inner .menu-item .menu-link {
+    color: var(--text-color) !important;
+  }
+  
+  .menu-inner .menu-item.active > .menu-link {
+    background-color: var(--menu-active-bg) !important;
+  }
+  
+  .menu-inner .menu-item .menu-link:hover {
+    background-color: var(--menu-hover-bg) !important;
+  }
+  
+  /* Cards */
+  .card {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    box-shadow: var(--card-box-shadow);
+  }
+  
+  .card-header {
+    background-color: var(--card-bg);
+    border-bottom-color: var(--border-color);
+  }
+  
+  .card-footer {
+    background-color: var(--card-bg);
+    border-top-color: var(--border-color);
+  }
+  
+  /* Tables */
+  .table {
+    color: var(--text-color);
+    border-color: var(--table-border);
+  }
+  
+  .table th {
+    background-color: var(--table-head-bg);
+    color: var(--text-color);
+    border-color: var(--table-border);
+  }
+  
+  .table tbody tr {
+    color: var(--text-color);
+  }
+  
+  .table-bordered {
+    border-color: var(--table-border);
+  }
+  
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--table-stripe-bg);
+  }
+  
+  /* Forms */
+  .form-control, 
+  .form-select, 
+  .input-group-text {
+    background-color: var(--input-bg);
+    color: var(--input-color);
+    border-color: var(--input-border);
+  }
+  
+  .form-control:focus,
+  .form-select:focus {
+    background-color: var(--input-bg);
+    color: var(--input-color);
+  }
+  
+  .form-control::placeholder {
+    color: var(--text-muted);
+  }
+  
+  .form-check-input {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+  }
+  
+  .input-group-text {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-color: var(--input-border);
+  }
+  
+  /* Dropdowns */
+  .dropdown-menu {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dropdown-item {
+    color: var(--text-color);
+  }
+  
+  .dropdown-item:hover, 
+  .dropdown-item:focus {
+    background-color: var(--menu-hover-bg);
+    color: var(--text-color);
+  }
+  
+  .dropdown-header {
+    color: var(--text-muted);
+  }
+  
+  .dropdown-divider {
+    border-top-color: var(--divider-color);
+  }
+  
+  /* Modals */
+  .modal-content {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+  }
+  
+  .modal-header {
+    border-bottom-color: var(--divider-color);
+  }
+  
+  .modal-footer {
+    border-top-color: var(--divider-color);
+  }
+  
+  /* Notifications */
+  .notification-dropdown {
+    background-color: var(--card-bg);
+  }
+  
+  .notification-item .dropdown-item {
+    background-color: var(--card-bg);
+  }
+  
+  [data-theme="dark"] .notification-item.read .dropdown-item {
+    background-color: rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Other UI Elements */
+  .border, .border-top, .border-end, .border-bottom, .border-start {
+    border-color: var(--border-color) !important;
+  }
+  
+  .divider {
+    background-color: var(--divider-color);
+  }
+  
+  .avatar-initial {
+    color: #fff;
+  }
+  
+  .apexcharts-tooltip,
+  .apexcharts-xaxistooltip,
+  .apexcharts-menu {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+  }
