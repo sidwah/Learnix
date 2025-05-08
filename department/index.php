@@ -1,0 +1,453 @@
+<?php include '../includes/admin-header.php'; ?>
+<!-- ========== MAIN CONTENT ========== -->
+<main id="content" role="main">
+    <!-- Navbar -->
+    <nav class="js-nav-scroller navbar navbar-expand-lg navbar-sidebar navbar-vertical navbar-light bg-white border-end" data-hs-nav-scroller-options='{
+            "type": "vertical",
+            "target": ".navbar-nav .active",
+            "offset": 80
+           }'>
+
+        <?php include '../includes/admin-sidebar.php'; ?>
+    </nav>
+
+
+    <!-- Content -->
+    <div class="navbar-sidebar-aside-content content-space-t-3 content-space-b-2 px-lg-5 px-xl-10">
+        <div class="row justify-content-md-between align-items-md-center mb-10">
+            <div class="col-md-6 col-xl-5">
+                <div class="mb-4">
+                    <h1 class="display-5 mb-3">Manage <span class="text-primary text-highlight-warning">Learnix</span> with ease.</h1>
+                    <p class="lead">A simple and powerful dashboard for managing users, courses, and reports.</p>
+                </div>
+            </div>
+            <!-- End Col -->
+
+            <div class="col-md-6 col-xl-6">
+                <img class="img-fluid" src="../assets/svg/illustrations/oc-growing.svg" alt="Admin Dashboard Image">
+            </div>
+            <!-- End Col -->
+        </div>
+        <!-- End Row -->
+        <?php
+        include '../backend/config.php';
+
+        // Main counts query (unchanged)
+        $query = "SELECT 
+      (SELECT COUNT(*) FROM users ) AS user_count,
+      (SELECT COUNT(*) FROM courses) AS course_count,
+      (SELECT COUNT(*) FROM categories) AS categories_count,
+      (SELECT COUNT(*) FROM subcategories) AS subcategories_count,
+      (SELECT COUNT(*) FROM issue_reports) AS issues,
+      (SELECT COUNT(*) FROM chatbot_responses) AS chatbot_responses,
+      (SELECT COUNT(*) FROM users WHERE role = 'student') AS students,
+      (SELECT COUNT(*) FROM issue_reports WHERE status = 'pending') AS recent_reports,
+      (SELECT COUNT(*) FROM users WHERE role = 'instructor') AS instructors,
+      (SELECT COUNT(*) FROM users WHERE role = 'admin') AS admins";
+
+        // Execute the main query
+        $result = mysqli_query($conn, $query);
+
+        if ($result) {
+            $data = mysqli_fetch_assoc($result);
+            $users_count = $data['user_count'];
+            $course_count = $data['course_count'];
+            $categories_count = $data['categories_count'];
+            $subcategories_count = $data['subcategories_count'];
+            $complaints_count = $data['issues'];
+            $chatbot_interactions = $data['chatbot_responses'];
+            $students = $data['students'];
+            $instructors = $data['instructors'];
+            $admins = $data['admins'];
+            $recent_reports = $data['recent_reports'];
+        } else {
+            die("Error executing main query: " . mysqli_error($conn));
+        }
+
+        // Enrollment count
+        $enrollment_query = "SELECT COUNT(*) AS enrollment_count FROM enrollments";
+        $enrollment_result = mysqli_query($conn, $enrollment_query);
+        $enrollment_count = $enrollment_result ? mysqli_fetch_assoc($enrollment_result)['enrollment_count'] : 0;
+
+        // Course approval status counts - updated to exclude drafts and properly count published/approved courses
+        $course_status_query = "SELECT 
+    SUM(CASE WHEN status = 'Published' AND approval_status = 'Approved' THEN 1 ELSE 0 END) AS approved_courses,
+    SUM(CASE WHEN status = 'Published' AND approval_status = 'Pending'  THEN 1 ELSE 0 END) AS pending_courses,
+    SUM(CASE WHEN approval_status = 'Rejected' THEN 1 ELSE 0 END) AS rejected_courses,
+    SUM(CASE WHEN status = 'Draft' THEN 1 ELSE 0 END) AS draft_courses
+FROM courses";
+        $course_status_result = mysqli_query($conn, $course_status_query);
+        if ($course_status_result) {
+            $status_data = mysqli_fetch_assoc($course_status_result);
+            $approved_courses = $status_data['approved_courses'];
+            $pending_courses = $status_data['pending_courses'];
+            $rejected_courses = $status_data['rejected_courses'];
+            $draft_courses = $status_data['draft_courses']; // Added if you want to display drafts separately
+        } else {
+            $approved_courses = $pending_courses = $rejected_courses = $draft_courses = 0;
+        }
+
+        // Quiz statistics - fixed to use correct column names from your schema
+        $quiz_query = "SELECT 
+    COUNT(*) AS total_quizzes,
+    (SELECT quiz_title FROM section_quizzes 
+     JOIN student_quiz_attempts ON section_quizzes.quiz_id = student_quiz_attempts.quiz_id
+     GROUP BY section_quizzes.quiz_id 
+     ORDER BY COUNT(*) DESC LIMIT 1) AS most_attempted_quiz,
+    AVG(score) AS average_quiz_score
+FROM section_quizzes
+LEFT JOIN student_quiz_attempts ON section_quizzes.quiz_id = student_quiz_attempts.quiz_id";
+        $quiz_result = mysqli_query($conn, $quiz_query);
+        if ($quiz_result) {
+            $quiz_data = mysqli_fetch_assoc($quiz_result);
+            $total_quizzes = $quiz_data['total_quizzes'];
+            $most_attempted_quiz = $quiz_data['most_attempted_quiz'] ?: "No quizzes attempted";
+            $average_quiz_score = round($quiz_data['average_quiz_score'] ?: 0, 2);
+        } else {
+            $total_quizzes = 0;
+            $most_attempted_quiz = "N/A";
+            $average_quiz_score = 0;
+            // For debugging:
+            // die("Error executing quiz query: " . mysqli_error($conn));
+        }
+
+        // System logs count
+        $logs_query = "SELECT COUNT(*) AS recent_logs FROM user_activity_logs 
+               WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+        $logs_result = mysqli_query($conn, $logs_query);
+        $recent_logs = $logs_result ? mysqli_fetch_assoc($logs_result)['recent_logs'] : 0;
+
+        // Help center tickets (using issue_reports table)
+        $tickets_query = "SELECT 
+    SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS open_tickets,
+    SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) AS resolved_tickets
+FROM issue_reports";
+        $tickets_result = mysqli_query($conn, $tickets_query);
+        if ($tickets_result) {
+            $tickets_data = mysqli_fetch_assoc($tickets_result);
+            $open_tickets = $tickets_data['open_tickets'];
+            $resolved_tickets = $tickets_data['resolved_tickets'];
+        } else {
+            $open_tickets = $resolved_tickets = 0;
+        }
+        ?>
+
+        <hr class="mb-5">
+
+        <!-- Dashboard Summary -->
+        <div class="row">
+            <!-- Card for Dashboard Summary Title -->
+            <div class="col-sm-3 mb-5 mb-sm-0">
+                <h4>Dashboard Summary</h4>
+            </div>
+
+            <div class="col-sm-9">
+                <div class="row row-cols-sm-2 row-cols-md-3">
+                    <!-- Total Users Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Total Students</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($students); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Total Instructors Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Total Instructors</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($instructors); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Total Courses Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Total Courses</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($course_count); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Total Enrollments Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Total Enrollments</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($enrollment_count); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Total Complaints Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Total Complaints</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($complaints_count); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="mb-5">
+
+        <!-- User Management -->
+        <div class="row">
+            <!-- Card for User Management Title -->
+            <div class="col-sm-3 mb-5 mb-sm-0">
+                <h4>User Management</h4>
+            </div>
+
+            <div class="col-sm-9">
+                <div class="row row-cols-sm-2 row-cols-md-3">
+                    <!-- Active & Inactive Students Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Students</h5>
+                                <h1 class="card-text large text-body"> <?php echo number_format($students); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Active & Pending Instructors Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Instructors</h5>
+                                <h1 class="card-text large text-body"> <?php echo number_format($instructors); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Super Admins & Staff Admins Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Admins</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($admins); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Row -->
+
+        <hr class="mb-5">
+
+        <!-- Course Management -->
+        <div class="row mt-5">
+            <!-- Card for Course Management Title -->
+            <div class="col-sm-3 mb-5 mb-sm-0">
+                <h4>Course Management</h4>
+            </div>
+
+            <div class="col-sm-9">
+                <div class="row row-cols-sm-2 row-cols-md-3">
+                    <!-- Approved Courses Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Approved Courses</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($approved_courses); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Pending Approval Courses Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Pending Approval</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($pending_courses); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Rejected Courses Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Rejected Courses</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($rejected_courses); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Row -->
+
+        <hr class="mb-5">
+
+        <!-- Quiz & Performance Analytics -->
+        <div class="row mt-5">
+            <!-- Card for Quiz & Performance Analytics Title -->
+            <div class="col-sm-3 mb-5 mb-sm-0">
+                <h4>Quiz & Performance Analytics</h4>
+            </div>
+
+            <div class="col-sm-9">
+                <div class="row row-cols-sm-2 row-cols-md-3">
+                    <!--  Total Quizzes Created Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit"> Total Quizzes Created</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($total_quizzes); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Most Attempted Quiz Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Most Attempted Quiz</h5>
+                                <h3 class="card-text text-body"><?php echo ($most_attempted_quiz); ?></h3>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Average Quiz Score Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Average Quiz Score</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($average_quiz_score); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Row -->
+
+        <hr class="mb-5">
+
+        <!-- Category Management -->
+        <div class="row mt-5">
+            <!-- Card for Category Management Title -->
+            <div class="col-sm-3 mb-5 mb-sm-0">
+                <h4>Category Management</h4>
+            </div>
+
+            <div class="col-sm-9">
+                <div class="row row-cols-sm-2">
+                    <!--  Total QTotal Categories Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit"> Total Categories</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($categories_count); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Total Active Categories Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Total Subcategories</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($subcategories_count); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+        <!-- End Row -->
+
+        <hr class="mb-5">
+
+
+        <!-- System Notifications & Reports -->
+        <div class="row mt-5">
+            <!-- Card for System Notifications & Reports Title -->
+            <div class="col-sm-3 mb-5 mb-sm-0">
+                <h4>System Notifications & Reports</h4>
+            </div>
+
+            <div class="col-sm-9">
+                <div class="row row-cols-sm-2">
+                    <!-- Recent Reports Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Recent Reports/Complaints</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($recent_reports); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Recent System Logs Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Recent System Logs</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($recent_logs); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <hr class="mb-5">
+
+        <div class="row mt-5">
+            <!-- Card for Help Center & Chatbot Stats Title -->
+            <div class="col-sm-3 mb-5 mb-sm-0">
+                <h4>Help Center & Chatbot Stats</h4>
+            </div>
+
+            <div class="col-sm-9">
+                <div class="row row-cols-sm-2 row-cols-md-3">
+                    <!-- Total  Reports Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Total Reports</h5>
+                                <h1 class="card-text large text-body"> <?php echo number_format($open_tickets); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Total Resolved Tickets Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Total Resolved Issues</h5>
+                                <h1 class="card-text large text-body"> <?php echo number_format($resolved_tickets); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Chatbot Interactions Card -->
+                    <div class="col mb-4">
+                        <a class="card card-sm card-transition h-100" href="#" data-aos="fade-up">
+                            <div class="card-body text-center">
+                                <h5 class="card-title text-inherit">Chatbot Interactions</h5>
+                                <h1 class="card-text large text-body"><?php echo number_format($chatbot_interactions); ?></h1>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <!-- End Content -->
+     
