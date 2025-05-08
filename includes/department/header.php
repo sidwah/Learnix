@@ -33,6 +33,7 @@ try {
   // Log the error but continue execution
   error_log("Error updating database schema: " . $e->getMessage());
 }
+$pageTitle = $_SESSION['department_name']. ' - Department';
 ?>
 
 <!DOCTYPE html>
@@ -43,7 +44,7 @@ try {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-  <title>Admin | Learnix - Empowering Education</title>
+  <title><?php echo $pageTitle; ?> | Learnix </title>
   <meta name="description" content="Admin panel for managing users, courses, instructors, and platform settings on Learnix." />
   <meta name="author" content="Learnix Team" />
 

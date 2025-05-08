@@ -295,7 +295,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (!empty($email) && !empty($password)) {
         // Get user details including department staff info and MFA preference
         $sql = "SELECT u.user_id, u.email, u.password_hash, u.first_name, u.last_name, u.role, 
-                       d.staff_id, d.department_id, d.mfa_enabled, dept.name as department_name  
+                       u.force_password_reset, d.staff_id, d.department_id, d.mfa_enabled, 
+                       dept.name as department_name  
                 FROM users u
                 JOIN department_staff d ON u.user_id = d.user_id
                 JOIN departments dept ON d.department_id = dept.department_id
@@ -312,6 +313,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $resetLockout = $conn->prepare("DELETE FROM department_lockouts WHERE email = ?");
                 $resetLockout->bind_param("s", $email);
                 $resetLockout->execute();
+                
+                // Check if forced password reset is required
+                $forcePasswordReset = (bool)$row['force_password_reset'];
+                
+                if ($forcePasswordReset) {
+                    // Store temp user data and indicate password reset needed
+                    $_SESSION['temp_user_id'] = $row['user_id'];
+                    
+                    echo json_encode([
+                        "status" => "success", 
+                        "message" => "Password reset required", 
+                        "requirePasswordReset" => true,
+                        "requireVerification" => false
+                    ]);
+                    exit;
+                }
                 
                 // Check if MFA is enabled for this user
                 $mfaEnabled = (bool)$row['mfa_enabled'];
@@ -342,7 +359,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             echo json_encode([
                                 "status" => "success", 
                                 "message" => "Verification code sent", 
-                                "requireVerification" => true
+                                "requireVerification" => true,
+                                "requirePasswordReset" => false
                             ]);
                         } else {
                             echo json_encode(["status" => "error", "message" => "Failed to send verification email"]);
@@ -375,6 +393,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         "status" => "success",
                         "message" => "Login successful",
                         "requireVerification" => false,
+                        "requirePasswordReset" => false,
                         "user" => [
                             "first_name" => $row['first_name'],
                             "last_name" => $row['last_name'],
