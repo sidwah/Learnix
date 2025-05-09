@@ -20,6 +20,11 @@
 <!-- JS Plugins Initialization -->
 <script>
   (function() {
+    // INITIALIZATION OF LIVE TOAST
+    // =======================================================
+    const liveToast = new bootstrap.Toast(document.querySelector('#liveToast'))
+    document.querySelector('#liveToastBtn').addEventListener('click', () => liveToast.show())
+
     // Wait for DOM to be fully loaded
     document.addEventListener('DOMContentLoaded', function() {
       try {

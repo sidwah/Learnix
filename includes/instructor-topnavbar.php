@@ -4,7 +4,7 @@ include("../backend/config.php");
 $user_id = $_SESSION['user_id'];
 
 // Get user profile pic, name and verification status
-$query = "SELECT u.profile_pic, u.first_name, u.last_name, i.verification_status 
+$query = "SELECT u.profile_pic, u.first_name, u.last_name
                   FROM users u 
                   LEFT JOIN instructors i ON u.user_id = i.user_id 
                   WHERE u.user_id = ?";
@@ -21,8 +21,6 @@ $profileImage = $userData['profile_pic'] ? "../uploads/instructor-profile/" . $u
 // Store user name for display
 $userName = $userData['first_name'] . ' ' . $userData['last_name'];
 
-// Determine verification status
-$isVerified = isset($userData['verification_status']) && $userData['verification_status'] === 'verified';
 ?>
 <div class="navbar-custom">
     <ul class="list-unstyled topbar-menu float-end mb-0">
@@ -170,7 +168,7 @@ $isVerified = isset($userData['verification_status']) && $userData['verification
                     <div style="position: relative; display: inline-block;">
                         <img src="<?php echo htmlspecialchars($profileImage); ?>" alt="user-image" class="rounded-circle avatar-lg img-thumbnail">
 
-                        <?php if ($isVerified): ?>
+                        <!-- <?php //if ($isVerified): ?>
                             <div style="position: absolute; bottom: 0; left: 0; width: 16px; height: 16px; background-color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 3px rgba(0,0,0,0.4);">
                                 <img src="../assets/svg/illustrations/top-vendor.svg"
                                     alt="Verified"
@@ -178,7 +176,7 @@ $isVerified = isset($userData['verification_status']) && $userData['verification
                                     title="Verified Instructor"
                                     style="width: 12px; height: 12px;">
                             </div>
-                        <?php endif; ?>
+                        <?php // endif; ?> -->
                     </div>
                 </span>
                 <span>

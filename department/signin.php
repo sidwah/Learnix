@@ -36,7 +36,7 @@
             background-color: white;
             min-width: 300px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            border-left: 4px solid;
+            /* border-left: 4px solid; */
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
         }

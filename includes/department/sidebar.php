@@ -1,49 +1,29 @@
-<?php
-$user_id = $_SESSION["user_id"];
-$user_role = $_SESSION["role"]; // Make sure role is set in session
-
-// Query to fetch user data
-$query = "SELECT first_name, last_name
-          FROM users
-          WHERE user_id = $user_id";
-
-// Execute the query
-$result = mysqli_query($conn, $query);
-
-// Check if the query was successful and fetch the data
-if (!$result) {
-  die("Error executing query: " . mysqli_error($conn));
-}
-
-// Fetch the user data
-$user_data = mysqli_fetch_assoc($result);
-?>
 
 <!-- Navbar Collapse -->
 <div id="navbarVerticalNavMenu" class="collapse navbar-collapse">
   <div class="navbar-brand-wrapper border-end" style="height: auto;">
     <!-- Default Logo -->
-    <div class="d-flex align-items-center mb-3">
-      <a class="navbar-brand" href="index.php" aria-label="Space">
+    <div class="d-flex align-items-center mb-2">
+      <a class="navbar-brand" href="index.php" aria-label="Learnix">
         <img class="navbar-brand-logo" src="../assets/svg/logos/logo.svg" alt="Logo">
       </a>
     </div>
     <!-- End Default Logo -->
-
-    <!-- Nav -->
-    <ul class="nav nav-segment nav-fill nav-justified">
-      <li class="nav-item">
-        <a class="nav-link active" href="#">
+    
+    <!-- User Info - Compact Layout -->
+    <div class="d-flex align-items-center mb-1 px-2  mt-3">
+      <div class="avatar avatar-sm avatar-circle">
+        <img class="avatar-img" src="<?php echo !empty($user_data['profile_pic']) ? '../uploads/' . htmlspecialchars($user_data['profile_pic']) : '../uploads/default.png'; ?>" alt="Profile Image">
+      </div>
+      <div class="ms-2 overflow-hidden">
+        <h6 class="mb-0 text-truncate"><?php echo htmlspecialchars($user_data['first_name'] . ' ' . $user_data['last_name']); ?></h6>
+        <span class="badge bg-soft-primary text-primary small">
           <?php echo $user_role === 'department_head' ? 'Department Head' : 'Secretary'; ?>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#"><?php echo htmlspecialchars($user_data['first_name']); ?></a>
-      </li>
-    </ul>
-    <!-- End Nav -->
+        </span>
+      </div>
+    </div>
+    <!-- End User Info -->
   </div>
-
   <div class="docs-navbar-sidebar-aside-body navbar-sidebar-aside-body">
     <ul id="navbarSettings" class="navbar-nav nav nav-vertical nav-tabs nav-tabs-borderless nav-sm">
       <!-- Dashboard -->
@@ -62,10 +42,10 @@ $user_data = mysqli_fetch_assoc($result);
         <span class="nav-subtitle">Department Management</span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="department-settings.php">Department Settings</a>
+        <a class="nav-link" href="settings.php">Settings</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="appoint-secretary.php">Secretary Management</a>
+        <a class="nav-link" href="appoint-secretary.php">Management</a>
       </li>
       <li class="nav-item my-2 my-lg-5"></li>
       <?php endif; ?>
@@ -110,7 +90,7 @@ $user_data = mysqli_fetch_assoc($result);
       <?php endif; ?>
       
       <li class="nav-item">
-        <a class="nav-link" href="courses.php">Department Courses</a>
+        <a class="nav-link" href="courses.php">Courses</a>
       </li>
       
       <?php if ($user_role === 'department_head'): ?>
@@ -134,7 +114,7 @@ $user_data = mysqli_fetch_assoc($result);
         <span class="nav-subtitle">Student Management</span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="students.php">Department Students</a>
+        <a class="nav-link" href="students.php">Students</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="student-progress.php">Student Progress</a>
@@ -179,8 +159,8 @@ $user_data = mysqli_fetch_assoc($result);
       </li>
       
       <li class="nav-item">
-        <a class="nav-link" href="department-reports.php">
-          <?php echo $user_role === 'department_head' ? 'Department Analytics' : 'Standard Reports'; ?>
+        <a class="nav-link" href="reports.php">
+          <?php echo $user_role === 'department_head' ? 'Analytics' : 'Standard Reports'; ?>
         </a>
       </li>
       
@@ -206,7 +186,7 @@ $user_data = mysqli_fetch_assoc($result);
         <span class="nav-subtitle">Documents & Resources</span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="department-documents.php">Department Documents</a>
+        <a class="nav-link" href="documents.php">Documents</a>
       </li>
       
       <?php if ($user_role === 'department_secretary'): ?>
@@ -214,7 +194,7 @@ $user_data = mysqli_fetch_assoc($result);
         <a class="nav-link" href="document-management.php">Manage Documentation</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="schedule-management.php">Department Schedule</a>
+        <a class="nav-link" href="schedule-management.php">Schedule</a>
       </li>
       <?php endif; ?>
       
@@ -229,7 +209,7 @@ $user_data = mysqli_fetch_assoc($result);
         <span class="nav-subtitle">Profile & Support</span>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="profile-settings.php">My Profile</a>
+        <a class="nav-link" href="profile.php">My Profile</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="help-center.php">Help Center</a>
