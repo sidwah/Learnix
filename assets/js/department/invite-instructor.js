@@ -149,8 +149,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide loading overlay
             removeOverlay();
             
+            // Get the error message
+            let errorMessage = error.message || `Failed to send invitation to ${formData.email}. Please try again.`;
+            let errorTitle = 'Sending Failed';
+            
+            // If the error is about a duplicate invitation or existing instructor
+            if (errorMessage.includes('already been sent') || 
+                errorMessage.includes('already associated with your department')) {
+                errorTitle = 'Instructor Already Exists';
+            }
+            
             // Show error toast
-            showToast('error', 'Sending Failed', error.message || `Failed to send invitation to ${formData.email}. Please try again.`);
+            showToast('error', errorTitle, errorMessage);
         });
     });
     

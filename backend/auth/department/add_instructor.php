@@ -1,6 +1,7 @@
 <?php
 // backend/department/add_instructor.php
 require_once '../../config.php'; // Database connection file
+require_once '../../../includes/notification_functions.php'; // Notification functions
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -63,6 +64,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit(json_encode(['status' => 'error', 'message' => 'Invalid email address.']));
     }
 
+    // Database connection
+    $conn = new mysqli($host, $username, $password, $db_name);
+    if ($conn->connect_error) {
+        error_log("Database connection failed: " . $conn->connect_error);
+        http_response_code(500);
+        exit(json_encode(['status' => 'error', 'message' => 'Server error. Please try again later.']));
+    }
+
     try {
         // Check if email already exists for any role
         $stmt = $conn->prepare("SELECT user_id, role, is_verified FROM users WHERE LOWER(email) = LOWER(?)");
@@ -77,18 +86,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Check if this is an existing instructor
             if ($user['role'] === 'instructor') {
                 // Check if this instructor is already associated with this department
-                $stmt = $conn->prepare("SELECT id FROM department_instructors 
-                                        WHERE instructor_id = (SELECT instructor_id FROM instructors WHERE user_id = ?) 
-                                        AND department_id = ? 
-                                        AND deleted_at IS NULL");
+                $stmt = $conn->prepare("SELECT di.id FROM department_instructors di 
+                                        INNER JOIN instructors i ON di.instructor_id = i.instructor_id
+                                        WHERE i.user_id = ? AND di.department_id = ? 
+                                        AND di.deleted_at IS NULL");
                 $stmt->bind_param("ii", $user['user_id'], $departmentId);
                 $stmt->execute();
+                $result = $stmt->get_result();
                 
-                if ($stmt->fetch()) {
+                if ($result->num_rows > 0) {
                     // Already associated with this department
                     $stmt->close();
                     http_response_code(400);
-                    exit(json_encode(['status' => 'error', 'message' => 'This instructor is already associated with your department.']));
+                    exit(json_encode([
+                        'status' => 'error', 
+                        'message' => 'This instructor is already associated with your department.',
+                        'code' => 'instructor_exists'
+                    ]));
                 }
                 $stmt->close();
                 
@@ -106,6 +120,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param("iii", $departmentId, $instructorId, $departmentHeadId);
                 $stmt->execute();
                 $stmt->close();
+                
+                // Create notification about existing instructor added to department
+                $title = 'Instructor Added to Department';
+                $message = "$firstName $lastName ($email) has been added to your department as an instructor.";
+                createNotification($departmentHeadId, 'instructor_added', $title, $message, $instructorId, 'instructor');
+                
+                // Notify department secretaries
+                $title = 'New Instructor Added';
+                $message = "Department head has added $firstName $lastName ($email) to the department as an instructor.";
+                notifyUsersByRole('department_secretary', 'instructor_added', $title, $message, $departmentId, $instructorId, 'instructor');
                 
                 http_response_code(200);
                 exit(json_encode(['status' => 'success', 'message' => 'Existing instructor added to your department.']));
@@ -125,18 +149,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Store the invitation in the instructor_invitations table
         $expiryTime = date('Y-m-d H:i:s', strtotime('+48 hours'));
-        $stmt = $conn->prepare("INSERT INTO instructor_invitations 
-                                (email, temp_password_hash, department_id, invited_by, expiry_time) 
-                                VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssis", $email, $passwordHash, $departmentId, $departmentHeadId, $expiryTime);
-        $stmt->execute();
-        $invitationId = $stmt->insert_id;
-        $stmt->close();
+        
+        try {
+            $stmt = $conn->prepare("INSERT INTO instructor_invitations 
+                                    (email, temp_password_hash, department_id, invited_by, expiry_time, notes) 
+                                    VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssiss", $email, $passwordHash, $departmentId, $departmentHeadId, $expiryTime, $notes);
+            $stmt->execute();
+            $invitationId = $stmt->insert_id;
+            $stmt->close();
+        } catch (mysqli_sql_exception $e) {
+            // Check if this is a duplicate entry error
+            if ($e->getCode() == 1062) { // MySQL error code for duplicate entry
+                // Check if it's an unused invitation that hasn't expired yet
+                $stmt = $conn->prepare("SELECT id, expiry_time FROM instructor_invitations 
+                                        WHERE email = ? AND department_id = ? AND is_used = 0");
+                $stmt->bind_param("si", $email, $departmentId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                
+                if ($result->num_rows > 0) {
+                    $existingInvitation = $result->fetch_assoc();
+                    $stmt->close();
+                    
+                    // Check if the invitation is still valid
+                    if (strtotime($existingInvitation['expiry_time']) > time()) {
+                        $conn->rollback();
+                        http_response_code(400);
+                        exit(json_encode([
+                            'status' => 'error', 
+                            'message' => 'An invitation has already been sent to this email address and is still valid. You can resend it from the pending invitations section.',
+                            'code' => 'duplicate_invitation'
+                        ]));
+                    } else {
+                        // Invitation exists but has expired, update it
+                        $stmt = $conn->prepare("UPDATE instructor_invitations 
+                                               SET temp_password_hash = ?, invited_by = ?, expiry_time = ?, notes = ? 
+                                               WHERE id = ?");
+                        $stmt->bind_param("sissi", $passwordHash, $departmentHeadId, $expiryTime, $notes, $existingInvitation['id']);
+                        $stmt->execute();
+                        $invitationId = $existingInvitation['id'];
+                        $stmt->close();
+                    }
+                } else {
+                    // This should not happen based on the error, but just in case
+                    $stmt->close();
+                    $conn->rollback();
+                    http_response_code(500);
+                    exit(json_encode(['status' => 'error', 'message' => 'An error occurred while processing your request.']));
+                }
+            } else {
+                // For other SQL errors
+                throw $e;
+            }
+        }
         
         // Send invitation email
-        if (sendInvitationEmail($email, $firstName, $lastName, $tempPassword, $departmentId)) {
+        if (sendInvitationEmail($email, $firstName, $lastName, $tempPassword, $departmentId, $notes)) {
             // If email sent successfully, commit transaction
             $conn->commit();
+            
+            // Create notification about the invitation
+            notifyAboutInstructorInvitation($invitationId, $email, $firstName, $lastName, $departmentId, $departmentHeadId);
+            
             http_response_code(200);
             exit(json_encode([
                 'status' => 'success', 
@@ -174,23 +249,15 @@ function generateRandomPassword($length = 10) {
     $max = strlen($chars) - 1;
     
     for ($i = 0; $i < $length; $i++) {
-        $password .= $chars[random_int(0, $max)];
+        $password .= $chars[rand(0, $max)];
     }
     
     return $password;
 }
 
 // Function to send invitation email
-function sendInvitationEmail($email, $firstName, $lastName, $tempPassword, $departmentId) {
-    global $conn, $site_name, $base_url;
-    
-    // Get department name
-    $stmt = $conn->prepare("SELECT name FROM departments WHERE department_id = ?");
-    $stmt->bind_param("i", $departmentId);
-    $stmt->execute();
-    $stmt->bind_result($departmentName);
-    $stmt->fetch();
-    $stmt->close();
+function sendInvitationEmail($email, $firstName, $lastName, $tempPassword, $departmentId, $notes = '') {
+    global $conn, $site_name, $base_url, $departmentName;
     
     $mail = new PHPMailer(true);
 
@@ -332,6 +399,14 @@ function sendInvitationEmail($email, $firstName, $lastName, $tempPassword, $depa
                 color: #856404;
             }
             
+            .notes-container {
+                background-color: #f5f7fa;
+                border-radius: 6px;
+                padding: 15px;
+                margin: 20px 0;
+                border-left: 4px solid #3a66db;
+            }
+            
             .support-note {
                 font-size: 14px;
                 color: #666666;
@@ -394,6 +469,11 @@ function sendInvitationEmail($email, $firstName, $lastName, $tempPassword, $depa
                 
                 <a href="' . $loginUrl . '" class="button">Log In to Learnix</a>
                 
+                ' . (!empty($notes) ? '<div class="notes-container">
+                    <h5 style="margin-top: 0; color: #3a66db;">Additional Notes</h5>
+                    <p style="margin-bottom: 0;">' . nl2br(htmlspecialchars($notes)) . '</p>
+                </div>' : '') . '
+                
                 <div class="expiry-alert">
                     <strong>⏱️ Time Sensitive:</strong> This invitation will expire in 48 hours. Please log in and set up your account before the invitation expires.
                 </div>
@@ -426,7 +506,10 @@ Email: {$email}
 Temporary Password: {$tempPassword}
 Login URL: {$loginUrl}
 
-This invitation will expire in 48 hours. Please log in and set up your account before the invitation expires.
+" . (!empty($notes) ? "Additional Notes:
+{$notes}
+
+" : "") . "This invitation will expire in 48 hours. Please log in and set up your account before the invitation expires.
 
 For any questions, please contact our support team at support@learnix.com.
 

@@ -1,6 +1,7 @@
 <?php
 // backend/department/cancel_invitation.php
 require_once '../../config.php'; // Database connection file
+require_once '../../../includes/notification_functions.php'; // Notification functions
 
 // Start or resume session to get the department head's ID
 session_start();
@@ -84,6 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($stmt->execute()) {
             $conn->commit();
+            
+            // Create notification about cancelling the invitation
+            notifyAboutInvitationCancelled($invitationId, $invitation['email'], $invitation['department_id'], $departmentHeadId);
+            
             http_response_code(200);
             exit(json_encode([
                 'status' => 'success', 

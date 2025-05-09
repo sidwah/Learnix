@@ -1,6 +1,7 @@
 <?php
 // backend/department/resend_invitation.php
 require_once '../../config.php'; // Database connection file
+require_once '../../../includes/notification_functions.php'; // Notification functions
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -59,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // Check if the invitation exists and belongs to a department managed by this department head
         $stmt = $conn->prepare(
-            "SELECT ii.email, ii.temp_password_hash, ii.department_id, 
+            "SELECT ii.email, ii.temp_password_hash, ii.department_id, ii.notes,
                     CONCAT(u.first_name, ' ', u.last_name) as instructor_name,
                     d.name as department_name
              FROM instructor_invitations ii
@@ -114,10 +115,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $lastName, 
             $tempPassword, 
             $invitation['department_id'],
-            $invitation['department_name']
+            $departmentName,
+            $invitation['notes'] ?? ''
         )) {
             // If email sent successfully, commit transaction
             $conn->commit();
+            
+            // Create notification about resending the invitation
+            notifyAboutInvitationResend($invitationId, $invitation['email'], $invitation['department_id'], $departmentHeadId);
+            
             http_response_code(200);
             exit(json_encode([
                 'status' => 'success', 
@@ -146,21 +152,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Reusing the same email sending function from add_instructor.php
-function sendInvitationEmail($email, $firstName, $lastName, $tempPassword, $departmentId, $departmentName = null) {
+// Function to send invitation email
+function sendInvitationEmail($email, $firstName, $lastName, $tempPassword, $departmentId, $departmentName, $notes = '') {
     global $site_name, $base_url;
     
-    // If department name is not passed, try to get it from the database
-    if ($departmentName === null) {
-        $conn = new mysqli($GLOBALS['host'], $GLOBALS['username'], $GLOBALS['password'], $GLOBALS['db_name']);
-        $stmt = $conn->prepare("SELECT name FROM departments WHERE department_id = ?");
-        $stmt->bind_param("i", $departmentId);
-        $stmt->execute();
-        $stmt->bind_result($departmentName);
-        $stmt->fetch();
-        $stmt->close();
-        $conn->close();
-    }
+    $mail = new PHPMailer(true);
+        // Remove redundant and misplaced code block
+    
     
     $mail = new PHPMailer(true);
 
@@ -364,6 +362,11 @@ function sendInvitationEmail($email, $firstName, $lastName, $tempPassword, $depa
                 
                 <a href="' . $loginUrl . '" class="button">Log In to Learnix</a>
                 
+                ' . (!empty($notes) ? '<div style="background-color: #f5f7fa; border-radius: 6px; padding: 15px; margin: 20px 0; border-left: 4px solid #3a66db;">
+                    <h5 style="margin-top: 0; color: #3a66db;">Additional Notes</h5>
+                    <p style="margin-bottom: 0;">' . nl2br(htmlspecialchars($notes)) . '</p>
+                </div>' : '') . '
+                
                 <div class="expiry-alert">
                     <strong>⏱️ Time Sensitive:</strong> This invitation will expire in 48 hours. Please log in and set up your account before the invitation expires.
                 </div>
@@ -409,7 +412,6 @@ Learnix";
         return false;
     }
 }
-
 // If the request method is not POST, return an error
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405); // Method Not Allowed

@@ -1,4 +1,35 @@
 
+<?php
+// Make sure session is started in the including file
+// session_start();  // Usually done in the header.php file
+
+// Check if user is logged in
+if (!isset($_SESSION["user_id"]) || !isset($_SESSION["role"])) {
+    // Redirect to login page if not logged in
+    header("Location: ../auth/sign-in.php");
+    exit;
+}
+
+$user_id = $_SESSION["user_id"];
+$user_role = $_SESSION["role"]; // Set the user role from session
+
+// Get first name and last name from session
+$first_name = $_SESSION["first_name"] ?? '';
+$last_name = $_SESSION["last_name"] ?? '';
+
+// Get profile pic from session or use default
+$profile_pic = $_SESSION["profile_pic"] ?? 'default.png';
+
+// Create user data array from session variables
+$user_data = [
+    'first_name' => $first_name,
+    'last_name' => $last_name,
+    'profile_pic' => $profile_pic
+];
+
+// No database query needed since we're using session variables
+?>
+
 <!-- Navbar Collapse -->
 <div id="navbarVerticalNavMenu" class="collapse navbar-collapse">
   <div class="navbar-brand-wrapper border-end" style="height: auto;">
