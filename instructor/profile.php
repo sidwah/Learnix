@@ -1,3 +1,4 @@
+
 <?php
 require '../backend/session_start.php'; // Ensure session is started
 
@@ -12,12 +13,8 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 }
 ?>
 
-
-
-
 <!DOCTYPE html>
 <html lang="en">
-
 
 <head>
     <meta charset="utf-8" />
@@ -42,9 +39,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     <!-- Begin page -->
     <div class="wrapper">
         <!-- ========== Left Sidebar Start ========== -->
-        <?php
-        include '../includes/instructor-sidebar.php';
-        ?>
+        <?php include '../includes/instructor-sidebar.php'; ?>
 
         <!-- Left Sidebar End -->
 
@@ -55,9 +50,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
         <div class="content-page">
             <div class="content">
                 <!-- Topbar Start -->
-                <?php
-                include '../includes/instructor-topnavbar.php';
-                ?>
+                <?php include '../includes/instructor-topnavbar.php'; ?>
                 <!-- end Topbar -->
 
                 <!-- Start Content-->
@@ -99,7 +92,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
                         // Fetch user and instructor data
                         $query = "
-                        SELECT u.*, i.instructor_id, i.bio, i.verification_status 
+                        SELECT u.*, i.instructor_id, i.bio
                         FROM users u 
                         LEFT JOIN instructors i ON u.user_id = i.user_id 
                         WHERE u.user_id = ?
@@ -149,7 +142,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                         }
 
                         // Prepare profile image path
-                        $profileImage = "../uploads/instructor-profile/" . ($userData['profile_pic'] ?: 'default.png');
+                        $profileImage = "../Uploads/instructor-profile/" . ($userData['profile_pic'] ?: 'default.png');
 
                         // Helper function to check if social link exists
                         function hasSocialLink($linkData)
@@ -166,171 +159,9 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
                                     <h4 class="mb-0 mt-2" id="instructorName">
                                         <?= htmlspecialchars($userData['first_name'] . ' ' . $userData['last_name']) ?>
-                                        <!-- Verification icon with conditional styling -->
-                                        <img
-                                            src="../assets/svg/illustrations/top-vendor.svg"
-                                            alt="Verification Status"
-                                            data-bs-toggle="tooltip"
-                                            style="width: 16px; height: 16px; margin-left: 5px; opacity: <?php
-                                                                                                            if (!isset($userData['verification_status']) || $userData['verification_status'] === 'unverified') {
-                                                                                                                echo '0.25';
-                                                                                                            } elseif ($userData['verification_status'] === 'pending') {
-                                                                                                                echo '0.5';
-                                                                                                            } else {
-                                                                                                                echo '1';
-                                                                                                            }
-                                                                                                            ?>;"
-                                            title="<?php
-                                                    if (!isset($userData['verification_status']) || $userData['verification_status'] === 'unverified') echo 'Unverified';
-                                                    elseif ($userData['verification_status'] === 'pending') echo 'Verification Pending';
-                                                    else echo 'Verified';
-                                                    ?>">
                                     </h4>
 
                                     <p class="text-muted font-14">Instructor</p>
-
-                                    <?php
-$status = $userData['verification_status'] ?? 'unverified';
-
-// Display different messages based on verification status
-if (strtolower($status) === 'unverified'):
-?>
-    <a href="" class="text font-14 p-0 text-danger" data-bs-toggle="modal" data-bs-target="#verificationModal">
-        Click here to verify
-    </a>
-<?php elseif (strtolower($status) === 'pending'): ?>
-    <span class="text font-14 p-0 text-primary">
-        <i class="mdi mdi-clock-outline me-1"></i> Verification pending
-    </span>
-<?php elseif (strtolower($status) === 'rejected'): ?>
-    <a href="" class="text font-14 p-0 text-danger" data-bs-toggle="modal" data-bs-target="#verificationModal">
-        <i class="mdi mdi-alert-circle me-1"></i> Verification rejected - Click to resubmit
-    </a>
-<?php elseif (strtolower($status) === 'verified'): ?>
-    <span class="text font-14 p-0 text-success">
-        <i class="mdi mdi-check-circle me-1"></i> Verified instructor
-    </span>
-<?php endif; ?>
-
-<!-- Verification Modal -->
-<div class="modal fade" id="verificationModal" tabindex="-1" aria-labelledby="verificationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="verificationModalLabel">
-                    <?php echo (strtolower($status) === 'rejected') ? 'Resubmit Verification' : 'Instructor Verification'; ?>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <?php if (strtolower($status) === 'rejected'): ?>
-                <div class="alert alert-warning">
-                    <i class="mdi mdi-alert-circle me-1"></i>
-                    Your previous verification submission was rejected. Please review and resubmit your credentials.
-                </div>
-                <?php endif; ?>
-                
-                <form id="verificationForm" enctype="multipart/form-data">
-                    <input type="hidden" name="action" value="verification">
-                    <div class="mb-3">
-                        <label for="credentials" class="form-label">Professional Credentials</label>
-                        <textarea class="form-control" id="credentials" name="credentials" rows="3"
-                            placeholder="Describe your professional background and qualifications"></textarea>
-                        <small class="text-muted">Include details about your expertise, experience, and qualifications (minimum 50 characters)</small>
-                    </div>
-                    <div class="mb-3">
-                        <label for="verificationDocs" class="form-label">Upload Documents</label>
-                        <input type="file" class="form-control" id="verificationDocs" name="verification_docs" multiple>
-                        <small class="text-muted">Upload certificates, diplomas, or other supporting documents (PDF, JPG, PNG)</small>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="submitVerification()">
-                    <?php echo (strtolower($status) === 'rejected') ? 'Resubmit for Verification' : 'Submit for Verification'; ?>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function submitVerification() {
-        // Basic validation
-        const credentials = document.getElementById('credentials').value.trim();
-        const docs = document.getElementById('verificationDocs').files;
-
-        // Check if credentials are provided
-        if (credentials.length < 50) {
-            showAlert('error', 'Please provide detailed credentials (at least 50 characters)');
-            return;
-        }
-
-        // Check if documents are uploaded
-        if (docs.length === 0) {
-            showAlert('error', 'Please upload at least one supporting document');
-            return;
-        }
-
-        // Get form data
-        const formData = new FormData(document.getElementById('verificationForm'));
-
-        // Add the verification docs files explicitly to ensure they're added correctly
-        for (let i = 0; i < docs.length; i++) {
-            formData.append('verification_docs[]', docs[i]);
-        }
-
-        // Show loading overlay
-        const loadingOverlay = showLoading();
-
-        // Send AJAX request
-        fetch('../backend/instructor/verification.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                // Get the raw text first to see what's being returned
-                return response.text().then(text => {
-                    console.log("Raw server response:", text);
-                    try {
-                        // Try to parse as JSON
-                        return JSON.parse(text);
-                    } catch (error) {
-                        // If parsing fails, throw a more descriptive error
-                        throw new Error(`Server returned invalid JSON: ${text}`);
-                    }
-                });
-            })
-            .then(data => {
-                // Hide loading overlay
-                hideLoading(loadingOverlay);
-
-                // Close modal
-                document.querySelector('#verificationModal .btn-close').click();
-
-                if (data.status === 'success') {
-                    showAlert('success', 'Verification request submitted successfully. We will review your credentials shortly.');
-
-                    // Add a slight delay before refreshing the page
-                    setTimeout(() => {
-                        // Refresh the page
-                        window.location.reload();
-                    }, 1500); // 1.5 seconds delay to allow the user to see the success message
-                } else {
-                    showAlert('error', data.message || 'An error occurred during submission');
-                }
-            })
-            .catch(error => {
-                hideLoading(loadingOverlay);
-                showAlert('error', 'An error occurred: ' + error.message);
-                console.error('Error details:', error);
-            });
-    }
-</script>
 
                                     <div class="text-start mt-3">
                                         <h4 class="font-13 text-uppercase">About Me : </h4>
@@ -708,7 +539,7 @@ if (strtolower($status) === 'unverified'):
                                         </div>
                                     </div>
 
-                                    <!-- JavaScript remains the same -->
+                                    <!-- JavaScript -->
                                     <script>
                                         function previewImage(event) {
                                             const reader = new FileReader();
@@ -719,7 +550,7 @@ if (strtolower($status) === 'unverified'):
                                         }
 
                                         function resetImage() {
-                                            document.getElementById('avatarImg').src = "../uploads/profile/default.png"; // Reset to default image
+                                            document.getElementById('avatarImg').src = "../Uploads/profile/default.png"; // Reset to default image
                                             document.getElementById('avatarUploader').value = ""; // Clear file input
                                         }
 
@@ -842,7 +673,7 @@ if (strtolower($status) === 'unverified'):
                                             overlay.style.left = '0';
                                             overlay.style.width = '100%';
                                             overlay.style.height = '100%';
-                                            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                                            overlay.style.backgroundColor = 'rgba(0, 0, 0,alternatives0.5)';
                                             overlay.style.display = 'flex';
                                             overlay.style.justifyContent = 'center';
                                             overlay.style.alignItems = 'center';
@@ -943,12 +774,10 @@ ${message}
         <!-- End Page content -->
         <!-- ============================================================== -->
 
-
     </div>
     <!-- END wrapper -->
 
     <?php include '../includes/instructor-darkmode.php'; ?>
-
 
     <!-- bundle -->
     <script src="assets/js/vendor.min.js"></script>
@@ -964,7 +793,5 @@ ${message}
     <script src="assets/js/pages/demo.dashboard.js"></script>
     <!-- end demo js-->
 </body>
-
-
 
 </html>

@@ -1,57 +1,53 @@
+
 <?php
-// File: ajax/instructors/course_performance_filter.php
 require '../../backend/session_start.php';
 require_once '../../backend/config.php';
 
-// Check if user is authenticated as instructor
+// Check if the user is an instructor
 if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['role'] !== 'instructor') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
-// Process filter request
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get filter parameters
-    $course_id = isset($_POST['course_id']) ? $_POST['course_id'] : 'all';
-    $time_frame = isset($_POST['time_frame']) ? $_POST['time_frame'] : 'monthly';
-    
-    // Get current sorting and pagination parameters if they exist
-    $sort = isset($_GET['sort']) ? $_GET['sort'] : '';
-    $order = isset($_GET['order']) ? $_GET['order'] : '';
-    
-    // Build query string for redirect
-    $query = "?";
-    if ($course_id !== 'all') {
-        $query .= "course_id=" . $course_id . "&";
-    }
-    if ($time_frame !== 'monthly') {
-        $query .= "time_frame=" . $time_frame . "&";
-    }
-    if (!empty($sort)) {
-        $query .= "sort=" . $sort . "&";
-    }
-    if (!empty($order)) {
-        $query .= "order=" . $order . "&";
-    }
-    
-    // Remove trailing '&' if it exists
-    $query = rtrim($query, "&");
-    
-    // If query is just "?", return empty string
-    if ($query === "?") {
-        $query = "";
-    }
-    
-    // Return success with redirect query string
-    echo json_encode([
-        'success' => true,
-        'redirect_query' => $query
-    ]);
-    exit;
+$instructor_id = $_SESSION['instructor_id'];
+$course_id = isset($_POST['course_id']) ? $_POST['course_id'] : 'all';
+$time_frame = isset($_POST['time_frame']) ? $_POST['time_frame'] : 'monthly';
+
+// Validate inputs
+$valid_time_frames = ['weekly', 'monthly', 'quarterly', 'yearly'];
+if (!in_array($time_frame, $valid_time_frames)) {
+    $time_frame = 'monthly';
 }
 
-// Handle invalid request method
-http_response_code(405);
-echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+if ($course_id !== 'all') {
+    // Verify the course belongs to the instructor
+    $sql = "SELECT COUNT(*) as count 
+            FROM courses c 
+            JOIN course_instructors ci ON c.course_id = ci.course_id 
+            WHERE ci.instructor_id = ? AND c.course_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $instructor_id, $course_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    if ($row['count'] == 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid course']);
+        $stmt->close();
+        exit;
+    }
+    $stmt->close();
+}
+
+// Build redirect query
+$redirect_query = "?time_frame=$time_frame";
+if ($course_id !== 'all') {
+    $redirect_query .= "&course_id=$course_id";
+}
+
+echo json_encode([
+    'success' => true,
+    'redirect_query' => $redirect_query
+]);
+
+$conn->close();
 ?>

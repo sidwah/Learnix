@@ -13,15 +13,33 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
 require_once '../backend/config.php';
 
-// Get instructor ID from the session
-$instructor_id = $_SESSION['user_id'];
+// Get user ID from the session
+$user_id = $_SESSION['user_id'];
+
+// Fetch instructor ID from the instructors table
+$query = "SELECT instructor_id FROM instructors WHERE user_id = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$stmt->store_result();
+
+if ($stmt->num_rows > 0) {
+    $stmt->bind_result($instructor_id);
+    $stmt->fetch();
+} else {
+    die("Instructor not found.");
+}
+$stmt->close();
 
 // Get course filter (if provided)
 $course_filter = isset($_GET['course']) ? intval($_GET['course']) : 0;
 $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 
 // Get all instructor's courses for filter dropdown
-$courses_query = "SELECT course_id, title FROM courses WHERE instructor_id = ? AND status = 'Published'";
+$courses_query = "SELECT c.course_id, c.title 
+                 FROM courses c
+                 JOIN course_instructors ci ON c.course_id = ci.course_id
+                 WHERE ci.instructor_id = ? AND c.status = 'Published'";
 $stmt = $conn->prepare($courses_query);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
@@ -30,26 +48,30 @@ $courses = [];
 while ($course = $courses_result->fetch_assoc()) {
     $courses[] = $course;
 }
+$stmt->close();
 
 // Get total student count for summary
 $count_query = "SELECT COUNT(DISTINCT u.user_id) as total 
                FROM users u
                JOIN enrollments e ON u.user_id = e.user_id
                JOIN courses c ON e.course_id = c.course_id
-               WHERE c.instructor_id = ?";
+               JOIN course_instructors ci ON c.course_id = ci.course_id
+               WHERE ci.instructor_id = ?";
 $stmt = $conn->prepare($count_query);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 $total_students = $row['total'];
+$stmt->close();
 
 // Get active student count
 $active_query = "SELECT COUNT(DISTINCT u.user_id) as active 
                 FROM users u
                 JOIN enrollments e ON u.user_id = e.user_id
                 JOIN courses c ON e.course_id = c.course_id
-                WHERE c.instructor_id = ? 
+                JOIN course_instructors ci ON c.course_id = ci.course_id
+                WHERE ci.instructor_id = ? 
                 AND e.status = 'Active'
                 AND e.last_accessed >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
 $stmt = $conn->prepare($active_query);
@@ -58,26 +80,29 @@ $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 $active_students = $row['active'];
+$stmt->close();
 
 // Get average course completion percentage
 $completion_query = "SELECT AVG(e.completion_percentage) as avg_completion 
                     FROM enrollments e
                     JOIN courses c ON e.course_id = c.course_id
-                    WHERE c.instructor_id = ?";
+                    JOIN course_instructors ci ON c.course_id = ci.course_id
+                    WHERE ci.instructor_id = ?";
 $stmt = $conn->prepare($completion_query);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 $avg_completion = number_format($row['avg_completion'] ?? 0, 1);
+$stmt->close();
 
-// Main query to get all data for datatable (we'll fetch with AJAX)
-// This is just to check if at least one student exists
+// Main query to check if at least one student exists
 $check_query = "SELECT EXISTS(
                 SELECT 1 FROM users u
                 JOIN enrollments e ON u.user_id = e.user_id
                 JOIN courses c ON e.course_id = c.course_id
-                WHERE c.instructor_id = ?
+                JOIN course_instructors ci ON c.course_id = ci.course_id
+                WHERE ci.instructor_id = ?
                 ) as has_students";
 $stmt = $conn->prepare($check_query);
 $stmt->bind_param("i", $instructor_id);
@@ -85,6 +110,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 $has_students = $row['has_students'];
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -93,8 +119,8 @@ $has_students = $row['has_students'];
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instructor Dashboard | Learnix - Create and Manage Courses</title>
-<meta name="description" content="Intuitive dashboard for instructors to create, manage courses, track student progress, and engage learners effectively." />
-<meta name="author" content="Learnix Team" />
+    <meta name="description" content="Intuitive dashboard for instructors to create, manage courses, track student progress, and engage learners effectively." />
+    <meta name="author" content="Learnix Team" />
 
     <!-- App favicon -->
     <link rel="shortcut icon" href="assets/images/favicon.ico">
@@ -243,7 +269,9 @@ $has_students = $row['has_students'];
                                             <select class="form-select" id="course-filter">
                                                 <option value="0">All Courses</option>
                                                 <?php foreach ($courses as $course): ?>
-                                                <option value="<?php echo $course['course_id']; ?>"><?php echo htmlspecialchars($course['title']); ?></option>
+                                                <option value="<?php echo $course['course_id']; ?>" <?php echo $course_filter == $course['course_id'] ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($course['title']); ?>
+                                                </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
@@ -252,10 +280,10 @@ $has_students = $row['has_students'];
                                             <label for="status-filter" class="form-label">Enrollment Status</label>
                                             <select class="form-select" id="status-filter">
                                                 <option value="">All Statuses</option>
-                                                <option value="Active">Active</option>
-                                                <option value="Completed">Completed</option>
-                                                <option value="Expired">Expired</option>
-                                                <option value="Suspended">Suspended</option>
+                                                <option value="Active" <?php echo $status_filter == 'Active' ? 'selected' : ''; ?>>Active</option>
+                                                <option value="Completed" <?php echo $status_filter == 'Completed' ? 'selected' : ''; ?>>Completed</option>
+                                                <option value="Expired" <?php echo $status_filter == 'Expired' ? 'selected' : ''; ?>>Expired</option>
+                                                <option value="Suspended" <?php echo $status_filter == 'Suspended' ? 'selected' : ''; ?>>Suspended</option>
                                             </select>
                                         </div>
 
@@ -308,7 +336,7 @@ $has_students = $row['has_students'];
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-md-6">
-                        © Learnix. <script>document.write(new Date().getFullYear())</script> All rights reserved.
+                            © Learnix. <script>document.write(new Date().getFullYear())</script> All rights reserved.
                         </div>
                     </div>
                 </div>
@@ -321,11 +349,9 @@ $has_students = $row['has_students'];
         <!-- End Page content -->
         <!-- ============================================================== -->
 
-
     </div>
     <!-- END wrapper -->
      
-
     <?php include '../includes/instructor-darkmode.php'; ?>
 
     <!-- bundle -->
@@ -358,11 +384,11 @@ $has_students = $row['has_students'];
             const overlay = document.createElement('div');
             overlay.className = 'custom-overlay';
             overlay.innerHTML = `
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            ${message ? `<div class="text-white ms-3">${message}</div>` : ''}
-        `;
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                ${message ? `<div class="text-white ms-3">${message}</div>` : ''}
+            `;
 
             document.body.appendChild(overlay);
             
@@ -473,30 +499,27 @@ $has_students = $row['has_students'];
                     url: '../ajax/instructors/get_students.php',
                     type: 'POST',
                     data: function(d) {
-    // Get values from the filters
-    var courseVal = $('#course-filter').val();
-    var statusVal = $('#status-filter').val();
-    var activityVal = $('#activity-filter').val();
-    
-    // Ensure we have proper data types
-    d.course = courseVal ? parseInt(courseVal) : 0;
-    d.status = statusVal ? String(statusVal).trim() : '';
-    d.activity = activityVal ? String(activityVal).trim() : '';
-    
-    // Log to console and debug panel
-    console.log('Sending filters to server:', {
-        course: d.course,
-        status: d.status,
-        activity: d.activity
-    });
-    
-    $('#debug-content').html(
-        `Sending to server:\n` +
-        `course=${d.course} (${typeof d.course})\n` +
-        `status=${d.status} (${typeof d.status})\n` +
-        `activity=${d.activity} (${typeof d.activity})`
-    );
-},
+                        // Get values from the filters
+                        var courseVal = $('#course-filter').val();
+                        var statusVal = $('#status-filter').val();
+                        var activityVal = $('#activity-filter').val();
+                        
+                        // Ensure we have proper data types
+                        d.course = courseVal ? parseInt(courseVal) : 0;
+                        d.status = statusVal ? String(statusVal).trim() : '';
+                        d.activity = activityVal ? String(activityVal).trim() : '';
+                        
+                        // Add instructor_id to the AJAX data
+                        d.instructor_id = <?php echo $instructor_id; ?>;
+                        
+                        // Log to console for debugging
+                        console.log('Sending filters to server:', {
+                            course: d.course,
+                            status: d.status,
+                            activity: d.activity,
+                            instructor_id: d.instructor_id
+                        });
+                    },
                     error: function(xhr, error, thrown) {
                         console.error('AJAX error:', error, thrown);
                         showAlert('danger', 'Error loading student data. Please refresh the page.');
@@ -508,7 +531,7 @@ $has_students = $row['has_students'];
                         render: function(data, type, row) {
                             return `
                                 <div class="d-flex align-items-center">
-                                    <img src="${row.profile_pic ? '../uploads/profile/' + row.profile_pic : 'assets/images/users/default.png'}" 
+                                    <img src="${row.profile_pic ? '../Uploads/profile/' + row.profile_pic : 'assets/images/users/default.png'}" 
                                          alt="Profile" class="avatar-sm me-2">
                                     <div>
                                         <h5 class="m-0 student-name">${row.first_name} ${row.last_name}</h5>

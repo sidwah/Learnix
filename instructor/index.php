@@ -6,33 +6,22 @@ require '../backend/config.php'; // Ensure connection file is correct
 if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['role'] !== 'instructor') {
     // Log unauthorized access attempt for security auditing
     error_log("Unauthorized access attempt detected: " . json_encode($_SERVER));
-
-    // Redirect unauthorized users to a custom unauthorized access page or login page
     header('Location: landing.php');
     exit;
 }
 ?>
 
-
-
 <!DOCTYPE html>
 <html lang="en">
-
-
 <head>
     <meta charset="utf-8" />
     <title>Instructor | Learnix - Create and Manage Courses</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Intuitive dashboard for instructors to create, manage courses, track student progress, and engage learners effectively." />
     <meta name="author" content="Learnix Team" />
-    <!-- App favicon -->
     <link rel="shortcut icon" href="assets/images/favicon.ico">
-
-    <!-- third party css -->
     <link href="assets/css/vendor/jquery-jvectormap-1.2.2.css" rel="stylesheet" type="text/css" />
-    <!-- third party css end -->
     <meta name="sourcemap" content="off">
-    <!-- App css -->
     <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
     <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style" />
     <style>
@@ -43,51 +32,19 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
             border-radius: 5px;
             text-align: center;
         }
-
-        .badge-draft {
-            background-color: #f0ad4e;
-            /* Bootstrap warning color */
-        }
-
-        .badge-published {
-            background-color: #5cb85c;
-            /* Bootstrap success color */
-        }
-
-        .badge-pending {
-            background-color: #d9534f;
-            /* Bootstrap danger color */
-        }
+        .badge-draft { background-color: #f0ad4e; }
+        .badge-published { background-color: #5cb85c; }
+        .badge-pending { background-color: #d9534f; }
     </style>
-
 </head>
 
 <body class="loading" data-layout-color="light" data-leftbar-theme="dark" data-layout-mode="fluid" data-rightbar-onstart="true">
-    <!-- Begin page -->
     <div class="wrapper">
-        <!-- ========== Left Sidebar Start ========== -->
-        <?php
-        include '../includes/instructor-sidebar.php';
-        ?>
-
-        <!-- Left Sidebar End -->
-
-        <!-- ============================================================== -->
-        <!-- Start Page Content here -->
-        <!-- ============================================================== -->
-
+        <?php include '../includes/instructor-sidebar.php'; ?>
         <div class="content-page">
             <div class="content">
-                <!-- Topbar Start -->
-                <?php
-                include '../includes/instructor-topnavbar.php';
-                ?>
-                <!-- end Topbar -->
-
-                <!-- Start Content-->
+                <?php include '../includes/instructor-topnavbar.php'; ?>
                 <div class="container-fluid">
-
-                    <!-- start page title -->
                     <div class="row">
                         <div class="col-12">
                             <div class="page-title-box">
@@ -102,11 +59,8 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                             </div>
                         </div>
                     </div>
-                    <!-- end page title -->
 
                     <?php
-
-                    // Assuming database connection is already established
                     if (!isset($_SESSION['user_id'])) {
                         die("User not logged in.");
                     }
@@ -122,30 +76,39 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                     if ($stmt->num_rows > 0) {
                         $stmt->bind_result($instructor_id);
                         $stmt->fetch();
-                        $stmt->close();
                     } else {
                         die("Instructor not found.");
                     }
+                    $stmt->close();
 
                     // Fetch Total Courses
-                    $total_courses_sql = "SELECT COUNT(*) AS total_courses FROM courses WHERE instructor_id = '$instructor_id'"; // Change instructor_id dynamically
-                    $total_courses = $conn->query($total_courses_sql)->fetch_assoc()['total_courses'];
-
-
+                    $total_courses_sql = "SELECT COUNT(DISTINCT c.course_id) AS total_courses 
+                                         FROM courses c
+                                         JOIN course_instructors ci ON c.course_id = ci.course_id 
+                                         WHERE ci.instructor_id = ?";
+                    $stmt = $conn->prepare($total_courses_sql);
+                    $stmt->bind_param("i", $instructor_id);
+                    $stmt->execute();
+                    $total_courses_result = $stmt->get_result();
+                    $total_courses = $total_courses_result->fetch_assoc()['total_courses'];
+                    $stmt->close();
 
                     // Fetch Active Courses
-                    $active_courses_sql = "SELECT COUNT(*) AS active_courses FROM courses WHERE status = 'published' AND instructor_id = $instructor_id"; // Change dynamically
-                    $active_courses = $conn->query($active_courses_sql)->fetch_assoc()['active_courses'];
+                    $active_courses_sql = "SELECT COUNT(DISTINCT c.course_id) AS active_courses 
+                                          FROM courses c
+                                          JOIN course_instructors ci ON c.course_id = ci.course_id 
+                                          WHERE c.status = 'Published' AND ci.instructor_id = ?";
+                    $stmt = $conn->prepare($active_courses_sql);
+                    $stmt->bind_param("i", $instructor_id);
+                    $stmt->execute();
+                    $active_courses_result = $stmt->get_result();
+                    $active_courses = $active_courses_result->fetch_assoc()['active_courses'];
+                    $stmt->close();
 
                     // Performance Rating (Placeholder)
-                    $performance_rating = 0.0; // You can define logic for this
-
-
-
-                    $conn->close();
+                    $performance_rating = 0.0; // Define logic as needed
                     ?>
                     <ul class="list-unstyled topbar-menu float-end mb-2">
-
                         <?php
                         // Define verification status messages based on status
                         if (isset($userData['verification_status'])) {
@@ -169,10 +132,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                 </li>
                             <?php
                             } elseif ($userData['verification_status'] === 'verified' && isset($_SESSION['recently_verified']) && $_SESSION['recently_verified']) {
-                                // Only show this if they were recently verified
-                                // You'd need to set this session variable when verifying
-                                // And clear it after they've seen this message
-                                unset($_SESSION['recently_verified']); // Clear it after showing once
+                                unset($_SESSION['recently_verified']);
                             ?>
                                 <li class="me-3">
                                     <div class="alert alert-success py-1 px-2 mb-0 d-flex align-items-center verification-success" role="alert">
@@ -195,7 +155,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                         <div class="col-sm-6 col-lg-3">
                                             <div class="card shadow-none m-0">
                                                 <div class="card-body text-center">
-                                                    <i class="dripicons-view-list  text-muted" style="font-size: 24px;"></i>
+                                                    <i class="dripicons-view-list text-muted" style="font-size: 24px;"></i>
                                                     <h3><span><?php echo $total_courses; ?></span></h3>
                                                     <p class="text-muted font-15 mb-0">Total Courses</p>
                                                 </div>
@@ -207,27 +167,25 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                 <div class="card-body text-center">
                                                     <i class="dripicons-user text-muted" style="font-size: 24px;"></i>
                                                     <?php
-                                                    include '../backend/config.php'; // Ensure connection file is correct
                                                     // Fetch total students enrolled in instructor's courses
                                                     $total_students_sql = "SELECT COUNT(DISTINCT u.user_id) AS total_students 
-                                      FROM users u 
-                                      JOIN enrollments e ON u.user_id = e.user_id 
-                                      JOIN courses c ON e.course_id = c.course_id 
-                                      WHERE c.instructor_id = ? AND u.role = 'student'";
-
+                                                                         FROM users u 
+                                                                         JOIN enrollments e ON u.user_id = e.user_id 
+                                                                         JOIN courses c ON e.course_id = c.course_id 
+                                                                         JOIN course_instructors ci ON c.course_id = ci.course_id 
+                                                                         WHERE ci.instructor_id = ? AND u.role = 'student'";
                                                     $stmt = $conn->prepare($total_students_sql);
                                                     $stmt->bind_param("i", $instructor_id);
                                                     $stmt->execute();
                                                     $total_students_result = $stmt->get_result();
                                                     $total_students = $total_students_result->fetch_assoc()['total_students'];
+                                                    $stmt->close();
                                                     ?>
                                                     <h3><span><?php echo $total_students; ?></span></h3>
                                                     <p class="text-muted font-15 mb-0">Total Students</p>
                                                 </div>
                                             </div>
                                         </div>
-                                        <?php $conn->close(); ?>
-
 
                                         <div class="col-sm-6 col-lg-3">
                                             <div class="card shadow-none m-0 border-start">
@@ -248,15 +206,11 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                 </div>
                                             </div>
                                         </div>
-
-                                    </div> <!-- end row -->
+                                    </div>
                                 </div>
-                            </div> <!-- end card-box-->
-                        </div> <!-- end col-->
+                            </div>
+                        </div>
                     </div>
-                    <!-- end row-->
-
-
 
                     <div class="row">
                         <div class="col-lg-4">
@@ -319,7 +273,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
                                     <script>
                                         document.addEventListener("DOMContentLoaded", function() {
-                                            fetch("http://localhost:8888/Learnix/backend/courses/get_course_status.php")
+                                            fetch("http://localhost:8888/Learnix/backend/instructor/get_course_status.php")
                                                 .then(response => response.text())
                                                 .then(text => {
                                                     console.log("Raw Response:", text);
@@ -331,7 +285,6 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                             return;
                                                         }
 
-                                                        // Update counts
                                                         const publishedCount = data.published || 0;
                                                         const draftCount = data.draft || 0;
                                                         const pendingCount = data.pending || 0;
@@ -340,13 +293,10 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                         document.getElementById("draft-count").textContent = draftCount;
                                                         document.getElementById("pending-count").textContent = pendingCount;
 
-                                                        // Check if all counts are zero
                                                         if (publishedCount === 0 && draftCount === 0 && pendingCount === 0) {
-                                                            // Hide chart and show no courses message
                                                             document.getElementById("course-status-chart").style.display = 'none';
                                                             document.getElementById("no-courses-message").classList.remove('d-none');
                                                         } else {
-                                                            // Render chart normally
                                                             var ctx = document.getElementById("course-status-chart").getContext("2d");
                                                             new Chart(ctx, {
                                                                 type: "doughnut",
@@ -368,9 +318,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                                             position: "bottom",
                                                                             labels: {
                                                                                 color: "#6c757d",
-                                                                                font: {
-                                                                                    size: 14
-                                                                                },
+                                                                                font: { size: 14 },
                                                                             },
                                                                         },
                                                                         tooltip: {
@@ -392,56 +340,20 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                 .catch(error => console.error("Error fetching course data:", error));
                                         });
                                     </script>
-                                </div><!-- end card body-->
-                            </div> <!-- end card -->
-                        </div><!-- end col-->
+                                </div>
+                            </div>
+                        </div>
 
                         <?php
-
-
-                        // Database connection
-                        $host = "localhost";
-                        $user = "root"; // Change if needed
-                        $pass = "root"; // Change if needed
-                        $dbname = "learnix_db";
-
-                        $conn = new mysqli($host, $user, $pass, $dbname);
-
-                        // Check connection
-                        if ($conn->connect_error) {
-                            die("Connection failed: " . $conn->connect_error);
-                        }
-
-                        // Ensure user session is set
-                        if (!isset($_SESSION['user_id'])) {
-                            die("User not authenticated.");
-                        }
-
-                        $user_id = $_SESSION['user_id'];
-
-                        // Get instructor ID
-                        $query = "SELECT instructor_id FROM instructors WHERE user_id = ?";
-                        $stmt = $conn->prepare($query);
-                        $stmt->bind_param("i", $user_id);
-                        $stmt->execute();
-                        $stmt->bind_result($instructor_id);
-                        $stmt->fetch();
-                        $stmt->close();
-
-                        if (!$instructor_id) {
-                            die("Instructor not found.");
-                        }
-
-                        // Fetch latest 9 courses with category
                         // Fetch latest 9 courses with subcategory
                         $sql = "SELECT c.course_id, c.title, c.price, c.status, c.created_at, 
-               COALESCE(sub.name, 'Uncategorized') AS subcategory
-        FROM courses c
-        LEFT JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
-        WHERE c.instructor_id = ?
-        ORDER BY c.created_at DESC
-        LIMIT 9";
-
+                                COALESCE(sub.name, 'Uncategorized') AS subcategory
+                                FROM courses c
+                                JOIN course_instructors ci ON c.course_id = ci.course_id
+                                LEFT JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
+                                WHERE ci.instructor_id = ?
+                                ORDER BY c.created_at DESC
+                                LIMIT 9";
                         $stmt = $conn->prepare($sql);
                         $stmt->bind_param("i", $instructor_id);
                         $stmt->execute();
@@ -458,7 +370,6 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <h4 class="header-title">Latest 9 Courses</h4>
                                     </div>
-
                                     <div class="table-responsive">
                                         <table class="table table-centered table-nowrap table-hover mb-0">
                                             <thead>
@@ -472,17 +383,15 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                             </thead>
                                             <tbody>
                                                 <?php if ($result->num_rows > 0) { ?>
-                                                    <?php
-                                                    while ($row = $result->fetch_assoc()) {
-                                                    ?>
+                                                    <?php while ($row = $result->fetch_assoc()) { ?>
                                                         <tr>
                                                             <td><?php echo htmlspecialchars($row['title']); ?></td>
                                                             <td><?php echo htmlspecialchars($row['subcategory']); ?></td>
                                                             <td>₵<?php echo number_format($row['price'], 2); ?></td>
                                                             <td>
                                                                 <?php
-                                                                $status = $row['status'] ?? 'Draft'; // Default to 'Draft' if null
-                                                                $badgeClass = 'badge-draft'; // Default class
+                                                                $status = $row['status'] ?? 'Draft';
+                                                                $badgeClass = 'badge-draft';
                                                                 switch ($status) {
                                                                     case 'Published':
                                                                         $badgeClass = 'badge-published';
@@ -501,11 +410,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                             </td>
                                                             <td><?php echo date("M d, Y", strtotime($row['created_at'])); ?></td>
                                                         </tr>
-                                                    <?php
-                                                    }
-                                                    ?>
-
-
+                                                    <?php } ?>
                                                 <?php } else { ?>
                                                     <tr>
                                                         <td colspan="5" class="text-center">No courses found.</td>
@@ -513,65 +418,36 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                 <?php } ?>
                                             </tbody>
                                         </table>
-                                    </div> <!-- end table-responsive -->
-                                </div> <!-- end card body -->
-                            </div> <!-- end card -->
-                        </div><!-- end col-->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <?php
+                        $stmt->close();
                         $conn->close();
                         ?>
-
-
                     </div>
-                    <!-- end row-->
-
-
 
                 </div>
-                <!-- content -->
-
-                <!-- Footer Start -->
                 <footer class="footer">
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col-md-6">
-                                © Learnix. <script>
-                                    document.write(new Date().getFullYear())
-                                </script> All rights reserved.
+                                © Learnix. <script>document.write(new Date().getFullYear())</script> All rights reserved.
                             </div>
                         </div>
                     </div>
                 </footer>
-                <!-- end Footer -->
-
             </div>
-
-            <!-- ============================================================== -->
-            <!-- End Page content -->
-            <!-- ============================================================== -->
-
-
         </div>
-        <!-- END wrapper -->
 
-    <?php include '../includes/instructor-darkmode.php'; ?>
-
-        <!-- bundle -->
+        <?php include '../includes/instructor-darkmode.php'; ?>
         <script src="assets/js/vendor.min.js"></script>
         <script src="assets/js/app.min.js"></script>
-
-        <!-- third party js -->
         <script src="assets/js/vendor/chart.min.js"></script>
-        <!-- third party js ends -->
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-
-        <!-- demo app -->
         <script src="assets/js/pages/demo.dashboard-projects.js"></script>
-        <!-- end demo js-->
+    </div>
 </body>
-
-
-
 </html>

@@ -1,3 +1,4 @@
+
 <?php
 require '../backend/session_start.php'; // Ensure session is started
 
@@ -10,14 +11,16 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
 // Include the database configuration
 require_once '../backend/config.php';
-// No need to create a new connection as $conn is already available
 
 // Get instructor ID from session
 $instructor_id = $_SESSION['instructor_id'];
 
 // ===== FETCH INSTRUCTOR COURSES =====
 $courses = [];
-$sql = "SELECT course_id, title FROM courses WHERE instructor_id = ?";
+$sql = "SELECT c.course_id, c.title 
+        FROM courses c
+        JOIN course_instructors ci ON c.course_id = ci.course_id 
+        WHERE ci.instructor_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
@@ -30,9 +33,11 @@ $stmt->close();
 
 // ===== FETCH PERFORMANCE METRICS =====
 // Total students
-$sql = "SELECT COUNT(*) as total_students FROM enrollments e 
+$sql = "SELECT COUNT(*) as total_students 
+        FROM enrollments e 
         JOIN courses c ON e.course_id = c.course_id 
-        WHERE c.instructor_id = ?";
+        JOIN course_instructors ci ON c.course_id = ci.course_id 
+        WHERE ci.instructor_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
@@ -45,7 +50,8 @@ $stmt->close();
 $sql = "SELECT AVG(e.completion_percentage) as avg_completion_rate 
         FROM enrollments e 
         JOIN courses c ON e.course_id = c.course_id 
-        WHERE c.instructor_id = ?";
+        JOIN course_instructors ci ON c.course_id = ci.course_id 
+        WHERE ci.instructor_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
@@ -61,7 +67,8 @@ $sql = "SELECT AVG(sqa.score) as avg_grade
         JOIN section_topics st ON sq.topic_id = st.topic_id
         JOIN course_sections cs ON st.section_id = cs.section_id
         JOIN courses c ON cs.course_id = c.course_id
-        WHERE c.instructor_id = ?";
+        JOIN course_instructors ci ON c.course_id = ci.course_id
+        WHERE ci.instructor_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
@@ -74,7 +81,8 @@ $stmt->close();
 $sql = "SELECT COUNT(*) as active_students
         FROM enrollments e
         JOIN courses c ON e.course_id = c.course_id
-        WHERE c.instructor_id = ? AND e.last_accessed >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+        JOIN course_instructors ci ON c.course_id = ci.course_id
+        WHERE ci.instructor_id = ? AND e.last_accessed >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
@@ -126,7 +134,8 @@ $sql = "SELECT COUNT(*) as total
         FROM enrollments e
         JOIN users u ON e.user_id = u.user_id
         JOIN courses c ON e.course_id = c.course_id
-        WHERE c.instructor_id = ?";
+        JOIN course_instructors ci ON c.course_id = ci.course_id
+        WHERE ci.instructor_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
@@ -150,8 +159,9 @@ $sql = "SELECT u.first_name, u.last_name, c.title as course_title,
         FROM enrollments e
         JOIN users u ON e.user_id = u.user_id
         JOIN courses c ON e.course_id = c.course_id
+        JOIN course_instructors ci ON c.course_id = ci.course_id
         LEFT JOIN section_topics st ON e.current_topic_id = st.topic_id
-        WHERE c.instructor_id = ?
+        WHERE ci.instructor_id = ?
         $orderBy
         LIMIT ?, ?";
 $stmt = $conn->prepare($sql);
@@ -208,7 +218,8 @@ $sql = "SELECT sq.quiz_title,
         JOIN section_topics st ON sq.topic_id = st.topic_id
         JOIN course_sections cs ON st.section_id = cs.section_id
         JOIN courses c ON cs.course_id = c.course_id
-        WHERE c.instructor_id = ?
+        JOIN course_instructors ci ON c.course_id = ci.course_id
+        WHERE ci.instructor_id = ?
         GROUP BY sq.quiz_id
         ORDER BY attempt_count DESC
         LIMIT 5";
@@ -247,9 +258,11 @@ if (empty($quiz_names)) {
 $insights = [];
 
 // Low engagement students insight
-$sql = "SELECT COUNT(*) as count FROM enrollments e
+$sql = "SELECT COUNT(*) as count 
+        FROM enrollments e
         JOIN courses c ON e.course_id = c.course_id
-        WHERE c.instructor_id = ? AND e.last_accessed < DATE_SUB(NOW(), INTERVAL 14 DAY)";
+        JOIN course_instructors ci ON c.course_id = ci.course_id
+        WHERE ci.instructor_id = ? AND e.last_accessed < DATE_SUB(NOW(), INTERVAL 14 DAY)";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $instructor_id);
 $stmt->execute();
@@ -265,8 +278,9 @@ if ($low_engagement_count > 0) {
 // Course with lowest completion rate
 $sql = "SELECT c.title, AVG(e.completion_percentage) as avg_completion
         FROM courses c
+        JOIN course_instructors ci ON c.course_id = ci.course_id
         JOIN enrollments e ON c.course_id = e.course_id
-        WHERE c.instructor_id = ?
+        WHERE ci.instructor_id = ?
         GROUP BY c.course_id
         ORDER BY avg_completion ASC
         LIMIT 1";
@@ -624,7 +638,7 @@ function getSortLink($column, $currentSort, $currentOrder) {
                                             <!-- Previous button -->
                                             <li class="page-item <?= ($page <= 1) ? 'disabled' : '' ?>">
                                                 <a class="page-link" href="<?= getPaginationLink($page - 1, $sortColumn, $sortOrder) ?>" aria-label="Previous">
-                                                    <span aria-hidden="true">&laquo;</span>
+                                                    <span aria-hidden="true">«</span>
                                                 </a>
                                             </li>
                                             
@@ -646,7 +660,7 @@ function getSortLink($column, $currentSort, $currentOrder) {
                                             <!-- Next button -->
                                             <li class="page-item <?= ($page >= $totalPages) ? 'disabled' : '' ?>">
                                                 <a class="page-link" href="<?= getPaginationLink($page + 1, $sortColumn, $sortOrder) ?>" aria-label="Next">
-                                                    <span aria-hidden="true">&raquo;</span>
+                                                    <span aria-hidden="true">»</span>
                                                 </a>
                                             </li>
                                         </ul>

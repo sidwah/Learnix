@@ -4,7 +4,6 @@ require_once '../../backend/session_start.php';
 
 // Check if the user is signed in and has the 'instructor' role
 if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['role'] !== 'instructor') {
-    // Return error response
     header('Content-Type: application/json');
     echo json_encode([
         'error' => 'Unauthorized access',
@@ -13,16 +12,46 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     exit;
 }
 
-// Get instructor ID from the session
-$instructor_id = $_SESSION['user_id'];
+// Get instructor ID from POST data (sent by all-students.php)
+$instructor_id = isset($_POST['instructor_id']) ? intval($_POST['instructor_id']) : 0;
+
+// Validate instructor ID by mapping user_id to instructor_id
+$user_id = $_SESSION['user_id'];
+$query = "SELECT instructor_id FROM instructors WHERE user_id = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$stmt->store_result();
+
+if ($stmt->num_rows > 0) {
+    $stmt->bind_result($db_instructor_id);
+    $stmt->fetch();
+    // Ensure the POST instructor_id matches the database instructor_id
+    if ($instructor_id !== $db_instructor_id) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'error' => 'Invalid instructor ID',
+            'data' => []
+        ]);
+        exit;
+    }
+} else {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error' => 'Instructor not found',
+        'data' => []
+    ]);
+    exit;
+}
+$stmt->close();
 
 // Get filters if provided
 $course_filter = isset($_POST['course']) ? intval($_POST['course']) : 0;
-$status_filter = isset($_POST['status']) ? $_POST['status'] : '';
-$activity_filter = isset($_POST['activity']) ? $_POST['activity'] : '';
+$status_filter = isset($_POST['status']) ? trim($_POST['status']) : '';
+$activity_filter = isset($_POST['activity']) ? trim($_POST['activity']) : '';
 
 // Log the received parameters for debugging
-error_log("get_students.php received filters: course=$course_filter, status=$status_filter, activity=$activity_filter");
+error_log("get_students.php received filters: course=$course_filter, status=$status_filter, activity=$activity_filter, instructor_id=$instructor_id");
 
 // Base query for fetching all student data
 $query = "SELECT 
@@ -41,32 +70,33 @@ $query = "SELECT
                 JOIN section_quizzes sq ON sqa.quiz_id = sq.quiz_id
                 JOIN course_sections cs ON sq.section_id = cs.section_id
                 JOIN courses c_sub ON cs.course_id = c_sub.course_id
-                WHERE sqa.user_id = u.user_id AND c_sub.instructor_id = ?
+                JOIN course_instructors ci_sub ON c_sub.course_id = ci_sub.course_id
+                WHERE sqa.user_id = u.user_id AND ci_sub.instructor_id = ?
             ) as quiz_avg,
             MAX(e.status) as status
           FROM users u
           JOIN enrollments e ON u.user_id = e.user_id
           JOIN courses c ON e.course_id = c.course_id
-          WHERE c.instructor_id = ? ";
+          JOIN course_instructors ci ON c.course_id = ci.course_id
+          WHERE ci.instructor_id = ? ";
 
-// Parameters array
+// Parameters array with types
 $params = [$instructor_id, $instructor_id];
+$param_types = "ii";
 
 // Add course filter if provided
 if ($course_filter > 0) {
     $query .= " AND c.course_id = ? ";
     $params[] = $course_filter;
+    $param_types .= "i";
 }
 
 // Add status filter if provided
 if (!empty($status_filter)) {
-    // Direct approach - filter on the main enrollment table with a subquery
-     // Direct filter on enrollment status
-     $query .= " AND e.status = ? ";
-     $params[] = $status_filter;
-     
-     // Log the applied filter
-     error_log("Applied status filter: '$status_filter'");
+    $query .= " AND e.status = ? ";
+    $params[] = $status_filter;
+    $param_types .= "s"; // Status is a string
+    error_log("Applied status filter: '$status_filter'");
 }
 
 // Add activity filter if provided
@@ -95,11 +125,13 @@ error_log("Parameters: " . json_encode($params));
 try {
     // Prepare and execute query
     $stmt = $conn->prepare($query);
+    if (!$stmt) {
+        throw new Exception("Query preparation failed: " . $conn->error);
+    }
     
     // Bind parameters
     if (count($params) > 0) {
-        $types = str_repeat('i', count($params)); // Assuming all params are integers
-        $stmt->bind_param($types, ...$params);
+        $stmt->bind_param($param_types, ...$params);
     }
     
     $stmt->execute();
@@ -124,7 +156,12 @@ try {
         ];
     }
     
+    // Close statement and connection
+    $stmt->close();
+    $conn->close();
+    
     // Return success response with data
+    header('Content-Type: application/json');
     echo json_encode([
         'data' => $records
     ]);
@@ -133,10 +170,18 @@ try {
     // Log the error
     error_log('Error in get_students.php: ' . $e->getMessage());
     
+    // Close connection if open
+    if (isset($stmt)) {
+        $stmt->close();
+    }
+    $conn->close();
+    
     // Return error response
+    header('Content-Type: application/json');
     echo json_encode([
         'error' => 'Database error',
-        'message' => 'An error occurred while fetching student data. Please try again.',
+        'message' => 'An error occurred while fetching student data: ' . $e->getMessage(),
         'data' => []
     ]);
 }
+?>
