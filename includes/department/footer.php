@@ -19,69 +19,75 @@
 
 <!-- JS Plugins Initialization -->
 <script>
-  (function() {
-    // INITIALIZATION OF LIVE TOAST
-    // =======================================================
-    const liveToast = new bootstrap.Toast(document.querySelector('#liveToast'))
-    document.querySelector('#liveToastBtn').addEventListener('click', () => liveToast.show())
-
-    // Wait for DOM to be fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
-      try {
-        // INITIALIZATION OF SELECT
-        if (typeof HSCore !== 'undefined' && HSCore.components.HSTomSelect) {
-          HSCore.components.HSTomSelect.init('.js-select', {
-            render: {
-              'option': function(data, escape) {
-                return data.optionTemplate;
-              },
-              'item': function(data, escape) {
-                return data.optionTemplate;
-              }
-            }
-          });
-        }
-        // Ensure HSBsDropdownComponent is only initialized once
-        if (typeof HSBsDropdownComponent !== 'undefined' && typeof window.HSBsDropdown === 'undefined') {
-          window.HSBsDropdown = new HSBsDropdownComponent();
-        }
-        // INITIALIZATION OF HEADER
-        if (document.querySelector('#header')) {
-          new HSHeader('#header').init();
-        }
-        // INITIALIZATION OF NAV SCROLLER (with safety checks)
-        const navScroller = document.querySelector('.js-nav-scroller');
-        if (navScroller) {
-          new HsNavScroller(navScroller, {
-            delay: 400,
-            offset: 140
-          });
-        }
-        // INITIALIZATION OF LISTJS COMPONENT
-        if (typeof HSCore !== 'undefined' && HSCore.components.HSList) {
-          const docsSearch = HSCore.components.HSList.init('#docsSearch');
-          // GET JSON FILE RESULTS
-          if (docsSearch) {
-            fetch('../assets/json/docs-search.json')
-              .then(response => response.json())
-              .then(data => {
-                if (data && docsSearch.getItem(0)) {
-                  docsSearch.getItem(0).add(data);
-                }
-              })
-              .catch(error => console.error('Error loading search data:', error));
-          }
-        }
-        // INITIALIZATION OF GO TO
-        const goToEl = document.querySelector('.js-go-to');
-        if (goToEl) {
-          new HSGoTo(goToEl).init();
-        }
-      } catch (error) {
-        console.error('Initialization error:', error);
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      // INITIALIZATION OF LIVE TOAST
+      const toastBtn = document.querySelector('#liveToastBtn');
+      const toastEl = document.querySelector('#liveToast');
+      if (toastBtn && toastEl) {
+        const liveToast = new bootstrap.Toast(toastEl);
+        toastBtn.addEventListener('click', () => liveToast.show());
       }
-    });
-  })();
+
+      // INITIALIZATION OF SELECT
+      if (typeof HSCore !== 'undefined' && HSCore.components.HSTomSelect) {
+        HSCore.components.HSTomSelect.init('.js-select', {
+          render: {
+            'option': function(data, escape) {
+              return data.optionTemplate;
+            },
+            'item': function(data, escape) {
+              return data.optionTemplate;
+            }
+          }
+        });
+      }
+
+      // Ensure HSBsDropdownComponent is only initialized once
+      if (typeof HSBsDropdownComponent !== 'undefined' && typeof window.HSBsDropdown === 'undefined') {
+        window.HSBsDropdown = new HSBsDropdownComponent();
+      }
+
+      // INITIALIZATION OF HEADER
+      if (document.querySelector('#header')) {
+        new HSHeader('#header').init();
+      }
+
+      // INITIALIZATION OF NAV SCROLLER (with safety checks)
+      const navScroller = document.querySelector('.js-nav-scroller');
+      if (navScroller) {
+        new HsNavScroller(navScroller, {
+          delay: 400,
+          offset: 140
+        });
+      }
+
+      // INITIALIZATION OF LISTJS COMPONENT
+      if (typeof HSCore !== 'undefined' && HSCore.components.HSList) {
+        const docsSearch = HSCore.components.HSList.init('#docsSearch');
+        // GET JSON FILE RESULTS
+        if (docsSearch) {
+          fetch('../assets/json/docs-search.json')
+            .then(response => response.json())
+            .then(data => {
+              if (data && docsSearch.getItem(0)) {
+                docsSearch.getItem(0).add(data);
+              }
+            })
+            .catch(error => console.error('Error loading search data:', error));
+        }
+      }
+
+      // INITIALIZATION OF GO TO
+      const goToEl = document.querySelector('.js-go-to');
+      if (goToEl) {
+        new HSGoTo(goToEl).init();
+      }
+
+    } catch (error) {
+      console.error('Initialization error:', error);
+    }
+  });
 </script>
 <!-- ========== END FOOTER SCRIPTS ========== -->
 </body>
