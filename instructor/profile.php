@@ -305,7 +305,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                                             <!-- Profile Image Box -->
                                                             <div class="position-relative">
                                                                 <label class="avatar avatar-xl avatar-circle" for="avatarUploader">
-                                                                    <img id="avatarImg" class="avatar-img rounded-circle border border-2"
+                                                                    <img id="avatarImg" class="avatar-img rounded-circle  border-2"
                                                                         src="<?php echo htmlspecialchars($profileImage); ?>" alt="Profile Photo"
                                                                         style="width: 100px; height: 100px; object-fit: cover;">
                                                                 </label>
