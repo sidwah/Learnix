@@ -1,7 +1,8 @@
-
 <?php
 // Make sure session is started in the including file
 // session_start();  // Usually done in the header.php file
+
+// includes/department/sidebar.php
 
 // Check if user is logged in
 if (!isset($_SESSION["user_id"]) || !isset($_SESSION["role"])) {
@@ -67,6 +68,29 @@ $user_data = [
 
       <li class="nav-item my-2 my-lg-5"></li>
 
+      <!-- Secretary Quick Actions -->
+      <?php if ($user_role === 'department_secretary'): ?>
+      <li class="nav-item">
+        <span class="nav-subtitle">Quick Actions</span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="daily-tasks.php">
+          <span class="nav-indicator">🎯</span> Daily Tasks
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="pending-requests.php">
+          <span class="nav-indicator">📝</span> Pending Requests
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="urgent-actions.php">
+          <span class="nav-indicator">⚡</span> Urgent Actions
+        </a>
+      </li>
+      <li class="nav-item my-2 my-lg-5"></li>
+      <?php endif; ?>
+
       <!-- Department Management -->
       <?php if ($user_role === 'department_head'): ?>
       <li class="nav-item">
@@ -76,8 +100,11 @@ $user_data = [
         <a class="nav-link" href="settings.php">Settings</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="appoint-secretary.php">Management</a>
+        <a class="nav-link" href="secretary.php">Secretary</a>
       </li>
+      <!-- <li class="nav-item">
+        <a class="nav-link" href="manage-secretary.php">Manage Secretary Permissions</a>
+      </li> -->
       <li class="nav-item my-2 my-lg-5"></li>
       <?php endif; ?>
 
@@ -102,6 +129,9 @@ $user_data = [
       <li class="nav-item">
         <a class="nav-link" href="instructor-requests.php">Process Instructor Requests</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" href="instructor-documentation.php">Instructor Documentation</a>
+      </li>
       <?php endif; ?>
 
       <li class="nav-item my-2 my-lg-5"></li>
@@ -123,6 +153,15 @@ $user_data = [
       <li class="nav-item">
         <a class="nav-link" href="courses.php">Courses</a>
       </li>
+      
+      <?php if ($user_role === 'department_secretary'): ?>
+      <li class="nav-item">
+        <a class="nav-link" href="course-metadata.php">Course Information</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="course-scheduling.php">Course Scheduling</a>
+      </li>
+      <?php endif; ?>
       
       <?php if ($user_role === 'department_head'): ?>
       <li class="nav-item">
@@ -150,6 +189,15 @@ $user_data = [
       <li class="nav-item">
         <a class="nav-link" href="student-progress.php">Student Progress</a>
       </li>
+      
+      <?php if ($user_role === 'department_secretary'): ?>
+      <li class="nav-item">
+        <a class="nav-link" href="student-records.php">Student Records</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="enrollment-support.php">Enrollment Support</a>
+      </li>
+      <?php endif; ?>
 
       <li class="nav-item my-2 my-lg-5"></li>
 
@@ -180,6 +228,12 @@ $user_data = [
       <li class="nav-item">
         <a class="nav-link" href="draft-communications.php">Draft Communications</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" href="email-management.php">Email Management</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="meeting-coordination.php">Meeting Coordination</a>
+      </li>
       <?php endif; ?>
 
       <li class="nav-item my-2 my-lg-5"></li>
@@ -209,6 +263,15 @@ $user_data = [
           <?php echo $user_role === 'department_head' ? 'Activity Monitoring' : 'Activity Tracking'; ?>
         </a>
       </li>
+      
+      <?php if ($user_role === 'department_secretary'): ?>
+      <li class="nav-item">
+        <a class="nav-link" href="generate-reports.php">Generate Reports</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="data-compilation.php">Data Compilation</a>
+      </li>
+      <?php endif; ?>
 
       <li class="nav-item my-2 my-lg-5"></li>
 
@@ -227,6 +290,12 @@ $user_data = [
       <li class="nav-item">
         <a class="nav-link" href="schedule-management.php">Schedule</a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" href="calendar-management.php">Calendar Management</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="filing-system.php">Filing System</a>
+      </li>
       <?php endif; ?>
       
       <li class="nav-item">
@@ -235,6 +304,23 @@ $user_data = [
 
       <li class="nav-item my-2 my-lg-5"></li>
 
+      <!-- Administrative Tools (Secretary specific) -->
+      <?php if ($user_role === 'department_secretary'): ?>
+      <li class="nav-item">
+        <span class="nav-subtitle">Administrative Tools</span>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="workflow-management.php">Workflow Management</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="task-coordination.php">Task Coordination</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="approval-tracking.php">Approval Tracking</a>
+      </li>
+      <li class="nav-item my-2 my-lg-5"></li>
+      <?php endif; ?>
+
       <!-- Profile & Support -->
       <li class="nav-item">
         <span class="nav-subtitle">Profile & Support</span>
@@ -242,6 +328,13 @@ $user_data = [
       <li class="nav-item">
         <a class="nav-link" href="profile.php">My Profile</a>
       </li>
+      
+      <?php if ($user_role === 'department_secretary'): ?>
+      <li class="nav-item">
+        <a class="nav-link" href="preferences.php">My Preferences</a>
+      </li>
+      <?php endif; ?>
+      
       <li class="nav-item">
         <a class="nav-link" href="help-center.php">Help Center</a>
       </li>
@@ -256,6 +349,28 @@ $user_data = [
         <a class="nav-link" href="../backend/signout.php">Sign Out</a>
       </li>
     </ul>
+  </div>
+  
+  <!-- Session Management Indicator -->
+  <div class="navbar-footer border-top p-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <!-- <small class="text-muted">
+        <i class="bi bi-clock-fill me-1"></i>
+        Session: <?php // echo date('H:i'); ?>
+      </small> -->
+      <small class="text-muted">
+        <i class="bi bi-building me-1"></i>
+        <?php echo htmlspecialchars($_SESSION['department_name'] ?? 'Department'); ?>
+      </small>
+    </div>
+    <?php if ($user_role === 'department_secretary'): ?>
+    <div class="mt-2">
+      <small class="badge bg-soft-info text-info w-100">
+        <i class="bi bi-shield-check me-1"></i>
+        Limited Access Mode
+      </small>
+    </div>
+    <?php endif; ?>
   </div>
 </div>
 <!-- End Navbar Collapse -->

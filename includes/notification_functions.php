@@ -1,5 +1,5 @@
 <?php
-// backend/includes/notification_functions.php
+// includes/notification_functions.php
 require_once($_SERVER['DOCUMENT_ROOT'] . '/Learnix/backend/config.php');
 /**
  * Create a notification in the user_notifications table

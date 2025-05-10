@@ -196,7 +196,7 @@
       <div class="col-lg-3 mb-7 mb-lg-0">
         <!-- Logo -->
         <div class="mb-5">
-          <a class="navbar-brand" href="index.html" aria-label="Space">
+          <a class="navbar-brand" href="index.php" aria-label="Space">
             <img class="navbar-brand-logo" src="../assets/svg/logos/logo.svg" alt="Image Description">
           </a>
         </div>

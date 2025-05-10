@@ -152,9 +152,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         try {
             $stmt = $conn->prepare("INSERT INTO instructor_invitations 
-                                    (email, first_name, last_name, temp_password_hash, department_id, invited_by, expiry_time, notes) 
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssss", $email, $firstName, $lastName, $passwordHash, $departmentId, $departmentHeadId, $expiryTime, $notes);
+                                    (email, temp_password_hash, department_id, invited_by, expiry_time, notes) 
+                                    VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssiss", $email, $passwordHash, $departmentId, $departmentHeadId, $expiryTime, $notes);
             $stmt->execute();
             $invitationId = $stmt->insert_id;
             $stmt->close();
@@ -163,8 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($e->getCode() == 1062) { // MySQL error code for duplicate entry
                 // Check if it's an unused invitation that hasn't expired yet
                 $stmt = $conn->prepare("SELECT id, expiry_time FROM instructor_invitations 
-                                        WHERE email = ? AND department_id = ? AND is_used = 0
-                                        ORDER BY created_at DESC LIMIT 1");
+                                        WHERE email = ? AND department_id = ? AND is_used = 0");
                 $stmt->bind_param("si", $email, $departmentId);
                 $stmt->execute();
                 $result = $stmt->get_result();
@@ -183,25 +182,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'code' => 'duplicate_invitation'
                         ]));
                     } else {
-                        // Invitation exists but has expired, update it with new password and names
+                        // Invitation exists but has expired, update it
                         $stmt = $conn->prepare("UPDATE instructor_invitations 
-                                               SET first_name = ?, last_name = ?, temp_password_hash = ?, invited_by = ?, expiry_time = ?, notes = ?, created_at = NOW() 
+                                               SET temp_password_hash = ?, invited_by = ?, expiry_time = ?, notes = ? 
                                                WHERE id = ?");
-                        $stmt->bind_param("ssssssi", $firstName, $lastName, $passwordHash, $departmentHeadId, $expiryTime, $notes, $existingInvitation['id']);
+                        $stmt->bind_param("sissi", $passwordHash, $departmentHeadId, $expiryTime, $notes, $existingInvitation['id']);
                         $stmt->execute();
                         $invitationId = $existingInvitation['id'];
                         $stmt->close();
                     }
                 } else {
-                    // No unused invitation found, try to insert again
+                    // This should not happen based on the error, but just in case
                     $stmt->close();
-                    $stmt = $conn->prepare("INSERT INTO instructor_invitations 
-                                          (email, first_name, last_name, temp_password_hash, department_id, invited_by, expiry_time, notes) 
-                                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                    $stmt->bind_param("ssssssss", $email, $firstName, $lastName, $passwordHash, $departmentId, $departmentHeadId, $expiryTime, $notes);
-                    $stmt->execute();
-                    $invitationId = $stmt->insert_id;
-                    $stmt->close();
+                    $conn->rollback();
+                    http_response_code(500);
+                    exit(json_encode(['status' => 'error', 'message' => 'An error occurred while processing your request.']));
                 }
             } else {
                 // For other SQL errors

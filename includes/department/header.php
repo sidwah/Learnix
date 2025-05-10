@@ -288,7 +288,7 @@ $pageTitle = $_SESSION['department_name']. ' - Department';
         <div class="row flex-grow-1">
           <!-- Default Logo -->
           <div class="docs-navbar-sidebar-container d-flex align-items-center mb-2 mb-lg-0">
-            <a class="navbar-brand" href="index.html" aria-label="Space">
+            <a class="navbar-brand" href="index.php" aria-label="Space">
               <img class="navbar-brand-logo" src="../assets/svg/logos/logo.svg" alt="Logo">
             </a>
           </div>
