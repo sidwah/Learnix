@@ -1,7 +1,7 @@
 <?php
 // backend/department/resend_invitation.php
 require_once '../../config.php'; // Database connection file
-require_once '../../../includes/notification_functions.php'; // Notification functions
+require_once '../includes/notification_functions.php'; // Notification functions
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // Check if the invitation exists and belongs to a department managed by this department head
         $stmt = $conn->prepare(
-            "SELECT ii.email, ii.temp_password_hash, ii.department_id, ii.notes,
+            "SELECT ii.id, ii.email, ii.temp_password_hash, ii.department_id, ii.notes,
                     CONCAT(u.first_name, ' ', u.last_name) as instructor_name,
                     d.name as department_name
              FROM instructor_invitations ii
@@ -86,15 +86,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $invitation = $result->fetch_assoc();
         $stmt->close();
         
-        // Update expiration time
+        // Generate a new temporary password
+        $tempPassword = generateRandomPassword(12);
+        $passwordHash = password_hash($tempPassword, PASSWORD_BCRYPT);
+        
+        // Update expiration time and password
         $expiryTime = date('Y-m-d H:i:s', strtotime('+48 hours'));
         
         // Begin transaction
         $conn->begin_transaction();
         
-        // Update invitation in database
-        $stmt = $conn->prepare("UPDATE instructor_invitations SET expiry_time = ? WHERE id = ?");
-        $stmt->bind_param("si", $expiryTime, $invitationId);
+        // Update invitation in database with new password
+        $stmt = $conn->prepare("UPDATE instructor_invitations 
+                               SET temp_password_hash = ?, expiry_time = ?, notes = ? 
+                               WHERE id = ?");
+        $stmt->bind_param("sssi", $passwordHash, $expiryTime, $invitation['notes'], $invitationId);
         $stmt->execute();
         $stmt->close();
         
@@ -104,11 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $firstName = ucfirst($possibleNameParts[0] ?? '');
         $lastName = ucfirst($possibleNameParts[1] ?? '');
         
-        // Extract temp password from hash (in practice we would generate a new one)
-        // Here we're just reusing the existing one for simplicity in this demo
-        $tempPassword = substr($invitation['temp_password_hash'], 0, 12); // Not safe, just for demo
-        
-        // Send invitation email
+        // Send invitation email with new password
         if (sendInvitationEmail(
             $invitation['email'], 
             $firstName, 
@@ -412,8 +414,22 @@ Learnix";
         return false;
     }
 }
+
 // If the request method is not POST, return an error
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405); // Method Not Allowed
     exit(json_encode(['status' => 'error', 'message' => 'Method not allowed']));
+}
+
+// Function to generate a random password
+function generateRandomPassword($length = 10) {
+    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+';
+    $password = '';
+    $max = strlen($chars) - 1;
+    
+    for ($i = 0; $i < $length; $i++) {
+        $password .= $chars[rand(0, $max)];
+    }
+    
+    return $password;
 }

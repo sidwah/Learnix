@@ -13,7 +13,7 @@
     <link rel="shortcut icon" href="../favicon.ico">
 
     <!-- Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
     <!-- CSS Implementing Plugins -->
     <link rel="stylesheet" href="../assets/css/vendor.min.css">
@@ -36,7 +36,6 @@
             background-color: white;
             min-width: 300px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            /* border-left: 4px solid; */
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
         }
@@ -44,8 +43,6 @@
         .toast.show {
             opacity: 1;
         }
-        
-       
         
         .toast-body {
             padding: 12px 15px;
@@ -61,6 +58,51 @@
         }
         
         .toast-icon.error {
+            color: #dc3545;
+        }
+
+        /* Password strength bar */
+        .password-strength-meter {
+            height: 5px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        
+        .password-strength-meter-progress {
+            height: 100%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .strength-0 { background-color: #dc3545; width: 0%; }
+        .strength-1 { background-color: #dc3545; width: 25%; }
+        .strength-2 { background-color: #ffc107; width: 50%; }
+        .strength-3 { background-color: #28a745; width: 75%; }
+        .strength-4 { background-color: #28a745; width: 100%; }
+        
+        .password-requirements-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0 0;
+            font-size: 0.9rem;
+        }
+        
+        .password-requirements-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .password-requirements-list li i {
+            margin-right: 8px;
+        }
+        
+        .requirement-met {
+            color: #28a745;
+        }
+        
+        .requirement-not-met {
             color: #dc3545;
         }
     </style>
@@ -374,7 +416,7 @@
                                     <div class="mb-3">
                                         <label for="newForcePassword" class="form-label">New Password</label>
                                         <div class="input-group input-group-merge">
-                                            <input type="password" class="js-toggle-password form-control form-control-lg" id="newForcePassword" name="newForcePassword" placeholder="Enter new password" required minlength="8"
+                                            <input type="password" class="js-toggle-password form-control form-control-lg" id="newForcePassword" name="newForcePassword" placeholder="Enter new password" required
                                                 data-hs-toggle-password-options='{
                                 "target": "#toggleNewForcePassword",
                                 "defaultClass": "bi-eye-slash",
@@ -385,7 +427,27 @@
                                                 <i id="toggleNewForcePasswordIcon" class="bi-eye-slash"></i>
                                             </a>
                                         </div>
-                                        <div class="invalid-feedback">Password must be at least 8 characters long.</div>
+                                        <div class="invalid-feedback">Please enter a valid password.</div>
+                                        <div class="password-strength-meter">
+                                            <div class="password-strength-meter-progress strength-0"></div>
+                                        </div>
+                                        <ul class="password-requirements-list">
+                                            <li id="length-requirement" class="requirement-not-met">
+                                                <i class="bi bi-x-circle-fill"></i> At least 8 characters
+                                            </li>
+                                            <li id="uppercase-requirement" class="requirement-not-met">
+                                                <i class="bi bi-x-circle-fill"></i> At least one uppercase letter
+                                            </li>
+                                            <li id="lowercase-requirement" class="requirement-not-met">
+                                                <i class="bi bi-x-circle-fill"></i> At least one lowercase letter
+                                            </li>
+                                            <li id="number-requirement" class="requirement-not-met">
+                                                <i class="bi bi-x-circle-fill"></i> At least one number
+                                            </li>
+                                            <li id="special-requirement" class="requirement-not-met">
+                                                <i class="bi bi-x-circle-fill"></i> At least one special character
+                                            </li>
+                                        </ul>
                                     </div>
                                     <div class="mb-4">
                                         <label for="confirmForcePassword" class="form-label">Confirm Password</label>
@@ -402,19 +464,6 @@
                                             </a>
                                         </div>
                                         <div class="invalid-feedback">Passwords do not match.</div>
-                                    </div>
-                                    <div class="password-requirements mb-4">
-                                        <p class="fw-semibold mb-2">Password requirements:</p>
-                                        <ul class="list-unstyled">
-                                            <li class="requirements-item">
-                                                <i class="bi bi-check-circle text-success me-1"></i>
-                                                At least 8 characters
-                                            </li>
-                                            <li class="requirements-item">
-                                                <i class="bi bi-check-circle text-success me-1"></i>
-                                                Combination of letters, numbers, and symbols recommended
-                                            </li>
-                                        </ul>
                                     </div>
                                     <div class="d-grid mt-4">
                                         <button type="submit" class="btn btn-primary">Update Password</button>
@@ -531,6 +580,50 @@
 
             // Store email for reset process
             let resetEmail = '';
+
+            // Password strength checker for force password reset
+            const newForcePasswordInput = document.getElementById('newForcePassword');
+            const strengthMeter = document.querySelector('.password-strength-meter-progress');
+            const lengthReq = document.getElementById('length-requirement');
+            const uppercaseReq = document.getElementById('uppercase-requirement');
+            const lowercaseReq = document.getElementById('lowercase-requirement');
+            const numberReq = document.getElementById('number-requirement');
+            const specialReq = document.getElementById('special-requirement');
+
+            function updatePasswordStrength() {
+                const password = newForcePasswordInput.value;
+                let strength = 0;
+
+                // Check requirements
+                const hasLength = password.length >= 8;
+                const hasUppercase = /[A-Z]/.test(password);
+                const hasLowercase = /[a-z]/.test(password);
+                const hasNumber = /[0-9]/.test(password);
+                const hasSpecial = /[^A-Za-z0-9]/.test(password);
+
+                // Update requirement indicators
+                lengthReq.className = hasLength ? 'requirement-met' : 'requirement-not-met';
+                lengthReq.querySelector('i').className = hasLength ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill';
+                uppercaseReq.className = hasUppercase ? 'requirement-met' : 'requirement-not-met';
+                uppercaseReq.querySelector('i').className = hasUppercase ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill';
+                lowercaseReq.className = hasLowercase ? 'requirement-met' : 'requirement-not-met';
+                lowercaseReq.querySelector('i').className = hasLowercase ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill';
+                numberReq.className = hasNumber ? 'requirement-met' : 'requirement-not-met';
+                numberReq.querySelector('i').className = hasNumber ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill';
+                specialReq.className = hasSpecial ? 'requirement-met' : 'requirement-not-met';
+                specialReq.querySelector('i').className = hasSpecial ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill';
+
+                // Calculate strength
+                if (password.length > 0) strength++;
+                if (hasLength) strength++;
+                if (hasUppercase && hasLowercase) strength++;
+                if (hasNumber && hasSpecial) strength++;
+
+                // Update strength meter
+                strengthMeter.className = `password-strength-meter-progress strength-${strength}`;
+            }
+
+            newForcePasswordInput.addEventListener('input', updatePasswordStrength);
 
             // Handle main sign-in form submission
             document.querySelector('.js-validate').addEventListener('submit', function(e) {
@@ -1169,8 +1262,14 @@
                 const confirmPassword = document.getElementById('confirmForcePassword').value;
                 let isValid = true;
 
-                // Validate password length
+                // Client-side validation for password strength
                 if (newPassword.length < 8) {
+                    document.getElementById('newForcePassword').classList.add('is-invalid');
+                    isValid = false;
+                } else if (!/[A-Z]/.test(newPassword) || 
+                           !/[a-z]/.test(newPassword) || 
+                           !/[0-9]/.test(newPassword) || 
+                           !/[^A-Za-z0-9]/.test(newPassword)) {
                     document.getElementById('newForcePassword').classList.add('is-invalid');
                     isValid = false;
                 } else {

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <title>Sign In | Learnix - Empowering Education</title>
@@ -11,7 +12,7 @@
 
     <!-- App css -->
     <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
-    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style"/>
+    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style" />
 
     <!-- Additional custom styles -->
     <style>
@@ -60,7 +61,7 @@
             transform: translateX(-50%);
             z-index: 9999;
             min-width: 300px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -103,7 +104,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="d-grid mb-0 text-center">
                             <button class="btn btn-primary" type="submit" id="signinButton"><i class="mdi mdi-login"></i> Sign In</button>
                         </div>
@@ -112,7 +113,7 @@
 
                     <!-- Footer-->
                     <footer class="footer footer-alt">
-                        <p class="text-muted">Don't have an account? <a href="signup.php" class="text-muted ms-1"><b>Sign Up</b></a></p>
+                        <p class="text-muted">Need an account? Please contact your department head for access.</p>
                     </footer>
 
                 </div> <!-- end .card-body -->
@@ -161,12 +162,306 @@
         </div>
     </div>
 
+    <!-- Password Change Modal -->
+    <div class="modal fade" id="passwordChangeModal" tabindex="-1" aria-labelledby="passwordChangeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title" id="passwordChangeModalLabel">Set Your Password</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-soft-primary">
+                        <p class="mb-0"><strong>Welcome!</strong> As this is your first login, please set a permanent password for your account.</p>
+                    </div>
+                    <form id="passwordChangeForm">
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <div class="input-group input-group-merge">
+                                <input type="password" id="newPassword" name="newPassword" class="form-control" required placeholder="Enter new password">
+                                <div class="input-group-text" onclick="togglePassword('newPassword')">
+                                    <span class="password-eye"></span>
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                Password must be at least 8 characters long and include a mix of letters, numbers, and special characters.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <div class="input-group input-group-merge">
+                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required placeholder="Confirm your password">
+                                <div class="input-group-text" onclick="togglePassword('confirmPassword')">
+                                    <span class="password-eye"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Password Strength Indicator -->
+                        <div class="mb-3">
+                            <label class="form-label">Password Strength</label>
+                            <div class="progress" style="height: 6px;">
+                                <div id="passwordStrength" class="progress-bar bg-danger" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div id="passwordFeedback" class="form-text mt-1">
+                                Enter a new password
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-primary">Set Password & Continue</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- bundle -->
     <script src="assets/js/vendor.min.js"></script>
     <script src="assets/js/app.min.js"></script>
 
     <!-- Custom JavaScript -->
     <script>
+        // Handle password change form
+        document.getElementById("passwordChangeForm").onsubmit = async (e) => {
+            e.preventDefault();
+
+            const submitButton = e.target.querySelector("button[type='submit']");
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="mdi mdi-loading mdi-spin me-1"></i> Setting Password...';
+
+            createOverlay("Setting your password...");
+
+            const formData = new FormData(e.target);
+            const newPassword = formData.get('newPassword');
+            const confirmPassword = formData.get('confirmPassword');
+
+            if (newPassword !== confirmPassword) {
+                removeOverlay();
+                showAlert('danger', "❌ Passwords do not match!");
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Set Password & Continue';
+                return;
+            }
+
+            try {
+                const response = await fetch("../backend/auth/instructor/change_password.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        newPassword: newPassword,
+                        confirmPassword: confirmPassword,
+                        isFirstTime: true
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === "success") {
+                    removeOverlay();
+
+                    // Close modal
+                    const modalElement = document.getElementById("passwordChangeModal");
+                    const passwordModal = bootstrap.Modal.getInstance(modalElement);
+                    if (passwordModal) {
+                        passwordModal.hide();
+                    }
+
+                    // Show success and redirect
+                    createOverlay("Password set successfully! Redirecting...");
+                    showAlert('success', "✅ Password set successfully! Taking you to your dashboard...");
+
+                    setTimeout(() => {
+                        window.location.href = "../instructor/index.php";
+                    }, 2000);
+                } else {
+                    removeOverlay();
+                    showAlert('danger', result.message || "❌ Failed to set password. Please try again.");
+                }
+            } catch (error) {
+                removeOverlay();
+                showAlert('danger', "❌ There was an error processing your request. Please try again.");
+                console.error("Error:", error);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Set Password & Continue';
+            }
+        };
+
+        // Password strength checker
+        document.getElementById('newPassword').addEventListener('input', function() {
+            const password = this.value;
+            const strength = checkPasswordStrength(password);
+            updatePasswordStrengthUI(strength);
+        });
+
+        function checkPasswordStrength(password) {
+            let score = 0;
+
+            // Length check
+            if (password.length >= 8) score += 25;
+            if (password.length >= 12) score += 25;
+
+            // Character variety checks
+            if (/[a-z]/.test(password)) score += 10;
+            if (/[A-Z]/.test(password)) score += 10;
+            if (/[0-9]/.test(password)) score += 10;
+            if (/[^A-Za-z0-9]/.test(password)) score += 20;
+
+            return score;
+        }
+
+        function updatePasswordStrengthUI(score) {
+            const progressBar = document.getElementById('passwordStrength');
+            const feedback = document.getElementById('passwordFeedback');
+
+            progressBar.style.width = score + '%';
+            progressBar.setAttribute('aria-valuenow', score);
+
+            if (score < 50) {
+                progressBar.className = 'progress-bar bg-danger';
+                feedback.textContent = 'Weak password';
+                feedback.className = 'form-text mt-1 text-danger';
+            } else if (score < 75) {
+                progressBar.className = 'progress-bar bg-warning';
+                feedback.textContent = 'Fair password';
+                feedback.className = 'form-text mt-1 text-warning';
+            } else {
+                progressBar.className = 'progress-bar bg-success';
+                feedback.textContent = 'Strong password';
+                feedback.className = 'form-text mt-1 text-success';
+            }
+        }
+
+        // Password toggle function
+        function togglePassword(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleElement = event.currentTarget;
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleElement.setAttribute('data-password', 'true');
+            } else {
+                passwordInput.type = 'password';
+                toggleElement.setAttribute('data-password', 'false');
+            }
+        }
+
+        // Handle Signin Form Submission
+        document.getElementById("signinForm").onsubmit = async (e) => {
+            e.preventDefault();
+            const signinButton = document.getElementById("signinButton");
+            signinButton.disabled = true;
+            signinButton.innerHTML = '<i class="mdi mdi-loading mdi-spin me-1"></i> Signing in...';
+
+            createOverlay("Signing in...");
+
+            const formData = new FormData(e.target);
+
+            try {
+                const response = await fetch("../backend/auth/instructor/signin.php", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    if (result.status === "success") {
+                        removeOverlay();
+                        createOverlay("Sign in successful! Redirecting...");
+                        showAlert('success', "✅ Sign in successful! Redirecting to your dashboard...");
+                        setTimeout(() => {
+                            window.location.href = "../instructor/index.php";
+                        }, 2000);
+                    } else if (result.status === "reset_required") {
+                        removeOverlay();
+                        showAlert('info', "Please set your permanent password to continue.");
+
+                        // Show the password change modal
+                        const passwordModal = new bootstrap.Modal(document.getElementById("passwordChangeModal"));
+                        passwordModal.show();
+                    } else if (result.status === "mfa_required") {
+                        removeOverlay();
+                        showAlert('info', "Please enter the verification code sent to your email.");
+
+                        // Show verification modal for MFA
+                        const modal = new bootstrap.Modal(document.getElementById("verificationModal"));
+                        modal.show();
+                    } else if (result.status === "unverified") {
+                        removeOverlay();
+                        showAlert('warning', "Your account is not verified. Please contact support.");
+                    } else if (result.status === "lockout") {
+                        removeOverlay();
+                        showAlert('danger', "❌ Account locked due to multiple failed attempts.");
+                    } else {
+                        removeOverlay();
+                        showAlert('danger', result.message || "❌ Sign in failed.");
+                    }
+                } else {
+                    removeOverlay();
+                    showAlert('danger', "❌ Server error. Please try again.");
+                }
+            } catch (error) {
+                removeOverlay();
+                showAlert('danger', "❌ There was an error processing your request. Please try again.");
+                console.error("Error:", error);
+            } finally {
+                signinButton.disabled = false;
+                signinButton.innerHTML = '<i class="mdi mdi-login"></i> Sign In';
+            }
+        };
+
+        // Handle Verification Form Submission for MFA
+        document.getElementById("verificationForm").onsubmit = async (e) => {
+            e.preventDefault();
+
+            const verifyButton = e.target.querySelector("button[type='submit']");
+            verifyButton.disabled = true;
+            verifyButton.innerHTML = '<i class="mdi mdi-loading mdi-spin me-1"></i> Verifying...';
+
+            createOverlay("Verifying your account...");
+
+            const verificationInputs = Array.from(e.target.querySelectorAll("input[name='code[]']")).map((input) => input.value.trim());
+            const code = verificationInputs.join("");
+
+            try {
+                const response = await fetch("../backend/auth/instructor/verify_mfa.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        code: code
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === "success") {
+                    removeOverlay();
+                    createOverlay("Verification successful! Redirecting...");
+                    showAlert('success', "✅ Verification successful! Redirecting to your dashboard...");
+                    setTimeout(() => {
+                        window.location.href = "../instructor/index.php";
+                    }, 2000);
+                } else {
+                    removeOverlay();
+                    showAlert('danger', result.message || "❌ Verification failed. Please try again.");
+                }
+            } catch (error) {
+                removeOverlay();
+                showAlert('danger', "❌ There was an error processing your request. Please try again.");
+                console.error("Error:", error);
+            } finally {
+                verifyButton.disabled = false;
+                verifyButton.innerHTML = "Verify";
+            }
+        };
+
         // Show alert notification function
         function showAlert(type, message) {
             const alertDiv = document.createElement('div');
@@ -176,9 +471,9 @@
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
-            
+
             document.body.appendChild(alertDiv);
-            
+
             // Auto-dismiss after 5 seconds
             setTimeout(() => {
                 if (alertDiv.parentNode) {
@@ -237,247 +532,7 @@
                 document.body.removeChild(overlay);
             }
         }
-
-        // Handle Signin Form Submission
-        document.getElementById("signinForm").onsubmit = async (e) => {
-            e.preventDefault();
-            const signinButton = document.getElementById("signinButton");
-            signinButton.disabled = true;
-            signinButton.innerHTML = '<i class="mdi mdi-loading mdi-spin me-1"></i> Signing in...';
-
-            // Create overlay to prevent interaction with loading message
-            createOverlay("Signing in...");
-
-            const formData = new FormData(e.target);
-
-            try {
-                const response = await fetch("../backend/auth/instructor/signin.php", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    if (result.status === "success") {
-                        removeOverlay();
-                        createOverlay("Sign in successful! Redirecting...");
-                        showAlert('success', "✅ Sign in successful! Redirecting to your dashboard...");
-                        setTimeout(() => {
-                            window.location.href = "../instructor/index.php";
-                        }, 2000);
-                    } else if (result.status === "reset_required") {
-                        removeOverlay();
-                        showAlert('warning', "⚠️ Your password must be reset before signing in.");
-                        setTimeout(() => {
-                            window.location.href = "../backend/auth/instructor/reset_password.php";
-                        }, 3000);
-                    } else if (result.status === "unverified") {
-                        // Skip confirmation and directly resend verification code
-                        removeOverlay();
-                        createOverlay("Sending verification code...");
-                        
-                        const resendResponse = await fetch("../backend/auth/instructor/resend_verification.php", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify({
-                                email: formData.get("email")
-                            }),
-                        });
-
-                        const resendResult = await resendResponse.json();
-
-                        if (resendResponse.ok && resendResult.status === "success") {
-                            removeOverlay();
-                            showAlert('success', "✅ Verification code sent to your email. Please check your inbox.");
-
-                            // Store email for verification
-                            sessionStorage.setItem('pendingVerificationEmail', formData.get("email"));
-
-                            // Reset and initialize verification inputs
-                            const verificationInputs = document.querySelectorAll('.verification-input');
-                            verificationInputs.forEach(input => {
-                                input.value = '';
-                            });
-
-                            // Show verification modal
-                            const modal = new bootstrap.Modal(document.getElementById("verificationModal"));
-                            modal.show();
-                        } else {
-                            removeOverlay();
-                            showAlert('danger', resendResult.message || "❌ Failed to send verification code.");
-                        }
-                    } else if (result.status === "lockout") {
-                        // Handle account lockout
-                        removeOverlay();
-                        showAlert('danger', "❌ Your account has been temporarily locked due to multiple failed login attempts. Please try again later or reset your password.");
-                    } else {
-                        removeOverlay();
-                        showAlert('danger', result.message || "❌ Sign in failed. Please check your credentials.");
-                    }
-                } else {
-                    removeOverlay();
-                    showAlert('danger', "❌ Server error. Please try again.");
-                }
-            } catch (error) {
-                removeOverlay();
-                showAlert('danger', "❌ There was an error processing your request. Please try again.");
-                console.error("Error:", error);
-            } finally {
-                signinButton.disabled = false;
-                signinButton.innerHTML = '<i class="mdi mdi-login"></i> Sign In';
-            }
-        };
-
-        // Handle Verification Form Submission
-        document.getElementById("verificationForm").onsubmit = async (e) => {
-            e.preventDefault();
-
-            const verifyButton = e.target.querySelector("button[type='submit']");
-            verifyButton.disabled = true;
-            verifyButton.innerHTML = '<i class="mdi mdi-loading mdi-spin me-1"></i> Verifying...';
-
-            // Create overlay to prevent interaction
-            createOverlay("Verifying your account...");
-
-            const verificationInputs = Array.from(e.target.querySelectorAll("input[name='code[]']")).map((input) => input.value.trim());
-            const code = verificationInputs.join("");
-
-            try {
-                const response = await fetch("../backend/auth/instructor/verify_account.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        code
-                    }),
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.status === "success") {
-                    removeOverlay();
-                    createOverlay("Verification successful! Redirecting...");
-                    showAlert('success', "✅ Verification successful! You can now sign in.");
-
-                    // Clear stored email
-                    sessionStorage.removeItem('pendingVerificationEmail');
-
-                    // Close the modal if it exists
-                    const modalElement = document.getElementById("verificationModal");
-                    if (modalElement) {
-                        const verificationModal = bootstrap.Modal.getInstance(modalElement);
-                        if (verificationModal) {
-                            verificationModal.hide();
-                        }
-                    }
-
-                    // Redirect after verification
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                } else {
-                    removeOverlay();
-                    showAlert('danger', result.message || "❌ Verification failed. Please try again.");
-                }
-            } catch (error) {
-                removeOverlay();
-                showAlert('danger', "❌ There was an error processing your request. Please try again.");
-                console.error("Error:", error);
-            } finally {
-                verifyButton.disabled = false;
-                verifyButton.innerHTML = "Verify";
-            }
-        };
-
-        // Set up verification input auto-advance behavior when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            const verificationInputs = document.querySelectorAll('.verification-input');
-
-            // Only digits regex
-            const onlyDigits = /^[0-9]$/;
-
-            verificationInputs.forEach((input, index) => {
-                // Move to next input when a character is entered
-                input.addEventListener('input', function(e) {
-                    // Only allow digits
-                    if (!onlyDigits.test(this.value) && this.value !== '') {
-                        this.value = '';
-                        return;
-                    }
-                    
-                    if (this.value.length === this.maxLength) {
-                        if (index < verificationInputs.length - 1) {
-                            verificationInputs[index + 1].focus();
-                        } else {
-                            // If this is the last input, check if all inputs are filled
-                            const allFilled = Array.from(verificationInputs).every(input => input.value.length === 1);
-                            if (allFilled) {
-                                // Submit the form automatically when all digits are entered
-                                document.getElementById("verificationForm").dispatchEvent(new Event('submit'));
-                            }
-                        }
-                    }
-                });
-
-                // Handle paste event for verification code
-                input.addEventListener('paste', function(e) {
-                    e.preventDefault();
-                    const pastedData = (e.clipboardData || window.clipboardData).getData('text');
-                    
-                    // Check if pasted data is a 5-digit number
-                    if (/^\d{5}$/.test(pastedData)) {
-                        // Distribute digits across the inputs
-                        verificationInputs.forEach((input, i) => {
-                            if (i < pastedData.length) {
-                                input.value = pastedData[i];
-                            }
-                        });
-                        
-                        // Auto-submit if all fields are filled
-                        document.getElementById("verificationForm").dispatchEvent(new Event('submit'));
-                    }
-                });
-
-                // Go back to previous input on backspace if current is empty
-                input.addEventListener('keydown', function(e) {
-                    if (e.key === 'Backspace' && this.value.length === 0) {
-                        if (index > 0) {
-                            verificationInputs[index - 1].focus();
-                        }
-                    }
-                });
-            });
-
-            // Password toggle functionality - direct approach
-            document.addEventListener('DOMContentLoaded', function() {
-                // Add a direct click handler for the password toggle
-                document.body.addEventListener('click', function(e) {
-                    // Target both the eye icon and its parent
-                    if (e.target.classList.contains('password-eye') || 
-                        (e.target.classList.contains('input-group-text') && e.target.querySelector('.password-eye'))) {
-                        
-                        // Get the password input
-                        const passwordInput = document.getElementById('password');
-                        // Get the toggle element (parent of eye icon)
-                        const toggleElement = e.target.classList.contains('password-eye') ? 
-                                             e.target.parentElement : e.target;
-                        
-                        // Toggle password visibility
-                        if (passwordInput.type === 'password') {
-                            passwordInput.type = 'text';
-                            toggleElement.setAttribute('data-password', 'true');
-                        } else {
-                            passwordInput.type = 'password';
-                            toggleElement.setAttribute('data-password', 'false');
-                        }
-                    }
-                });
-            });
-        });
     </script>
 </body>
+
 </html>
