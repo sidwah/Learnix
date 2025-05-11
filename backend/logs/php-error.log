@@ -1,0 +1,170 @@
+[11-May-2025 00:14:17 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p>the full description</p>
+    [outcomes] => Array
+        (
+            [0] => what you will learn 1
+            [1] => what you will learn 2
+        )
+
+    [requirements] => Array
+        (
+            [0] => the course requirement 1
+            [1] => the course requirement 1
+        )
+
+    [course_id] => 162
+)
+
+[11-May-2025 00:14:17 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 257
+[11-May-2025 00:14:17 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 257
+[11-May-2025 00:14:17 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 270
+[11-May-2025 00:14:17 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 270
+[11-May-2025 00:14:40 UTC] Step: 3, Input: Array
+(
+    [price] => 10.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 0
+    [course_id] => 162
+)
+
+[11-May-2025 00:14:40 UTC] PHP Fatal error:  Uncaught Error: mysqli_stmt::bind_param(): Argument #7 could not be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:319
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(86): saveStep3(Object(mysqli), Array, 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '3', 5, 81)
+#2 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 319
+[11-May-2025 00:15:28 UTC] Step: 3, Input: Array
+(
+    [price] => 10.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 0
+    [course_id] => 162
+)
+
+[11-May-2025 00:15:28 UTC] PHP Fatal error:  Uncaught Error: mysqli_stmt::bind_param(): Argument #7 could not be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:319
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(86): saveStep3(Object(mysqli), Array, 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '3', 5, 81)
+#2 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 319
+[11-May-2025 00:15:52 UTC] Step: 3, Input: Array
+(
+    [price] => 10.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 0
+    [course_id] => 162
+)
+
+[11-May-2025 00:15:52 UTC] PHP Fatal error:  Uncaught Error: mysqli_stmt::bind_param(): Argument #7 could not be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:319
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(86): saveStep3(Object(mysqli), Array, 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '3', 5, 81)
+#2 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 319
+[11-May-2025 00:22:30 UTC] Step: 1, Input: Array
+(
+    [title] => these 103
+    [category_id] => 4
+    [subcategory_id] => 11
+    [course_level] => Beginner
+    [estimated_duration] => 3-5 hours
+    [short_description] => th is the short description
+)
+
+[11-May-2025 00:23:36 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p>this is the full description</p>
+    [outcomes] => Array
+        (
+            [0] => learn 1
+            [1] => learn 2
+        )
+
+    [requirements] => Array
+        (
+            [0] => requirement 1
+            [1] => requirement 2
+        )
+
+    [course_id] => 163
+)
+
+[11-May-2025 00:23:36 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 257
+[11-May-2025 00:23:36 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 257
+[11-May-2025 00:23:36 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 270
+[11-May-2025 00:23:36 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 270
+[11-May-2025 00:23:43 UTC] Step: 3, Input: Array
+(
+    [price] => 0.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 0
+    [estimated_duration] => 3-5 hours
+    [course_id] => 163
+)
+
+[11-May-2025 00:23:43 UTC] Error in handleStep: Data truncated for column 'difficulty_level' at row 1
+[11-May-2025 00:31:00 UTC] Step: 3, Input: Array
+(
+    [price] => 0.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 0
+    [estimated_duration] => 3-5 hours
+    [course_id] => 163
+)
+
+[11-May-2025 00:31:55 UTC] Step: 1, Input: Array
+(
+    [title] => test 104
+    [category_id] => 4
+    [subcategory_id] => 12
+    [course_level] => Intermediate
+    [estimated_duration] => 1-2 hours
+    [short_description] => test 104
+)
+
+[11-May-2025 00:32:10 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p><br></p>
+    [outcomes] => Array
+        (
+            [0] => test 104
+        )
+
+    [requirements] => Array
+        (
+            [0] => test 104
+        )
+
+    [course_id] => 164
+)
+
+[11-May-2025 00:32:10 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 259
+[11-May-2025 00:32:10 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 272
+[11-May-2025 00:32:21 UTC] Step: 3, Input: Array
+(
+    [price] => 10.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 1
+    [estimated_duration] => 1-2 hours
+    [course_id] => 164
+)
+
