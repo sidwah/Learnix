@@ -39,7 +39,7 @@
                         <h6 class="text-muted text-uppercase mb-2">Total Instructors</h6>
                         <div class="d-flex align-items-center">
                             <h2 class="mb-0 total-instructors-count">0</h2>
-                            <span class="badge bg-soft-success text-success ms-2">Department</span>
+                            <!-- <span class="badge bg-soft-success text-success ms-2">Department</span> -->
                         </div>
                     </div>
                 </div>

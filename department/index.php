@@ -136,7 +136,7 @@
                     </p>
                 </div>
                 <div class="col-auto">
-                    <a href="department-settings.php" class="btn btn-sm btn-primary">
+                    <a href="settings.php" class="btn btn-sm btn-primary">
                         <i class="bi bi-gear me-1"></i>Settings
                     </a>
                 </div>
@@ -160,7 +160,7 @@
                         </div>
                         <div class="d-flex align-items-center">
                             <h3 class="mb-0 me-2"><?php echo number_format($instructor_count); ?></h3>
-                            <a href="department-instructors.php" class="btn btn-xs btn-soft-primary">Manage</a>
+                            <a href="instructors.php" class="btn btn-xs btn-soft-primary">Manage</a>
                         </div>
                     </div>
                 </div>
@@ -181,7 +181,7 @@
                         </div>
                         <div class="d-flex align-items-center">
                             <h3 class="mb-0 me-2"><?php echo number_format($course_count); ?></h3>
-                            <a href="department-courses.php" class="btn btn-xs btn-soft-primary">View</a>
+                            <a href="courses.php" class="btn btn-xs btn-soft-primary">View</a>
                         </div>
                     </div>
                 </div>
@@ -202,7 +202,7 @@
                         </div>
                         <div class="d-flex align-items-center">
                             <h3 class="mb-0 me-2"><?php echo number_format($enrollment_count); ?></h3>
-                            <a href="department-enrollments.php" class="btn btn-xs btn-soft-primary">Details</a>
+                            <a href="enrollments.php" class="btn btn-xs btn-soft-primary">Details</a>
                         </div>
                     </div>
                 </div>
@@ -474,7 +474,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white border-top-0 text-end">
-                        <a href="department-courses.php" class="btn btn-sm btn-primary">View All Courses</a>
+                        <a href="courses.php" class="btn btn-sm btn-primary">View All Courses</a>
                     </div>
                 </div>
             </div>
