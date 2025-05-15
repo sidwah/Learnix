@@ -146,7 +146,7 @@ $user_data = [
         <a class="nav-link" href="initiate-course.php">Initiate New Course</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="assign-instructors.php">Assign Instructors</a>
+        <!-- <a class="nav-link" href="assign-instructors.php">Assign Instructors</a> -->
       </li>
       <?php endif; ?>
       

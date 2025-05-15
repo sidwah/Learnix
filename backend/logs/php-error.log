@@ -168,3 +168,33 @@ Stack trace:
     [course_id] => 164
 )
 
+[15-May-2025 08:48:09 UTC] Step: 1, Input data received
+[15-May-2025 08:48:09 UTC] Thumbnail uploaded successfully: thumb_6825aa4913df6_1747298889.jpg
+[15-May-2025 08:48:10 UTC] Step: 2, Input data received
+[15-May-2025 08:48:11 UTC] Step: 3, Input data received
+[15-May-2025 08:48:31 UTC] Step: 2, Input data received
+[15-May-2025 08:48:32 UTC] Step: 3, Input data received
+[15-May-2025 08:48:59 UTC] Step: 2, Input data received
+[15-May-2025 08:49:01 UTC] Step: 3, Input data received
+[15-May-2025 08:49:07 UTC] Error in handleFinalize: At least one learning outcome is required
+[15-May-2025 08:49:15 UTC] Step: 4, Input data received
+[15-May-2025 08:49:15 UTC] Error in handleStep: Invalid step
+[15-May-2025 08:49:18 UTC] Step: 4, Input data received
+[15-May-2025 08:49:18 UTC] Error in handleStep: Invalid step
+[15-May-2025 08:49:28 UTC] Step: 2, Input data received
+[15-May-2025 08:49:29 UTC] Step: 3, Input data received
+[15-May-2025 08:49:31 UTC] Error in handleFinalize: At least one learning outcome is required
+[15-May-2025 08:50:32 UTC] Step: 1, Input data received
+[15-May-2025 08:50:44 UTC] Step: 2, Input data received
+[15-May-2025 08:50:45 UTC] Step: 3, Input data received
+[15-May-2025 08:50:47 UTC] Error in handleFinalize: At least one learning outcome is required
+[15-May-2025 08:51:06 UTC] Step: 1, Input data received
+[15-May-2025 08:51:53 UTC] Step: 1, Input data received
+[15-May-2025 08:56:12 UTC] Step: 1, Input data received
+[15-May-2025 08:56:43 UTC] Step: 1, Input data received
+[15-May-2025 08:56:43 UTC] Thumbnail uploaded successfully: thumb_6825ac4bcaf1d_1747299403.jpg
+[15-May-2025 08:56:44 UTC] Step: 2, Input data received
+[15-May-2025 08:56:45 UTC] Step: 3, Input data received
+[15-May-2025 08:56:47 UTC] Error in handleFinalize: At least one learning outcome is required
+[15-May-2025 08:57:41 UTC] Error in handleFinalize: At least one learning outcome is required
+[15-May-2025 08:57:48 UTC] Error in handleFinalize: At least one learning outcome is required
