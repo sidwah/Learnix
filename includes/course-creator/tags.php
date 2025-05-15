@@ -39,11 +39,11 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
             <div class="card-body">
                 <div class="mb-4">
                     <p class="text-muted">
-                        Tags help potential students discover your course through search and recommendations. 
+                        Tags help potential students discover your course through search and recommendations.
                         Add relevant, specific tags that accurately describe your course content and target audience.
                     </p>
                 </div>
-                
+
                 <!-- Current Tags Display -->
                 <div class="mb-4">
                     <label class="form-label">Current Tags</label>
@@ -60,7 +60,7 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                         <?php endif; ?>
                     </div>
                 </div>
-                
+
                 <!-- Tag Search Input -->
                 <div class="mb-4">
                     <label for="tagSearch" class="form-label">Add Tags</label>
@@ -77,7 +77,7 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                         Type to search existing tags or create new ones. Press Enter or click Add to add the tag.
                     </small>
                 </div>
-                
+
                 <!-- Popular Tags Section -->
                 <div>
                     <label class="form-label">Popular Tags</label>
@@ -89,7 +89,7 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                         <?php endforeach; ?>
                     </div>
                 </div>
-                
+
                 <div class="alert alert-info mt-4">
                     <h5 class="alert-heading"><i class="mdi mdi-information-outline"></i> Tips for Effective Tagging</h5>
                     <ul class="mb-0 ps-3">
@@ -108,24 +108,26 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
     $(document).ready(function() {
         // Store current course tags
         let currentTags = <?php echo json_encode($course_tags); ?>;
-        
+
         // Tag search input handler
         $('#tagSearch').on('input', function() {
             const searchTerm = $(this).val().trim();
-            
+
             if (searchTerm.length >= 2) {
                 // Show loading state
                 $('#tagSuggestions').html('<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Searching...</div>').removeClass('d-none');
-                
+
                 // Fetch tag suggestions via AJAX
                 $.ajax({
                     url: '../ajax/courses/search_tags.php',
                     type: 'POST',
-                    data: { search: searchTerm },
+                    data: {
+                        search: searchTerm
+                    },
                     success: function(response) {
                         try {
                             const tags = JSON.parse(response);
-                            
+
                             if (tags.length > 0) {
                                 // Populate suggestions
                                 let suggestionsHtml = '';
@@ -140,7 +142,7 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                                         `;
                                     }
                                 });
-                                
+
                                 // Add option to create new tag if no exact match
                                 const exactMatch = tags.some(tag => tag.tag_name.toLowerCase() === searchTerm.toLowerCase());
                                 if (!exactMatch) {
@@ -150,7 +152,7 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                                         </div>
                                     `;
                                 }
-                                
+
                                 $('#tagSuggestions').html(suggestionsHtml).removeClass('d-none');
                             } else {
                                 // No suggestions found, offer to create new tag
@@ -173,12 +175,12 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                 $('#tagSuggestions').addClass('d-none');
             }
         });
-        
+
         // Add tag when clicking on a suggestion
         $(document).on('click', '.tag-suggestion', function() {
             const tagId = $(this).data('tag-id');
             const tagName = $(this).data('tag-name');
-            
+
             if ($(this).hasClass('create-tag')) {
                 // Create a new tag
                 createTag(tagName);
@@ -186,20 +188,20 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                 // Add existing tag
                 addTag(tagId, tagName);
             }
-            
+
             // Clear search and suggestions
             $('#tagSearch').val('').focus();
             $('#tagSuggestions').addClass('d-none');
         });
-        
+
         // Add tag button click handler
         $('#addTagBtn').click(function() {
             const searchTerm = $('#tagSearch').val().trim();
-            
+
             if (searchTerm) {
                 // Check if tag already exists in our current tags
                 const existingTag = currentTags.find(t => t.tag_name.toLowerCase() === searchTerm.toLowerCase());
-                
+
                 if (existingTag) {
                     showAlert('info', 'This tag has already been added.');
                 } else {
@@ -207,14 +209,16 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                     $.ajax({
                         url: '../ajax/courses/find_or_create_tag.php',
                         type: 'POST',
-                        data: { tag_name: searchTerm },
+                        data: {
+                            tag_name: searchTerm
+                        },
                         success: function(response) {
                             try {
                                 const result = JSON.parse(response);
-                                
+
                                 if (result.success) {
                                     addTag(result.tag_id, result.tag_name);
-                                    
+
                                     // Clear search
                                     $('#tagSearch').val('').focus();
                                     $('#tagSuggestions').addClass('d-none');
@@ -233,7 +237,7 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                 }
             }
         });
-        
+
         // Handle enter key in search input
         $('#tagSearch').keypress(function(e) {
             if (e.which === 13) { // Enter key
@@ -241,33 +245,33 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                 $('#addTagBtn').click();
             }
         });
-        
+
         // Remove tag click handler
         $(document).on('click', '.remove-tag', function(e) {
             e.stopPropagation();
             const tagBadge = $(this).closest('.tag-badge');
             const tagId = tagBadge.data('tag-id');
-            
+
             // Remove from current tags array
             currentTags = currentTags.filter(t => t.tag_id !== tagId);
-            
+
             // Remove from display
             tagBadge.remove();
-            
+
             // Show "no tags" message if all tags removed
             if (currentTags.length === 0) {
                 $('#currentTags').append('<div id="noTagsMessage" class="text-muted fst-italic">No tags added yet</div>');
             }
-            
+
             // Save to server
             saveTagsToServer();
         });
-        
+
         // Add popular tag click handler
         $('.popular-tag').click(function() {
             const tagId = $(this).data('tag-id');
             const tagName = $(this).text().trim();
-            
+
             // Check if already added
             if (!currentTags.some(t => t.tag_id === tagId)) {
                 addTag(tagId, tagName);
@@ -275,17 +279,19 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                 showAlert('info', 'This tag has already been added.');
             }
         });
-        
+
         // Create new tag function
         function createTag(tagName) {
             $.ajax({
                 url: '../ajax/courses/create_tag.php',
                 type: 'POST',
-                data: { tag_name: tagName },
+                data: {
+                    tag_name: tagName
+                },
                 success: function(response) {
                     try {
                         const result = JSON.parse(response);
-                        
+
                         if (result.success) {
                             addTag(result.tag_id, result.tag_name);
                         } else {
@@ -301,16 +307,19 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                 }
             });
         }
-        
+
         // Add tag to the UI and current tags array
         function addTag(tagId, tagName) {
             // Remove "no tags" message if present
             $('#noTagsMessage').remove();
-            
+
             // Add to current tags array
             if (!currentTags.some(t => t.tag_id === tagId)) {
-                currentTags.push({ tag_id: tagId, tag_name: tagName });
-                
+                currentTags.push({
+                    tag_id: tagId,
+                    tag_name: tagName
+                });
+
                 // Add to UI
                 const tagBadge = `
                     <div class="badge bg-light text-dark p-2 tag-badge" data-tag-id="${tagId}">
@@ -319,52 +328,49 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
                     </div>
                 `;
                 $('#currentTags').append(tagBadge);
-                
+
                 // Save to server
                 saveTagsToServer();
             }
         }
-        
+
         // Save tags to server
         function saveTagsToServer() {
             // Show saving indicator
             $('#autoSaveIndicator').addClass('show');
-            
+
             // Create array of tag IDs
             const tagIds = currentTags.map(t => t.tag_id);
-            
+
             // Send AJAX request
             $.ajax({
                 url: '../ajax/courses/save_tags.php',
                 type: 'POST',
+                dataType: 'json', // Explicitly expect JSON response
                 data: {
                     course_id: <?php echo $course_id; ?>,
                     tags: tagIds
                 },
                 success: function(response) {
-                    // Hide saving indicator
                     $('#autoSaveIndicator').removeClass('show');
-                    
-                    try {
-                        const result = JSON.parse(response);
-                        
-                        if (!result.success) {
-                            showAlert('danger', 'Error saving tags: ' + result.message);
-                        }
-                    } catch (e) {
-                        console.error('Error parsing server response', e);
-                        showAlert('danger', 'Error processing server response.');
+
+                    if (!response.success) {
+                        showAlert('danger', 'Error saving tags: ' + response.message);
                     }
+                    // Success case - no need to show alert if successful
                 },
-                error: function() {
-                    // Hide saving indicator
+                error: function(xhr, status, error) {
                     $('#autoSaveIndicator').removeClass('show');
-                    
+
+                    // Log full error details for debugging
+                    console.error("AJAX Error:", status, error);
+                    console.error("Response Text:", xhr.responseText);
+
                     showAlert('danger', 'Network error while saving tags.');
                 }
             });
         }
-        
+
         // Escape HTML to prevent XSS
         function escapeHtml(str) {
             const div = document.createElement('div');
@@ -372,7 +378,7 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
             return div.innerHTML;
         }
     });
-    
+
     // Validate tags
     function validateTags() {
         // No strict validation required for tags
@@ -387,40 +393,40 @@ while ($tag = $popular_tags_result->fetch_assoc()) {
         font-size: 0.9rem;
         transition: all 0.2s ease;
     }
-    
+
     .tag-badge:hover {
         background-color: #e9ecef !important;
     }
-    
+
     .tag-suggestions {
         border: 1px solid #ced4da;
         border-radius: 0.25rem;
         max-height: 200px;
         overflow-y: auto;
     }
-    
+
     .tag-suggestion {
         cursor: pointer;
         transition: background-color 0.2s ease;
     }
-    
+
     .tag-suggestion:hover {
         background-color: #f8f9fa;
     }
-    
+
     .create-tag {
         color: #0d6efd;
     }
-    
+
     .popular-tag {
         cursor: pointer;
         transition: all 0.2s ease;
     }
-    
+
     .popular-tag:hover {
         background-color: #e9ecef !important;
     }
-    
+
     .btn-close {
         font-size: 0.7rem;
         opacity: 0.5;

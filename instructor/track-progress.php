@@ -299,7 +299,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                             <div class="page-title-box">
                                 <div class="page-title-right">
                                     <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                        <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
                                         <li class="breadcrumb-item"><a href="all-students.php">All Students</a></li>
                                         <li class="breadcrumb-item active">Student Progress</li>
                                     </ol>

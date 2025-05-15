@@ -16,7 +16,7 @@ $user_id = $_SESSION['user_id'];
 
 // Check if required parameters are provided
 if (!isset($_GET['course_id']) || !isset($_GET['quiz_id'])) {
-    header("Location: dashboard.php");
+    header("Location: index.php");
     exit;
 }
 
@@ -34,7 +34,7 @@ if (!$attempt_id) {
     $latest_attempt_stmt->bind_param("ii", $user_id, $quiz_id);
     $latest_attempt_stmt->execute();
     $latest_attempt_result = $latest_attempt_stmt->get_result();
-    
+
     if ($latest_attempt_result->num_rows > 0) {
         $latest_attempt = $latest_attempt_result->fetch_assoc();
         $attempt_id = $latest_attempt['attempt_id'];
@@ -109,7 +109,7 @@ while ($question = $question_result->fetch_assoc()) {
     if ($question['is_correct']) {
         $correct_count++;
     }
-    
+
     // Get all answers for this question
     $answer_sql = "SELECT a.*, (
                     SELECT COUNT(*) FROM student_answer_selections 
@@ -122,12 +122,12 @@ while ($question = $question_result->fetch_assoc()) {
     $answer_stmt->bind_param("ii", $question['response_id'], $question['question_id']);
     $answer_stmt->execute();
     $answer_result = $answer_stmt->get_result();
-    
+
     $answers = [];
     while ($answer = $answer_result->fetch_assoc()) {
         $answers[] = $answer;
     }
-    
+
     $question['answers'] = $answers;
     $questions[] = $question;
 }
@@ -148,7 +148,8 @@ $attempt_end = $end_time->format('g:i A');
 include '../includes/student-header.php';
 
 // Helper function to format time
-function formatTime($seconds) {
+function formatTime($seconds)
+{
     $minutes = floor($seconds / 60);
     $secs = $seconds % 60;
     return sprintf('%d min %d sec', $minutes, $secs);
@@ -245,7 +246,7 @@ function formatTime($seconds) {
                     <!-- Question Review -->
                     <div class="mb-4">
                         <h5 class="mb-3">Question Review</h5>
-                        
+
                         <?php foreach ($questions as $index => $question): ?>
                             <div class="mb-4 p-3 border rounded <?php echo $question['is_correct'] ? 'border-success' : 'border-danger'; ?>">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -254,19 +255,19 @@ function formatTime($seconds) {
                                         <?php echo $question['is_correct'] ? 'Correct' : 'Incorrect'; ?>
                                     </span>
                                 </div>
-                                
+
                                 <?php if ($question['question_type'] === 'Multiple Choice' || $question['question_type'] === 'True/False'): ?>
                                     <div class="mb-3">
                                         <?php foreach ($question['answers'] as $answer): ?>
-                                            <div class="form-check mb-2 <?php 
-                                                if ($answer['selected'] && $answer['is_correct']) echo 'text-success';
-                                                else if ($answer['selected'] && !$answer['is_correct']) echo 'text-danger';
-                                                else if (!$answer['selected'] && $answer['is_correct']) echo 'text-success';
-                                            ?>">
-                                                <input class="form-check-input" type="radio" 
-                                                    disabled 
+                                            <div class="form-check mb-2 <?php
+                                                                        if ($answer['selected'] && $answer['is_correct']) echo 'text-success';
+                                                                        else if ($answer['selected'] && !$answer['is_correct']) echo 'text-danger';
+                                                                        else if (!$answer['selected'] && $answer['is_correct']) echo 'text-success';
+                                                                        ?>">
+                                                <input class="form-check-input" type="radio"
+                                                    disabled
                                                     <?php echo $answer['selected'] ? 'checked' : ''; ?>
-                                                    name="question_<?php echo $question['question_id']; ?>" 
+                                                    name="question_<?php echo $question['question_id']; ?>"
                                                     id="answer_<?php echo $answer['answer_id']; ?>">
                                                 <label class="form-check-label" for="answer_<?php echo $answer['answer_id']; ?>">
                                                     <?php echo htmlspecialchars($answer['answer_text']); ?>
@@ -281,7 +282,7 @@ function formatTime($seconds) {
                                         <?php endforeach; ?>
                                     </div>
                                 <?php endif; ?>
-                                
+
                                 <?php if (!empty($question['explanation'])): ?>
                                     <div class="alert alert-info">
                                         <strong>Explanation:</strong> <?php echo htmlspecialchars($question['explanation']); ?>
@@ -290,16 +291,16 @@ function formatTime($seconds) {
                             </div>
                         <?php endforeach; ?>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between align-items-center">
                         <a href="course-materials.php?course_id=<?php echo $course_id; ?>" class="btn btn-outline-secondary">Back to Course</a>
-                        
-                        <?php 
+
+                        <?php
                         // Check if retakes are allowed
                         $max_attempts = isset($quiz['attempts_allowed']) ? $quiz['attempts_allowed'] : null;
                         $can_retake = ($max_attempts === null || $attempt['attempt_number'] < $max_attempts);
                         ?>
-                        
+
                         <?php if ($can_retake): ?>
                             <a href="take-quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz_id; ?>" class="btn btn-primary">
                                 Retake Quiz

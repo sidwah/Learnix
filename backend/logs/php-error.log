@@ -617,3 +617,105 @@ Stack trace:
 #2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '1', 5, 81)
 #3 {main}
   thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 220
+[15-May-2025 19:36:18 UTC] Step: 1, Input: Array
+(
+    [title] => test for instructors
+    [category_id] => 2
+    [subcategory_id] => 5
+    [course_level] => Beginner
+    [estimated_duration] => 
+    [short_description] => the short description
+    [has_thumbnail] => 
+    [course_id] => 162
+)
+
+[15-May-2025 19:36:33 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p>hey this is the full description</p>
+    [outcomes] => Array
+        (
+            [0] => 1
+            [1] => 2
+        )
+
+    [requirements] => Array
+        (
+            [0] => 1
+            [1] => 2
+        )
+
+    [course_id] => 162
+)
+
+[15-May-2025 19:36:33 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[15-May-2025 19:36:33 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[15-May-2025 19:36:33 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[15-May-2025 19:36:33 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[15-May-2025 19:36:34 UTC] Step: 3, Input: Array
+(
+    [price] => 0.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 0
+    [course_id] => 162
+)
+
+[15-May-2025 19:36:51 UTC] Step: 1, Input: Array
+(
+    [title] => test for instructors
+    [category_id] => 2
+    [subcategory_id] => 5
+    [course_level] => Beginner
+    [estimated_duration] => 
+    [short_description] => the short description
+    [has_thumbnail] => 
+    [course_id] => 162
+)
+
+[15-May-2025 19:38:45 UTC] Step: 1, Input: Array
+(
+    [title] => test for instructors
+    [category_id] => 2
+    [subcategory_id] => 5
+    [course_level] => Beginner
+    [estimated_duration] => 
+    [short_description] => the short description
+    [has_thumbnail] => 
+    [course_id] => 162
+)
+
+[15-May-2025 19:38:46 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p>hey this is the full description</p>
+    [outcomes] => Array
+        (
+            [0] => 1
+            [1] => 2
+        )
+
+    [requirements] => Array
+        (
+            [0] => 1
+            [1] => 2
+        )
+
+    [course_id] => 162
+)
+
+[15-May-2025 19:38:46 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[15-May-2025 19:38:46 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[15-May-2025 19:38:46 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[15-May-2025 19:38:46 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[15-May-2025 19:38:54 UTC] Step: 3, Input: Array
+(
+    [price] => 10.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 1
+    [course_id] => 162
+)
+

@@ -16,7 +16,7 @@ require_once '../backend/config.php';
 
 // Verify required parameters
 if (!isset($_GET['course_id']) || !isset($_GET['section_id'])) {
-    header('Location: dashboard.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -34,7 +34,7 @@ $course_result = $stmt->get_result();
 
 if ($course_result->num_rows === 0) {
     // Course not found or not owned by this instructor
-    header('Location: dashboard.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -66,14 +66,14 @@ $quiz_id = null;
 // If quiz_id is provided in URL, load that specific quiz
 if (isset($_GET['quiz_id']) && is_numeric($_GET['quiz_id'])) {
     $quiz_id = intval($_GET['quiz_id']);
-    
+
     // Verify this quiz belongs to this section
     $quiz_query = "SELECT * FROM section_quizzes WHERE quiz_id = ? AND section_id = ?";
     $stmt = $conn->prepare($quiz_query);
     $stmt->bind_param("ii", $quiz_id, $section_id);
     $stmt->execute();
     $quiz_result = $stmt->get_result();
-    
+
     if ($quiz_result->num_rows > 0) {
         $quiz = $quiz_result->fetch_assoc();
     } else {
@@ -82,7 +82,7 @@ if (isset($_GET['quiz_id']) && is_numeric($_GET['quiz_id'])) {
         exit;
     }
     $stmt->close();
-} 
+}
 // If 'new' parameter is set, we're creating a new quiz
 else if (isset($_GET['new']) && $_GET['new'] == 1) {
     // Keep quiz and quiz_id as null to create a new one
@@ -94,7 +94,7 @@ else {
     $stmt->bind_param("i", $section_id);
     $stmt->execute();
     $quiz_result = $stmt->get_result();
-    
+
     if ($quiz_result->num_rows > 0) {
         $quiz = $quiz_result->fetch_assoc();
         $quiz_id = $quiz['quiz_id'];
@@ -109,6 +109,7 @@ $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <title><?php echo $page_title; ?> | Learnix - Empowering Education</title>
@@ -124,7 +125,7 @@ $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';
 
     <!-- App css -->
     <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
-    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style"/>
+    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style" />
 
 </head>
 
@@ -144,7 +145,7 @@ $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';
                 <!-- Topbar Start -->
                 <?php include '../includes/instructor-topnavbar.php'; ?>
                 <!-- end Topbar -->
-                
+
                 <!-- Start Content-->
                 <div class="container-fluid">
 
@@ -154,7 +155,7 @@ $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';
                             <div class="page-title-box">
                                 <div class="page-title-right">
                                     <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                        <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
                                         <li class="breadcrumb-item"><a href="course-creator.php?course_id=<?php echo $course_id; ?>&step=6">Course Builder</a></li>
                                         <li class="breadcrumb-item active"><?php echo $page_title; ?></li>
                                     </ol>
@@ -315,20 +316,20 @@ $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';
                                     <div id="questionsList">
                                         <!-- Questions will be loaded here -->
                                         <?php if ($quiz_id): ?>
-                                        <div class="text-center py-3" id="questionsLoading">
-                                            <div class="spinner-border text-primary" role="status">
-                                                <span class="visually-hidden">Loading...</span>
+                                            <div class="text-center py-3" id="questionsLoading">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p class="mt-2">Loading questions...</p>
                                             </div>
-                                            <p class="mt-2">Loading questions...</p>
-                                        </div>
                                         <?php else: ?>
-                                        <div class="text-center py-5" id="noQuestionsMessage">
-                                            <div class="mb-3">
-                                                <i class="mdi mdi-help-circle-outline" style="font-size: 64px; color: #adb5bd;"></i>
+                                            <div class="text-center py-5" id="noQuestionsMessage">
+                                                <div class="mb-3">
+                                                    <i class="mdi mdi-help-circle-outline" style="font-size: 64px; color: #adb5bd;"></i>
+                                                </div>
+                                                <h5>No Questions Added Yet</h5>
+                                                <p class="text-muted">Save your quiz settings first, then add questions using the button above.</p>
                                             </div>
-                                            <h5>No Questions Added Yet</h5>
-                                            <p class="text-muted">Save your quiz settings first, then add questions using the button above.</p>
-                                        </div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -347,7 +348,9 @@ $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-md-6">
-                        © Learnix. <script>document.write(new Date().getFullYear())</script> All rights reserved.
+                            © Learnix. <script>
+                                document.write(new Date().getFullYear())
+                            </script> All rights reserved.
                         </div>
                     </div>
                 </div>
@@ -520,294 +523,294 @@ $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';
 
     <!-- Quiz Builder Script -->
     <script>
-// This JavaScript code should be added to your quiz-builder.php file
+        // This JavaScript code should be added to your quiz-builder.php file
 
-$(document).ready(function() {
-    // Load questions if quiz exists
-    if ($("#quizId").val()) {
-        loadQuestions();
-    }
+        $(document).ready(function() {
+            // Load questions if quiz exists
+            if ($("#quizId").val()) {
+                loadQuestions();
+            }
 
-    // Save Quiz Settings
-    $("#saveQuizSettingsBtn").click(function() {
-        const quizSettingsForm = document.getElementById('quizSettingsForm');
-        
-        // Basic form validation
-        if (!$("#quizTitle").val().trim()) {
-            $("#quizTitle").addClass('is-invalid');
-            return;
-        } else {
-            $("#quizTitle").removeClass('is-invalid');
-        }
-        
-        if (!$("#passMark").val().trim() || parseInt($("#passMark").val()) < 0 || parseInt($("#passMark").val()) > 100) {
-            $("#passMark").addClass('is-invalid');
-            return;
-        } else {
-            $("#passMark").removeClass('is-invalid');
-        }
+            // Save Quiz Settings
+            $("#saveQuizSettingsBtn").click(function() {
+                const quizSettingsForm = document.getElementById('quizSettingsForm');
 
-        // Collect form data
-        const formData = {
-            course_id: $("#courseId").val(),
-            section_id: $("#sectionId").val(),
-            quiz_id: $("#quizId").val() || null,
-            quiz_title: $("#quizTitle").val(),
-            instruction: $("#quizInstructions").val(),
-            pass_mark: $("#passMark").val(),
-            time_limit: $("#timeLimit").val() || null,
-            attempts_allowed: $("#attemptsAllowed").val() || 1,
-            randomize_questions: $("#randomizeQuestions").is(':checked') ? 1 : 0,
-            show_correct_answers: $("#showCorrectAnswers").is(':checked') ? 1 : 0,
-            shuffle_answers: $("#shuffleAnswers").is(':checked') ? 1 : 0,
-            is_required: $("#isRequired").is(':checked') ? 1 : 0
-        };
+                // Basic form validation
+                if (!$("#quizTitle").val().trim()) {
+                    $("#quizTitle").addClass('is-invalid');
+                    return;
+                } else {
+                    $("#quizTitle").removeClass('is-invalid');
+                }
 
-        // Show loading overlay
-        createOverlay('Saving quiz settings...');
+                if (!$("#passMark").val().trim() || parseInt($("#passMark").val()) < 0 || parseInt($("#passMark").val()) > 100) {
+                    $("#passMark").addClass('is-invalid');
+                    return;
+                } else {
+                    $("#passMark").removeClass('is-invalid');
+                }
 
-        // Send AJAX request
-        $.ajax({
-            url: '../ajax/assessments/save_quiz.php',
-            type: 'POST',
-            data: formData,
-            dataType: 'json',
-            success: function(result) {
-                // If jQuery has already parsed the result, we don't need to parse it again
-                if (result && typeof result === 'object') {
-                    if (result.success) {
-                        // Update quiz ID if new quiz
-                        if (!$("#quizId").val() && result.quiz_id) {
-                            $("#quizId").val(result.quiz_id);
-                            // Show questions section
-                            $("#questionsSection").show();
-                            // Replace no questions message
-                            $("#noQuestionsMessage").html(`
+                // Collect form data
+                const formData = {
+                    course_id: $("#courseId").val(),
+                    section_id: $("#sectionId").val(),
+                    quiz_id: $("#quizId").val() || null,
+                    quiz_title: $("#quizTitle").val(),
+                    instruction: $("#quizInstructions").val(),
+                    pass_mark: $("#passMark").val(),
+                    time_limit: $("#timeLimit").val() || null,
+                    attempts_allowed: $("#attemptsAllowed").val() || 1,
+                    randomize_questions: $("#randomizeQuestions").is(':checked') ? 1 : 0,
+                    show_correct_answers: $("#showCorrectAnswers").is(':checked') ? 1 : 0,
+                    shuffle_answers: $("#shuffleAnswers").is(':checked') ? 1 : 0,
+                    is_required: $("#isRequired").is(':checked') ? 1 : 0
+                };
+
+                // Show loading overlay
+                createOverlay('Saving quiz settings...');
+
+                // Send AJAX request
+                $.ajax({
+                    url: '../ajax/assessments/save_quiz.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(result) {
+                        // If jQuery has already parsed the result, we don't need to parse it again
+                        if (result && typeof result === 'object') {
+                            if (result.success) {
+                                // Update quiz ID if new quiz
+                                if (!$("#quizId").val() && result.quiz_id) {
+                                    $("#quizId").val(result.quiz_id);
+                                    // Show questions section
+                                    $("#questionsSection").show();
+                                    // Replace no questions message
+                                    $("#noQuestionsMessage").html(`
                                 <div class="mb-3">
                                     <i class="mdi mdi-help-circle-outline" style="font-size: 64px; color: #adb5bd;"></i>
                                 </div>
                                 <h5>No Questions Added Yet</h5>
                                 <p class="text-muted">Start adding questions using the button above.</p>
                             `);
-                        }
-                        
-                        showAlert('success', 'Quiz settings saved successfully!');
-                    } else {
-                        showAlert('danger', 'Error: ' + (result.message || 'Failed to save quiz settings.'));
-                    }
-                } else {
-                    // Handle case where result is a string that needs parsing
-                    try {
-                        const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-                        
-                        if (parsedResult.success) {
-                            // Update quiz ID if new quiz
-                            if (!$("#quizId").val() && parsedResult.quiz_id) {
-                                $("#quizId").val(parsedResult.quiz_id);
-                                // Show questions section
-                                $("#questionsSection").show();
-                                // Replace no questions message
-                                $("#noQuestionsMessage").html(`
+                                }
+
+                                showAlert('success', 'Quiz settings saved successfully!');
+                            } else {
+                                showAlert('danger', 'Error: ' + (result.message || 'Failed to save quiz settings.'));
+                            }
+                        } else {
+                            // Handle case where result is a string that needs parsing
+                            try {
+                                const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
+
+                                if (parsedResult.success) {
+                                    // Update quiz ID if new quiz
+                                    if (!$("#quizId").val() && parsedResult.quiz_id) {
+                                        $("#quizId").val(parsedResult.quiz_id);
+                                        // Show questions section
+                                        $("#questionsSection").show();
+                                        // Replace no questions message
+                                        $("#noQuestionsMessage").html(`
                                     <div class="mb-3">
                                         <i class="mdi mdi-help-circle-outline" style="font-size: 64px; color: #adb5bd;"></i>
                                     </div>
                                     <h5>No Questions Added Yet</h5>
                                     <p class="text-muted">Start adding questions using the button above.</p>
                                 `);
+                                    }
+
+                                    showAlert('success', 'Quiz settings saved successfully!');
+                                } else {
+                                    showAlert('danger', 'Error: ' + (parsedResult.message || 'Failed to save quiz settings.'));
+                                }
+                            } catch (e) {
+                                console.error('Error handling response', e);
+                                console.error('Response:', result);
+                                showAlert('danger', 'Error processing server response. Check browser console for details.');
                             }
-                            
-                            showAlert('success', 'Quiz settings saved successfully!');
-                        } else {
-                            showAlert('danger', 'Error: ' + (parsedResult.message || 'Failed to save quiz settings.'));
                         }
-                    } catch (e) {
-                        console.error('Error handling response', e);
-                        console.error('Response:', result);
-                        showAlert('danger', 'Error processing server response. Check browser console for details.');
+
+                        // Remove loading overlay
+                        removeOverlay();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                        showAlert('danger', 'Network error. Please try again.');
+                        removeOverlay();
                     }
-                }
-                
-                // Remove loading overlay
-                removeOverlay();
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error);
-                showAlert('danger', 'Network error. Please try again.');
-                removeOverlay();
-            }
-        });
-    });
+                });
+            });
 
-    // Add Question Button
-    $("#addQuestionBtn").click(function() {
-        // Show question types modal
-        $("#questionTypesModal").modal('show');
-    });
+            // Add Question Button
+            $("#addQuestionBtn").click(function() {
+                // Show question types modal
+                $("#questionTypesModal").modal('show');
+            });
 
-    // Question Type Selection
-    $(".question-type-card").click(function() {
-        const questionType = $(this).data('type');
-        $("#questionTypesModal").modal('hide');
-        
-        // Show loading overlay
-        createOverlay('Loading question editor...');
-        
-        // Load question editor based on type
-        $.ajax({
-            url: '../includes/quiz-builder/question-types.php',
-            type: 'GET',
-            data: {
-                type: questionType,
-                quiz_id: $("#quizId").val()
-            },
-            success: function(response) {
-                $("#questionEditorContent").html(response);
-                $("#questionEditorTitle").text(`Add New ${questionType === 'multiple_choice' ? 'Multiple Choice' : 'True/False'} Question`);
-                $("#questionEditorModal").modal('show');
-                removeOverlay();
-            },
-            error: function() {
-                showAlert('danger', 'Failed to load question editor.');
-                removeOverlay();
-            }
-        });
-    });
+            // Question Type Selection
+            $(".question-type-card").click(function() {
+                const questionType = $(this).data('type');
+                $("#questionTypesModal").modal('hide');
 
-    // Load questions for the quiz
-    function loadQuestions() {
-        $.ajax({
-            url: '../includes/quiz-builder/question-list.php',
-            type: 'GET',
-            data: {
-                quiz_id: $("#quizId").val()
-            },
-            dataType: 'html',
-            success: function(response) {
-                $("#questionsList").html(response);
-            },
-            error: function() {
-                $("#questionsList").html(`
+                // Show loading overlay
+                createOverlay('Loading question editor...');
+
+                // Load question editor based on type
+                $.ajax({
+                    url: '../includes/quiz-builder/question-types.php',
+                    type: 'GET',
+                    data: {
+                        type: questionType,
+                        quiz_id: $("#quizId").val()
+                    },
+                    success: function(response) {
+                        $("#questionEditorContent").html(response);
+                        $("#questionEditorTitle").text(`Add New ${questionType === 'multiple_choice' ? 'Multiple Choice' : 'True/False'} Question`);
+                        $("#questionEditorModal").modal('show');
+                        removeOverlay();
+                    },
+                    error: function() {
+                        showAlert('danger', 'Failed to load question editor.');
+                        removeOverlay();
+                    }
+                });
+            });
+
+            // Load questions for the quiz
+            function loadQuestions() {
+                $.ajax({
+                    url: '../includes/quiz-builder/question-list.php',
+                    type: 'GET',
+                    data: {
+                        quiz_id: $("#quizId").val()
+                    },
+                    dataType: 'html',
+                    success: function(response) {
+                        $("#questionsList").html(response);
+                    },
+                    error: function() {
+                        $("#questionsList").html(`
                     <div class="alert alert-danger">
                         Failed to load questions. Please refresh the page and try again.
                     </div>
                 `);
-            }
-        });
-    }
-
-    // Handle edit question (delegated event)
-    $(document).on('click', '.edit-question-btn', function() {
-        const questionId = $(this).data('question-id');
-        const questionType = $(this).data('question-type');
-        
-        // Show loading overlay
-        createOverlay('Loading question editor...');
-        
-        // Load question editor for editing
-        $.ajax({
-            url: '../includes/quiz-builder/question-types.php',
-            type: 'GET',
-            data: {
-                type: questionType,
-                quiz_id: $("#quizId").val(),
-                question_id: questionId
-            },
-            success: function(response) {
-                $("#questionEditorContent").html(response);
-                $("#questionEditorTitle").text(`Edit ${questionType === 'Multiple Choice' ? 'Multiple Choice' : 'True/False'} Question`);
-                $("#questionEditorModal").modal('show');
-                removeOverlay();
-            },
-            error: function() {
-                showAlert('danger', 'Failed to load question editor.');
-                removeOverlay();
-            }
-        });
-    });
-
-    // Handle delete question (delegated event)
-    $(document).on('click', '.delete-question-btn', function() {
-        const questionId = $(this).data('question-id');
-        
-        // Store question ID for deletion
-        $("#confirmDeleteBtn").data('question-id', questionId);
-        
-        // Show confirmation modal
-        $("#deleteConfirmModal").modal('show');
-    });
-
-    // Confirm Delete Question
-    $("#confirmDeleteBtn").click(function() {
-        const questionId = $(this).data('question-id');
-        
-        // Show loading overlay
-        createOverlay('Deleting question...');
-        
-        // Send AJAX request to delete question
-        $.ajax({
-            url: '../ajax/assessments/delete_question.php',
-            type: 'POST',
-            data: {
-                question_id: questionId
-            },
-            dataType: 'json',
-            success: function(result) {
-                // Check if the result is already an object
-                if (result && typeof result === 'object') {
-                    if (result.success) {
-                        // Hide confirmation modal
-                        $("#deleteConfirmModal").modal('hide');
-                        
-                        // Reload questions list
-                        loadQuestions();
-                        
-                        showAlert('success', 'Question deleted successfully.');
-                    } else {
-                        showAlert('danger', 'Error: ' + (result.message || 'Failed to delete question.'));
                     }
-                } else {
-                    // Try to parse result if it's a string
-                    try {
-                        const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-                        
-                        if (parsedResult.success) {
-                            // Hide confirmation modal
-                            $("#deleteConfirmModal").modal('hide');
-                            
-                            // Reload questions list
-                            loadQuestions();
-                            
-                            showAlert('success', 'Question deleted successfully.');
+                });
+            }
+
+            // Handle edit question (delegated event)
+            $(document).on('click', '.edit-question-btn', function() {
+                const questionId = $(this).data('question-id');
+                const questionType = $(this).data('question-type');
+
+                // Show loading overlay
+                createOverlay('Loading question editor...');
+
+                // Load question editor for editing
+                $.ajax({
+                    url: '../includes/quiz-builder/question-types.php',
+                    type: 'GET',
+                    data: {
+                        type: questionType,
+                        quiz_id: $("#quizId").val(),
+                        question_id: questionId
+                    },
+                    success: function(response) {
+                        $("#questionEditorContent").html(response);
+                        $("#questionEditorTitle").text(`Edit ${questionType === 'Multiple Choice' ? 'Multiple Choice' : 'True/False'} Question`);
+                        $("#questionEditorModal").modal('show');
+                        removeOverlay();
+                    },
+                    error: function() {
+                        showAlert('danger', 'Failed to load question editor.');
+                        removeOverlay();
+                    }
+                });
+            });
+
+            // Handle delete question (delegated event)
+            $(document).on('click', '.delete-question-btn', function() {
+                const questionId = $(this).data('question-id');
+
+                // Store question ID for deletion
+                $("#confirmDeleteBtn").data('question-id', questionId);
+
+                // Show confirmation modal
+                $("#deleteConfirmModal").modal('show');
+            });
+
+            // Confirm Delete Question
+            $("#confirmDeleteBtn").click(function() {
+                const questionId = $(this).data('question-id');
+
+                // Show loading overlay
+                createOverlay('Deleting question...');
+
+                // Send AJAX request to delete question
+                $.ajax({
+                    url: '../ajax/assessments/delete_question.php',
+                    type: 'POST',
+                    data: {
+                        question_id: questionId
+                    },
+                    dataType: 'json',
+                    success: function(result) {
+                        // Check if the result is already an object
+                        if (result && typeof result === 'object') {
+                            if (result.success) {
+                                // Hide confirmation modal
+                                $("#deleteConfirmModal").modal('hide');
+
+                                // Reload questions list
+                                loadQuestions();
+
+                                showAlert('success', 'Question deleted successfully.');
+                            } else {
+                                showAlert('danger', 'Error: ' + (result.message || 'Failed to delete question.'));
+                            }
                         } else {
-                            showAlert('danger', 'Error: ' + (parsedResult.message || 'Failed to delete question.'));
-                        }
-                    } catch (e) {
-                        console.error('Error handling response', e);
-                        console.error('Response:', result);
-                        showAlert('danger', 'Error processing server response. Check browser console for details.');
-                    }
-                }
-                
-                // Remove loading overlay
-                removeOverlay();
-            },
-            error: function() {
-                showAlert('danger', 'Network error. Please try again.');
-                removeOverlay();
-            }
-        });
-    });
+                            // Try to parse result if it's a string
+                            try {
+                                const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
 
-    // Handle preview question (delegated event)
-    $(document).on('click', '.preview-question-btn', function() {
-        const questionId = $(this).data('question-id');
-        
-        // Show loading overlay
-        createOverlay('Loading question preview...');
-        
-        // Create a modal for previewing
-        if (!$("#questionPreviewModal").length) {
-            $('body').append(`
+                                if (parsedResult.success) {
+                                    // Hide confirmation modal
+                                    $("#deleteConfirmModal").modal('hide');
+
+                                    // Reload questions list
+                                    loadQuestions();
+
+                                    showAlert('success', 'Question deleted successfully.');
+                                } else {
+                                    showAlert('danger', 'Error: ' + (parsedResult.message || 'Failed to delete question.'));
+                                }
+                            } catch (e) {
+                                console.error('Error handling response', e);
+                                console.error('Response:', result);
+                                showAlert('danger', 'Error processing server response. Check browser console for details.');
+                            }
+                        }
+
+                        // Remove loading overlay
+                        removeOverlay();
+                    },
+                    error: function() {
+                        showAlert('danger', 'Network error. Please try again.');
+                        removeOverlay();
+                    }
+                });
+            });
+
+            // Handle preview question (delegated event)
+            $(document).on('click', '.preview-question-btn', function() {
+                const questionId = $(this).data('question-id');
+
+                // Show loading overlay
+                createOverlay('Loading question preview...');
+
+                // Create a modal for previewing
+                if (!$("#questionPreviewModal").length) {
+                    $('body').append(`
                 <div class="modal fade" id="questionPreviewModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
@@ -822,184 +825,184 @@ $(document).ready(function() {
                     </div>
                 </div>
             `);
-        }
-        
-        // Load preview content
-        $.ajax({
-            url: '../includes/quiz-builder/question-preview.php',
-            type: 'GET',
-            data: {
-                question_id: questionId
-            },
-            success: function(response) {
-                $("#questionPreviewContent").html(response);
-                $("#questionPreviewModal").modal('show');
-                removeOverlay();
-            },
-            error: function() {
-                showAlert('danger', 'Failed to load question preview.');
-                removeOverlay();
-            }
-        });
-    });
+                }
 
-    // Handle save question (delegated event)
-    $(document).on('click', '#saveQuestionBtn', function() {
-        // Get question type
-        const questionType = $(this).data('question-type');
-        
-        // Validate form fields
-        if (!validateQuestionForm(questionType)) {
-            return;
-        }
-        
-        // Collect form data
-        const formData = collectQuestionFormData(questionType);
-        
-        // Show loading overlay
-        createOverlay('Saving question...');
-        
-        // Send AJAX request
-        $.ajax({
-            url: '../ajax/assessments/save_question.php',
-            type: 'POST',
-            data: formData,
-            dataType: 'json',
-            success: function(result) {
-                // Check if the result is already an object
-                if (result && typeof result === 'object') {
-                    if (result.success) {
-                        // Close modal
-                        $("#questionEditorModal").modal('hide');
-                        
-                        // Reload questions
-                        loadQuestions();
-                        
-                        showAlert('success', result.message || 'Question saved successfully.');
-                    } else {
-                        showAlert('danger', 'Error: ' + (result.message || 'Failed to save question.'));
+                // Load preview content
+                $.ajax({
+                    url: '../includes/quiz-builder/question-preview.php',
+                    type: 'GET',
+                    data: {
+                        question_id: questionId
+                    },
+                    success: function(response) {
+                        $("#questionPreviewContent").html(response);
+                        $("#questionPreviewModal").modal('show');
+                        removeOverlay();
+                    },
+                    error: function() {
+                        showAlert('danger', 'Failed to load question preview.');
+                        removeOverlay();
                     }
-                } else {
-                    // Try to parse result if it's a string
-                    try {
-                        const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-                        
-                        if (parsedResult.success) {
-                            // Close modal
-                            $("#questionEditorModal").modal('hide');
-                            
-                            // Reload questions
-                            loadQuestions();
-                            
-                            showAlert('success', parsedResult.message || 'Question saved successfully.');
-                        } else {
-                            showAlert('danger', 'Error: ' + (parsedResult.message || 'Failed to save question.'));
-                        }
-                    } catch (e) {
-                        console.error('Error handling response', e);
-                        console.error('Response:', result);
-                        showAlert('danger', 'Error processing server response. Check browser console for details.');
-                    }
-                }
-                
-                // Remove loading overlay
-                removeOverlay();
-            },
-            error: function() {
-                showAlert('danger', 'Network error. Please try again.');
-                removeOverlay();
-            }
-        });
-    });
-    
-    // Validate question form based on type
-    function validateQuestionForm(questionType) {
-        let isValid = true;
-        
-        // Validate question text
-        if (!$("#questionText").val().trim()) {
-            $("#questionText").addClass('is-invalid');
-            isValid = false;
-        } else {
-            $("#questionText").removeClass('is-invalid');
-        }
-        
-        // Validate points
-        if (!$("#questionPoints").val() || parseInt($("#questionPoints").val()) < 1) {
-            $("#questionPoints").addClass('is-invalid');
-            isValid = false;
-        } else {
-            $("#questionPoints").removeClass('is-invalid');
-        }
-        
-        if (questionType === 'multiple_choice') {
-            // Make sure we have at least 2 answer options
-            if ($(".answer-option").length < 2) {
-                showAlert('danger', 'You need at least 2 answer options.');
-                isValid = false;
-            }
-            
-            // Make sure each answer option has text
-            $(".answer-text").each(function() {
-                if (!$(this).val().trim()) {
-                    $(this).addClass('is-invalid');
-                    isValid = false;
-                } else {
-                    $(this).removeClass('is-invalid');
-                }
-            });
-            
-            // Make sure at least one answer is selected as correct
-            if ($(".correct-answer:checked").length === 0) {
-                showAlert('danger', 'You must select at least one correct answer.');
-                isValid = false;
-            }
-        }
-        
-        return isValid;
-    }
-    
-    // Collect form data based on question type
-    function collectQuestionFormData(questionType) {
-        const formData = {
-            quiz_id: $("#quizId").val(),
-            question_id: $("#questionId").val() || null,
-            question_text: $("#questionText").val(),
-            question_type: questionType,
-            points: $("#questionPoints").val(),
-            explanation: $("#questionExplanation").val() || null
-        };
-        
-        if (questionType === 'multiple_choice') {
-            const answers = [];
-            
-            // Collect all answer options
-            $(".answer-option").each(function() {
-                const answerId = $(this).data('answer-id') || null;
-                const answerText = $(this).find('.answer-text').val();
-                const isCorrect = $(this).find('.correct-answer').is(':checked') ? 1 : 0;
-                
-                answers.push({
-                    answer_id: answerId,
-                    answer_text: answerText,
-                    is_correct: isCorrect
                 });
             });
-            
-            formData.answers = JSON.stringify(answers);
-        } else if (questionType === 'true_false') {
-            formData.correct_answer = $("input[name='correctAnswer']:checked").val();
-        }
-        
-        return formData;
-    }
-    
-    // Handle add answer option (delegated event)
-    $(document).on('click', '#addAnswerBtn', function() {
-        const answersContainer = $("#answersContainer");
-        const newAnswerIndex = $(".answer-option").length + 1;
-        
-        const newAnswer = `
+
+            // Handle save question (delegated event)
+            $(document).on('click', '#saveQuestionBtn', function() {
+                // Get question type
+                const questionType = $(this).data('question-type');
+
+                // Validate form fields
+                if (!validateQuestionForm(questionType)) {
+                    return;
+                }
+
+                // Collect form data
+                const formData = collectQuestionFormData(questionType);
+
+                // Show loading overlay
+                createOverlay('Saving question...');
+
+                // Send AJAX request
+                $.ajax({
+                    url: '../ajax/assessments/save_question.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(result) {
+                        // Check if the result is already an object
+                        if (result && typeof result === 'object') {
+                            if (result.success) {
+                                // Close modal
+                                $("#questionEditorModal").modal('hide');
+
+                                // Reload questions
+                                loadQuestions();
+
+                                showAlert('success', result.message || 'Question saved successfully.');
+                            } else {
+                                showAlert('danger', 'Error: ' + (result.message || 'Failed to save question.'));
+                            }
+                        } else {
+                            // Try to parse result if it's a string
+                            try {
+                                const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
+
+                                if (parsedResult.success) {
+                                    // Close modal
+                                    $("#questionEditorModal").modal('hide');
+
+                                    // Reload questions
+                                    loadQuestions();
+
+                                    showAlert('success', parsedResult.message || 'Question saved successfully.');
+                                } else {
+                                    showAlert('danger', 'Error: ' + (parsedResult.message || 'Failed to save question.'));
+                                }
+                            } catch (e) {
+                                console.error('Error handling response', e);
+                                console.error('Response:', result);
+                                showAlert('danger', 'Error processing server response. Check browser console for details.');
+                            }
+                        }
+
+                        // Remove loading overlay
+                        removeOverlay();
+                    },
+                    error: function() {
+                        showAlert('danger', 'Network error. Please try again.');
+                        removeOverlay();
+                    }
+                });
+            });
+
+            // Validate question form based on type
+            function validateQuestionForm(questionType) {
+                let isValid = true;
+
+                // Validate question text
+                if (!$("#questionText").val().trim()) {
+                    $("#questionText").addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    $("#questionText").removeClass('is-invalid');
+                }
+
+                // Validate points
+                if (!$("#questionPoints").val() || parseInt($("#questionPoints").val()) < 1) {
+                    $("#questionPoints").addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    $("#questionPoints").removeClass('is-invalid');
+                }
+
+                if (questionType === 'multiple_choice') {
+                    // Make sure we have at least 2 answer options
+                    if ($(".answer-option").length < 2) {
+                        showAlert('danger', 'You need at least 2 answer options.');
+                        isValid = false;
+                    }
+
+                    // Make sure each answer option has text
+                    $(".answer-text").each(function() {
+                        if (!$(this).val().trim()) {
+                            $(this).addClass('is-invalid');
+                            isValid = false;
+                        } else {
+                            $(this).removeClass('is-invalid');
+                        }
+                    });
+
+                    // Make sure at least one answer is selected as correct
+                    if ($(".correct-answer:checked").length === 0) {
+                        showAlert('danger', 'You must select at least one correct answer.');
+                        isValid = false;
+                    }
+                }
+
+                return isValid;
+            }
+
+            // Collect form data based on question type
+            function collectQuestionFormData(questionType) {
+                const formData = {
+                    quiz_id: $("#quizId").val(),
+                    question_id: $("#questionId").val() || null,
+                    question_text: $("#questionText").val(),
+                    question_type: questionType,
+                    points: $("#questionPoints").val(),
+                    explanation: $("#questionExplanation").val() || null
+                };
+
+                if (questionType === 'multiple_choice') {
+                    const answers = [];
+
+                    // Collect all answer options
+                    $(".answer-option").each(function() {
+                        const answerId = $(this).data('answer-id') || null;
+                        const answerText = $(this).find('.answer-text').val();
+                        const isCorrect = $(this).find('.correct-answer').is(':checked') ? 1 : 0;
+
+                        answers.push({
+                            answer_id: answerId,
+                            answer_text: answerText,
+                            is_correct: isCorrect
+                        });
+                    });
+
+                    formData.answers = JSON.stringify(answers);
+                } else if (questionType === 'true_false') {
+                    formData.correct_answer = $("input[name='correctAnswer']:checked").val();
+                }
+
+                return formData;
+            }
+
+            // Handle add answer option (delegated event)
+            $(document).on('click', '#addAnswerBtn', function() {
+                const answersContainer = $("#answersContainer");
+                const newAnswerIndex = $(".answer-option").length + 1;
+
+                const newAnswer = `
             <div class="answer-option mb-3" data-answer-id="">
                 <div class="input-group">
                     <div class="input-group-text">
@@ -1012,20 +1015,21 @@ $(document).ready(function() {
                 </div>
             </div>
         `;
-        
-        answersContainer.append(newAnswer);
-    });
-    
-    // Handle remove answer option (delegated event)
-    $(document).on('click', '.remove-answer-btn', function() {
-        // Only remove if we have more than 2 options
-        if ($(".answer-option").length > 2) {
-            $(this).closest('.answer-option').remove();
-        } else {
-            showAlert('danger', 'You need at least 2 answer options.');
-        }
-    });
-});
+
+                answersContainer.append(newAnswer);
+            });
+
+            // Handle remove answer option (delegated event)
+            $(document).on('click', '.remove-answer-btn', function() {
+                // Only remove if we have more than 2 options
+                if ($(".answer-option").length > 2) {
+                    $(this).closest('.answer-option').remove();
+                } else {
+                    showAlert('danger', 'You need at least 2 answer options.');
+                }
+            });
+        });
     </script>
 </body>
+
 </html>

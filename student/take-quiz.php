@@ -16,7 +16,7 @@ $user_id = $_SESSION['user_id'];
 
 // Check if course_id and quiz_id are provided
 if (!isset($_GET['course_id']) || !isset($_GET['quiz_id'])) {
-    header("Location: dashboard.php");
+    header("Location: index.php");
     exit;
 }
 
@@ -96,7 +96,7 @@ if ($attempt_result->num_rows > 0) {
     $new_attempt_stmt->bind_param("iiii", $user_id, $quiz_id, $user_id, $quiz_id);
     $new_attempt_stmt->execute();
     $attempt_id = $conn->insert_id;
-    
+
     // Get the newly created attempt to get the start time
     $new_attempt_sql = "SELECT * FROM student_quiz_attempts WHERE attempt_id = ?";
     $new_attempt_stmt = $conn->prepare($new_attempt_sql);
@@ -114,7 +114,7 @@ $question_sql = "SELECT * FROM quiz_questions WHERE quiz_id = ?";
 // Check if we should randomize questions
 if (isset($quiz['randomize_questions']) && $quiz['randomize_questions']) {
     $question_sql .= " ORDER BY RAND()";
-    
+
     // If there's a limit on number of questions to display
     if (isset($quiz['questions_to_display']) && $quiz['questions_to_display'] > 0) {
         $question_sql .= " LIMIT " . intval($quiz['questions_to_display']);
@@ -133,24 +133,24 @@ $questions = [];
 while ($question = $question_result->fetch_assoc()) {
     // Get answers for this question
     $answer_sql = "SELECT * FROM quiz_answers WHERE question_id = ?";
-    
+
     // Check if we should randomize answers
     if (isset($quiz['shuffle_answers']) && $quiz['shuffle_answers']) {
         $answer_sql .= " ORDER BY RAND()";
     } else {
         $answer_sql .= " ORDER BY answer_id";
     }
-    
+
     $answer_stmt = $conn->prepare($answer_sql);
     $answer_stmt->bind_param("i", $question['question_id']);
     $answer_stmt->execute();
     $answer_result = $answer_stmt->get_result();
-    
+
     $answers = [];
     while ($answer = $answer_result->fetch_assoc()) {
         $answers[] = $answer;
     }
-    
+
     $question['answers'] = $answers;
     $questions[] = $question;
 }
@@ -160,15 +160,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_quiz'])) {
     $total_points = 0;
     $earned_points = 0;
     $question_responses = [];
-    
+
     foreach ($questions as $question) {
         $question_id = $question['question_id'];
         $total_points += $question['points'];
-        
+
         if ($question['question_type'] === 'Multiple Choice' || $question['question_type'] === 'True/False') {
             if (isset($_POST['question_' . $question_id])) {
                 $selected_answer_id = $_POST['question_' . $question_id];
-                
+
                 // Find if this is the correct answer
                 $is_correct = 0;
                 foreach ($question['answers'] as $answer) {
@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_quiz'])) {
                         break;
                     }
                 }
-                
+
                 // Save response
                 $response_sql = "INSERT INTO student_question_responses 
                                 (attempt_id, question_id, is_correct, points_awarded) 
@@ -188,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_quiz'])) {
                 $response_stmt->bind_param("iiid", $attempt_id, $question_id, $is_correct, $points_awarded);
                 $response_stmt->execute();
                 $response_id = $conn->insert_id;
-                
+
                 // Save answer selection
                 $selection_sql = "INSERT INTO student_answer_selections 
                                  (response_id, answer_id) 
@@ -196,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_quiz'])) {
                 $selection_stmt = $conn->prepare($selection_sql);
                 $selection_stmt->bind_param("ii", $response_id, $selected_answer_id);
                 $selection_stmt->execute();
-                
+
                 $question_responses[$question_id] = [
                     'selected_answer' => $selected_answer_id,
                     'is_correct' => $is_correct
@@ -205,11 +205,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_quiz'])) {
         }
         // Add handlers for other question types if needed
     }
-    
+
     // Calculate score as percentage
     $score = ($total_points > 0) ? ($earned_points / $total_points) * 100 : 0;
     $passed = ($score >= $quiz['pass_mark']);
-    
+
     // Update attempt
     $update_attempt_sql = "UPDATE student_quiz_attempts 
                           SET end_time = NOW(), is_completed = 1, score = ?, passed = ?, 
@@ -218,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_quiz'])) {
     $update_attempt_stmt = $conn->prepare($update_attempt_sql);
     $update_attempt_stmt->bind_param("dii", $score, $passed, $attempt_id);
     $update_attempt_stmt->execute();
-    
+
     // Redirect to results page
     header("Location: quiz-results.php?course_id=$course_id&quiz_id=$quiz_id&attempt_id=$attempt_id");
     exit;
@@ -235,7 +235,7 @@ if ($time_remaining <= 0) {
     $update_attempt_stmt = $conn->prepare($update_attempt_sql);
     $update_attempt_stmt->bind_param("iii", $time_limit_seconds, $time_limit_seconds, $attempt_id);
     $update_attempt_stmt->execute();
-    
+
     // Redirect to results page
     header("Location: quiz-results.php?course_id=$course_id&quiz_id=$quiz_id&attempt_id=$attempt_id&timeout=1");
     exit;
@@ -275,7 +275,7 @@ include '../includes/student-header.php';
                                 <div><strong>Current Attempt:</strong> #<?php echo $attempt['attempt_number']; ?></div>
                             <?php endif; ?>
                         </div>
-                        
+
                         <?php if (isset($quiz['randomize_questions']) && $quiz['randomize_questions']): ?>
                             <div class="alert alert-warning">
                                 <i class="bi bi-shuffle"></i> Questions are randomly ordered for each attempt.
@@ -287,14 +287,14 @@ include '../includes/student-header.php';
                         <?php foreach ($questions as $index => $question): ?>
                             <div class="mb-4 p-3 border rounded">
                                 <h5 class="mb-3">Question <?php echo $index + 1; ?>: <?php echo htmlspecialchars($question['question_text']); ?></h5>
-                                
+
                                 <?php if ($question['question_type'] === 'Multiple Choice'): ?>
                                     <div class="mb-3">
                                         <?php foreach ($question['answers'] as $answer): ?>
                                             <div class="form-check mb-2">
-                                                <input class="form-check-input" type="radio" 
-                                                    name="question_<?php echo $question['question_id']; ?>" 
-                                                    id="answer_<?php echo $answer['answer_id']; ?>" 
+                                                <input class="form-check-input" type="radio"
+                                                    name="question_<?php echo $question['question_id']; ?>"
+                                                    id="answer_<?php echo $answer['answer_id']; ?>"
                                                     value="<?php echo $answer['answer_id']; ?>">
                                                 <label class="form-check-label" for="answer_<?php echo $answer['answer_id']; ?>">
                                                     <?php echo htmlspecialchars($answer['answer_text']); ?>
@@ -306,9 +306,9 @@ include '../includes/student-header.php';
                                     <div class="mb-3">
                                         <?php foreach ($question['answers'] as $answer): ?>
                                             <div class="form-check mb-2">
-                                                <input class="form-check-input" type="radio" 
-                                                    name="question_<?php echo $question['question_id']; ?>" 
-                                                    id="answer_<?php echo $answer['answer_id']; ?>" 
+                                                <input class="form-check-input" type="radio"
+                                                    name="question_<?php echo $question['question_id']; ?>"
+                                                    id="answer_<?php echo $answer['answer_id']; ?>"
                                                     value="<?php echo $answer['answer_id']; ?>">
                                                 <label class="form-check-label" for="answer_<?php echo $answer['answer_id']; ?>">
                                                     <?php echo htmlspecialchars($answer['answer_text']); ?>
@@ -339,21 +339,21 @@ include '../includes/student-header.php';
         const endTime = parseInt(timerElement.getAttribute('data-end-time')) * 1000; // Convert to milliseconds
         const now = new Date().getTime();
         const timeLeft = endTime - now;
-        
+
         if (timeLeft <= 0) {
             // Time's up, auto-submit the form
             document.getElementById('quizForm').submit();
             return;
         }
-        
+
         // Calculate minutes and seconds
         const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-        
+
         // Display the timer
         document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
         document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
-        
+
         // Update color based on time remaining
         if (timeLeft < 60000) { // less than 1 minute
             timerElement.classList.remove('bg-primary', 'bg-warning', 'text-dark');
@@ -363,19 +363,19 @@ include '../includes/student-header.php';
             timerElement.classList.add('bg-warning', 'text-dark');
         }
     }
-    
+
     // Update timer every second
     updateTimer();
     setInterval(updateTimer, 1000);
-    
+
     // Save user's progress periodically
     function saveProgress() {
         const form = document.getElementById('quizForm');
         const formData = new FormData(form);
-        
+
         // Add an identifier to indicate this is just a progress save, not a final submission
         formData.append('save_progress', '1');
-        
+
         fetch(form.action, {
             method: 'POST',
             body: formData
@@ -383,22 +383,22 @@ include '../includes/student-header.php';
             console.error('Error saving progress:', error);
         });
     }
-    
+
     // Save progress every 30 seconds
     setInterval(saveProgress, 30000);
-    
+
     // Form validation before submission
     document.getElementById('quizForm').addEventListener('submit', function(event) {
         let allAnswered = true;
         const radioGroups = this.querySelectorAll('input[type="radio"]');
         const questionIds = new Set();
-        
+
         // Collect all question IDs
         radioGroups.forEach(radio => {
             const name = radio.getAttribute('name');
             questionIds.add(name);
         });
-        
+
         // Check if all questions are answered
         questionIds.forEach(name => {
             const answered = document.querySelector(`input[name="${name}"]:checked`);
@@ -406,14 +406,14 @@ include '../includes/student-header.php';
                 allAnswered = false;
             }
         });
-        
+
         if (!allAnswered) {
             if (!confirm('Some questions are not answered. Are you sure you want to submit?')) {
                 event.preventDefault();
             }
         }
     });
-    
+
     // Prevent accidental navigation away
     window.addEventListener('beforeunload', function(e) {
         // Cancel the event
@@ -421,44 +421,44 @@ include '../includes/student-header.php';
         // Chrome requires returnValue to be set
         e.returnValue = '';
     });
-    
+
     // Record selected answers in localStorage to restore on refresh
     function saveAnswersToLocalStorage() {
         const answers = {};
         const radioGroups = document.querySelectorAll('input[type="radio"]:checked');
-        
+
         radioGroups.forEach(radio => {
             const name = radio.getAttribute('name');
             const value = radio.value;
             answers[name] = value;
         });
-        
+
         localStorage.setItem('quiz_<?php echo $attempt_id; ?>_answers', JSON.stringify(answers));
     }
-    
+
     // Save answers when they're selected
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', saveAnswersToLocalStorage);
     });
-    
+
     // Restore answers from localStorage on page load
     function restoreAnswersFromLocalStorage() {
         const savedAnswers = localStorage.getItem('quiz_<?php echo $attempt_id; ?>_answers');
-        
+
         if (savedAnswers) {
             const answers = JSON.parse(savedAnswers);
-            
+
             for (const name in answers) {
                 const value = answers[name];
                 const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
-                
+
                 if (radio) {
                     radio.checked = true;
                 }
             }
         }
     }
-    
+
     // Restore saved answers when page loads
     document.addEventListener('DOMContentLoaded', restoreAnswersFromLocalStorage);
 </script>

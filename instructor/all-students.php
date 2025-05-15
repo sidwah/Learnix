@@ -115,6 +115,7 @@ $stmt->close();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -134,8 +135,8 @@ $stmt->close();
 
     <!-- App css -->
     <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
-    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style"/>
-    
+    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style" />
+
     <style>
         .avatar-sm {
             width: 36px;
@@ -143,16 +144,20 @@ $stmt->close();
             object-fit: cover;
             border-radius: 50%;
         }
+
         .progress {
             height: 8px;
         }
+
         .student-name {
             display: inline-block;
             vertical-align: middle;
         }
+
         .dropdown-menu .dropdown-item {
             padding: 0.4rem 1.2rem;
         }
+
         .activity-indicator {
             width: 10px;
             height: 10px;
@@ -160,19 +165,24 @@ $stmt->close();
             display: inline-block;
             margin-right: 5px;
         }
+
         .active-now {
             background-color: #0acf97;
         }
+
         .active-recent {
             background-color: #ffbc00;
         }
+
         .inactive {
             background-color: #fa5c7c;
         }
+
         .badge-courses {
             font-size: 0.7rem;
             font-weight: 600;
         }
+
         .btn-action {
             padding: 0.2rem 0.5rem;
             font-size: 0.75rem;
@@ -196,24 +206,24 @@ $stmt->close();
                 <!-- Topbar Start -->
                 <?php include '../includes/instructor-topnavbar.php'; ?>
                 <!-- end Topbar -->
-                
+
                 <!-- Start Content-->
                 <div class="container-fluid">
-                
+
                     <!-- start page title -->
                     <div class="row">
                         <div class="col-12">
                             <div class="page-title-box">
                                 <div class="page-title-right">
                                     <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="dashboard.php">Dashboard</a></li>
+                                        <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
                                         <li class="breadcrumb-item active">All Students</li>
                                     </ol>
                                 </div>
                                 <h4 class="page-title">All Students</h4>
                             </div>
                         </div>
-                    </div>     
+                    </div>
                     <!-- end page title -->
 
                     <!-- Stats row -->
@@ -269,9 +279,9 @@ $stmt->close();
                                             <select class="form-select" id="course-filter">
                                                 <option value="0">All Courses</option>
                                                 <?php foreach ($courses as $course): ?>
-                                                <option value="<?php echo $course['course_id']; ?>" <?php echo $course_filter == $course['course_id'] ? 'selected' : ''; ?>>
-                                                    <?php echo htmlspecialchars($course['title']); ?>
-                                                </option>
+                                                    <option value="<?php echo $course['course_id']; ?>" <?php echo $course_filter == $course['course_id'] ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($course['title']); ?>
+                                                    </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
@@ -297,7 +307,7 @@ $stmt->close();
                                             </select>
                                         </div>
                                     </div>
-                                
+
                                     <div class="table-responsive">
                                         <table id="students-datatable" class="table table-centered table-striped dt-responsive nowrap w-100">
                                             <thead>
@@ -315,9 +325,9 @@ $stmt->close();
                                             <tbody>
                                                 <!-- Data will be loaded via AJAX -->
                                                 <?php if (!$has_students): ?>
-                                                <tr>
-                                                    <td colspan="8" class="text-center">No students found. Once students enroll in your courses, they will appear here.</td>
-                                                </tr>
+                                                    <tr>
+                                                        <td colspan="8" class="text-center">No students found. Once students enroll in your courses, they will appear here.</td>
+                                                    </tr>
                                                 <?php endif; ?>
                                             </tbody>
                                         </table>
@@ -326,7 +336,7 @@ $stmt->close();
                             </div> <!-- end card -->
                         </div><!-- end col-->
                     </div> <!-- end row-->
-                    
+
                 </div> <!-- container -->
 
             </div> <!-- content -->
@@ -336,7 +346,9 @@ $stmt->close();
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-md-6">
-                            © Learnix. <script>document.write(new Date().getFullYear())</script> All rights reserved.
+                            © Learnix. <script>
+                                document.write(new Date().getFullYear())
+                            </script> All rights reserved.
                         </div>
                     </div>
                 </div>
@@ -351,7 +363,7 @@ $stmt->close();
 
     </div>
     <!-- END wrapper -->
-     
+
     <?php include '../includes/instructor-darkmode.php'; ?>
 
     <!-- bundle -->
@@ -391,7 +403,7 @@ $stmt->close();
             `;
 
             document.body.appendChild(overlay);
-            
+
             // Add styles
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
@@ -412,7 +424,7 @@ $stmt->close();
                 overlay.remove();
             }
         }
-        
+
         // Show alert notification function
         function showAlert(type, message) {
             const alertDiv = document.createElement('div');
@@ -451,12 +463,12 @@ $stmt->close();
             // Format date in a readable format
             function formatDate(dateString) {
                 if (!dateString) return 'Never';
-                
+
                 const date = new Date(dateString);
                 const now = new Date();
                 const diffTime = Math.abs(now - date);
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 if (diffDays === 0) {
                     return 'Today';
                 } else if (diffDays === 1) {
@@ -466,20 +478,24 @@ $stmt->close();
                 } else if (diffDays < 30) {
                     return Math.floor(diffDays / 7) + ' weeks ago';
                 } else {
-                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                    const options = {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    };
                     return date.toLocaleDateString('en-US', options);
                 }
             }
-            
+
             // Format the activity status with indicator
             function formatActivity(lastActivity) {
                 if (!lastActivity) return '<span class="activity-indicator inactive"></span> Inactive';
-                
+
                 const activityDate = new Date(lastActivity);
                 const now = new Date();
                 const diffTime = Math.abs(now - activityDate);
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 if (diffDays <= 7) {
                     return '<span class="activity-indicator active-now"></span> Active';
                 } else if (diffDays <= 30) {
@@ -488,48 +504,47 @@ $stmt->close();
                     return '<span class="activity-indicator inactive"></span> Inactive';
                 }
             }
-            
+
             // Check if we have students before initializing DataTable with AJAX
             <?php if ($has_students): ?>
-            // Initialize DataTable with AJAX loading
-            var table = $('#students-datatable').DataTable({
-                processing: true,
-                serverSide: false, // Change to false for initial implementation
-                ajax: {
-                    url: '../ajax/instructors/get_students.php',
-                    type: 'POST',
-                    data: function(d) {
-                        // Get values from the filters
-                        var courseVal = $('#course-filter').val();
-                        var statusVal = $('#status-filter').val();
-                        var activityVal = $('#activity-filter').val();
-                        
-                        // Ensure we have proper data types
-                        d.course = courseVal ? parseInt(courseVal) : 0;
-                        d.status = statusVal ? String(statusVal).trim() : '';
-                        d.activity = activityVal ? String(activityVal).trim() : '';
-                        
-                        // Add instructor_id to the AJAX data
-                        d.instructor_id = <?php echo $instructor_id; ?>;
-                        
-                        // Log to console for debugging
-                        console.log('Sending filters to server:', {
-                            course: d.course,
-                            status: d.status,
-                            activity: d.activity,
-                            instructor_id: d.instructor_id
-                        });
+                // Initialize DataTable with AJAX loading
+                var table = $('#students-datatable').DataTable({
+                    processing: true,
+                    serverSide: false, // Change to false for initial implementation
+                    ajax: {
+                        url: '../ajax/instructors/get_students.php',
+                        type: 'POST',
+                        data: function(d) {
+                            // Get values from the filters
+                            var courseVal = $('#course-filter').val();
+                            var statusVal = $('#status-filter').val();
+                            var activityVal = $('#activity-filter').val();
+
+                            // Ensure we have proper data types
+                            d.course = courseVal ? parseInt(courseVal) : 0;
+                            d.status = statusVal ? String(statusVal).trim() : '';
+                            d.activity = activityVal ? String(activityVal).trim() : '';
+
+                            // Add instructor_id to the AJAX data
+                            d.instructor_id = <?php echo $instructor_id; ?>;
+
+                            // Log to console for debugging
+                            console.log('Sending filters to server:', {
+                                course: d.course,
+                                status: d.status,
+                                activity: d.activity,
+                                instructor_id: d.instructor_id
+                            });
+                        },
+                        error: function(xhr, error, thrown) {
+                            console.error('AJAX error:', error, thrown);
+                            showAlert('danger', 'Error loading student data. Please refresh the page.');
+                        }
                     },
-                    error: function(xhr, error, thrown) {
-                        console.error('AJAX error:', error, thrown);
-                        showAlert('danger', 'Error loading student data. Please refresh the page.');
-                    }
-                },
-                columns: [
-                    { 
-                        data: null,
-                        render: function(data, type, row) {
-                            return `
+                    columns: [{
+                            data: null,
+                            render: function(data, type, row) {
+                                return `
                                 <div class="d-flex align-items-center">
                                     <img src="${row.profile_pic ? '../Uploads/profile/' + row.profile_pic : 'assets/images/users/default.png'}" 
                                          alt="Profile" class="avatar-sm me-2">
@@ -539,29 +554,31 @@ $stmt->close();
                                     </div>
                                 </div>
                             `;
-                        }
-                    },
-                    { data: 'enrolled_courses' },
-                    { 
-                        data: 'enrolled_at',
-                        render: function(data) {
-                            return formatDate(data);
-                        }
-                    },
-                    { 
-                        data: 'last_activity',
-                        render: function(data) {
-                            return formatActivity(data);
-                        }
-                    },
-                    { 
-                        data: 'avg_completion',
-                        render: function(data) {
-                            const progress = parseFloat(data) || 0;
-                            const progressClass = progress < 30 ? 'bg-danger' : 
-                                                progress < 70 ? 'bg-warning' : 'bg-success';
-                            
-                            return `
+                            }
+                        },
+                        {
+                            data: 'enrolled_courses'
+                        },
+                        {
+                            data: 'enrolled_at',
+                            render: function(data) {
+                                return formatDate(data);
+                            }
+                        },
+                        {
+                            data: 'last_activity',
+                            render: function(data) {
+                                return formatActivity(data);
+                            }
+                        },
+                        {
+                            data: 'avg_completion',
+                            render: function(data) {
+                                const progress = parseFloat(data) || 0;
+                                const progressClass = progress < 30 ? 'bg-danger' :
+                                    progress < 70 ? 'bg-warning' : 'bg-success';
+
+                                return `
                                 <div class="progress" style="height: 8px;">
                                     <div class="progress-bar ${progressClass}" role="progressbar" 
                                          style="width: ${progress}%;" aria-valuenow="${progress}" 
@@ -569,34 +586,43 @@ $stmt->close();
                                 </div>
                                 <small class="text-muted">${progress.toFixed(1)}% complete</small>
                             `;
-                        }
-                    },
-                    { 
-                        data: 'quiz_avg',
-                        render: function(data) {
-                            const score = parseFloat(data) || 0;
-                            return score.toFixed(1) + '%';
-                        }
-                    },
-                    { 
-                        data: 'status',
-                        render: function(data) {
-                            let badgeClass = '';
-                            switch(data) {
-                                case 'Active': badgeClass = 'bg-success'; break;
-                                case 'Completed': badgeClass = 'bg-info'; break;
-                                case 'Expired': badgeClass = 'bg-warning'; break;
-                                case 'Suspended': badgeClass = 'bg-danger'; break;
-                                default: badgeClass = 'bg-secondary';
                             }
-                            return `<span class="badge ${badgeClass}">${data}</span>`;
-                        }
-                    },
-                    {
-                        data: null,
-                        orderable: false,
-                        render: function(data, type, row) {
-                            return `
+                        },
+                        {
+                            data: 'quiz_avg',
+                            render: function(data) {
+                                const score = parseFloat(data) || 0;
+                                return score.toFixed(1) + '%';
+                            }
+                        },
+                        {
+                            data: 'status',
+                            render: function(data) {
+                                let badgeClass = '';
+                                switch (data) {
+                                    case 'Active':
+                                        badgeClass = 'bg-success';
+                                        break;
+                                    case 'Completed':
+                                        badgeClass = 'bg-info';
+                                        break;
+                                    case 'Expired':
+                                        badgeClass = 'bg-warning';
+                                        break;
+                                    case 'Suspended':
+                                        badgeClass = 'bg-danger';
+                                        break;
+                                    default:
+                                        badgeClass = 'bg-secondary';
+                                }
+                                return `<span class="badge ${badgeClass}">${data}</span>`;
+                            }
+                        },
+                        {
+                            data: null,
+                            orderable: false,
+                            render: function(data, type, row) {
+                                return `
                                 <div class="btn-group">
                                     <a href="track-progress.php?student_id=${row.user_id}" class="btn btn-sm btn-primary btn-action">
                                         <i class="uil uil-chart-line"></i> Track
@@ -614,96 +640,96 @@ $stmt->close();
                                     </ul>
                                 </div>
                             `;
+                            }
                         }
+                    ],
+                    dom: 'Bfrtip',
+                    buttons: [{
+                            extend: 'copy',
+                            text: '<i class="uil uil-copy me-1"></i> Copy',
+                            className: 'btn btn-light btn-sm'
+                        },
+                        {
+                            extend: 'excel',
+                            text: '<i class="uil uil-file-excel me-1"></i> Excel',
+                            className: 'btn btn-light btn-sm'
+                        },
+                        {
+                            extend: 'pdf',
+                            text: '<i class="uil uil-file-pdf me-1"></i> PDF',
+                            className: 'btn btn-light btn-sm'
+                        },
+                        {
+                            extend: 'print',
+                            text: '<i class="uil uil-print me-1"></i> Print',
+                            className: 'btn btn-light btn-sm'
+                        }
+                    ],
+                    order: [
+                        [2, 'desc']
+                    ], // Sort by enrollment date by default
+                    pageLength: 10,
+                    lengthChange: false,
+                    language: {
+                        paginate: {
+                            previous: "<i class='mdi mdi-chevron-left'>",
+                            next: "<i class='mdi mdi-chevron-right'>"
+                        },
+                        emptyTable: "No students found for your courses"
+                    },
+                    drawCallback: function() {
+                        $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
                     }
-                ],
-                dom: 'Bfrtip',
-                buttons: [
-                    { 
-                        extend: 'copy', 
-                        text: '<i class="uil uil-copy me-1"></i> Copy',
-                        className: 'btn btn-light btn-sm' 
-                    },
-                    { 
-                        extend: 'excel', 
-                        text: '<i class="uil uil-file-excel me-1"></i> Excel',
-                        className: 'btn btn-light btn-sm' 
-                    },
-                    { 
-                        extend: 'pdf', 
-                        text: '<i class="uil uil-file-pdf me-1"></i> PDF',
-                        className: 'btn btn-light btn-sm' 
-                    },
-                    { 
-                        extend: 'print', 
-                        text: '<i class="uil uil-print me-1"></i> Print',
-                        className: 'btn btn-light btn-sm' 
-                    }
-                ],
-                order: [[2, 'desc']], // Sort by enrollment date by default
-                pageLength: 10,
-                lengthChange: false,
-                language: {
-                    paginate: {
-                        previous: "<i class='mdi mdi-chevron-left'>",
-                        next: "<i class='mdi mdi-chevron-right'>"
-                    },
-                    emptyTable: "No students found for your courses"
-                },
-                drawCallback: function() {
-                    $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
-                }
-            });
-            
-            // Filter handlers
-            $('#course-filter, #status-filter, #activity-filter').on('change', function() {
-                console.log('Filter changed:', this.id, 'New value:', $(this).val());
-                showOverlay('Loading students...');
-                table.ajax.reload(function() {
-                    removeOverlay();
                 });
-            });
-            
-            // Search box functionality
-            $('#students-datatable_filter input').unbind();
-            $('#students-datatable_filter input').bind('keyup', function(e) {
-                if(e.keyCode == 13) {
-                    table.search(this.value).draw();
-                }
-            });
-            <?php else: ?>
-            // Initialize a simple DataTable without AJAX if no students found
-            $('#students-datatable').DataTable({
-                dom: 'Bfrtip',
-                buttons: [
-                    { 
-                        extend: 'copy', 
-                        text: '<i class="uil uil-copy me-1"></i> Copy',
-                        className: 'btn btn-light btn-sm' 
-                    },
-                    { 
-                        extend: 'excel', 
-                        text: '<i class="uil uil-file-excel me-1"></i> Excel',
-                        className: 'btn btn-light btn-sm' 
-                    },
-                    { 
-                        extend: 'pdf', 
-                        text: '<i class="uil uil-file-pdf me-1"></i> PDF',
-                        className: 'btn btn-light btn-sm' 
-                    },
-                    { 
-                        extend: 'print', 
-                        text: '<i class="uil uil-print me-1"></i> Print',
-                        className: 'btn btn-light btn-sm' 
+
+                // Filter handlers
+                $('#course-filter, #status-filter, #activity-filter').on('change', function() {
+                    console.log('Filter changed:', this.id, 'New value:', $(this).val());
+                    showOverlay('Loading students...');
+                    table.ajax.reload(function() {
+                        removeOverlay();
+                    });
+                });
+
+                // Search box functionality
+                $('#students-datatable_filter input').unbind();
+                $('#students-datatable_filter input').bind('keyup', function(e) {
+                    if (e.keyCode == 13) {
+                        table.search(this.value).draw();
                     }
-                ],
-                language: {
-                    emptyTable: "No students found. Once students enroll in your courses, they will appear here."
-                }
-            });
+                });
+            <?php else: ?>
+                // Initialize a simple DataTable without AJAX if no students found
+                $('#students-datatable').DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [{
+                            extend: 'copy',
+                            text: '<i class="uil uil-copy me-1"></i> Copy',
+                            className: 'btn btn-light btn-sm'
+                        },
+                        {
+                            extend: 'excel',
+                            text: '<i class="uil uil-file-excel me-1"></i> Excel',
+                            className: 'btn btn-light btn-sm'
+                        },
+                        {
+                            extend: 'pdf',
+                            text: '<i class="uil uil-file-pdf me-1"></i> PDF',
+                            className: 'btn btn-light btn-sm'
+                        },
+                        {
+                            extend: 'print',
+                            text: '<i class="uil uil-print me-1"></i> Print',
+                            className: 'btn btn-light btn-sm'
+                        }
+                    ],
+                    language: {
+                        emptyTable: "No students found. Once students enroll in your courses, they will appear here."
+                    }
+                });
             <?php endif; ?>
         });
-        
+
         // Function to send message to student
         function sendMessage(userId) {
             // Show modal for messaging
@@ -711,20 +737,21 @@ $stmt->close();
             // For now, we'll just show an alert
             showAlert('success', 'Messaging functionality will be implemented soon!');
         }
-        
+
         // Function to export student progress data
         function exportProgress(userId) {
             showOverlay('Preparing student data...');
-            
+
             // Simulate AJAX call
             setTimeout(function() {
                 removeOverlay();
                 showAlert('success', 'Student progress data has been exported!');
             }, 1500);
-            
+
             // In production, this would be an actual AJAX call to a PHP script
             // that generates and serves the export file
         }
     </script>
 </body>
+
 </html>
