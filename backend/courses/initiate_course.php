@@ -56,7 +56,14 @@ if ($action === 'finalize') {
 }
 
 function handleStep($conn, $step, $department_id, $user_id) {
-    $input = json_decode(file_get_contents('php://input'), true);
+    // Check if it's a multipart/form-data request for file uploads
+    if (isset($_FILES['thumbnail']) && $step == 1) {
+        // For file uploads, data is in $_POST
+        $input = $_POST;
+    } else {
+        // For JSON data
+        $input = json_decode(file_get_contents('php://input'), true);
+    }
     
     if (!$input) {
         echo json_encode(['success' => false, 'message' => 'Invalid input data']);
@@ -65,6 +72,9 @@ function handleStep($conn, $step, $department_id, $user_id) {
     
     // Add debug logging
     error_log("Step: " . $step . ", Input: " . print_r($input, true));
+    if (isset($_FILES['thumbnail'])) {
+        error_log("Thumbnail file data: " . print_r($_FILES['thumbnail'], true));
+    }
     
     try {
         $conn->begin_transaction();
@@ -105,6 +115,39 @@ function saveStep1($conn, $data, $department_id) {
     foreach ($required as $field) {
         if (empty($data[$field])) {
             throw new Exception("Field '$field' is required");
+        }
+    }
+    
+    // Process thumbnail upload if present
+    $thumbnail_filename = null;
+    if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] == 0) {
+        // Validate file size (max 2MB)
+        if ($_FILES['thumbnail']['size'] > 2 * 1024 * 1024) {
+            throw new Exception("Thumbnail file size exceeds the 2MB limit");
+        }
+        
+        // Validate file type
+        $mime_type = mime_content_type($_FILES['thumbnail']['tmp_name']);
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!in_array($mime_type, $allowed_types)) {
+            throw new Exception("Invalid file type. Only JPG, JPEG, and PNG are allowed. Got: " . $mime_type);
+        }
+        
+        // Generate unique filename
+        $file_extension = pathinfo($_FILES['thumbnail']['name'], PATHINFO_EXTENSION);
+        $thumbnail_filename = 'course_' . time() . '_' . rand(1000, 9999) . '.' . $file_extension;
+        
+        // Create uploads directory if it doesn't exist
+        $upload_dir = '../../uploads/thumbnails/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        
+        $upload_path = $upload_dir . $thumbnail_filename;
+        
+        // Move the uploaded file
+        if (!move_uploaded_file($_FILES['thumbnail']['tmp_name'], $upload_path)) {
+            throw new Exception("Failed to upload thumbnail");
         }
     }
     
@@ -160,39 +203,73 @@ function saveStep1($conn, $data, $department_id) {
         throw new Exception("Price cannot be negative");
     }
     
-    // Create course entry
+    // Create course entry with thumbnail
     if (isset($data['course_id']) && $data['course_id']) {
         // Update existing course
-        $sql = "UPDATE courses 
-                SET title = ?, short_description = ?, subcategory_id = ?, course_level = ?, 
-                    price = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE course_id = ? AND department_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssdii", 
-            $data['title'], 
-            $data['short_description'], 
-            $data['subcategory_id'], 
-            $data['course_level'],
-            $price,
-            $data['course_id'],
-            $department_id
-        );
+        if ($thumbnail_filename) {
+            // If new thumbnail uploaded, update with it
+            $sql = "UPDATE courses 
+                    SET title = ?, short_description = ?, subcategory_id = ?, course_level = ?, 
+                        price = ?, thumbnail = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE course_id = ? AND department_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssssdsi", 
+                $data['title'], 
+                $data['short_description'], 
+                $data['subcategory_id'], 
+                $data['course_level'],
+                $price,
+                $thumbnail_filename,
+                $data['course_id'],
+                $department_id
+            );
+        } else {
+            // If no new thumbnail, don't update that field
+            $sql = "UPDATE courses 
+                    SET title = ?, short_description = ?, subcategory_id = ?, course_level = ?, 
+                        price = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE course_id = ? AND department_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssssdii", 
+                $data['title'], 
+                $data['short_description'], 
+                $data['subcategory_id'], 
+                $data['course_level'],
+                $price,
+                $data['course_id'],
+                $department_id
+            );
+        }
         $stmt->execute();
         $course_id = $data['course_id'];
+        
+        // Get current thumbnail filename if needed
+        if (!$thumbnail_filename) {
+            $query = "SELECT thumbnail FROM courses WHERE course_id = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $course_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            if ($row && !empty($row['thumbnail'])) {
+                $thumbnail_filename = $row['thumbnail'];
+            }
+        }
     } else {
-        // Create new course
+        // Create new course with thumbnail
         $sql = "INSERT INTO courses (department_id, title, short_description, subcategory_id, 
                 course_level, status, approval_status, certificate_enabled, 
-                creation_step, price) 
-                VALUES (?, ?, ?, ?, ?, 'Draft', 'pending', 0, 1, ?)";
+                creation_step, price, thumbnail) 
+                VALUES (?, ?, ?, ?, ?, 'Draft', 'pending', 0, 1, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("issssd", 
+        $stmt->bind_param("issssds", 
             $department_id,
             $data['title'], 
             $data['short_description'], 
             $data['subcategory_id'], 
             $data['course_level'],
-            $price
+            $price,
+            $thumbnail_filename
         );
         $stmt->execute();
         $course_id = $conn->insert_id;
@@ -210,7 +287,17 @@ function saveStep1($conn, $data, $department_id) {
         $settings_stmt->execute();
     }
     
-    return ['success' => true, 'course_id' => $course_id];
+    // Return the thumbnail URL for the frontend
+    $response = [
+        'success' => true, 
+        'course_id' => $course_id
+    ];
+    
+    if ($thumbnail_filename) {
+        $response['thumbnail_url'] = 'uploads/thumbnails/' . $thumbnail_filename;
+    }
+    
+    return $response;
 }
 
 function saveStep2($conn, $data, $department_id) {
@@ -230,17 +317,20 @@ function saveStep2($conn, $data, $department_id) {
         throw new Exception('Course not found or unauthorized');
     }
     
-    // Update course with full description in separate table
+    // Update course full description in courses table directly
     if (isset($data['full_description'])) {
-        $desc_sql = "INSERT INTO course_detailed_descriptions (course_id, description_content) 
-                    VALUES (?, ?) 
-                    ON DUPLICATE KEY UPDATE description_content = ?";
+        $desc_sql = "UPDATE courses SET full_description = ? WHERE course_id = ?";
         $desc_stmt = $conn->prepare($desc_sql);
-        $desc_stmt->bind_param("iss", $course_id, $data['full_description'], $data['full_description']);
+        $desc_stmt->bind_param("si", $data['full_description'], $course_id);
         $desc_stmt->execute();
+        
+        // Log if the update failed
+        if ($desc_stmt->affected_rows <= 0 && $desc_stmt->errno != 0) {
+            error_log("Failed to update full_description: " . $desc_stmt->error);
+        }
     }
     
-    // Clear existing outcomes and requirements - Fix these DELETE statements
+    // Clear existing outcomes and requirements
     $delete_outcomes = $conn->prepare("DELETE FROM course_learning_outcomes WHERE course_id = ?");
     $delete_outcomes->bind_param("i", $course_id);
     $delete_outcomes->execute();
@@ -376,7 +466,7 @@ function handleFinalize($conn, $user_id) {
         $conn->begin_transaction();
         
         // Validate course exists and belongs to user's department
-        $validate_sql = "SELECT c.course_id, c.title, c.department_id 
+        $validate_sql = "SELECT c.course_id, c.title, c.department_id, c.thumbnail 
                         FROM courses c
                         JOIN department_staff ds ON c.department_id = ds.department_id
                         WHERE c.course_id = ? AND ds.user_id = ? AND ds.role = 'head' 
@@ -427,7 +517,14 @@ function handleFinalize($conn, $user_id) {
         $log_stmt->execute();
         
         $conn->commit();
-        echo json_encode(['success' => true, 'message' => 'Course created successfully']);
+        
+        // Include thumbnail URL in response if it exists
+        $response = ['success' => true, 'message' => 'Course created successfully'];
+        if (!empty($course['thumbnail'])) {
+            $response['thumbnail_url'] = 'uploads/thumbnails/' . $course['thumbnail'];
+        }
+        
+        echo json_encode($response);
         
     } catch (Exception $e) {
         $conn->rollback();
