@@ -2,6 +2,8 @@
 // backend/courses/initiate_course.php
 
 // Add error logging
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 ini_set('log_errors', 1);
 ini_set('error_log', '../logs/php-error.log');
 
@@ -139,9 +141,13 @@ function saveStep1($conn, $data, $department_id) {
         
         // Create uploads directory if it doesn't exist
         $upload_dir = '../../uploads/thumbnails/';
-        if (!file_exists($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
+    //   $upload_dir = '../../uploads/course_thumbnails/';
+if (!file_exists($upload_dir)) {
+    if (!mkdir($upload_dir, 0755, true)) {
+        error_log("Failed to create directory: $upload_dir");
+        throw new Exception("Failed to create upload directory");
+    }
+}
         
         $upload_path = $upload_dir . $thumbnail_filename;
         
@@ -520,9 +526,11 @@ function handleFinalize($conn, $user_id) {
         
         // Include thumbnail URL in response if it exists
         $response = ['success' => true, 'message' => 'Course created successfully'];
-        if (!empty($course['thumbnail'])) {
-            $response['thumbnail_url'] = 'uploads/thumbnails/' . $course['thumbnail'];
-        }
+        // Add thumbnail URL if exists
+if ($course && !empty($course['thumbnail'])) {
+    $response['course']['thumbnail'] = $course['thumbnail'];
+    $response['course']['thumbnail_url'] = '../uploads/humbnails/' . $course['thumbnail'];
+}
         
         echo json_encode($response);
         

@@ -443,3 +443,177 @@ Stack trace:
     [course_id] => 167
 )
 
+[15-May-2025 18:25:34 UTC] Step: 1, Input: Array
+(
+    [title] => test 101
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => this is the short description
+    [has_thumbnail] => true
+    [course_id] => 161
+)
+
+[15-May-2025 18:25:34 UTC] Thumbnail file data: Array
+(
+    [name] => Mobile Web Development with JavaScript.jpg
+    [full_path] => Mobile Web Development with JavaScript.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpZlG5gR
+    [error] => 0
+    [size] => 57182
+)
+
+[15-May-2025 18:25:34 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:216
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(216): mysqli_stmt->bind_param('ssssdsi', 'test 101', 'this is the sho...', '88', 'Intermediate', 0.0, 'course_17473335...', '161', 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(84): saveStep1(Object(mysqli), Array, 5)
+#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '1', 5, 81)
+#3 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 216
+[15-May-2025 18:25:39 UTC] Step: 1, Input: Array
+(
+    [title] => test 101
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => this is the short description
+    [has_thumbnail] => true
+    [course_id] => 161
+)
+
+[15-May-2025 18:25:39 UTC] Thumbnail file data: Array
+(
+    [name] => Mobile Web Development with JavaScript.jpg
+    [full_path] => Mobile Web Development with JavaScript.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpw0B09Z
+    [error] => 0
+    [size] => 57182
+)
+
+[15-May-2025 18:25:39 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:216
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(216): mysqli_stmt->bind_param('ssssdsi', 'test 101', 'this is the sho...', '88', 'Intermediate', 0.0, 'course_17473335...', '161', 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(84): saveStep1(Object(mysqli), Array, 5)
+#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '1', 5, 81)
+#3 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 216
+[15-May-2025 18:25:57 UTC] Step: 1, Input: Array
+(
+    [title] => test 101
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => this is the short description
+    [has_thumbnail] => true
+    [course_id] => 161
+)
+
+[15-May-2025 18:25:57 UTC] Thumbnail file data: Array
+(
+    [name] => Mobile Web Development with JavaScript.jpg
+    [full_path] => Mobile Web Development with JavaScript.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpaUzUWO
+    [error] => 0
+    [size] => 57182
+)
+
+[15-May-2025 18:25:57 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:216
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(216): mysqli_stmt->bind_param('ssssdsi', 'test 101', 'this is the sho...', '88', 'Intermediate', 0.0, 'course_17473335...', '161', 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(84): saveStep1(Object(mysqli), Array, 5)
+#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '1', 5, 81)
+#3 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 216
+[15-May-2025 18:26:38 UTC] Step: 1, Input: Array
+(
+    [title] => test 101
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => this is the short description
+    [has_thumbnail] => true
+    [course_id] => 161
+)
+
+[15-May-2025 18:26:38 UTC] Thumbnail file data: Array
+(
+    [name] => Mobile Web Development with JavaScript.jpg
+    [full_path] => Mobile Web Development with JavaScript.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/php07HKiH
+    [error] => 0
+    [size] => 57182
+)
+
+[15-May-2025 18:26:38 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:216
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(216): mysqli_stmt->bind_param('ssssdsi', 'test 101', 'this is the sho...', '88', 'Intermediate', 0.0, 'course_17473335...', '161', 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(84): saveStep1(Object(mysqli), Array, 5)
+#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '1', 5, 81)
+#3 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 216
+[15-May-2025 18:33:57 UTC] Step: 1, Input: Array
+(
+    [title] => test 101
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => this is the short description
+    [has_thumbnail] => true
+    [course_id] => 161
+)
+
+[15-May-2025 18:33:57 UTC] Thumbnail file data: Array
+(
+    [name] => Mobile Web Development with JavaScript.jpg
+    [full_path] => Mobile Web Development with JavaScript.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/php5elaxZ
+    [error] => 0
+    [size] => 57182
+)
+
+[15-May-2025 18:33:57 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:220
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(220): mysqli_stmt->bind_param('ssssdsi', 'test 101', 'this is the sho...', '88', 'Intermediate', 0.0, 'course_17473340...', '161', 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(84): saveStep1(Object(mysqli), Array, 5)
+#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '1', 5, 81)
+#3 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 220
+[15-May-2025 18:41:19 UTC] Step: 1, Input: Array
+(
+    [title] => test 101
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => this is the short description
+    [has_thumbnail] => true
+    [course_id] => 161
+)
+
+[15-May-2025 18:41:19 UTC] Thumbnail file data: Array
+(
+    [name] => Mobile Web Development with JavaScript.jpg
+    [full_path] => Mobile Web Development with JavaScript.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpkAm0zF
+    [error] => 0
+    [size] => 57182
+)
+
+[15-May-2025 18:41:19 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:220
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(220): mysqli_stmt->bind_param('ssssdsi', 'test 101', 'this is the sho...', '88', 'Intermediate', 0.0, 'course_17473344...', '161', 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(84): saveStep1(Object(mysqli), Array, 5)
+#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(53): handleStep(Object(mysqli), '1', 5, 81)
+#3 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 220

@@ -62,6 +62,27 @@ while ($row = $levels_result->fetch_assoc()) {
 $stats = getCourseStats($department_id);
 ?>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<style>
+    /* Fix dropdown positioning issues */
+.dropdown-fixed .dropdown-menu {
+    position: absolute !important;
+    z-index: 1050 !important;
+}
+
+.dropdown-fixed {
+    position: static;
+}
+
+/* Ensure proper dropdown display */
+.card .dropdown-menu {
+    min-width: 160px;
+    z-index: 1050;
+}
+</style>
+
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -296,6 +317,7 @@ $stats = getCourseStats($department_id);
 
 <!-- All Course Modals -->
 <?php renderAllCourseModals(); ?>
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
 
 <!-- Add custom styles -->
 <style>
@@ -595,27 +617,45 @@ $stats = getCourseStats($department_id);
                 limit: perPage
             });
             
-            fetch(`../ajax/department/search_courses.php?${params.toString()}`)
-                .then(response => response.json())
-                .then(data => {
-                    hideLoading();
+            fetch(`../ajax/department/search_courses.php?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                
+                if (data.success) {
+                    updateView(data.html);
+                    updateCourseCount(data.count);
+                    updatePagination(data.current_page, data.total_pages, data.total_count);
+                    updateNoResultsState(data.count === 0);
                     
-                    if (data.success) {
-                        updateView(data.html);
-                        updateCourseCount(data.count);
-                        updatePagination(data.current_page, data.total_pages, data.total_count);
-                        updateNoResultsState(data.count === 0);
-                        
-                        // Re-initialize tooltips for new content
-                        initializeTooltips();
-                    } else {
-                        showError(data.message || 'Failed to load courses');
-                    }
-                })
-                .catch(error => {
-                    hideLoading();
-                    showError('Error loading courses: ' + error.message);
-                });
+                    // Re-initialize tooltips for new content
+                    initializeTooltips();
+                    
+                    // Initialize dropdowns
+                    initializeDropdowns();
+                    
+                    // Dispatch event for other listeners
+                    document.dispatchEvent(new CustomEvent('course-cards-updated'));
+                } else {
+                    showError(data.message || 'Failed to load courses');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showError('Error loading courses: ' + error.message);
+                console.error('AJAX Error:', error);
+            });
         }
         
         function filterCourses() {
@@ -735,7 +775,30 @@ $stats = getCourseStats($department_id);
             }
         }
         
-        // Course actions handler - CORRECTED
+        // Initialize dropdowns with proper configuration
+        function initializeDropdowns() {
+            const dropdownElements = document.querySelectorAll('.dropdown-fixed .btn[data-bs-toggle="dropdown"]');
+            dropdownElements.forEach(dropdown => {
+                // Clean up any existing dropdown initialization
+                try {
+                    const dropdownInstance = bootstrap.Dropdown.getInstance(dropdown);
+                    if (dropdownInstance) {
+                        dropdownInstance.dispose();
+                    }
+                } catch (e) {
+                    // Ignore errors if no instance exists
+                }
+                
+                // Create new dropdown instance with proper configuration
+                new bootstrap.Dropdown(dropdown, {
+                    boundary: 'viewport',
+                    reference: 'toggle',
+                    display: 'static'
+                });
+            });
+        }
+        
+        // Course actions handler
         function handleCourseAction(e) {
             const actionElement = e.target.closest('[data-action]');
             if (!actionElement) return;
@@ -928,7 +991,13 @@ $stats = getCourseStats($department_id);
         }
         
         function showLoading() {
-            // Simple loading overlay
+            // Use the existing showOverlay function if it exists
+            if (typeof window.showOverlay === 'function') {
+                window.showOverlay('Loading courses...');
+                return;
+            }
+
+            // Fallback to creating a simple loading overlay
             const overlay = document.createElement('div');
             overlay.id = 'loadingOverlay';
             overlay.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
@@ -943,6 +1012,13 @@ $stats = getCourseStats($department_id);
         }
         
         function hideLoading() {
+            // Use the existing removeOverlay function if it exists
+            if (typeof window.removeOverlay === 'function') {
+                window.removeOverlay();
+                return;
+            }
+
+            // Fallback to removing the simple loading overlay
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) {
                 overlay.remove();

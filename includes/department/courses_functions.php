@@ -373,4 +373,49 @@ function getCourseProgress($course_id) {
         'progress_percentage' => 0
     ];
 }
+
+function getCourseStatusBadgeClass($status, $approval_status) {
+    if ($status === 'Published') {
+        return 'success';
+    }
+    
+    switch ($approval_status) {
+        case 'approved':
+            return 'success';
+        case 'pending':
+            return 'warning';
+        case 'submitted_for_review':
+        case 'under_review':
+            return 'info';
+        case 'revisions_requested':
+            return 'primary';
+        case 'rejected':
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+}
+
+function getCourseStatusLabel($status, $approval_status) {
+    if ($status === 'Published') {
+        return 'Published';
+    }
+    
+    switch ($approval_status) {
+        case 'approved':
+            return 'Approved';
+        case 'pending':
+            return 'Draft';
+        case 'submitted_for_review':
+            return 'Submitted';
+        case 'under_review':
+            return 'Under Review';
+        case 'revisions_requested':
+            return 'Revisions Needed';
+        case 'rejected':
+            return 'Rejected';
+        default:
+            return 'Draft';
+    }
+}
 ?>
