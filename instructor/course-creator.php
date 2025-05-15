@@ -4,6 +4,10 @@
 require '../backend/session_start.php'; // Ensure session is started
 require '../backend/config.php'; // Ensure session is started
 
+// Check if the user is signed in and has the 'ins<?php
+require '../backend/session_start.php'; // Ensure session is started
+require '../backend/config.php'; // Ensure session is started
+
 // Check if the user is signed in and has the 'instructor' role
 if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['role'] !== 'instructor') {
     // Log unauthorized access attempt for security auditing
@@ -14,6 +18,23 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     exit;
 }
 
+// Get instructor ID if not already in session
+if (!isset($_SESSION['instructor_id'])) {
+    $stmt = $conn->prepare("SELECT instructor_id FROM instructors WHERE user_id = ?");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $instructor = $result->fetch_assoc();
+        $_SESSION['instructor_id'] = $instructor['instructor_id'];
+    } else {
+        // Redirect if not an instructor
+        header('Location: index.php');
+        exit;
+    }
+    $stmt->close();
+}
 
 // Initialize course_id from URL parameter or session
 $course_id = isset($_GET['course_id']) ? intval($_GET['course_id']) : (isset($_SESSION['current_course_id']) ? $_SESSION['current_course_id'] : 0);
@@ -27,18 +48,24 @@ if ($course_id <= 0) {
 // Store course_id in session for persistence
 $_SESSION['current_course_id'] = $course_id;
 
-// Fetch current course data and step
-$stmt = $conn->prepare("SELECT * FROM courses WHERE course_id = ? AND instructor_id = ?");
+// Fetch current course data and step - UPDATED QUERY to use course_instructors table
+$stmt = $conn->prepare("
+    SELECT c.* 
+    FROM courses c
+    JOIN course_instructors ci ON c.course_id = ci.course_id
+    WHERE c.course_id = ? AND ci.instructor_id = ? AND c.deleted_at IS NULL
+");
 $stmt->bind_param("ii", $course_id, $_SESSION['instructor_id']);
 $stmt->execute();
-$course = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+$result = $stmt->get_result();
 
-// If course doesn't exist or doesn't belong to this instructor, redirect
-if (!$course) {
+if ($result->num_rows === 0) {
     header('Location: index.php');
     exit;
 }
+
+$course = $result->fetch_assoc();
+$stmt->close();
 
 // Get current step from course creation_step field (defaulting to 1 if not set)
 $current_step = isset($course['creation_step']) ? intval($course['creation_step']) : 1;
