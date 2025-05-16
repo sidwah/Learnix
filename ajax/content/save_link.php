@@ -1,4 +1,5 @@
 <?php
+//ajax/content/save_link.php
 require '../../backend/session_start.php';
 require '../../backend/config.php';
 
@@ -19,6 +20,8 @@ $title = trim($_POST['title']);
 $external_url = trim($_POST['external_url']);
 $description = isset($_POST['description']) ? trim($_POST['description']) : '';
 $content_id = isset($_POST['content_id']) ? intval($_POST['content_id']) : 0;
+$instructor_id = $_SESSION['instructor_id'];
+$user_id = $_SESSION['user_id'];
 
 // Validate input
 if (empty($title)) {
@@ -37,21 +40,29 @@ if (!filter_var($external_url, FILTER_VALIDATE_URL)) {
     exit;
 }
 
-// Verify that the topic belongs to a section of a course owned by the current instructor
+// Verify that the topic belongs to a section of a course assigned to the current instructor
 $stmt = $conn->prepare("
-    SELECT st.section_id, cs.course_id, c.instructor_id 
-    FROM section_topics st
-    JOIN course_sections cs ON st.section_id = cs.section_id
-    JOIN courses c ON cs.course_id = c.course_id
-    WHERE st.topic_id = ?
+    SELECT 
+        st.section_id, 
+        cs.course_id
+    FROM 
+        section_topics st
+    JOIN 
+        course_sections cs ON st.section_id = cs.section_id
+    JOIN 
+        course_instructors ci ON cs.course_id = ci.course_id
+    WHERE 
+        st.topic_id = ? AND
+        ci.instructor_id = ? AND
+        ci.deleted_at IS NULL
 ");
-$stmt->bind_param("i", $topic_id);
+$stmt->bind_param("ii", $topic_id, $instructor_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $topic_data = $result->fetch_assoc();
 $stmt->close();
 
-if (!$topic_data || $topic_data['instructor_id'] != $_SESSION['instructor_id']) {
+if (!$topic_data) {
     echo json_encode(['success' => false, 'message' => 'Topic not found or not authorized']);
     exit;
 }
@@ -100,7 +111,7 @@ try {
                 $current_content['external_url'],
                 $current_content['description'],
                 $current_content['position'],
-                $_SESSION['user_id']
+                $user_id
             );
             $stmt->execute();
             $stmt->close();
@@ -109,10 +120,11 @@ try {
         // Update existing content
         $stmt = $conn->prepare("
             UPDATE topic_content
-            SET title = ?, external_url = ?, description = ?, updated_at = NOW()
+            SET title = ?, external_url = ?, description = ?, 
+                updated_at = NOW(), updated_by = ?
             WHERE content_id = ? AND topic_id = ?
         ");
-        $stmt->bind_param("sssii", $title, $external_url, $description, $content_id, $topic_id);
+        $stmt->bind_param("sssiii", $title, $external_url, $description, $user_id, $content_id, $topic_id);
         $stmt->execute();
         $stmt->close();
         
@@ -141,10 +153,10 @@ try {
         // Create new content
         $stmt = $conn->prepare("
             INSERT INTO topic_content 
-            (topic_id, content_type, title, external_url, description, position, created_at)
-            VALUES (?, 'link', ?, ?, ?, 0, NOW())
+            (topic_id, content_type, title, external_url, description, position, created_at, created_by)
+            VALUES (?, 'link', ?, ?, ?, 0, NOW(), ?)
         ");
-        $stmt->bind_param("isss", $topic_id, $title, $external_url, $description);
+        $stmt->bind_param("isssi", $topic_id, $title, $external_url, $description, $user_id);
         $stmt->execute();
         $new_content_id = $stmt->insert_id;
         $stmt->close();

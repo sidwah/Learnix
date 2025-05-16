@@ -1,4 +1,5 @@
 <?php
+//ajax/assessments/delete_quiz.php
 // Include session and authentication check
 require '../../backend/session_start.php';
 
@@ -32,27 +33,36 @@ try {
     }
 
     $quiz_id = intval($_POST['quiz_id']);
+    $instructor_id = $_SESSION['instructor_id'];
     
-    // Verify instructor's access to the quiz
-    $access_check_query = "SELECT sq.quiz_id, sq.section_id, cs.course_id, c.instructor_id 
-                          FROM section_quizzes sq
-                          JOIN course_sections cs ON sq.section_id = cs.section_id
-                          JOIN courses c ON cs.course_id = c.course_id
-                          WHERE sq.quiz_id = ?";
+    // Verify instructor's access to the quiz using course_instructors table
+    $access_check_query = "
+        SELECT 
+            sq.quiz_id, 
+            sq.section_id, 
+            cs.course_id 
+        FROM 
+            section_quizzes sq
+        JOIN 
+            course_sections cs ON sq.section_id = cs.section_id
+        JOIN 
+            course_instructors ci ON cs.course_id = ci.course_id
+        WHERE 
+            sq.quiz_id = ? AND
+            ci.instructor_id = ? AND
+            ci.deleted_at IS NULL
+    ";
                           
     $stmt = $conn->prepare($access_check_query);
-    $stmt->bind_param("i", $quiz_id);
+    $stmt->bind_param("ii", $quiz_id, $instructor_id);
     $stmt->execute();
     $access_result = $stmt->get_result();
     
     if ($access_result->num_rows === 0) {
-        throw new Exception('Quiz not found');
+        throw new Exception('Quiz not found or you do not have permission to delete it');
     }
     
     $access_data = $access_result->fetch_assoc();
-    if ($access_data['instructor_id'] != $_SESSION['instructor_id']) {
-        throw new Exception('You do not have permission to delete this quiz');
-    }
     $stmt->close();
     
     // Start transaction

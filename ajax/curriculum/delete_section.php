@@ -1,4 +1,5 @@
 <?php
+//ajax/curriculum/delete_section.php
 require '../../backend/session_start.php';
 require '../../backend/config.php';
 
@@ -15,21 +16,24 @@ if (!isset($_POST['section_id'])) {
 }
 
 $section_id = intval($_POST['section_id']);
+$instructor_id = $_SESSION['instructor_id'];
 
-// Verify that the section belongs to a course owned by the current instructor
+// Verify that the section belongs to a course assigned to the current instructor
 $stmt = $conn->prepare("
-    SELECT cs.course_id, c.instructor_id 
+    SELECT cs.course_id 
     FROM course_sections cs
-    JOIN courses c ON cs.course_id = c.course_id
+    JOIN course_instructors ci ON cs.course_id = ci.course_id
     WHERE cs.section_id = ?
+    AND ci.instructor_id = ? 
+    AND ci.deleted_at IS NULL
 ");
-$stmt->bind_param("i", $section_id);
+$stmt->bind_param("ii", $section_id, $instructor_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $section_data = $result->fetch_assoc();
 $stmt->close();
 
-if (!$section_data || $section_data['instructor_id'] != $_SESSION['instructor_id']) {
+if (!$section_data) {
     echo json_encode(['success' => false, 'message' => 'Section not found or not authorized']);
     exit;
 }
@@ -133,17 +137,16 @@ try {
     $stmt->close();
     
     // Reorder remaining sections
-  // Replace the SQL position reordering with this:
-$conn->query("SET @pos = 0");
-$stmt = $conn->prepare("
-    UPDATE course_sections 
-    SET position = (@pos := @pos + 1) 
-    WHERE course_id = ? 
-    ORDER BY position
-");
-$stmt->bind_param("i", $section_data['course_id']);
-$stmt->execute();
-$stmt->close();
+    $conn->query("SET @pos = 0");
+    $stmt = $conn->prepare("
+        UPDATE course_sections 
+        SET position = (@pos := @pos + 1) 
+        WHERE course_id = ? 
+        ORDER BY position
+    ");
+    $stmt->bind_param("i", $section_data['course_id']);
+    $stmt->execute();
+    $stmt->close();
     
     // Commit transaction
     $conn->commit();

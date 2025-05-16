@@ -1,4 +1,5 @@
 <?php
+//ajax/content/delete_resource.php
 require '../../backend/session_start.php';
 require '../../backend/config.php';
 
@@ -16,22 +17,31 @@ if (!isset($_POST['topic_id']) || !isset($_POST['resource_id'])) {
 
 $topic_id = intval($_POST['topic_id']);
 $resource_id = intval($_POST['resource_id']);
+$instructor_id = $_SESSION['instructor_id'];
 
-// Verify that the topic belongs to a section of a course owned by the current instructor
+// Verify that the topic belongs to a section of a course assigned to the current instructor
 $stmt = $conn->prepare("
-    SELECT st.section_id, cs.course_id, c.instructor_id 
-    FROM section_topics st
-    JOIN course_sections cs ON st.section_id = cs.section_id
-    JOIN courses c ON cs.course_id = c.course_id
-    WHERE st.topic_id = ?
+    SELECT 
+        st.section_id, 
+        cs.course_id
+    FROM 
+        section_topics st
+    JOIN 
+        course_sections cs ON st.section_id = cs.section_id
+    JOIN 
+        course_instructors ci ON cs.course_id = ci.course_id
+    WHERE 
+        st.topic_id = ? AND
+        ci.instructor_id = ? AND
+        ci.deleted_at IS NULL
 ");
-$stmt->bind_param("i", $topic_id);
+$stmt->bind_param("ii", $topic_id, $instructor_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $topic_data = $result->fetch_assoc();
 $stmt->close();
 
-if (!$topic_data || $topic_data['instructor_id'] != $_SESSION['instructor_id']) {
+if (!$topic_data) {
     echo json_encode(['success' => false, 'message' => 'Topic not found or not authorized']);
     exit;
 }

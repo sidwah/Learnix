@@ -1,4 +1,5 @@
 <?php
+//ajax/curriculum/update_order.php
 require '../../backend/session_start.php';
 require '../../backend/config.php';
 
@@ -38,18 +39,29 @@ if ($type === 'section') {
     
     $course_id = intval($_POST['course_id']);
     
-    // Verify that the course belongs to the current instructor
-    $stmt = $conn->prepare("SELECT instructor_id FROM courses WHERE course_id = ?");
-    $stmt->bind_param("i", $course_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $course = $result->fetch_assoc();
-    $stmt->close();
-    
-    if (!$course || $course['instructor_id'] != $_SESSION['instructor_id']) {
-        echo json_encode(['success' => false, 'message' => 'Course not found or not authorized']);
-        exit;
-    }
+   // Verify that the course belongs to the current instructor
+$stmt = $conn->prepare("
+    SELECT 
+        ci.instructor_id,
+        ci.is_primary
+    FROM 
+        courses c
+    JOIN 
+        course_instructors ci ON c.course_id = ci.course_id
+    WHERE 
+        c.course_id = ? AND
+        ci.instructor_id = ?
+");
+$stmt->bind_param("ii", $course_id, $_SESSION['instructor_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+$course = $result->fetch_assoc();
+$stmt->close();
+
+if (!$course) {
+    echo json_encode(['success' => false, 'message' => 'Course not found or not authorized']);
+    exit;
+}
     
     // Start transaction
     $conn->begin_transaction();
@@ -97,23 +109,32 @@ else if ($type === 'topic') {
     
     $section_id = intval($_POST['section_id']);
     
-    // Verify that the section belongs to a course owned by the current instructor
-    $stmt = $conn->prepare("
-        SELECT cs.course_id, c.instructor_id 
-        FROM course_sections cs
-        JOIN courses c ON cs.course_id = c.course_id
-        WHERE cs.section_id = ?
-    ");
-    $stmt->bind_param("i", $section_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $section_data = $result->fetch_assoc();
-    $stmt->close();
-    
-    if (!$section_data || $section_data['instructor_id'] != $_SESSION['instructor_id']) {
-        echo json_encode(['success' => false, 'message' => 'Section not found or not authorized']);
-        exit;
-    }
+// Verify that the section belongs to a course owned by the current instructor
+$stmt = $conn->prepare("
+    SELECT 
+        cs.course_id, 
+        ci.instructor_id,
+        ci.is_primary
+    FROM 
+        course_sections cs
+    JOIN 
+        courses c ON cs.course_id = c.course_id
+    LEFT JOIN 
+        course_instructors ci ON c.course_id = ci.course_id
+    WHERE 
+        cs.section_id = ? AND
+        ci.instructor_id = ?
+");
+$stmt->bind_param("ii", $section_id, $_SESSION['instructor_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+$section_data = $result->fetch_assoc();
+$stmt->close();
+
+if (!$section_data) {
+    echo json_encode(['success' => false, 'message' => 'Section not found or not authorized']);
+    exit;
+}
     
     // Start transaction
     $conn->begin_transaction();

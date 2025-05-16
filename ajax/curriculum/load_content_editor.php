@@ -1,4 +1,5 @@
 <?php
+//ajax/curriculum/load_content_editor.php
 require '../../backend/session_start.php';
 require '../../backend/config.php';
 
@@ -18,11 +19,23 @@ $topic_id = intval($_GET['topic_id']);
 
 // Verify that the topic belongs to a section of a course owned by the current instructor
 $stmt = $conn->prepare("
-    SELECT st.topic_id, st.title, st.section_id, cs.course_id, c.instructor_id 
-    FROM section_topics st
-    JOIN course_sections cs ON st.section_id = cs.section_id
-    JOIN courses c ON cs.course_id = c.course_id
-    WHERE st.topic_id = ?
+    SELECT 
+        st.topic_id, 
+        st.title, 
+        st.section_id, 
+        cs.course_id, 
+        ci.instructor_id,
+        ci.is_primary
+    FROM 
+        section_topics st
+    JOIN 
+        course_sections cs ON st.section_id = cs.section_id
+    JOIN 
+        courses c ON cs.course_id = c.course_id
+    LEFT JOIN 
+        course_instructors ci ON c.course_id = ci.course_id
+    WHERE 
+        st.topic_id = ?
 ");
 $stmt->bind_param("i", $topic_id);
 $stmt->execute();

@@ -1,4 +1,5 @@
 <?php
+//ajax/assessments/delete_question.php
 // Include session and authentication check
 require '../../backend/session_start.php';
 
@@ -32,28 +33,28 @@ try {
     }
 
     $question_id = intval($_POST['question_id']);
+    $instructor_id = $_SESSION['instructor_id'];
     
-    // Verify instructor's access to the question
-    $access_check_query = "SELECT qq.quiz_id, sq.section_id, cs.course_id, c.instructor_id 
+    // Verify instructor's access to the question using course_instructors
+    $access_check_query = "SELECT qq.quiz_id, sq.section_id, cs.course_id 
                            FROM quiz_questions qq
                            JOIN section_quizzes sq ON qq.quiz_id = sq.quiz_id
                            JOIN course_sections cs ON sq.section_id = cs.section_id
-                           JOIN courses c ON cs.course_id = c.course_id
-                           WHERE qq.question_id = ?";
+                           JOIN course_instructors ci ON cs.course_id = ci.course_id
+                           WHERE qq.question_id = ?
+                           AND ci.instructor_id = ?
+                           AND ci.deleted_at IS NULL";
                            
     $stmt = $conn->prepare($access_check_query);
-    $stmt->bind_param("i", $question_id);
+    $stmt->bind_param("ii", $question_id, $instructor_id);
     $stmt->execute();
     $access_result = $stmt->get_result();
     
     if ($access_result->num_rows === 0) {
-        throw new Exception('Question not found');
+        throw new Exception('Question not found or you do not have permission to delete it');
     }
     
     $access_data = $access_result->fetch_assoc();
-    if ($access_data['instructor_id'] != $_SESSION['instructor_id']) {
-        throw new Exception('You do not have permission to delete this question');
-    }
     $stmt->close();
     
     // Start transaction
