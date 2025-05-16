@@ -19,13 +19,15 @@ $quiz_id = intval($_GET['quiz_id']);
 // Connect to database
 require_once '../../backend/config.php';
 
-// Verify instructor's access to this quiz
+// Verify instructor's access to this quiz - FIXED: Using course_instructors junction table instead
 $instructor_id = $_SESSION['instructor_id'];
 $access_check_query = "SELECT sq.quiz_id 
                        FROM section_quizzes sq 
                        JOIN course_sections cs ON sq.section_id = cs.section_id 
-                       JOIN courses c ON cs.course_id = c.course_id 
-                       WHERE sq.quiz_id = ? AND c.instructor_id = ?";
+                       JOIN course_instructors ci ON cs.course_id = ci.course_id 
+                       WHERE sq.quiz_id = ? 
+                       AND ci.instructor_id = ?
+                       AND ci.deleted_at IS NULL";
 $stmt = $conn->prepare($access_check_query);
 $stmt->bind_param("ii", $quiz_id, $instructor_id);
 $stmt->execute();

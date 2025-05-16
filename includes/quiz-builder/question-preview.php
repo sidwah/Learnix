@@ -19,12 +19,11 @@ if (!$question_id) {
 // Connect to database
 require_once '../../backend/config.php';
 
-// Query to get the question details
-$question_query = "SELECT qq.*, sq.section_id, sq.quiz_title, sq.show_correct_answers, cs.course_id, c.instructor_id 
+// FIXED: Query to get the question details - properly using course_instructors junction table
+$question_query = "SELECT qq.*, sq.section_id, sq.quiz_title, sq.show_correct_answers, cs.course_id
                  FROM quiz_questions qq
                  JOIN section_quizzes sq ON qq.quiz_id = sq.quiz_id
                  JOIN course_sections cs ON sq.section_id = cs.section_id
-                 JOIN courses c ON cs.course_id = c.course_id
                  WHERE qq.question_id = ?";
                  
 $stmt = $conn->prepare($question_query);
@@ -40,11 +39,25 @@ if ($question_result->num_rows === 0) {
 $question = $question_result->fetch_assoc();
 $stmt->close();
 
-// Verify instructor's access to this question
-if ($question['instructor_id'] != $_SESSION['instructor_id']) {
+// FIXED: Verify instructor's access to this question using course_instructors
+$instructor_id = $_SESSION['instructor_id'];
+$course_id = $question['course_id'];
+
+$access_check_query = "SELECT ci.course_id 
+                       FROM course_instructors ci
+                       WHERE ci.course_id = ? 
+                       AND ci.instructor_id = ?
+                       AND ci.deleted_at IS NULL";
+$stmt = $conn->prepare($access_check_query);
+$stmt->bind_param("ii", $course_id, $instructor_id);
+$stmt->execute();
+$access_result = $stmt->get_result();
+
+if ($access_result->num_rows === 0) {
     echo '<div class="alert alert-danger">You do not have permission to view this question</div>';
     exit;
 }
+$stmt->close();
 
 // Get answers for this question
 $answers_query = "SELECT * FROM quiz_answers WHERE question_id = ? ORDER BY answer_id";

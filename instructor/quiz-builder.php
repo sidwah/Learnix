@@ -23,21 +23,30 @@ if (!isset($_GET['course_id']) || !isset($_GET['section_id'])) {
 $course_id = intval($_GET['course_id']);
 $section_id = intval($_GET['section_id']);
 
-// Verify the instructor has access to this course
+// Verify the instructor has access to this course - FIXED: Using the course_instructors junction table
 $instructor_id = $_SESSION['instructor_id'];
-$course_check_query = "SELECT c.* FROM courses c 
-                       WHERE c.course_id = ? AND c.instructor_id = ?";
+$course_check_query = "SELECT ci.course_id 
+                       FROM course_instructors ci
+                       WHERE ci.course_id = ? 
+                       AND ci.instructor_id = ?
+                       AND ci.deleted_at IS NULL";
 $stmt = $conn->prepare($course_check_query);
 $stmt->bind_param("ii", $course_id, $instructor_id);
 $stmt->execute();
 $course_result = $stmt->get_result();
 
 if ($course_result->num_rows === 0) {
-    // Course not found or not owned by this instructor
+    // Course not found or not authorized for this instructor
     header('Location: index.php');
     exit;
 }
 
+// After verifying authorization, get course details if needed
+$course_details_query = "SELECT c.* FROM courses c WHERE c.course_id = ?";
+$stmt = $conn->prepare($course_details_query);
+$stmt->bind_param("i", $course_id);
+$stmt->execute();
+$course_result = $stmt->get_result();
 $course = $course_result->fetch_assoc();
 $stmt->close();
 
@@ -206,10 +215,11 @@ $page_title = $quiz ? 'Edit Quiz' : 'Create Quiz';
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="quizInstructions" class="form-label">Instructions for Students</label>
+                                            <label for="quizInstructions" class="form-label">Instructions for Students: <?php // echo $quiz ? htmlspecialchars($quiz['description']) : ''; ?></label>
                                             <textarea class="form-control" id="quizInstructions" name="quizInstructions" rows="3"
-                                                placeholder="e.g., Read each question carefully and select the best answer."><?php echo $quiz ? htmlspecialchars($quiz['instruction']) : ''; ?></textarea>
-                                        </div>
+                                                placeholder="e.g., Read each question carefully and select the best answer."><?php echo $quiz ? htmlspecialchars($quiz['description']) : ''; ?></textarea>
+                                            </div>
+                                            <!-- placeholder="e.g., Read each question carefully and select the best answer."><?php //echo $quiz ? htmlspecialchars($quiz['instruction']) : ''; ?></textarea> -->
 
                                         <div class="row">
                                             <div class="col-md-6">

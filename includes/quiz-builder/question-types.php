@@ -21,6 +21,45 @@ $question_id = isset($_GET['question_id']) ? intval($_GET['question_id']) : null
 // Connect to database
 require_once '../../backend/config.php';
 
+// ADDED: Verify instructor has access to this quiz through course_instructors
+$instructor_id = $_SESSION['instructor_id'];
+
+// Get the course_id for this quiz
+$course_query = "SELECT cs.course_id 
+                FROM section_quizzes sq 
+                JOIN course_sections cs ON sq.section_id = cs.section_id 
+                WHERE sq.quiz_id = ?";
+$stmt = $conn->prepare($course_query);
+$stmt->bind_param("i", $quiz_id);
+$stmt->execute();
+$course_result = $stmt->get_result();
+
+if ($course_result->num_rows === 0) {
+    echo '<div class="alert alert-danger">Quiz not found</div>';
+    exit;
+}
+
+$course_data = $course_result->fetch_assoc();
+$course_id = $course_data['course_id'];
+$stmt->close();
+
+// Check if instructor is assigned to this course
+$access_check_query = "SELECT ci.course_id 
+                      FROM course_instructors ci 
+                      WHERE ci.course_id = ? 
+                      AND ci.instructor_id = ?
+                      AND ci.deleted_at IS NULL";
+$stmt = $conn->prepare($access_check_query);
+$stmt->bind_param("ii", $course_id, $instructor_id);
+$stmt->execute();
+$access_result = $stmt->get_result();
+
+if ($access_result->num_rows === 0) {
+    echo '<div class="alert alert-danger">You do not have access to this quiz</div>';
+    exit;
+}
+$stmt->close();
+
 // Variables for editing
 $question_data = null;
 $answers_data = [];
@@ -241,3 +280,4 @@ if ($question_type === 'multiple_choice') {
     // Unsupported question type
     echo '<div class="alert alert-danger">Unsupported question type</div>';
 }
+?>
