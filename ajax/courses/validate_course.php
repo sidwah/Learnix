@@ -11,8 +11,14 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 // Get course_id from POST
 $course_id = isset($_POST['course_id']) ? intval($_POST['course_id']) : 0;
 
-// Validate course ownership
-$stmt = $conn->prepare("SELECT course_id FROM courses WHERE course_id = ? AND instructor_id = ?");
+// FIXED: Validate course access using course_instructors junction table
+$stmt = $conn->prepare("
+    SELECT ci.course_id 
+    FROM course_instructors ci
+    WHERE ci.course_id = ? 
+    AND ci.instructor_id = ?
+    AND ci.deleted_at IS NULL
+");
 $stmt->bind_param("ii", $course_id, $_SESSION['instructor_id']);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -21,6 +27,7 @@ if ($result->num_rows === 0) {
     echo json_encode(['success' => false, 'message' => 'Course not found or you do not have permission']);
     exit;
 }
+$stmt->close();
 
 // Initialize validation response
 $validation = [

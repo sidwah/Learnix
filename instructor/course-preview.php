@@ -19,19 +19,36 @@ if ($course_id === 0) {
 // Include database connection
 require_once '../backend/config.php';
 
-// Fetch course details
+// Get instructor_id from session
+$instructor_id = $_SESSION['instructor_id'];
+
+// FIXED: Check if instructor has access to this course using course_instructors junction table
+$access_query = "SELECT c.course_id, c.title 
+                FROM courses c
+                JOIN course_instructors ci ON c.course_id = ci.course_id
+                WHERE c.course_id = ? 
+                AND ci.instructor_id = ?
+                AND ci.deleted_at IS NULL";
+$stmt = $conn->prepare($access_query);
+$stmt->bind_param("ii", $course_id, $instructor_id);
+$stmt->execute();
+$access_result = $stmt->get_result();
+$has_access = ($access_result->num_rows > 0);
+$stmt->close();
+
+// If course not found or instructor doesn't have access
+if (!$has_access) {
+    header('Location: index.php');
+    exit;
+}
+
+// Now fetch the course details
 $query = "SELECT * FROM courses WHERE course_id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $course_id);
 $stmt->execute();
 $course = $stmt->get_result()->fetch_assoc();
 $stmt->close();
-
-// If course not found or doesn't belong to this instructor
-if (!$course || $course['instructor_id'] != $_SESSION['instructor_id']) {
-    header('Location: index.php');
-    exit;
-}
 
 // Set page title
 $page_title = "Preview: " . htmlspecialchars($course['title']);

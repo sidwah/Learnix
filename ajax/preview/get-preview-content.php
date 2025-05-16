@@ -46,15 +46,20 @@ if (isset($_SESSION['user_id'])) {
     $is_enrolled = ($stmt->get_result()->num_rows > 0);
     $stmt->close();
     
-    // Check if user is the instructor
+    // FIXED: Check if user is an instructor for this course using course_instructors junction table
     if (isset($_SESSION['role']) && $_SESSION['role'] === 'instructor' && isset($_SESSION['instructor_id'])) {
-        $stmt = $conn->prepare("SELECT instructor_id FROM courses WHERE course_id = ?");
-        $stmt->bind_param("i", $course_id);
+        $instructor_id = $_SESSION['instructor_id'];
+        $stmt = $conn->prepare("
+            SELECT ci.course_id 
+            FROM course_instructors ci
+            WHERE ci.course_id = ? 
+            AND ci.instructor_id = ?
+            AND ci.deleted_at IS NULL
+        ");
+        $stmt->bind_param("ii", $course_id, $instructor_id);
         $stmt->execute();
-        $course = $stmt->get_result()->fetch_assoc();
+        $is_instructor = ($stmt->get_result()->num_rows > 0);
         $stmt->close();
-        
-        $is_instructor = ($course && $course['instructor_id'] == $_SESSION['instructor_id']);
     }
 }
 

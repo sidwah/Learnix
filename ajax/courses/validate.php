@@ -32,18 +32,37 @@ if (!isset($_POST['course_id']) || empty($_POST['course_id'])) {
 
 $course_id = intval($_POST['course_id']);
 
-// Check if course exists and belongs to instructor
-$stmt = $conn->prepare("SELECT * FROM courses WHERE course_id = ? AND instructor_id = ?");
+// FIXED: Check if course exists and instructor has access to it using course_instructors junction table
+$stmt = $conn->prepare("
+    SELECT ci.course_id 
+    FROM course_instructors ci
+    WHERE ci.course_id = ? 
+    AND ci.instructor_id = ?
+    AND ci.deleted_at IS NULL
+");
 $stmt->bind_param("ii", $course_id, $instructor_id);
+$stmt->execute();
+$access_result = $stmt->get_result();
+
+if ($access_result->num_rows === 0) {
+    echo json_encode(['status' => 'error', 'message' => 'Course not found or not authorized']);
+    exit;
+}
+$stmt->close();
+
+// Now get the course details
+$stmt = $conn->prepare("SELECT * FROM courses WHERE course_id = ?");
+$stmt->bind_param("i", $course_id);
 $stmt->execute();
 $course_result = $stmt->get_result();
 
 if ($course_result->num_rows === 0) {
-    echo json_encode(['status' => 'error', 'message' => 'Course not found or not authorized']);
+    echo json_encode(['status' => 'error', 'message' => 'Course not found']);
     exit;
 }
 
 $course = $course_result->fetch_assoc();
+$stmt->close();
 
 // Initialize validation issues array
 $validation_issues = [];
@@ -198,10 +217,10 @@ $validation_results = json_encode([
 ]);
 
 $stmt = $conn->prepare("
-    INSERT INTO content_validation_logs (course_id, validation_type, validation_results, validation_date) 
-    VALUES (?, 'Automatic', ?, NOW())
+    INSERT INTO content_validation_logs (course_id, validation_type, validation_results, validation_date, validated_by) 
+    VALUES (?, 'Automatic', ?, NOW(), ?)
 ");
-$stmt->bind_param("is", $course_id, $validation_results);
+$stmt->bind_param("isi", $course_id, $validation_results, $user_id);
 $stmt->execute();
 
 // Return validation results

@@ -391,7 +391,7 @@ $stmt->close();
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" id="saveAsDraftBtn" style="display: none;">Save as Draft</button>
-                    <button type="button" class="btn btn-success" id="submitForReviewBtn" style="display: none;">Publish</button>
+                    <button type="button" class="btn btn-success" id="submitForReviewBtn" style="display: none;">Submit for Review</button>
                 </div>
             </div>
         </div>
@@ -465,53 +465,53 @@ $stmt->close();
                             } else {
                                 // Append new section
                                 const newSection = `
-                                    <div class="section-item mb-4" data-section-id="${result.section_id}">
-                                        <div class="card">
-                                            <div class="card-header section-header bg-light">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="drag-handle me-2">
-                                                            <i class="mdi mdi-drag-horizontal handle-icon"></i>
-                                                        </div>
-                                                        <h5 class="section-title mb-0">${sectionTitle}</h5>
+                                <div class="section-item mb-4" data-section-id="${result.section_id}">
+                                    <div class="card">
+                                        <div class="card-header section-header bg-light">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="drag-handle me-2">
+                                                        <i class="mdi mdi-drag-horizontal handle-icon"></i>
                                                     </div>
-                                                    <div class="section-actions">
-                                                        <button type="button" class="btn btn-sm btn-outline-primary edit-section-btn" 
-                                                                data-section-id="${result.section_id}"
-                                                                data-section-title="${sectionTitle}">
-                                                            <i class="mdi mdi-pencil"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger delete-section-btn" 
-                                                                data-section-id="${result.section_id}">
-                                                            <i class="mdi mdi-delete"></i>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-secondary section-collapse-btn">
-                                                            <i class="mdi mdi-chevron-up"></i>
-                                                        </button>
-                                                    </div>
+                                                    <h5 class="section-title mb-0">${sectionTitle}</h5>
                                                 </div>
-                                            </div>
-                                            <div class="card-body section-content">
-                                                <!-- Topics Container (sortable) -->
-                                                <div class="topics-container" data-section-id="${result.section_id}">
-                                                    <div class="empty-topics-message text-center py-4">
-                                                        <p class="text-muted mb-0">No content in this section yet. Add topics or quizzes.</p>
-                                                    </div>
-                                                </div>
-                                                <div class="mt-3">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary add-topic-btn" 
-                                                            data-section-id="${result.section_id}">
-                                                        <i class="mdi mdi-plus-circle"></i> Add Topic
+                                                <div class="section-actions">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-section-btn" 
+                                                            data-section-id="${result.section_id}"
+                                                            data-section-title="${sectionTitle}">
+                                                        <i class="mdi mdi-pencil"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-primary add-quiz-btn ms-2" 
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-section-btn" 
                                                             data-section-id="${result.section_id}">
-                                                        <i class="mdi mdi-help-circle"></i> Add Quiz
+                                                        <i class="mdi mdi-delete"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary section-collapse-btn">
+                                                        <i class="mdi mdi-chevron-up"></i>
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="card-body section-content">
+                                            <!-- Topics Container (sortable) -->
+                                            <div class="topics-container" data-section-id="${result.section_id}">
+                                                <div class="empty-topics-message text-center py-4">
+                                                    <p class="text-muted mb-0">No content in this section yet. Add topics or quizzes.</p>
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <button type="button" class="btn btn-sm btn-outline-primary add-topic-btn" 
+                                                        data-section-id="${result.section_id}">
+                                                    <i class="mdi mdi-plus-circle"></i> Add Topic
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-primary add-quiz-btn ms-2" 
+                                                        data-section-id="${result.section_id}">
+                                                    <i class="mdi mdi-help-circle"></i> Add Quiz
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                `;
+                                </div>
+                            `;
 
                                 $('#sectionsContainer').append(newSection);
 
@@ -566,10 +566,10 @@ $stmt->close();
 
             // Set confirmation message
             $('#deleteConfirmMessage').html(`
-                Are you sure you want to delete this section? <br>
-                <strong class="text-danger">This will also delete all topics, quizzes, and content within this section.</strong><br>
-                This action cannot be undone.
-            `);
+            Are you sure you want to delete this section? <br>
+            <strong class="text-danger">This will also delete all topics, quizzes, and content within this section.</strong><br>
+            This action cannot be undone.
+        `);
 
             // Setup confirmation button
             $('#confirmDeleteBtn').data('type', 'section').data('id', sectionId);
@@ -651,41 +651,40 @@ $stmt->close();
                             } else {
                                 // Create new topic element
                                 const newTopic = `
-                                    <div class="topic-item mb-2 card bg-light" data-topic-id="${result.topic_id}">
-                                        <div class="card-body py-2">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="drag-handle me-2">
-                                                        <i class="mdi mdi-drag-vertical handle-icon"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h6 class="topic-title mb-0">
-                                                            ${topicTitle}
-                                                            ${isPreviewable ? '<span class="badge bg-success ms-2">Preview</span>' : ''}
-                                                        </h6>
-                                                    </div>
+                                <div class="topic-item mb-2 card bg-light" data-topic-id="${result.topic_id}">
+                                    <div class="card-body py-2">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <div class="drag-handle me-2">
+                                                    <i class="mdi mdi-drag-vertical handle-icon"></i>
                                                 </div>
-                                                <div class="topic-actions">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-topic-btn" 
-                                                            data-topic-id="${result.topic_id}"
-                                                            data-topic-title="${topicTitle}"
-                                                            data-topic-previewable="${isPreviewable}">
-                                                        <i class="mdi mdi-pencil"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-success me-1 content-topic-btn"
-                                                            data-topic-id="${result.topic_id}">
-                                                        <i class="mdi mdi-file-document-edit"></i> Content
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-topic-btn" 
-                                                            data-topic-id="${result.topic_id}">
-                                                        <i class="mdi mdi-delete"></i>
-                                                    </button>
+                                                <div>
+                                                    <h6 class="topic-title mb-0">
+                                                        ${topicTitle}
+                                                        ${isPreviewable ? '<span class="badge bg-success ms-2">Preview</span>' : ''}
+                                                    </h6>
                                                 </div>
                                             </div>
+                                            <div class="topic-actions">
+                                                <button type="button" class="btn btn-sm btn-outline-primary edit-topic-btn" 
+                                                        data-topic-id="${result.topic_id}"
+                                                        data-topic-title="${topicTitle}"
+                                                        data-topic-previewable="${isPreviewable}">
+                                                    <i class="mdi mdi-pencil"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-success me-1 content-topic-btn"
+                                                        data-topic-id="${result.topic_id}">
+                                                    <i class="mdi mdi-file-document-edit"></i> Content
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger delete-topic-btn" 
+                                                        data-topic-id="${result.topic_id}">
+                                                    <i class="mdi mdi-delete"></i>
+                                                </button>
+                                            </div>
                                         </div>
-</div>
+                                    </div>
                                 </div>
-                                `;
+                            `;
 
                                 // Add to the topics container
                                 $(`.topics-container[data-section-id="${sectionId}"]`).append(newTopic);
@@ -742,10 +741,10 @@ $stmt->close();
 
             // Set confirmation message
             $('#deleteConfirmMessage').html(`
-                Are you sure you want to delete this topic? <br>
-                <strong class="text-danger">This will also delete all content associated with this topic.</strong><br>
-                This action cannot be undone.
-            `);
+            Are you sure you want to delete this topic? <br>
+            <strong class="text-danger">This will also delete all content associated with this topic.</strong><br>
+            This action cannot be undone.
+        `);
 
             // Setup confirmation button
             $('#confirmDeleteBtn').data('type', 'topic').data('id', topicId);
@@ -776,13 +775,13 @@ $stmt->close();
 
             // Load content editor with loading state
             contentEditorContainer.html(`
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Loading content editor...</p>
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
-    `);
+        <p class="mt-2">Loading content editor...</p>
+    </div>
+`);
 
             // AJAX request to load content editor
             $.ajax({
@@ -798,20 +797,20 @@ $stmt->close();
                 error: function(xhr, status, error) {
                     // More detailed error handling
                     contentEditorContainer.html(`
-                <div class="alert alert-danger mb-0">
-                    <h5 class="alert-heading">Error Loading Content Editor</h5>
-                    <p class="mb-0">There was a problem loading the content editor. 
-                    ${xhr.status ? 'Error code: ' + xhr.status : ''} 
-                    ${error ? 'Details: ' + error : ''}</p>
-                </div>
-            `);
+            <div class="alert alert-danger mb-0">
+                <h5 class="alert-heading">Error Loading Content Editor</h5>
+                <p class="mb-0">There was a problem loading the content editor. 
+                ${xhr.status ? 'Error code: ' + xhr.status : ''} 
+                ${error ? 'Details: ' + error : ''}</p>
+            </div>
+        `);
 
                     // Log the full error for debugging
                     console.error('Content editor load error:', status, error);
                 }
             });
         });
-        
+
         // Add Quiz Button
         $(document).on('click', '.add-quiz-btn', function() {
             const sectionId = $(this).data('section-id');
@@ -841,10 +840,10 @@ $stmt->close();
 
             // Set confirmation message
             $('#deleteConfirmMessage').html(`
-                Are you sure you want to delete this quiz? <br>
-                <strong class="text-danger">This will also delete all questions associated with this quiz.</strong><br>
-                This action cannot be undone.
-            `);
+            Are you sure you want to delete this quiz? <br>
+            <strong class="text-danger">This will also delete all questions associated with this quiz.</strong><br>
+            This action cannot be undone.
+        `);
 
             // Setup confirmation button
             $('#confirmDeleteBtn').data('type', 'quiz').data('id', quizId);
@@ -901,23 +900,23 @@ $stmt->close();
                                     // If no sections left, show empty state
                                     if ($('.section-item').length === 0) {
                                         $('#sectionsContainer').before(`
-                                <div id="emptyCurriculumState" class="row mb-4">
-                                    <div class="col-12">
-                                        <div class="card border border-dashed border-primary bg-light">
-                                            <div class="card-body text-center py-5">
-                                                <div class="empty-state-icon mb-3">
-                                                    <i class="mdi mdi-notebook-outline" style="font-size: 64px; color: #3e7bfa;"></i>
-                                                </div>
-                                                <h4>No Sections Added Yet</h4>
-                                                <p class="text-muted">Start building your course by adding sections and topics.</p>
-                                                <button class="btn btn-primary mt-2 add-first-section-btn">
-                                                    <i class="mdi mdi-plus-circle"></i> Add Your First Section
-                                                </button>
+                            <div id="emptyCurriculumState" class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card border border-dashed border-primary bg-light">
+                                        <div class="card-body text-center py-5">
+                                            <div class="empty-state-icon mb-3">
+                                                <i class="mdi mdi-notebook-outline" style="font-size: 64px; color: #3e7bfa;"></i>
                                             </div>
+                                            <h4>No Sections Added Yet</h4>
+                                            <p class="text-muted">Start building your course by adding sections and topics.</p>
+                                            <button class="btn btn-primary mt-2 add-first-section-btn">
+                                                <i class="mdi mdi-plus-circle"></i> Add Your First Section
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                            `);
+                            </div>
+                        `);
                                     }
                                 });
                             } else if (type === 'topic') {
@@ -972,10 +971,10 @@ $stmt->close();
 
             if (!hasTopics && !hasQuizzes) {
                 topicsContainer.html(`
-                    <div class="empty-topics-message text-center py-4">
-                        <p class="text-muted mb-0">No content in this section yet. Add topics or quizzes.</p>
-                    </div>
-                `);
+                <div class="empty-topics-message text-center py-4">
+                    <p class="text-muted mb-0">No content in this section yet. Add topics or quizzes.</p>
+                </div>
+            `);
             }
         }
 
@@ -1285,21 +1284,21 @@ $stmt->close();
 
             if (passedAll) {
                 summaryHtml = `
-                <div class="alert alert-success">
-                    <h5 class="alert-heading"><i class="mdi mdi-check-circle me-2"></i>Validation Successful</h5>
-                    <p class="mb-0">Your course meets all the requirements and is ready for publication.</p>
-                </div>
+            <div class="alert alert-success">
+                <h5 class="alert-heading"><i class="mdi mdi-check-circle me-2"></i>Validation Successful</h5>
+                <p class="mb-0">Your course meets all requirements and is ready to be submitted for departmental review.</p>
+            </div>
             `;
 
                 // Show action buttons for successful validation
                 $('#saveAsDraftBtn').show();
-                $('#submitForReviewBtn').show();
+                $('#submitForReviewBtn').show().text('Submit for Departmental Review');
             } else {
                 summaryHtml = `
-                <div class="alert alert-danger">
-                    <h5 class="alert-heading"><i class="mdi mdi-alert-circle me-2"></i>Validation Failed</h5>
-                    <p class="mb-0">Please address the issues below before publishing your course.</p>
-                </div>
+            <div class="alert alert-danger">
+                <h5 class="alert-heading"><i class="mdi mdi-alert-circle me-2"></i>Validation Failed</h5>
+                <p class="mb-0">Please address the issues below before submitting your course for review.</p>
+            </div>
             `;
             }
 
@@ -1343,21 +1342,21 @@ $stmt->close();
                     const issues = categoryData.issues || [];
 
                     detailsHtml += `
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="heading${index}">
-                            <button class="accordion-button ${passed ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" 
-                                    data-bs-target="#collapse${index}" aria-expanded="${passed ? 'false' : 'true'}" aria-controls="collapse${index}">
-                                <i class="mdi ${category.icon} me-2"></i>
-                                ${category.title}
-                                ${passed ? 
-                                    '<span class="badge bg-success ms-2"><i class="mdi mdi-check"></i> Passed</span>' : 
-                                    '<span class="badge bg-danger ms-2"><i class="mdi mdi-close"></i> Issues Found</span>'}
-                            </button>
-                        </h2>
-                        <div id="collapse${index}" class="accordion-collapse collapse ${!passed ? 'show' : ''}" 
-                             aria-labelledby="heading${index}" data-bs-parent="#validationAccordion">
-                            <div class="accordion-body">
-                `;
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading${index}">
+                        <button class="accordion-button ${passed ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" 
+                                data-bs-target="#collapse${index}" aria-expanded="${passed ? 'false' : 'true'}" aria-controls="collapse${index}">
+                            <i class="mdi ${category.icon} me-2"></i>
+                            ${category.title}
+                            ${passed ? 
+                                '<span class="badge bg-success ms-2"><i class="mdi mdi-check"></i> Passed</span>' : 
+                                '<span class="badge bg-danger ms-2"><i class="mdi mdi-close"></i> Issues Found</span>'}
+                        </button>
+                    </h2>
+                    <div id="collapse${index}" class="accordion-collapse collapse ${!passed ? 'show' : ''}" 
+                         aria-labelledby="heading${index}" data-bs-parent="#validationAccordion">
+                        <div class="accordion-body">
+            `;
 
                     if (passed) {
                         detailsHtml += `<p class="text-success mb-0"><i class="mdi mdi-check-circle"></i> All ${category.title.toLowerCase()} requirements are met.</p>`;
@@ -1374,20 +1373,20 @@ $stmt->close();
                             }
 
                             detailsHtml += `
-                            <li class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
-                                <div><i class="mdi mdi-alert-circle me-2"></i>${issue.message}</div>
-                                ${fixLink}
-                            </li>
-                        `;
+                        <li class="list-group-item list-group-item-danger d-flex justify-content-between align-items-center">
+                            <div><i class="mdi mdi-alert-circle me-2"></i>${issue.message}</div>
+                            ${fixLink}
+                        </li>
+                    `;
                         });
                         detailsHtml += '</ul>';
                     }
 
                     detailsHtml += `
-                            </div>
                         </div>
                     </div>
-                `;
+                </div>
+            `;
                 }
             });
 
@@ -1406,7 +1405,7 @@ $stmt->close();
                     saveCourseAsDraft();
                 });
 
-                // Submit for Review button
+                // Submit for Review button - always uses submit_for_review in institutional LMS
                 $('#submitForReviewBtn').off('click').on('click', function() {
                     submitCourseForReview();
                 });
@@ -1491,51 +1490,13 @@ $stmt->close();
             });
         }
 
-        // Submit course for review
+        // Submit course for review - UPDATED for institutional LMS
         function submitCourseForReview() {
-            // First check instructor verification status
-            createOverlay("Checking instructor verification status...");
+            createOverlay("Preparing to submit course for review...");
 
+            // First check if instructor is the primary instructor for this course
             $.ajax({
                 url: '../ajax/instructors/check_verification_status.php',
-                type: 'POST',
-                success: function(response) {
-                    try {
-                        const result = JSON.parse(response);
-
-                        if (result.verified) {
-                            // Instructor is verified, proceed with publishing directly
-                            updateOverlayMessage("Publishing course...");
-                            setTimeout(function() {
-                                publishCourse();
-                            }, 1500);
-                        } else {
-                            // Instructor is not verified, submit for review
-                            updateOverlayMessage("Instructor verification required");
-                            setTimeout(function() {
-                                updateOverlayMessage("Submitting for review...");
-                                setTimeout(function() {
-                                    submitForReview();
-                                }, 1500);
-                            }, 1500);
-                        }
-                    } catch (e) {
-                        console.error('Error parsing response', e);
-                        removeOverlay();
-                        showAlert('danger', 'Error processing verification status');
-                    }
-                },
-                error: function() {
-                    removeOverlay();
-                    showAlert('danger', 'Network error while checking verification status');
-                }
-            });
-        }
-
-        // Publish course (for verified instructors)
-        function publishCourse() {
-            $.ajax({
-                url: '../ajax/courses/publish_course.php',
                 type: 'POST',
                 data: {
                     course_id: courseId
@@ -1545,14 +1506,23 @@ $stmt->close();
                         const result = JSON.parse(response);
 
                         if (result.success) {
-                            $('#validationModal').modal('hide');
-                            removeOverlay();
-                            showAlert('success', 'Course published successfully! Students can now enroll.');
+                            if (!result.authorized) {
+                                removeOverlay();
+                                showAlert('danger', 'You are not authorized to submit this course. ' + result.message);
+                                return;
+                            }
 
-                            // Optionally redirect to courses list or dashboard
+                            if (!result.isPrimary) {
+                                removeOverlay();
+                                showAlert('warning', 'Only the primary instructor can submit a course for review.');
+                                return;
+                            }
+
+                            // Submit for departmental review
+                            updateOverlayMessage("Submitting for departmental review...");
                             setTimeout(function() {
-                                window.location.href = 'index.php';
-                            }, 2000);
+                                submitForReview();
+                            }, 1500);
                         } else {
                             removeOverlay();
                             showAlert('danger', 'Error: ' + result.message);
@@ -1560,17 +1530,17 @@ $stmt->close();
                     } catch (e) {
                         console.error('Error parsing response', e);
                         removeOverlay();
-                        showAlert('danger', 'Error processing server response');
+                        showAlert('danger', 'Error processing status check');
                     }
                 },
                 error: function() {
                     removeOverlay();
-                    showAlert('danger', 'Network error while publishing course');
+                    showAlert('danger', 'Network error while checking instructor status');
                 }
             });
         }
 
-        // Submit for review (for unverified instructors)
+        // Submit for departmental review
         function submitForReview() {
             $.ajax({
                 url: '../ajax/courses/submit_for_review.php',
@@ -1585,7 +1555,7 @@ $stmt->close();
                         if (result.success) {
                             $('#validationModal').modal('hide');
                             removeOverlay();
-                            showAlert('info', 'Your course has been submitted for review. You will be notified once it is approved.');
+                            showAlert('info', 'Your course has been submitted for departmental review. You will be notified once it is approved.');
 
                             // Optionally redirect to courses list or dashboard
                             setTimeout(function() {

@@ -1,5 +1,5 @@
 <?php
-//ajax/courses/submit_for_review.php
+//ajax/courses/submit_for_review.php - UPDATED for institutional LMS
 require_once '../../backend/config.php';
 require_once '../../backend/session_start.php';
 
@@ -16,10 +16,9 @@ require_once '../../backend/session_start.php';
  * @return bool Success status
  */
 function logCourseActivity($conn, $course_id, $instructor_id, $action_type, $entity_type, $entity_id = null, $change_details = null) {
-    // Check if the course_activity_logs table exists
+    // Same function implementation as original...
     $tableCheck = $conn->query("SHOW TABLES LIKE 'course_activity_logs'");
     
-    // If table doesn't exist, create it
     if ($tableCheck->num_rows == 0) {
         $conn->query("
             CREATE TABLE IF NOT EXISTS `course_activity_logs` (
@@ -76,12 +75,12 @@ $stmt->close();
 // Get course_id from POST
 $course_id = isset($_POST['course_id']) ? intval($_POST['course_id']) : 0;
 
-// Validate course ownership using junction table
+// Validate course access using junction table - FIXED to match institutional pattern
 $stmt = $conn->prepare("
-    SELECT c.course_id, c.title, c.approval_status 
+    SELECT c.course_id, c.title, c.approval_status, ci.is_primary 
     FROM courses c
     JOIN course_instructors ci ON c.course_id = ci.course_id
-    WHERE c.course_id = ? AND ci.instructor_id = ? AND c.deleted_at IS NULL
+    WHERE c.course_id = ? AND ci.instructor_id = ? AND c.deleted_at IS NULL AND ci.deleted_at IS NULL
 ");
 $stmt->bind_param("ii", $course_id, $instructor_id);
 $stmt->execute();
@@ -95,13 +94,20 @@ if ($result->num_rows === 0) {
 $course = $result->fetch_assoc();
 $course_title = $course['title'];
 $prev_approval_status = $course['approval_status'];
+$is_primary = (bool)$course['is_primary'];
+
+// ADDED: Check if instructor is primary for this course (institutional requirement)
+if (!$is_primary) {
+    echo json_encode(['success' => false, 'message' => 'Only the primary instructor can submit a course for review']);
+    exit;
+}
 
 // Begin transaction
 $conn->begin_transaction();
 
 try {
-    // Update course status to pending
-    $stmt = $conn->prepare("UPDATE courses SET status = 'Published', approval_status = 'submitted_for_review', updated_at = NOW() WHERE course_id = ?");
+    // Update course status to pending review
+    $stmt = $conn->prepare("UPDATE courses SET status = 'Draft', approval_status = 'submitted_for_review', updated_at = NOW() WHERE course_id = ?");
     $stmt->bind_param("i", $course_id);
     $result = $stmt->execute();
 
@@ -125,17 +131,32 @@ try {
         throw new Exception("Failed to create review request");
     }
 
-    // Find department heads to notify
+    // UPDATED: Find department heads AND secretaries to notify (institutional workflow)
     $stmt = $conn->prepare("
-        SELECT u.user_id, u.email 
+        SELECT u.user_id, u.email, ds.role 
         FROM users u
         JOIN department_staff ds ON u.user_id = ds.user_id
         JOIN courses c ON c.department_id = ds.department_id
-        WHERE c.course_id = ? AND ds.role = 'head' AND ds.status = 'active' AND ds.deleted_at IS NULL
+        WHERE c.course_id = ? AND ds.role IN ('head', 'secretary') AND ds.status = 'active' AND ds.deleted_at IS NULL
     ");
     $stmt->bind_param("i", $course_id);
     $stmt->execute();
-    $department_heads = $stmt->get_result();
+    $department_staff = $stmt->get_result();
+    
+    // Generate notifications for department staff
+    while ($staff = $department_staff->fetch_assoc()) {
+        // Build appropriate notification based on role
+        $notification_title = "Course Review Request: " . $course_title;
+        $notification_message = "A new course has been submitted for review by an instructor.";
+        
+        // Insert notification into user_notifications table
+        $stmt = $conn->prepare("
+            INSERT INTO user_notifications (user_id, type, title, message, related_id, related_type)
+            VALUES (?, 'course_review', ?, ?, ?, 'course')
+        ");
+        $stmt->bind_param("issi", $staff['user_id'], $notification_title, $notification_message, $course_id);
+        $stmt->execute();
+    }
 
     // Log the activity
     $changeDetails = [
@@ -144,7 +165,7 @@ try {
             'new' => 'submitted_for_review'
         ],
         'status' => [
-            'new' => 'Published'
+            'new' => 'Draft' // CHANGED to Draft (institutional workflow)
         ],
         'requested_at' => $current_date
     ];
@@ -161,7 +182,7 @@ try {
     // Success response
     echo json_encode([
         'success' => true,
-        'message' => 'Course submitted for review successfully',
+        'message' => 'Course submitted for review successfully. Department staff will be notified.',
         'course_title' => $course_title
     ]);
 } catch (Exception $e) {

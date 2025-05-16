@@ -34,19 +34,36 @@ if (!$topic) {
     exit;
 }
 
-// Fetch section and course info to verify instructor access
-$section_query = "SELECT cs.section_id, cs.course_id, c.instructor_id 
+// Fetch section and course info
+$section_query = "SELECT cs.section_id, cs.course_id 
                  FROM course_sections cs 
-                 JOIN courses c ON cs.course_id = c.course_id 
-                 WHERE cs.section_id = ?";
+                 WHERE cs.section_id = ? AND cs.deleted_at IS NULL";
 $stmt = $conn->prepare($section_query);
 $stmt->bind_param("i", $topic['section_id']);
 $stmt->execute();
 $section_info = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
+// If section not found, return error
+if (!$section_info) {
+    echo '<div class="alert alert-danger">Section not found</div>';
+    exit;
+}
+
+// Verify instructor has access to this course using the course_instructors junction table
+$instructor_access_query = "SELECT ci.course_id
+                           FROM course_instructors ci
+                           WHERE ci.course_id = ? 
+                           AND ci.instructor_id = ?
+                           AND ci.deleted_at IS NULL";
+$stmt = $conn->prepare($instructor_access_query);
+$stmt->bind_param("ii", $section_info['course_id'], $_SESSION['instructor_id']);
+$stmt->execute();
+$instructor_has_access = $stmt->get_result()->num_rows > 0;
+$stmt->close();
+
 // Verify instructor has access to this course
-if (!$section_info || $section_info['instructor_id'] != $_SESSION['instructor_id']) {
+if (!$instructor_has_access) {
     echo '<div class="alert alert-danger">You do not have permission to view this content</div>';
     exit;
 }
