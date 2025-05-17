@@ -767,8 +767,7 @@ $stats = getCourseStats($department_id);
             });
         }
 
-        // Course actions handler
-      function handleCourseAction(e) {
+function handleCourseAction(e) {
     const actionElement = e.target.closest('[data-action]');
     if (!actionElement) return;
 
@@ -795,6 +794,12 @@ $stats = getCourseStats($department_id);
             window.location.href = `review-course.php?course_id=${courseId}`;
             break;
 
+        case 'publish_course':
+            // Publish the approved course
+            confirmAction('Publish Course', 'Are you sure you want to publish this course? It will be visible to students.',
+                () => performCourseAction(courseId, 'publish'));
+            break;
+
         case 'unpublish':
             confirmAction('Unpublish Course', 'Are you sure you want to unpublish this course?',
                 () => performCourseAction(courseId, 'unpublish'));
@@ -805,8 +810,8 @@ $stats = getCourseStats($department_id);
                 () => performCourseAction(courseId, 'archive'), 'danger');
             break;
     }
-}
-        function performCourseAction(courseId, action, additionalData = {}) {
+}       
+function performCourseAction(courseId, action, additionalData = {}) {
             showLoading();
 
             const formData = new FormData();

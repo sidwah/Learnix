@@ -4,7 +4,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-function renderCourseTableRow($course) {
+function renderCourseTableRow($course)
+{
     // Validate course data
     if (!isset($course['course_id'], $course['title'], $course['status'], $course['category_name'], $course['course_level'])) {
         return '<tr><td colspan="5">Invalid course data</td></tr>';
@@ -36,7 +37,7 @@ function renderCourseTableRow($course) {
     $instructors_html .= '</div>';
 
     ob_start();
-    ?>
+?>
     <tr data-course-id="<?php echo htmlspecialchars($course['course_id']); ?>">
         <td>
             <div class="d-flex align-items-center">
@@ -77,14 +78,15 @@ function renderCourseTableRow($course) {
             </div>
         </td>
     </tr>
-    <?php
+<?php
     return ob_get_clean();
 }
 
 
-function renderTableActions($course) {
+function renderTableActions($course)
+{
     $actions = [];
-    
+
     switch ($course['status']) {
         case 'Draft':
             $actions[] = [
@@ -94,7 +96,7 @@ function renderTableActions($course) {
                 'color' => 'info'
             ];
             break;
-            
+
         case 'Published':
             $actions[] = [
                 'icon' => 'graph-up',
@@ -109,7 +111,7 @@ function renderTableActions($course) {
                 'color' => 'warning'
             ];
             break;
-            
+
         default:
             $actions[] = [
                 'icon' => 'eye',
@@ -119,7 +121,17 @@ function renderTableActions($course) {
             ];
             break;
     }
-    
+
+    // Add Publish button for approved courses
+    if ($course['approval_status'] === 'approved' && $course['status'] !== 'Published') {
+        $actions[] = [
+            'icon' => 'upload',
+            'title' => 'Publish Course',
+            'action' => 'publish_course',
+            'color' => 'success'
+        ];
+    }
+
     // Management link - always available
     $actions[] = [
         'icon' => 'gear',
@@ -127,7 +139,7 @@ function renderTableActions($course) {
         'action' => 'manage_course',
         'color' => 'primary'
     ];
-    
+
     // Replace multiple review actions with a single "Review Course" button
     // for courses that are in the review pipeline
     if ($course['approval_status'] === 'submitted_for_review' || $course['approval_status'] === 'under_review') {
@@ -138,14 +150,14 @@ function renderTableActions($course) {
             'color' => 'success'
         ];
     }
-    
-    $actions[] = [
-        'icon' => 'archive',
-        'title' => 'Archive',
-        'action' => 'archive',
-        'color' => 'danger'
-    ];
-    
+
+    // $actions[] = [
+    //     'icon' => 'archive',
+    //     'title' => 'Archive',
+    //     'action' => 'archive',
+    //     'color' => 'danger'
+    // ];
+
     foreach ($actions as $action) {
         echo "<button type=\"button\" 
                 class=\"btn btn-sm btn-soft-{$action['color']} btn-icon rounded-pill\" 

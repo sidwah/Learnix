@@ -125,7 +125,7 @@ try {
     
 } catch (Exception $e) {
     // Rollback on error
-    if (isset($conn) && $conn->inTransaction()) {
+    if (isset($conn)) {
         $conn->rollback();
     }
     logToFile("ERROR: " . $e->getMessage());
