@@ -1,11 +1,12 @@
 <?php
+// ajax/department/search_courses.php
 session_start();
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 require_once '../../backend/config.php';
-require_once '../../includes/department/courses_functions.php'; // Add this line
+require_once '../../includes/department/courses_functions.php';
 require_once '../../includes/department/course_card.php';
 require_once '../../includes/department/course_table_row.php';
 
@@ -16,49 +17,142 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'department_head') {
     exit;
 }
 
-// Get search parameters
-$search = $_GET['search'] ?? '';
-$status = $_GET['status'] ?? '';
-$category = $_GET['category'] ?? '';
-$level = $_GET['level'] ?? '';
-$sort = $_GET['sort'] ?? 'newest';
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = isset($_GET['limit']) ? min((int)$_GET['limit'], 100) : 20;
-$view = $_GET['view'] ?? 'cards';
+// Get department ID for the user
+$dept_query = "SELECT ds.department_id 
+               FROM department_staff ds 
+               WHERE ds.user_id = ? AND ds.role = 'head' AND ds.status = 'active' AND ds.deleted_at IS NULL
+               LIMIT 1";
+$dept_stmt = $conn->prepare($dept_query);
+$dept_stmt->bind_param("i", $_SESSION['user_id']);
+$dept_stmt->execute();
+$dept_result = $dept_stmt->get_result();
 
-// Create a new set of query parameters that will be passed to the backend
-$query_params = array_merge($_GET, [
+if ($dept_result->num_rows === 0) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'No active department found for user']);
+    exit;
+}
+
+$department = $dept_result->fetch_assoc();
+$department_id = $department['department_id'];
+
+// Get search parameters
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$status = isset($_GET['status']) ? trim($_GET['status']) : '';
+$category = isset($_GET['category']) ? trim($_GET['category']) : '';
+$level = isset($_GET['level']) ? trim($_GET['level']) : '';
+$sort = isset($_GET['sort']) ? trim($_GET['sort']) : 'newest';
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = isset($_GET['limit']) ? min(max(1, (int)$_GET['limit']), 100) : 20;
+$view = isset($_GET['view']) ? ($_GET['view'] === 'cards' ? 'cards' : 'table') : 'table';
+
+// Calculate offset
+$offset = ($page - 1) * $limit;
+
+// Build filters for getCoursesByDepartment
+$filters = [
     'search' => $search,
     'status' => $status,
     'category' => $category,
     'level' => $level,
     'sort' => $sort,
-    'page' => $page,
-    'limit' => $limit
-]);
+    'limit' => $limit,
+    'offset' => $offset
+];
 
-// Save current $_GET
-$original_get = $_GET;
-$_GET = $query_params;
+// Get total count for pagination
+$total_count_query = "SELECT COUNT(*) as total 
+                     FROM courses c
+                     JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
+                     JOIN categories cat ON sub.category_id = cat.category_id
+                     WHERE c.department_id = ? AND c.deleted_at IS NULL";
+$params = [$department_id];
+$param_types = "i";
 
-// Execute backend get_courses.php and capture the output
-ob_start();
-include '../../backend/department/get_courses.php';
-$backend_output = ob_get_clean();
+if (!empty($filters['search'])) {
+    $total_count_query .= " AND (c.title LIKE ? OR c.short_description LIKE ?)";
+    $params[] = "%{$filters['search']}%";
+    $params[] = "%{$filters['search']}%";
+    $param_types .= "ss";
+}
 
-// Restore original $_GET
-$_GET = $original_get;
+if (!empty($filters['status'])) {
+    if ($filters['status'] === 'pending') {
+        $total_count_query .= " AND c.approval_status IN ('pending', 'revisions_requested')";
+    } else {
+        $total_count_query .= " AND c.status = ?";
+        $params[] = $filters['status'];
+        $param_types .= "s";
+    }
+}
 
-// Parse the backend response
-$backend_data = json_decode($backend_output, true);
+if (!empty($filters['category'])) {
+    $total_count_query .= " AND cat.name = ?";
+    $params[] = $filters['category'];
+    $param_types .= "s";
+}
 
-if (!$backend_data || !$backend_data['success']) {
+if (!empty($filters['level'])) {
+    $total_count_query .= " AND c.course_level = ?";
+    $params[] = $filters['level'];
+    $param_types .= "s";
+}
+
+$total_stmt = $conn->prepare($total_count_query);
+if (!$total_stmt) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Failed to load courses']);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
     exit;
 }
 
-$courses = $backend_data['courses'] ?? [];
+$total_stmt->bind_param($param_types, ...$params);
+$total_stmt->execute();
+$total_count = $total_stmt->get_result()->fetch_assoc()['total'];
+
+// Calculate pagination data
+$total_pages = max(1, ceil($total_count / $limit));
+$current_page = min($page, $total_pages); // Ensure current_page doesn't exceed total_pages
+$showing_start = $total_count === 0 ? 0 : ($offset + 1);
+$showing_end = min($offset + $limit, $total_count);
+
+// Get courses
+$courses = getCoursesByDepartment($department_id, $filters);
+
+// Highlight search terms in course data
+if (!empty($search)) {
+    $search_pattern = '/(' . preg_quote($search, '/') . ')/i';
+    foreach ($courses as &$course) {
+        // Highlight specific fields
+        if (isset($course['title'])) {
+            $course['title'] = preg_replace_callback(
+                $search_pattern,
+                function ($matches) {
+                    return '<span class="highlight">' . htmlspecialchars($matches[0]) . '</span>';
+                },
+                htmlspecialchars($course['title'])
+            );
+        }
+        if (isset($course['category_name'])) {
+            $course['category_name'] = preg_replace_callback(
+                $search_pattern,
+                function ($matches) {
+                    return '<span class="highlight">' . htmlspecialchars($matches[0]) . '</span>';
+                },
+                htmlspecialchars($course['category_name'])
+            );
+        }
+        if (isset($course['course_level'])) {
+            $course['course_level'] = preg_replace_callback(
+                $search_pattern,
+                function ($matches) {
+                    return '<span class="highlight">' . htmlspecialchars($matches[0]) . '</span>';
+                },
+                htmlspecialchars($course['course_level'])
+            );
+        }
+    }
+    unset($course); // Unset reference
+}
 
 // Generate HTML based on view type
 $html = '';
@@ -72,24 +166,22 @@ if ($view === 'cards') {
     }
 }
 
-// Highlight search terms in HTML if search is active
-if (!empty($search)) {
-    $html = preg_replace_callback('/(' . preg_quote($search, '/') . ')/i', function($matches) {
-        return '<span class="highlight">' . $matches[0] . '</span>';
-    }, $html);
-}
-
-// Return complete response with all pagination data
+// Return JSON response
+header('Content-Type: application/json');
 echo json_encode([
     'success' => true,
     'html' => $html,
     'count' => count($courses),
-    'total_count' => $backend_data['total_count'] ?? 0,
-    'current_page' => $backend_data['current_page'] ?? 1,
-    'total_pages' => $backend_data['total_pages'] ?? 1,
-    'per_page' => $backend_data['per_page'] ?? 20,
-    'showing_start' => $backend_data['showing_start'] ?? 1,
-    'showing_end' => $backend_data['showing_end'] ?? count($courses),
+    'total_count' => $total_count,
+    'current_page' => $current_page,
+    'total_pages' => $total_pages,
+    'per_page' => $limit,
+    'showing_start' => $showing_start,
+    'showing_end' => $showing_end,
     'message' => count($courses) === 0 ? 'No courses found matching your criteria.' : null
 ]);
+
+// Close database connection
+$conn->close();
+exit;
 ?>

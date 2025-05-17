@@ -166,7 +166,7 @@ while ($section = $sectionResult->fetch_assoc()) {
     $topicStmt = $conn->prepare("
         SELECT topic_id, title, position
         FROM section_topics
-        WHERE section_id = ? AND deleted_at IS NULL
+        WHERE section_id = ? 
         ORDER BY position
     ");
     $topicStmt->bind_param("i", $sectionId);
@@ -182,7 +182,7 @@ while ($section = $sectionResult->fetch_assoc()) {
     $quizStmt = $conn->prepare("
         SELECT quiz_id, quiz_title, pass_mark
         FROM section_quizzes
-        WHERE section_id = ? AND deleted_at IS NULL
+        WHERE section_id = ? 
     ");
     $quizStmt->bind_param("i", $sectionId);
     $quizStmt->execute();

@@ -1,9 +1,8 @@
-<?php 
+<?php
 // department/courses.php
 include '../includes/department/header.php';
 require_once '../backend/config.php';
 require_once '../includes/department/courses_functions.php';
-require_once '../includes/department/course_card.php';
 require_once '../includes/department/course_table_row.php';
 require_once '../includes/department/course_modals.php';
 
@@ -64,25 +63,6 @@ $stats = getCourseStats($department_id);
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-
-<style>
-    /* Fix dropdown positioning issues */
-.dropdown-fixed .dropdown-menu {
-    position: absolute !important;
-    z-index: 1050 !important;
-}
-
-.dropdown-fixed {
-    position: static;
-}
-
-/* Ensure proper dropdown display */
-.card .dropdown-menu {
-    min-width: 160px;
-    z-index: 1050;
-}
-</style>
-
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->
@@ -126,7 +106,7 @@ $stats = getCourseStats($department_id);
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-sm-6 col-lg-3">
                 <div class="card h-100">
                     <div class="card-body py-3">
@@ -140,7 +120,7 @@ $stats = getCourseStats($department_id);
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-sm-6 col-lg-3">
                 <div class="card h-100">
                     <div class="card-body py-3">
@@ -154,7 +134,7 @@ $stats = getCourseStats($department_id);
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-sm-6 col-lg-3">
                 <div class="card h-100">
                     <div class="card-body py-3">
@@ -178,19 +158,9 @@ $stats = getCourseStats($department_id);
                     <div class="col-auto">
                         <h5 class="card-header-title mb-0">Course Management</h5>
                     </div>
-                    <div class="col-auto">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-sm btn-outline-primary active" data-view="cards">
-                                <i class="bi-grid-3x3-gap"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-view="table">
-                                <i class="bi-list-ul"></i>
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
-            
+
             <div class="card-body py-2">
                 <div class="row align-items-center g-2">
                     <div class="col-md-3">
@@ -201,7 +171,7 @@ $stats = getCourseStats($department_id);
                             <input type="text" id="courseSearch" class="form-control" placeholder="Search courses...">
                         </div>
                     </div>
-                    
+
                     <div class="col-md-9">
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -264,14 +234,8 @@ $stats = getCourseStats($department_id);
             </div>
         </div>
 
-        <!-- Course Cards View -->
-        <div id="courses-cards" class="row g-3">
-            <!-- Courses will be loaded here via AJAX -->
-        </div>
-        <!-- End Course Cards View -->
-
-        <!-- Table View (Hidden by default) -->
-        <div id="courses-table" class="card" style="display:none;">
+        <!-- Table View -->
+        <div id="courses-table" class="card">
             <div class="table-responsive">
                 <table class="table table-thead-bordered table-nowrap table-align-middle card-table">
                     <thead class="thead-light">
@@ -279,7 +243,6 @@ $stats = getCourseStats($department_id);
                             <th scope="col">Course</th>
                             <th scope="col">Status</th>
                             <th scope="col">Instructors</th>
-                            <th scope="col">Progress</th>
                             <th scope="col">Students</th>
                             <th scope="col" class="text-center">Actions</th>
                         </tr>
@@ -303,7 +266,7 @@ $stats = getCourseStats($department_id);
                 </ul>
             </div>
         </nav>
-        
+
         <!-- No Results State -->
         <div id="noResults" style="display: none;" class="text-center py-5">
             <i class="bi-search fs-1 text-muted"></i>
@@ -317,47 +280,46 @@ $stats = getCourseStats($department_id);
 
 <!-- All Course Modals -->
 <?php renderAllCourseModals(); ?>
-<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
 
 <!-- Add custom styles -->
 <style>
     .card {
         transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
-    
+
     .card:hover {
-        box-shadow: 0 .25rem .5rem rgba(0,0,0,.075);
+        box-shadow: 0 .25rem .5rem rgba(0, 0, 0, .075);
         transform: translateY(-2px);
     }
-    
+
     /* Avatar Stack */
     .avatar-stack {
         display: flex;
         align-items: center;
         position: relative;
     }
-    
+
     .avatar-stack .avatar {
         border: 2px solid #fff;
         transition: all 0.3s ease;
         position: relative;
         margin-left: -6px;
     }
-    
+
     .avatar-stack .avatar:first-child {
         margin-left: 0;
     }
-    
+
     .avatar-stack .avatar:hover {
         transform: translateX(8px) scale(1.05);
         z-index: 10;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
-    
-    .avatar-stack .avatar:hover ~ .avatar {
+
+    .avatar-stack .avatar:hover~.avatar {
         transform: translateX(8px);
     }
-    
+
     .avatar-initial {
         width: 100%;
         height: 100%;
@@ -367,7 +329,7 @@ $stats = getCourseStats($department_id);
         font-size: 0.7rem;
         font-weight: 600;
     }
-    
+
     /* Instructor Name Tooltip */
     .name-tooltip {
         position: absolute;
@@ -385,13 +347,13 @@ $stats = getCourseStats($department_id);
         transition: all 0.2s ease;
         z-index: 100;
     }
-    
+
     .avatar:hover .name-tooltip {
         opacity: 1;
         visibility: visible;
         transform: translateX(-50%) translateY(-10px);
     }
-    
+
     .name-tooltip::after {
         content: '';
         position: absolute;
@@ -402,70 +364,131 @@ $stats = getCourseStats($department_id);
         border-color: #3a3f45 transparent transparent transparent;
         transform: translateX(-50%);
     }
-    
+
     /* Soft Button Colors */
-    .btn-soft-primary { background-color: rgba(55, 125, 255, 0.1); color: #377dff; border-color: transparent; }
-    .btn-soft-primary:hover { background-color: rgba(55, 125, 255, 0.2); color: #377dff; }
-    
-    .btn-soft-info { background-color: rgba(0, 201, 219, 0.1); color: #00c9db; border-color: transparent; }
-    .btn-soft-info:hover { background-color: rgba(0, 201, 219, 0.2); color: #00c9db; }
-    
-    .btn-soft-success { background-color: rgba(0, 201, 167, 0.1); color: #00c9a7; border-color: transparent; }
-    .btn-soft-success:hover { background-color: rgba(0, 201, 167, 0.2); color: #00c9a7; }
-    
-    .btn-soft-warning { background-color: rgba(255, 181, 107, 0.1); color: #ffb56b; border-color: transparent; }
-    .btn-soft-warning:hover { background-color: rgba(255, 181, 107, 0.2); color: #ffb56b; }
-    
-    .btn-soft-danger { background-color: rgba(237, 53, 81, 0.1); color: #ed3551; border-color: transparent; }
-    .btn-soft-danger:hover { background-color: rgba(237, 53, 81, 0.2); color: #ed3551; }
-    
-    .btn-soft-secondary { background-color: rgba(226, 230, 236, 0.1); color: #677788; border-color: transparent; }
-    .btn-soft-secondary:hover { background-color: rgba(226, 230, 236, 0.2); color: #677788; }
-    
-    .btn-soft-purple { background-color: rgba(123, 80, 250, 0.1); color: #7b50fa; border-color: transparent; }
-    .btn-soft-purple:hover { background-color: rgba(123, 80, 250, 0.2); color: #7b50fa; }
-    
+    .btn-soft-primary {
+        background-color: rgba(55, 125, 255, 0.1);
+        color: #377dff;
+        border-color: transparent;
+    }
+
+    .btn-soft-primary:hover {
+        background-color: rgba(55, 125, 255, 0.2);
+        color: #377dff;
+    }
+
+    .btn-soft-info {
+        background-color: rgba(0, 201, 219, 0.1);
+        color: #00c9db;
+        border-color: transparent;
+    }
+
+    .btn-soft-info:hover {
+        background-color: rgba(0, 201, 219, 0.2);
+        color: #00c9db;
+    }
+
+    .btn-soft-success {
+        background-color: rgba(0, 201, 167, 0.1);
+        color: #00c9a7;
+        border-color: transparent;
+    }
+
+    .btn-soft-success:hover {
+        background-color: rgba(0, 201, 167, 0.2);
+        color: #00c9a7;
+    }
+
+    .btn-soft-warning {
+        background-color: rgba(255, 181, 107, 0.1);
+        color: #ffb56b;
+        border-color: transparent;
+    }
+
+    .btn-soft-warning:hover {
+        background-color: rgba(255, 181, 107, 0.2);
+        color: #ffb56b;
+    }
+
+    .btn-soft-danger {
+        background-color: rgba(237, 53, 81, 0.1);
+        color: #ed3551;
+        border-color: transparent;
+    }
+
+    .btn-soft-danger:hover {
+        background-color: rgba(237, 53, 81, 0.2);
+        color: #ed3551;
+    }
+
+    .btn-soft-secondary {
+        background-color: rgba(226, 230, 236, 0.1);
+        color: #677788;
+        border-color: transparent;
+    }
+
+    .btn-soft-secondary:hover {
+        background-color: rgba(226, 230, 236, 0.2);
+        color: #677788;
+    }
+
+    .btn-soft-purple {
+        background-color: rgba(123, 80, 250, 0.1);
+        color: #7b50fa;
+        border-color: transparent;
+    }
+
+    .btn-soft-purple:hover {
+        background-color: rgba(123, 80, 250, 0.2);
+        color: #7b50fa;
+    }
+
     /* Ghost button */
     .btn-ghost-secondary {
         color: #677788;
         background-color: transparent;
         border-color: transparent;
     }
-    
+
     .btn-ghost-secondary:hover {
         color: #495057;
         background-color: rgba(226, 230, 236, 0.1);
     }
-    
+
     /* Badge enhancements */
-    .text-purple { color: #7b50fa !important; }
-    .bg-soft-purple { background-color: rgba(123, 80, 250, 0.1) !important; }
-    
+    .text-purple {
+        color: #7b50fa !important;
+    }
+
+    .bg-soft-purple {
+        background-color: rgba(123, 80, 250, 0.1) !important;
+    }
+
     /* Search highlighting */
     .highlight {
         background-color: #fff8e1;
         padding: 0 2px;
         border-radius: 2px;
     }
-    
+
     /* Pagination styling */
     .pagination .page-link {
         color: #677788;
         border-color: #dee2e6;
     }
-    
+
     .pagination .page-link:hover {
         color: #377dff;
         background-color: #e8f5ff;
         border-color: #dee2e6;
     }
-    
+
     .pagination .page-item.active .page-link {
         background-color: #377dff;
         border-color: #377dff;
         color: #fff;
     }
-    
+
     .pagination .page-item.disabled .page-link {
         color: #98a6ad;
         background-color: #fff;
@@ -473,13 +496,10 @@ $stats = getCourseStats($department_id);
     }
 </style>
 
-<!-- Corrected JavaScript Section Only -->
+<!-- JavaScript for table view only -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize variables
-        const viewSwitchButtons = document.querySelectorAll('[data-view]');
-        const cardsView = document.getElementById('courses-cards');
-        const tableView = document.getElementById('courses-table');
         const searchInput = document.getElementById('courseSearch');
         const statusFilter = document.getElementById('statusFilter');
         const categoryFilter = document.getElementById('categoryFilter');
@@ -490,8 +510,7 @@ $stats = getCourseStats($department_id);
         const courseCount = document.getElementById('courseCount');
         const paginationInfo = document.getElementById('paginationInfo');
         const paginationControls = document.getElementById('paginationControls');
-        
-        let currentView = 'cards';
+
         let currentPage = 1;
         let totalPages = 1;
         let totalCourses = 0;
@@ -503,39 +522,25 @@ $stats = getCourseStats($department_id);
             level: '',
             sort: 'newest'
         };
-        
+
         // Initialize tooltips
         initializeTooltips();
-        
-        // Initialize view
-        initializeView();
-        
+
         // Load initial data
         loadCourses();
-        
+
         // Event listeners
         setupEventListeners();
-        
+
         // Helper Functions
         function initializeTooltips() {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
         }
-        
-        function initializeView() {
-            // Set initial view to cards
-            cardsView.style.display = 'flex';
-            tableView.style.display = 'none';
-        }
-        
+
         function setupEventListeners() {
-            // View switching
-            viewSwitchButtons.forEach(button => {
-                button.addEventListener('click', handleViewSwitch);
-            });
-            
             // Search and filters
             searchInput.addEventListener('input', debounce(handleSearch, 300));
             statusFilter.addEventListener('change', handleFilterChange);
@@ -543,133 +548,104 @@ $stats = getCourseStats($department_id);
             levelFilter.addEventListener('change', handleFilterChange);
             sortFilter.addEventListener('change', handleFilterChange);
             perPageSelect.addEventListener('change', handlePerPageChange);
-            
+
             // Course actions
             document.addEventListener('click', handleCourseAction);
-            
+
             // Pagination
             document.addEventListener('click', handlePaginationClick);
         }
-        
-        function handleViewSwitch(e) {
-            e.preventDefault();
-            
-            // Remove active class from all buttons
-            viewSwitchButtons.forEach(btn => btn.classList.remove('active'));
-            
-            // Add active class to clicked button
-            this.classList.add('active');
-            
-            // Update current view
-            currentView = this.dataset.view;
-            
-            // Show/hide appropriate view
-            if (currentView === 'cards') {
-                cardsView.style.display = 'flex';
-                tableView.style.display = 'none';
-            } else {
-                cardsView.style.display = 'none';
-                tableView.style.display = 'block';
-            }
-            
-            // Reload courses for new view
-            loadCourses();
-        }
-        
+
         function handleSearch(e) {
             currentFilters.search = e.target.value;
             currentPage = 1; // Reset to first page on search
             filterCourses();
         }
-        
+
         function handleFilterChange(e) {
             currentFilters[e.target.id.replace('Filter', '')] = e.target.value;
             currentPage = 1; // Reset to first page on filter change
             filterCourses();
         }
-        
+
         function handlePerPageChange(e) {
             perPage = parseInt(e.target.value);
             currentPage = 1; // Reset to first page
             loadCourses();
         }
-        
+
         function handlePaginationClick(e) {
             const paginationLink = e.target.closest('.page-link[data-page]');
             if (!paginationLink) return;
-            
+
             e.preventDefault();
             const newPage = parseInt(paginationLink.dataset.page);
-            
+
             if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
                 currentPage = newPage;
                 loadCourses();
             }
         }
-        
+
         function loadCourses() {
             showLoading();
-            
+
             const params = new URLSearchParams({
                 ...currentFilters,
-                view: currentView,
+                view: 'table', // Always use table view
                 page: currentPage,
                 limit: perPage
             });
-            
+
             fetch(`../ajax/department/search_courses.php?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                hideLoading();
-                
-                if (data.success) {
-                    updateView(data.html);
-                    updateCourseCount(data.count);
-                    updatePagination(data.current_page, data.total_pages, data.total_count);
-                    updateNoResultsState(data.count === 0);
-                    
-                    // Re-initialize tooltips for new content
-                    initializeTooltips();
-                    
-                    // Initialize dropdowns
-                    initializeDropdowns();
-                    
-                    // Dispatch event for other listeners
-                    document.dispatchEvent(new CustomEvent('course-cards-updated'));
-                } else {
-                    showError(data.message || 'Failed to load courses');
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                showError('Error loading courses: ' + error.message);
-                console.error('AJAX Error:', error);
-            });
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    hideLoading();
+
+                    if (data.success) {
+                        updateTableView(data.html);
+                        updateCourseCount(data.count);
+                        updatePagination(data.current_page, data.total_pages, data.total_count);
+                        updateNoResultsState(data.count === 0);
+
+                        // Re-initialize tooltips for new content
+                        initializeTooltips();
+
+                        // Initialize dropdowns
+                        initializeDropdowns();
+
+                        // Dispatch event for other listeners
+                        document.dispatchEvent(new CustomEvent('courses-updated'));
+                    } else {
+                        showError(data.message || 'Failed to load courses');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    showError('Error loading courses: ' + error.message);
+                    console.error('AJAX Error:', error);
+                });
         }
-        
+
         function filterCourses() {
             loadCourses();
         }
-        
-        function updateView(html) {
-            if (currentView === 'cards') {
-                cardsView.innerHTML = html;
-            } else {
-                document.getElementById('courseTableBody').innerHTML = html;
-            }
+
+        function updateTableView(html) {
+            document.getElementById('courseTableBody').innerHTML = html;
         }
-        
+
         function updateCourseCount(count) {
             if (count === 0) {
                 courseCount.textContent = 'No courses found';
@@ -679,20 +655,20 @@ $stats = getCourseStats($department_id);
                 courseCount.textContent = `${count} courses found`;
             }
         }
-        
+
         function updatePagination(current, total, totalCount) {
             currentPage = current;
             totalPages = total;
             totalCourses = totalCount;
-            
+
             // Update pagination info
             const start = ((currentPage - 1) * perPage) + 1;
             const end = Math.min(currentPage * perPage, totalCount);
             paginationInfo.textContent = `Showing ${start}-${end} of ${totalCount} courses`;
-            
+
             // Build pagination controls
             let paginationHtml = '';
-            
+
             // Previous button
             paginationHtml += `
                 <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
@@ -701,7 +677,7 @@ $stats = getCourseStats($department_id);
                     </a>
                 </li>
             `;
-            
+
             // First page if not visible
             if (currentPage > 3) {
                 paginationHtml += `
@@ -713,11 +689,11 @@ $stats = getCourseStats($department_id);
                     paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
                 }
             }
-            
+
             // Page numbers around current page
             const start_page = Math.max(1, currentPage - 2);
             const end_page = Math.min(totalPages, currentPage + 2);
-            
+
             for (let page = start_page; page <= end_page; page++) {
                 paginationHtml += `
                     <li class="page-item ${page === currentPage ? 'active' : ''}">
@@ -725,7 +701,7 @@ $stats = getCourseStats($department_id);
                     </li>
                 `;
             }
-            
+
             // Last page if not visible
             if (currentPage < totalPages - 2) {
                 if (currentPage < totalPages - 3) {
@@ -737,7 +713,7 @@ $stats = getCourseStats($department_id);
                     </li>
                 `;
             }
-            
+
             // Next button
             paginationHtml += `
                 <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
@@ -746,9 +722,9 @@ $stats = getCourseStats($department_id);
                     </a>
                 </li>
             `;
-            
+
             paginationControls.innerHTML = paginationHtml;
-            
+
             // Hide pagination if only one page
             if (totalPages <= 1) {
                 paginationControls.style.display = 'none';
@@ -756,25 +732,18 @@ $stats = getCourseStats($department_id);
                 paginationControls.style.display = 'flex';
             }
         }
-        
+
         function updateNoResultsState(show) {
             if (show) {
-                cardsView.style.display = 'none';
-                tableView.style.display = 'none';
+                document.getElementById('courses-table').style.display = 'none';
                 noResults.style.display = 'block';
                 paginationControls.style.display = 'none';
             } else {
                 noResults.style.display = 'none';
-                if (currentView === 'cards') {
-                    cardsView.style.display = 'flex';
-                    tableView.style.display = 'none';
-                } else {
-                    cardsView.style.display = 'none';
-                    tableView.style.display = 'block';
-                }
+                document.getElementById('courses-table').style.display = 'block';
             }
         }
-        
+
         // Initialize dropdowns with proper configuration
         function initializeDropdowns() {
             const dropdownElements = document.querySelectorAll('.dropdown-fixed .btn[data-bs-toggle="dropdown"]');
@@ -788,7 +757,7 @@ $stats = getCourseStats($department_id);
                 } catch (e) {
                     // Ignore errors if no instance exists
                 }
-                
+
                 // Create new dropdown instance with proper configuration
                 new bootstrap.Dropdown(dropdown, {
                     boundary: 'viewport',
@@ -797,199 +766,190 @@ $stats = getCourseStats($department_id);
                 });
             });
         }
-        
+
         // Course actions handler
-        function handleCourseAction(e) {
-            const actionElement = e.target.closest('[data-action]');
-            if (!actionElement) return;
+      function handleCourseAction(e) {
+    const actionElement = e.target.closest('[data-action]');
+    if (!actionElement) return;
+
+    e.preventDefault();
+    const action = actionElement.dataset.action;
+    const courseId = actionElement.dataset.courseId;
+
+    switch (action) {
+        case 'view_details':
+            showCourseDetails(courseId);
+            break;
+
+        case 'view_analytics':
+            window.location.href = `course-analytics.php?course_id=${courseId}`;
+            break;
+
+        case 'manage_course':
+            // Redirect to course management page
+            window.location.href = `manage-course.php?course_id=${courseId}`;
+            break;
             
-            e.preventDefault();
-            const action = actionElement.dataset.action;
-            const courseId = actionElement.dataset.courseId;
-            
-            switch (action) {
-                case 'view_details':
-                    showCourseDetails(courseId);
-                    break;
-                    
-                case 'view_analytics':
-                    window.location.href = `course-analytics.php?course_id=${courseId}`;
-                    break;
-                    
-                case 'manage_course':
-                    // Redirect to course management page
-                    window.location.href = `manage-course.php?course_id=${courseId}`;
-                    break;
-                    
-                case 'approve':
-                    confirmAction('Approve Course', 'Are you sure you want to approve this course?', 
-                        () => performCourseAction(courseId, 'approve'));
-                    break;
-                    
-                case 'request_revisions':
-                    showRevisionRequestForm(courseId);
-                    break;
-                    
-                case 'reject':
-                    showRejectCourseForm(courseId);
-                    break;
-                    
-                case 'unpublish':
-                    confirmAction('Unpublish Course', 'Are you sure you want to unpublish this course?', 
-                        () => performCourseAction(courseId, 'unpublish'));
-                    break;
-                    
-                case 'archive':
-                    confirmAction('Archive Course', 'Are you sure you want to archive this course?', 
-                        () => performCourseAction(courseId, 'archive'), 'danger');
-                    break;
-            }
-        }
-        
+        case 'review_course':
+            // Redirect to the new review page
+            window.location.href = `review-course.php?course_id=${courseId}`;
+            break;
+
+        case 'unpublish':
+            confirmAction('Unpublish Course', 'Are you sure you want to unpublish this course?',
+                () => performCourseAction(courseId, 'unpublish'));
+            break;
+
+        case 'archive':
+            confirmAction('Archive Course', 'Are you sure you want to archive this course?',
+                () => performCourseAction(courseId, 'archive'), 'danger');
+            break;
+    }
+}
         function performCourseAction(courseId, action, additionalData = {}) {
             showLoading();
-            
+
             const formData = new FormData();
             formData.append('action', action);
             formData.append('course_id', courseId);
-            
+
             // Add any additional data
             Object.keys(additionalData).forEach(key => {
                 formData.append(key, additionalData[key]);
             });
-            
+
             fetch('../ajax/department/course_action_handler.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                hideLoading();
-                
-                if (data.success) {
-                    if (data.redirect) {
-                        window.location.href = data.redirect;
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+
+                    if (data.success) {
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                        } else {
+                            showSuccess(data.message);
+                            loadCourses(); // Reload courses to reflect changes
+                        }
                     } else {
-                        showSuccess(data.message);
-                        loadCourses(); // Reload courses to reflect changes
+                        showError(data.message);
                     }
-                } else {
-                    showError(data.message);
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                showError('Error performing action: ' + error.message);
-            });
+                })
+                .catch(error => {
+                    hideLoading();
+                    showError('Error performing action: ' + error.message);
+                });
         }
-        
+
         function showCourseDetails(courseId) {
             const modal = new bootstrap.Modal(document.getElementById('courseDetailsModal'));
             modal.show();
-            
+
             // Load course details via AJAX
             fetch(`../ajax/department/course_action_handler.php`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `action=view_details&course_id=${courseId}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('courseDetailsContent').innerHTML = data.html;
-                } else {
-                    showError(data.message);
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=view_details&course_id=${courseId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('courseDetailsContent').innerHTML = data.html;
+                    } else {
+                        showError(data.message);
+                        modal.hide();
+                    }
+                })
+                .catch(error => {
+                    showError('Error loading course details: ' + error.message);
                     modal.hide();
-                }
-            })
-            .catch(error => {
-                showError('Error loading course details: ' + error.message);
-                modal.hide();
-            });
+                });
         }
-        
+
         function showRevisionRequestForm(courseId) {
             const modal = new bootstrap.Modal(document.getElementById('revisionRequestModal'));
             document.getElementById('revisionCourseId').value = courseId;
             document.getElementById('revisionComments').value = '';
             modal.show();
-            
+
             document.getElementById('revisionRequestForm').onsubmit = function(e) {
                 e.preventDefault();
-                
+
                 const formData = new FormData(this);
-                
+
                 fetch('../ajax/department/course_action_handler.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        modal.hide();
-                        showSuccess(data.message);
-                        loadCourses();
-                    } else {
-                        showError(data.message);
-                    }
-                })
-                .catch(error => {
-                    showError('Error sending revision request: ' + error.message);
-                });
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            modal.hide();
+                            showSuccess(data.message);
+                            loadCourses();
+                        } else {
+                            showError(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        showError('Error sending revision request: ' + error.message);
+                    });
             };
         }
-        
+
         function showRejectCourseForm(courseId) {
             const modal = new bootstrap.Modal(document.getElementById('rejectCourseModal'));
             document.getElementById('rejectCourseId').value = courseId;
             document.getElementById('rejectComments').value = '';
             modal.show();
-            
+
             document.getElementById('rejectCourseForm').onsubmit = function(e) {
                 e.preventDefault();
-                
+
                 const formData = new FormData(this);
-                
+
                 fetch('../ajax/department/course_action_handler.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        modal.hide();
-                        showSuccess(data.message);
-                        loadCourses();
-                    } else {
-                        showError(data.message);
-                    }
-                })
-                .catch(error => {
-                    showError('Error rejecting course: ' + error.message);
-                });
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            modal.hide();
+                            showSuccess(data.message);
+                            loadCourses();
+                        } else {
+                            showError(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        showError('Error rejecting course: ' + error.message);
+                    });
             };
         }
-        
+
         // Utility functions
         function confirmAction(title, message, callback, type = 'primary') {
             const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
             document.getElementById('confirmationModalLabel').textContent = title;
             document.getElementById('confirmationMessage').textContent = message;
-            
+
             const confirmBtn = document.getElementById('confirmActionBtn');
             confirmBtn.className = `btn btn-${type}`;
             confirmBtn.textContent = 'Confirm';
-            
+
             confirmBtn.onclick = function() {
                 modal.hide();
                 callback();
             };
-            
+
             modal.show();
         }
-        
+
         function showLoading() {
             // Use the existing showOverlay function if it exists
             if (typeof window.showOverlay === 'function') {
@@ -1010,7 +970,7 @@ $stats = getCourseStats($department_id);
             `;
             document.body.appendChild(overlay);
         }
-        
+
         function hideLoading() {
             // Use the existing removeOverlay function if it exists
             if (typeof window.removeOverlay === 'function') {
@@ -1024,15 +984,15 @@ $stats = getCourseStats($department_id);
                 overlay.remove();
             }
         }
-        
+
         function showSuccess(message) {
             showToast(message, 'success');
         }
-        
+
         function showError(message) {
             showToast(message, 'danger');
         }
-        
+
         function showToast(message, type) {
             const toast = document.createElement('div');
             toast.className = `toast align-items-center text-white bg-${type} border-0`;
@@ -1047,7 +1007,7 @@ $stats = getCourseStats($department_id);
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                 </div>
             `;
-            
+
             // Add to toast container (create if doesn't exist)
             let toastContainer = document.getElementById('toastContainer');
             if (!toastContainer) {
@@ -1057,16 +1017,16 @@ $stats = getCourseStats($department_id);
                 toastContainer.style.zIndex = '11';
                 document.body.appendChild(toastContainer);
             }
-            
+
             toastContainer.appendChild(toast);
             const bsToast = new bootstrap.Toast(toast);
             bsToast.show();
-            
+
             toast.addEventListener('hidden.bs.toast', () => {
                 toast.remove();
             });
         }
-        
+
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -1081,8 +1041,8 @@ $stats = getCourseStats($department_id);
     });
 </script>
 
-<?php 
+<?php
 // Close the connection at the very end
 $conn->close();
-include '../includes/department/footer.php'; 
+include '../includes/department/footer.php';
 ?>
