@@ -81,29 +81,30 @@ foreach ($courses as $course) {
     if ($course['status'] == 'Draft') {
         $draft_courses++;
     }
-    
+
     if ($course['approval_status'] == 'submitted_for_review' || $course['approval_status'] == 'under_review') {
         $review_courses++;
     }
-    
+
     if ($course['approval_status'] == 'approved') {
         $approved_courses++;
     }
 }
 
 // Function to handle course thumbnails
-function displayCourseImage($thumbnail) {
+function displayCourseImage($thumbnail)
+{
     $default_image = '../assets/images/default-course.jpg';
     if (empty($thumbnail)) {
         return $default_image;
     }
-    
+
     $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     $ext = strtolower(pathinfo($thumbnail, PATHINFO_EXTENSION));
     if (!in_array($ext, $allowed_extensions)) {
         return $default_image;
     }
-    
+
     $upload_paths = ['../Uploads/thumbnails/', '../Uploads/', 'Uploads/thumbnails/', 'Uploads/'];
     foreach ($upload_paths as $path) {
         $full_path = $path . $thumbnail;
@@ -111,12 +112,13 @@ function displayCourseImage($thumbnail) {
             return $full_path;
         }
     }
-    
+
     return $default_image;
 }
 
 // Function to get approval status badge HTML
-function getApprovalStatusBadge($status) {
+function getApprovalStatusBadge($status)
+{
     switch ($status) {
         case 'pending':
             return '<span class="badge bg-secondary">Pending</span>';
@@ -136,7 +138,8 @@ function getApprovalStatusBadge($status) {
 }
 
 // Function to calculate completion percentage
-function getStepProgressPercentage($step) {
+function getStepProgressPercentage($step)
+{
     // Assuming 6 steps total: Basic info, Requirements, Structure, Content, Settings, Review
     $totalSteps = 6;
     $currentStep = min(max(1, intval($step)), $totalSteps);
@@ -146,6 +149,7 @@ function getStepProgressPercentage($step) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <title>Instructor | Learnix - My Courses</title>
@@ -165,16 +169,19 @@ function getStepProgressPercentage($step) {
             color: #98a6ad;
             transition: all 0.3s ease;
         }
+
         .action-icon:hover {
             color: #3bafda;
             transform: scale(1.2);
         }
+
         .course-thumbnail {
             width: 48px;
             height: 48px;
             object-fit: cover;
             border-radius: 4px;
         }
+
         .course-title {
             white-space: nowrap;
             overflow: hidden;
@@ -182,6 +189,7 @@ function getStepProgressPercentage($step) {
             max-width: 200px;
             display: block;
         }
+
         .course-description {
             white-space: nowrap;
             overflow: hidden;
@@ -189,20 +197,25 @@ function getStepProgressPercentage($step) {
             max-width: 250px;
             display: block;
         }
+
         .course-row {
             cursor: pointer;
         }
+
         .progress-sm {
             height: 5px;
         }
+
         .workflow-icon {
             font-size: 2rem;
             color: #3bafda;
         }
+
         .workflow-step {
             position: relative;
             padding-bottom: 15px;
         }
+
         .workflow-step:not(:last-child):after {
             content: '';
             position: absolute;
@@ -211,9 +224,11 @@ function getStepProgressPercentage($step) {
             height: 30px;
             border-left: 2px dashed #e3eaef;
         }
+
         .info-card {
             border-left: 4px solid #3bafda;
         }
+
         .department-badge {
             background-color: #eef2f7;
             color: #6c757d;
@@ -222,6 +237,7 @@ function getStepProgressPercentage($step) {
             font-size: 0.75em;
             font-weight: 600;
         }
+
         .custom-overlay {
             position: fixed;
             top: 0;
@@ -243,11 +259,11 @@ function getStepProgressPercentage($step) {
 <body class="loading" data-layout-color="light" data-leftbar-theme="dark" data-layout-mode="fluid" data-rightbar-onstart="true">
     <div class="wrapper">
         <?php include '../includes/instructor-sidebar.php'; ?>
-        
+
         <div class="content-page">
             <div class="content">
                 <?php include '../includes/instructor-topnavbar.php'; ?>
-                
+
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-12">
@@ -263,7 +279,7 @@ function getStepProgressPercentage($step) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Info Alert -->
                     <div class="row">
                         <div class="col-12">
@@ -273,7 +289,7 @@ function getStepProgressPercentage($step) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Course Workflow -->
                     <div class="row mb-3">
                         <div class="col-12">
@@ -323,7 +339,7 @@ function getStepProgressPercentage($step) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Summary Cards -->
                     <div class="row">
                         <div class="col-12">
@@ -371,7 +387,7 @@ function getStepProgressPercentage($step) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Course Table -->
                     <div class="row">
                         <div class="col-12">
@@ -396,7 +412,7 @@ function getStepProgressPercentage($step) {
                                                             <div class="d-flex align-items-center">
                                                                 <?php if (!empty($course['thumbnail'])): ?>
                                                                     <img src="<?php echo displayCourseImage($course['thumbnail']); ?>"
-                                                                         alt="course-thumbnail" class="course-thumbnail me-3">
+                                                                        alt="course-thumbnail" class="course-thumbnail me-3">
                                                                 <?php else: ?>
                                                                     <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
                                                                         <i class="mdi mdi-book-open-page-variant text-muted"></i>
@@ -435,7 +451,7 @@ function getStepProgressPercentage($step) {
                                                             <?php endif; ?>
                                                         </td>
                                                         <td>
-                                                            <?php 
+                                                            <?php
                                                             $progressPercentage = getStepProgressPercentage($course['creation_step']);
                                                             $progressClass = 'bg-danger';
                                                             if ($progressPercentage > 33) $progressClass = 'bg-warning';
@@ -443,38 +459,38 @@ function getStepProgressPercentage($step) {
                                                             if ($course['approval_status'] === 'approved') $progressClass = 'bg-success';
                                                             ?>
                                                             <div class="progress progress-sm">
-                                                                <div class="progress-bar <?php echo $progressClass; ?>" 
-                                                                     role="progressbar" 
-                                                                     style="width: <?php echo $progressPercentage; ?>%" 
-                                                                     aria-valuenow="<?php echo $progressPercentage; ?>" 
-                                                                     aria-valuemin="0" 
-                                                                     aria-valuemax="100">
+                                                                <div class="progress-bar <?php echo $progressClass; ?>"
+                                                                    role="progressbar"
+                                                                    style="width: <?php echo $progressPercentage; ?>%"
+                                                                    aria-valuenow="<?php echo $progressPercentage; ?>"
+                                                                    aria-valuemin="0"
+                                                                    aria-valuemax="100">
                                                                 </div>
                                                             </div>
                                                             <small class="text-muted"><?php echo $progressPercentage; ?>% complete</small>
                                                         </td>
                                                         <td class="table-action">
                                                             <a href="course-creator.php?course_id=<?php echo $course['course_id']; ?>"
-                                                               class="action-icon" title="Edit Course">
+                                                                class="action-icon" title="Edit Course">
                                                                 <i class="mdi mdi-square-edit-outline"></i>
                                                             </a>
-                                                            
+
                                                             <?php if ($course['approval_status'] === 'pending' || $course['approval_status'] === 'revisions_requested'): ?>
                                                                 <?php if ($course['instructor_role'] === 'Primary'): ?>
                                                                     <a href="javascript:void(0);"
-                                                                       class="action-icon text-primary submit-for-review"
-                                                                       data-course-id="<?php echo $course['course_id']; ?>"
-                                                                       data-course-title="<?php echo htmlspecialchars($course['title']); ?>"
-                                                                       title="Submit for Review">
+                                                                        class="action-icon text-primary submit-for-review"
+                                                                        data-course-id="<?php echo $course['course_id']; ?>"
+                                                                        data-course-title="<?php echo htmlspecialchars($course['title']); ?>"
+                                                                        title="Submit for Review">
                                                                         <i class="mdi mdi-send"></i>
                                                                     </a>
                                                                 <?php endif; ?>
                                                             <?php endif; ?>
-                                                            
+
                                                             <a href="javascript:void(0);"
-                                                               class="action-icon preview-course"
-                                                               data-course-id="<?php echo $course['course_id']; ?>"
-                                                               title="Preview Course">
+                                                                class="action-icon preview-course"
+                                                                data-course-id="<?php echo $course['course_id']; ?>"
+                                                                title="Preview Course">
                                                                 <i class="mdi mdi-eye-outline"></i>
                                                             </a>
                                                         </td>
@@ -497,7 +513,7 @@ function getStepProgressPercentage($step) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Submit for Review Modal -->
                     <div class="modal fade" id="submitReviewModal" tabindex="-1" aria-labelledby="submitReviewModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
@@ -512,12 +528,12 @@ function getStepProgressPercentage($step) {
                                     </div>
                                     <p>You are about to submit this course for review by your department head:</p>
                                     <p class="mb-3"><strong>Course:</strong> <span id="courseToSubmit"></span></p>
-                                    
+
                                     <div class="alert alert-info">
                                         <i class="mdi mdi-information-outline me-2"></i>
                                         After submission, you can still edit the course while waiting for review.
                                     </div>
-                                    
+
                                     <div class="form-group">
                                         <label for="reviewNotes" class="form-label">Additional Notes (Optional)</label>
                                         <textarea class="form-control" id="reviewNotes" rows="3" placeholder="Add any notes for the reviewer"></textarea>
@@ -530,7 +546,7 @@ function getStepProgressPercentage($step) {
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Course Preview Modal -->
                     <div id="coursePreviewModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="coursePreviewModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg">
@@ -557,237 +573,249 @@ function getStepProgressPercentage($step) {
                         </div>
                     </div>
                 </div>
-                
+
             </div>
+             <!-- Footer Start -->
+            <footer class="footer">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-6">
+                            © Learnix. <script>
+                                document.write(new Date().getFullYear())
+                            </script> All rights reserved.
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- end Footer -->
         </div>
-        <?php include '../includes/instructor-footer.php'; ?>
         
         <?php include '../includes/instructor-darkmode.php'; ?>
-        
-    <script src="assets/js/vendor.min.js"></script>
-<script src="assets/js/app.min.js"></script>
 
-<!-- Add DataTables scripts -->
-<script src="assets/js/vendor/jquery.dataTables.min.js"></script>
-<script src="assets/js/vendor/dataTables.bootstrap5.js"></script>
-<script src="assets/js/vendor/dataTables.responsive.min.js"></script>
-<script src="assets/js/vendor/responsive.bootstrap5.min.js"></script>
+        <script src="assets/js/vendor.min.js"></script>
+        <script src="assets/js/app.min.js"></script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize DataTable with fallback
-        if (typeof $.fn.DataTable === 'function') {
-            $('#courses-table').DataTable({
-                "paging": true,
-                "ordering": true,
-                "info": true,
-                "searching": true,
-                "language": {
-                    "paginate": {
-                        "previous": "<i class='mdi mdi-chevron-left'>",
-                        "next": "<i class='mdi mdi-chevron-right'>"
-                    },
-                    "emptyTable": "No courses available"
-                },
-                "drawCallback": function() {
-                    $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+        <!-- Add DataTables scripts -->
+        <script src="assets/js/vendor/jquery.dataTables.min.js"></script>
+        <script src="assets/js/vendor/dataTables.bootstrap5.js"></script>
+        <script src="assets/js/vendor/dataTables.responsive.min.js"></script>
+        <script src="assets/js/vendor/responsive.bootstrap5.min.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize DataTable with fallback
+                if (typeof $.fn.DataTable === 'function') {
+                    $('#courses-table').DataTable({
+                        "paging": true,
+                        "ordering": true,
+                        "info": true,
+                        "searching": true,
+                        "language": {
+                            "paginate": {
+                                "previous": "<i class='mdi mdi-chevron-left'>",
+                                "next": "<i class='mdi mdi-chevron-right'>"
+                            },
+                            "emptyTable": "No courses available"
+                        },
+                        "drawCallback": function() {
+                            $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
+                        }
+                    });
+                } else {
+                    console.log("DataTables not loaded - using standard table functionality");
                 }
-            });
-        } else {
-            console.log("DataTables not loaded - using standard table functionality");
-        }
-        
-        // Utility functions for overlays and alerts
-        function showOverlay(message = null) {
-            const existingOverlay = document.querySelector('.custom-overlay');
-            if (existingOverlay) {
-                existingOverlay.remove();
-            }
-            const overlay = document.createElement('div');
-            overlay.className = 'custom-overlay';
-            overlay.innerHTML = `
+
+                // Utility functions for overlays and alerts
+                function showOverlay(message = null) {
+                    const existingOverlay = document.querySelector('.custom-overlay');
+                    if (existingOverlay) {
+                        existingOverlay.remove();
+                    }
+                    const overlay = document.createElement('div');
+                    overlay.className = 'custom-overlay';
+                    overlay.innerHTML = `
                 <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 ${message ? `<div class="fw-semibold fs-5 text-primary">${message}</div>` : ''}
             `;
-            document.body.appendChild(overlay);
-            return overlay;
-        }
-        
-        function removeOverlay() {
-            const overlay = document.querySelector('.custom-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
-        }
-        
-        function showAlert(type, message) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-            alertDiv.setAttribute('role', 'alert');
-            alertDiv.innerHTML = `
+                    document.body.appendChild(overlay);
+                    return overlay;
+                }
+
+                function removeOverlay() {
+                    const overlay = document.querySelector('.custom-overlay');
+                    if (overlay) {
+                        overlay.remove();
+                    }
+                }
+
+                function showAlert(type, message) {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+                    alertDiv.setAttribute('role', 'alert');
+                    alertDiv.innerHTML = `
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
-            alertDiv.style.position = 'fixed';
-            alertDiv.style.top = '20px';
-            alertDiv.style.left = '50%';
-            alertDiv.style.transform = 'translateX(-50%)';
-            alertDiv.style.zIndex = '9999';
-            alertDiv.style.minWidth = '300px';
-            alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-            document.body.appendChild(alertDiv);
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.classList.remove('show');
+                    alertDiv.style.position = 'fixed';
+                    alertDiv.style.top = '20px';
+                    alertDiv.style.left = '50%';
+                    alertDiv.style.transform = 'translateX(-50%)';
+                    alertDiv.style.zIndex = '9999';
+                    alertDiv.style.minWidth = '300px';
+                    alertDiv.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                    document.body.appendChild(alertDiv);
                     setTimeout(() => {
                         if (alertDiv.parentNode) {
-                            alertDiv.parentNode.removeChild(alertDiv);
+                            alertDiv.classList.remove('show');
+                            setTimeout(() => {
+                                if (alertDiv.parentNode) {
+                                    alertDiv.parentNode.removeChild(alertDiv);
+                                }
+                            }, 300);
                         }
-                    }, 300);
+                    }, 5000);
                 }
-            }, 5000);
-        }
-        
-        // Submit for review functionality
-        let courseIdToSubmit = null;
-        
-        function showSubmitReviewModal(courseId, courseTitle) {
-            courseIdToSubmit = courseId;
-            document.getElementById('courseToSubmit').textContent = courseTitle || 'This course';
-            document.getElementById('reviewNotes').value = '';
-            const submitModal = new bootstrap.Modal(document.getElementById('submitReviewModal'));
-            submitModal.show();
-        }
-        
-        function submitCourseForReview(courseId, notes) {
-            showOverlay('Submitting course for review...');
-            fetch(`../ajax/courses/submit_for_review.php`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ 
-                    course_id: courseId,
-                    notes: notes 
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                removeOverlay();
-                if (data.success) {
-                    showAlert('success', 'Course successfully submitted for review!');
-                    // Refresh the page after a delay
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                } else {
-                    showAlert('danger', data.message || 'Failed to submit course for review');
+
+                // Submit for review functionality
+                let courseIdToSubmit = null;
+
+                function showSubmitReviewModal(courseId, courseTitle) {
+                    courseIdToSubmit = courseId;
+                    document.getElementById('courseToSubmit').textContent = courseTitle || 'This course';
+                    document.getElementById('reviewNotes').value = '';
+                    const submitModal = new bootstrap.Modal(document.getElementById('submitReviewModal'));
+                    submitModal.show();
                 }
-            })
-            .catch(error => {
-                removeOverlay();
-                console.error('Error:', error);
-                showAlert('danger', 'An error occurred while submitting the course for review');
-            });
-        }
-        
-        // Event handlers for submit review
-        $(document).on('click', '.submit-for-review', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const courseId = $(this).data('course-id');
-            const courseTitle = $(this).data('course-title');
-            showSubmitReviewModal(courseId, courseTitle);
-        });
-        
-        document.getElementById('confirmSubmitReview').addEventListener('click', function() {
-            if (courseIdToSubmit) {
-                const notes = document.getElementById('reviewNotes').value;
-                submitCourseForReview(courseIdToSubmit, notes);
-                const submitModal = bootstrap.Modal.getInstance(document.getElementById('submitReviewModal'));
-                submitModal.hide();
-            }
-        });
-        
-        // Course preview functionality
-        const previewModal = new bootstrap.Modal(document.getElementById('coursePreviewModal'));
-        
-        $(document).on('click', '.preview-course', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const courseId = $(this).data('course-id');
-            openCoursePreview(courseId);
-        });
-        
-        $(document).on('click', '.course-row', function(e) {
-            if (e.target.closest('.table-action') || e.target.closest('.action-icon')) {
-                return;
-            }
-            const courseId = $(this).data('course-id');
-            openCoursePreview(courseId);
-        });
-        
-        // Helper function to safely escape HTML
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-        
-        // Course preview functionality - updated version
-        function openCoursePreview(courseId) {
-            $('#coursePreviewLoader').show();
-            $('#coursePreviewContent').hide();
-            previewModal.show();
-            
-            fetch(`../ajax/courses/get_course_details.php?course_id=${courseId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        populateCoursePreview(data.course);
-                    } else {
-                        showPreviewError(data.message || 'Failed to load course details');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showPreviewError('An error occurred while loading course details');
+
+                function submitCourseForReview(courseId, notes) {
+                    showOverlay('Submitting course for review...');
+                    fetch(`../ajax/courses/submit_for_review.php`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({
+                                course_id: courseId,
+                                notes: notes
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            removeOverlay();
+                            if (data.success) {
+                                showAlert('success', 'Course successfully submitted for review!');
+                                // Refresh the page after a delay
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 2000);
+                            } else {
+                                showAlert('danger', data.message || 'Failed to submit course for review');
+                            }
+                        })
+                        .catch(error => {
+                            removeOverlay();
+                            console.error('Error:', error);
+                            showAlert('danger', 'An error occurred while submitting the course for review');
+                        });
+                }
+
+                // Event handlers for submit review
+                $(document).on('click', '.submit-for-review', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const courseId = $(this).data('course-id');
+                    const courseTitle = $(this).data('course-title');
+                    showSubmitReviewModal(courseId, courseTitle);
                 });
-        }
-        
-        function populateCoursePreview(course) {
-            // Set edit button link
-            $('#previewEditButton').attr('href', `course-creator.php?course_id=${course.course_id}`);
-            
-            // Show/hide submit button based on status and role
-            if ((course.approval_status === 'pending' || course.approval_status === 'revisions_requested') && 
-                course.instructor_role === 'Primary') {
-                $('#previewSubmitButton').show();
-                $('#previewSubmitButton').data('course-id', course.course_id);
-                $('#previewSubmitButton').data('course-title', course.title);
-            } else {
-                $('#previewSubmitButton').hide();
-            }
-            
-            // Safely handle dates
-            const createdDate = course.created_at ? new Date(course.created_at).toLocaleDateString() : 'N/A';
-            const updatedDate = course.updated_at ? new Date(course.updated_at).toLocaleDateString() : 'N/A';
-            
-            // Safely get completion percentage
-            const completionPercentage = Math.round(parseFloat(course.completion_percentage || 0));
-            
-            // Safely handle creation step
-            const creationStep = parseInt(course.creation_step || 0);
-            
-            // Build preview content HTML with proper escaping
-            let previewHtml = `
+
+                document.getElementById('confirmSubmitReview').addEventListener('click', function() {
+                    if (courseIdToSubmit) {
+                        const notes = document.getElementById('reviewNotes').value;
+                        submitCourseForReview(courseIdToSubmit, notes);
+                        const submitModal = bootstrap.Modal.getInstance(document.getElementById('submitReviewModal'));
+                        submitModal.hide();
+                    }
+                });
+
+                // Course preview functionality
+                const previewModal = new bootstrap.Modal(document.getElementById('coursePreviewModal'));
+
+                $(document).on('click', '.preview-course', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const courseId = $(this).data('course-id');
+                    openCoursePreview(courseId);
+                });
+
+                $(document).on('click', '.course-row', function(e) {
+                    if (e.target.closest('.table-action') || e.target.closest('.action-icon')) {
+                        return;
+                    }
+                    const courseId = $(this).data('course-id');
+                    openCoursePreview(courseId);
+                });
+
+                // Helper function to safely escape HTML
+                function escapeHtml(str) {
+                    if (!str) return '';
+                    return String(str)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                }
+
+                // Course preview functionality - updated version
+                function openCoursePreview(courseId) {
+                    $('#coursePreviewLoader').show();
+                    $('#coursePreviewContent').hide();
+                    previewModal.show();
+
+                    fetch(`../ajax/courses/get_course_details.php?course_id=${courseId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                populateCoursePreview(data.course);
+                            } else {
+                                showPreviewError(data.message || 'Failed to load course details');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            showPreviewError('An error occurred while loading course details');
+                        });
+                }
+
+                function populateCoursePreview(course) {
+                    // Set edit button link
+                    $('#previewEditButton').attr('href', `course-creator.php?course_id=${course.course_id}`);
+
+                    // Show/hide submit button based on status and role
+                    if ((course.approval_status === 'pending' || course.approval_status === 'revisions_requested') &&
+                        course.instructor_role === 'Primary') {
+                        $('#previewSubmitButton').show();
+                        $('#previewSubmitButton').data('course-id', course.course_id);
+                        $('#previewSubmitButton').data('course-title', course.title);
+                    } else {
+                        $('#previewSubmitButton').hide();
+                    }
+
+                    // Safely handle dates
+                    const createdDate = course.created_at ? new Date(course.created_at).toLocaleDateString() : 'N/A';
+                    const updatedDate = course.updated_at ? new Date(course.updated_at).toLocaleDateString() : 'N/A';
+
+                    // Safely get completion percentage
+                    const completionPercentage = Math.round(parseFloat(course.completion_percentage || 0));
+
+                    // Safely handle creation step
+                    const creationStep = parseInt(course.creation_step || 0);
+
+                    // Build preview content HTML with proper escaping
+                    let previewHtml = `
                 <div class="row">
                     <div class="col-md-4">
                         ${course.thumbnail ? 
@@ -862,90 +890,106 @@ function getStepProgressPercentage($step) {
                     </div>
                 </div>
             `;
-            
-            // Update preview content and display
-            $('#coursePreviewContent').html(previewHtml);
-            $('#coursePreviewLoader').hide();
-            $('#coursePreviewContent').show();
-        }
-        
-        // Helper functions for preview
-        function getStatusClass(status) {
-            switch (status) {
-                case 'pending': return 'bg-secondary';
-                case 'revisions_requested': return 'bg-warning';
-                case 'submitted_for_review': return 'bg-info';
-                case 'under_review': return 'bg-primary';
-                case 'approved': return 'bg-success';
-                case 'rejected': return 'bg-danger';
-                default: return 'bg-secondary';
-            }
-        }
-        
-        function formatStatus(status) {
-            if (!status) return 'PENDING';
-            return String(status).replace(/_/g, ' ').toUpperCase();
-        }
-        
-        function getStatusMessage(status) {
-            switch (status) {
-                case 'pending': return 'This course is still pending submission for review.';
-                case 'revisions_requested': return 'Revisions have been requested by the department head.';
-                case 'submitted_for_review': return 'This course has been submitted for review.';
-                case 'under_review': return 'This course is currently being reviewed.';
-                case 'approved': return 'This course has been approved!';
-                case 'rejected': return 'This course has been rejected.';
-                default: return 'Status information unavailable.';
-            }
-        }
-        
-        function getFeedbackMessage(course) {
-            if (!course || !course.approval_status) return '';
-            
-            switch (course.approval_status) {
-                case 'pending': 
-                    return 'Submit this course for review when you feel it is ready.';
-                case 'revisions_requested': 
-                    return course.review_notes || 'Please make the necessary changes and resubmit.';
-                case 'submitted_for_review': 
-                    return 'The department head will review your submission shortly.';
-                case 'under_review': 
-                    return 'The department head is reviewing your course.';
-                case 'approved': 
-                    return course.review_notes || 'Congratulations! Your course has been approved.';
-                case 'rejected': 
-                    return course.review_notes || 'Please contact your department head for more information.';
-                default: 
-                    return '';
-            }
-        }
-        
-        function getProgressClass(percentage) {
-            if (isNaN(percentage)) percentage = 0;
-            if (percentage < 25) return 'bg-danger';
-            if (percentage < 50) return 'bg-warning';
-            if (percentage < 75) return 'bg-info';
-            return 'bg-success';
-        }
-        
-        function showPreviewError(message) {
-            $('#coursePreviewLoader').hide();
-            $('#coursePreviewContent').html(`
+
+                    // Update preview content and display
+                    $('#coursePreviewContent').html(previewHtml);
+                    $('#coursePreviewLoader').hide();
+                    $('#coursePreviewContent').show();
+                }
+
+                // Helper functions for preview
+                function getStatusClass(status) {
+                    switch (status) {
+                        case 'pending':
+                            return 'bg-secondary';
+                        case 'revisions_requested':
+                            return 'bg-warning';
+                        case 'submitted_for_review':
+                            return 'bg-info';
+                        case 'under_review':
+                            return 'bg-primary';
+                        case 'approved':
+                            return 'bg-success';
+                        case 'rejected':
+                            return 'bg-danger';
+                        default:
+                            return 'bg-secondary';
+                    }
+                }
+
+                function formatStatus(status) {
+                    if (!status) return 'PENDING';
+                    return String(status).replace(/_/g, ' ').toUpperCase();
+                }
+
+                function getStatusMessage(status) {
+                    switch (status) {
+                        case 'pending':
+                            return 'This course is still pending submission for review.';
+                        case 'revisions_requested':
+                            return 'Revisions have been requested by the department head.';
+                        case 'submitted_for_review':
+                            return 'This course has been submitted for review.';
+                        case 'under_review':
+                            return 'This course is currently being reviewed.';
+                        case 'approved':
+                            return 'This course has been approved!';
+                        case 'rejected':
+                            return 'This course has been rejected.';
+                        default:
+                            return 'Status information unavailable.';
+                    }
+                }
+
+                function getFeedbackMessage(course) {
+                    if (!course || !course.approval_status) return '';
+
+                    switch (course.approval_status) {
+                        case 'pending':
+                            return 'Submit this course for review when you feel it is ready.';
+                        case 'revisions_requested':
+                            return course.review_notes || 'Please make the necessary changes and resubmit.';
+                        case 'submitted_for_review':
+                            return 'The department head will review your submission shortly.';
+                        case 'under_review':
+                            return 'The department head is reviewing your course.';
+                        case 'approved':
+                            return course.review_notes || 'Congratulations! Your course has been approved.';
+                        case 'rejected':
+                            return course.review_notes || 'Please contact your department head for more information.';
+                        default:
+                            return '';
+                    }
+                }
+
+                function getProgressClass(percentage) {
+                    if (isNaN(percentage)) percentage = 0;
+                    if (percentage < 25) return 'bg-danger';
+                    if (percentage < 50) return 'bg-warning';
+                    if (percentage < 75) return 'bg-info';
+                    return 'bg-success';
+                }
+
+                function showPreviewError(message) {
+                    $('#coursePreviewLoader').hide();
+                    $('#coursePreviewContent').html(`
                 <div class="alert alert-danger">
                     <i class="mdi mdi-alert-circle-outline me-2"></i>
                     ${escapeHtml(message)}
                 </div>
             `).show();
-        }
-        
-        // Handle submit button in preview modal
-        $('#previewSubmitButton').on('click', function() {
-            const courseId = $(this).data('course-id');
-            const courseTitle = $(this).data('course-title');
-            previewModal.hide();
-            showSubmitReviewModal(courseId, courseTitle);
-        });
-    });
-</script>
-    </body>
+                }
+
+                // Handle submit button in preview modal
+                $('#previewSubmitButton').on('click', function() {
+                    const courseId = $(this).data('course-id');
+                    const courseTitle = $(this).data('course-title');
+                    previewModal.hide();
+                    showSubmitReviewModal(courseId, courseTitle);
+                });
+            });
+        </script>
+    </div>
+</body>
+
 </html>
