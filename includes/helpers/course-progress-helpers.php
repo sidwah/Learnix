@@ -5,7 +5,7 @@
  */
 
 /**
- * Helper function to check if all quizzes in a course have been completed with a passing grade
+ * Helper function to check if all required quizzes in a course have been completed with a passing grade
  * 
  * @param int $userId User ID
  * @param int $courseId Course ID
@@ -13,11 +13,12 @@
  * @return array Status information with counts
  */
 function checkQuizzesCompleted($userId, $courseId, $conn) {
-    // Get all quizzes for this course
+    // Get all quizzes for this course, including is_required flag
     $quizQuery = "SELECT 
                  sq.quiz_id, 
                  sq.quiz_title, 
                  sq.pass_mark,
+                 sq.is_required,
                  cs.section_id,
                  cs.title as section_title,
                  COALESCE(
@@ -44,34 +45,64 @@ function checkQuizzesCompleted($userId, $courseId, $conn) {
     
     $quizzes = [];
     $totalQuizzes = 0;
+    $totalRequiredQuizzes = 0;
     $passedQuizzes = 0;
+    $passedRequiredQuizzes = 0;
     $failedQuizzes = [];
+    $failedRequiredQuizzes = [];
     
     while ($quiz = $result->fetch_assoc()) {
         $totalQuizzes++;
         
+        if ($quiz['is_required'] == 1) {
+            $totalRequiredQuizzes++;
+        }
+        
         if ($quiz['is_passed'] == 1) {
             $passedQuizzes++;
+            
+            if ($quiz['is_required'] == 1) {
+                $passedRequiredQuizzes++;
+            }
         } else {
             $failedQuizzes[] = [
                 'quiz_id' => $quiz['quiz_id'],
                 'quiz_title' => $quiz['quiz_title'],
                 'section_title' => $quiz['section_title'],
                 'highest_score' => $quiz['highest_score'],
-                'pass_mark' => $quiz['pass_mark']
+                'pass_mark' => $quiz['pass_mark'],
+                'is_required' => $quiz['is_required']
             ];
+            
+            if ($quiz['is_required'] == 1) {
+                $failedRequiredQuizzes[] = [
+                    'quiz_id' => $quiz['quiz_id'],
+                    'quiz_title' => $quiz['quiz_title'],
+                    'section_title' => $quiz['section_title'],
+                    'highest_score' => $quiz['highest_score'],
+                    'pass_mark' => $quiz['pass_mark']
+                ];
+            }
         }
         
         $quizzes[] = $quiz;
     }
     
+    // Check if all REQUIRED quizzes are passed
+    $allRequiredPassed = ($totalRequiredQuizzes == $passedRequiredQuizzes);
+    
+    // Check if all quizzes (both required and optional) are passed
     $allPassed = ($totalQuizzes == $passedQuizzes);
     
     return [
         'all_passed' => $allPassed,
+        'all_required_passed' => $allRequiredPassed, // New field for required quizzes only
         'total_quizzes' => $totalQuizzes,
+        'total_required_quizzes' => $totalRequiredQuizzes, // Count of required quizzes
         'passed_quizzes' => $passedQuizzes,
+        'passed_required_quizzes' => $passedRequiredQuizzes, // Count of passed required quizzes
         'failed_quizzes' => $failedQuizzes,
+        'failed_required_quizzes' => $failedRequiredQuizzes, // Only failed required quizzes
         'quizzes' => $quizzes
     ];
 }
@@ -105,10 +136,11 @@ function checkCourseCompletionRequirements($userId, $courseId, $enrollmentId, $c
     
     // Check quiz completion
     $quizStatus = checkQuizzesCompleted($userId, $courseId, $conn);
-    $allQuizzesPassed = $quizStatus['all_passed'];
+    // Use all_required_passed instead of all_passed
+    $allRequiredQuizzesPassed = $quizStatus['all_required_passed'];
     
     // Overall completion status
-    $allRequirementsMet = $allTopicsCompleted && $allQuizzesPassed;
+    $allRequirementsMet = $allTopicsCompleted && $allRequiredQuizzesPassed;
     
     return [
         'all_requirements_met' => $allRequirementsMet,

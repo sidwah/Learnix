@@ -45,8 +45,9 @@ $enrollment_id = $enrollment['enrollment_id'];
 $sql = "SELECT c.*, u.first_name, u.last_name, 
               cat.name AS category_name, sub.name AS subcategory_name
         FROM courses c
-        JOIN instructors i ON c.instructor_id = i.instructor_id
-        JOIN users u ON i.user_id = u.user_id
+        LEFT JOIN course_instructors ci ON c.course_id = ci.course_id AND ci.is_primary = 1
+        LEFT JOIN instructors i ON ci.instructor_id = i.instructor_id
+        LEFT JOIN users u ON i.user_id = u.user_id
         JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
         JOIN categories cat ON sub.category_id = cat.category_id
         WHERE c.course_id = ? AND c.status = 'Published'";

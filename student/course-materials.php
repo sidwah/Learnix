@@ -54,8 +54,9 @@ $sql = "SELECT c.*, u.first_name, u.last_name, u.profile_pic, u.username,
                i.bio, cat.name AS category_name, cat.slug AS category_slug,
                sub.name AS subcategory_name, sub.slug AS subcategory_slug
         FROM courses c
-        JOIN instructors i ON c.instructor_id = i.instructor_id
-        JOIN users u ON i.user_id = u.user_id
+        LEFT JOIN course_instructors ci ON c.course_id = ci.course_id AND ci.is_primary = 1
+        LEFT JOIN instructors i ON ci.instructor_id = i.instructor_id
+        LEFT JOIN users u ON i.user_id = u.user_id
         JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
         JOIN categories cat ON sub.category_id = cat.category_id
         WHERE c.course_id = ? AND c.status = 'Published'";
@@ -399,6 +400,37 @@ if ($certificate_enabled) {
     $certificate_check_result = $stmt->get_result();
     $has_certificate = $certificate_check_result->num_rows > 0;
 }
+
+// Add this right after the $has_certificate check
+// Check for completion notification
+if (isset($_GET['completed']) && $_GET['completed'] == 'true') {
+    // Course was just completed - show success message
+    echo "<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toast = new bootstrap.Toast(document.getElementById('courseCompletedToast'));
+            toast.show();
+            
+            // After 2 seconds, scroll to completion section
+            setTimeout(function() {
+                document.getElementById('endOfCourseCollapse').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }, 2000);
+        });
+    </script>";
+}
+
+// If user just completed the course for the first time
+if ($all_requirements_met && !$has_certificate && !isset($_SESSION['certificate_generated'])) {
+    // Redirect to certificate generation page
+    $_SESSION['certificate_generated'] = true;
+    echo "<script>
+        setTimeout(function() {
+            window.location.href = 'generate-certificate.php?course_id=$course_id&enrollment_id=$enrollment_id';
+        }, 5000);
+    </script>";
+}
 ?>
 
 
@@ -630,10 +662,9 @@ if ($certificate_enabled) {
                     $quiz_requirements = checkQuizzesCompleted($user_id, $course_id, $conn);
                 }
 
-                // If there are failed quizzes and course is almost complete
-                if (!$quiz_requirements['all_passed'] && $completed_percentage >= 90) {
-                    $failedQuizCount = count($quiz_requirements['failed_quizzes']);
-
+                // If there are failed REQUIRED quizzes and course is almost complete
+                if (!$quiz_requirements['all_required_passed'] && $completed_percentage >= 90) {
+                    $failedQuizCount = count($quiz_requirements['failed_required_quizzes']);
                     // Store failed quiz HTML to insert into toast via JavaScript
                     ob_start();
                 ?>
@@ -647,7 +678,7 @@ if ($certificate_enabled) {
 
                             <?php if ($failedQuizCount <= 3): ?>
                                 <div class="bg-light rounded-2 overflow-hidden">
-                                    <?php foreach ($quiz_requirements['failed_quizzes'] as $index => $quiz): ?>
+                                    <?php foreach ($quiz_requirements['failed_required_quizzes'] as $index => $quiz): ?>
                                         <div class="d-flex justify-content-between align-items-center px-2 py-1 <?php echo $index % 2 == 0 ? 'bg-light' : 'bg-white'; ?> border-bottom small">
                                             <a href="course-content.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $quiz['quiz_id']; ?>" class="text-decoration-none text-truncate me-2">
                                                 <?php echo htmlspecialchars($quiz['quiz_title']); ?>
@@ -784,25 +815,53 @@ if ($certificate_enabled) {
                                                 </div>
                                             </div>
 
-                                            <!-- Quizzes Progress -->
-                                            <?php if ($quiz_requirements['total_quizzes'] > 0): ?>
+                                            <!-- Required Quizzes Progress -->
+                                            <?php if ($quiz_requirements['total_required_quizzes'] > 0): ?>
                                                 <div>
                                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                                         <div class="d-flex align-items-center">
                                                             <i class="bi bi-question-circle text-primary me-2 small"></i>
-                                                            <span class="small fw-semibold">Pass Quizzes</span>
+                                                            <span class="small fw-semibold">Pass Required Quizzes</span>
                                                         </div>
                                                         <span class="badge <?php echo $all_quizzes_passed ? 'bg-success' : 'bg-secondary'; ?> rounded-pill small">
-                                                            <?php echo $quiz_requirements['passed_quizzes']; ?>/<?php echo $quiz_requirements['total_quizzes']; ?>
+                                                            <?php echo $quiz_requirements['passed_required_quizzes']; ?>/<?php echo $quiz_requirements['total_required_quizzes']; ?>
                                                         </span>
                                                     </div>
                                                     <div class="progress" style="height: 6px;">
                                                         <div class="progress-bar <?php echo $all_quizzes_passed ? 'bg-success' : 'bg-primary'; ?>"
                                                             role="progressbar"
-                                                            style="width: <?php echo ($quiz_requirements['total_quizzes'] > 0) ? ($quiz_requirements['passed_quizzes'] / $quiz_requirements['total_quizzes']) * 100 : 0; ?>%"
-                                                            aria-valuenow="<?php echo $quiz_requirements['passed_quizzes']; ?>"
+                                                            style="width: <?php echo ($quiz_requirements['total_required_quizzes'] > 0) ? ($quiz_requirements['passed_required_quizzes'] / $quiz_requirements['total_required_quizzes']) * 100 : 0; ?>%"
+                                                            aria-valuenow="<?php echo $quiz_requirements['passed_required_quizzes']; ?>"
                                                             aria-valuemin="0"
-                                                            aria-valuemax="<?php echo $quiz_requirements['total_quizzes']; ?>">
+                                                            aria-valuemax="<?php echo $quiz_requirements['total_required_quizzes']; ?>">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <!-- Optional Quizzes Progress (only show if there are optional quizzes) -->
+                                            <?php
+                                            $total_optional = $quiz_requirements['total_quizzes'] - $quiz_requirements['total_required_quizzes'];
+                                            $passed_optional = $quiz_requirements['passed_quizzes'] - $quiz_requirements['passed_required_quizzes'];
+                                            if ($total_optional > 0):
+                                            ?>
+                                                <div class="mt-2">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="bi bi-star text-primary me-2 small"></i>
+                                                            <span class="small">Optional Quizzes</span>
+                                                        </div>
+                                                        <span class="badge bg-info rounded-pill small">
+                                                            <?php echo $passed_optional; ?>/<?php echo $total_optional; ?>
+                                                        </span>
+                                                    </div>
+                                                    <div class="progress" style="height: 6px;">
+                                                        <div class="progress-bar bg-info"
+                                                            role="progressbar"
+                                                            style="width: <?php echo ($total_optional > 0) ? ($passed_optional / $total_optional) * 100 : 0; ?>%"
+                                                            aria-valuenow="<?php echo $passed_optional; ?>"
+                                                            aria-valuemin="0"
+                                                            aria-valuemax="<?php echo $total_optional; ?>">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1022,6 +1081,11 @@ if ($certificate_enabled) {
                                                 <?php echo $title; ?>
                                                 <?php if ($is_quiz && isset($item['pass_mark'])): ?>
                                                     <span class="badge bg-light text-dark ms-1">Pass: <?php echo $item['pass_mark']; ?>%</span>
+                                                    <?php if (isset($item['is_required']) && $item['is_required'] == 1): ?>
+                                                        <span class="badge bg-danger text-white ms-1">Required</span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-secondary text-white ms-1">Optional</span>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
                                             </a>
                                         </h6>
@@ -1346,6 +1410,27 @@ if ($certificate_enabled) {
                 </div>
             </div>
             <!-- End Main Content -->
+            <!-- Course completion toast -->
+            <div class="toast-container position-fixed top-0 end-0 p-3">
+                <div id="courseCompletedToast" class="toast border-success" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header bg-success bg-opacity-10 border-bottom border-success">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        <strong class="me-auto">Course Completed!</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        <div class="d-flex">
+                            <div class="me-3 fs-1 text-success">
+                                <i class="bi bi-trophy-fill"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold">Congratulations!</h6>
+                                <p>You've successfully completed this course. Your certificate is being generated...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </div>
