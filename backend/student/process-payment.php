@@ -150,7 +150,7 @@ try {
                     VALUES (?, ?, ?, NOW(), 'Credit Card', ?, 'Completed')";
             $stmt = $conn->prepare($sql);
             $transaction_id = $charge->id;
-            $currency = strtoupper(STRIPE_CURRENCY);
+            $currency = strtoupper("ghs");
             $stmt->bind_param("idss", $enrollment_id, $course['price'], $currency, $transaction_id);
             $stmt->execute();
             $payment_id = $stmt->insert_id;
