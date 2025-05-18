@@ -1,7 +1,7 @@
 <?php
 // load_courses.php
 // Include database connection
-require_once('../backend/config.php');
+require_once('../../backend/config.php');
 
 // Check if this is an AJAX request
 header('Content-Type: application/json');
@@ -23,21 +23,24 @@ $price_max = isset($_POST['price_max']) ? (float)$_POST['price_max'] : 1000;
 $items_per_page = 9; // Always show 9 items in grid view (3x3)
 $offset = ($page - 1) * $items_per_page;
 
-// Build the query
-$query = "SELECT c.*, i.user_id, u.first_name, u.last_name, u.profile_pic, 
-          (SELECT COUNT(*) FROM course_sections WHERE course_id = c.course_id) as section_count,
-          (SELECT COUNT(*) FROM section_quizzes sq JOIN course_sections cs ON sq.section_id = cs.section_id WHERE cs.course_id = c.course_id) as quiz_count,
+// Build the query - fixed for GROUP BY compatibility and removed deleted_at from section_quizzes
+$query = "SELECT c.*, 
+          (SELECT i.instructor_id FROM course_instructors ci 
+           JOIN instructors i ON ci.instructor_id = i.instructor_id 
+           WHERE ci.course_id = c.course_id AND ci.is_primary = 1 AND ci.deleted_at IS NULL 
+           LIMIT 1) as primary_instructor_id,
+          (SELECT COUNT(*) FROM course_sections WHERE course_id = c.course_id AND deleted_at IS NULL) as section_count,
+          (SELECT COUNT(*) FROM section_quizzes sq JOIN course_sections cs ON sq.section_id = cs.section_id WHERE cs.course_id = c.course_id AND cs.deleted_at IS NULL) as quiz_count,
           AVG(cr.rating) as avg_rating,
           COUNT(DISTINCT cr.rating_id) as rating_count,
           cat.name as category_name,
           sub.name as subcategory_name
           FROM courses c
-          LEFT JOIN instructors i ON c.instructor_id = i.instructor_id
-          LEFT JOIN users u ON i.user_id = u.user_id
           LEFT JOIN course_ratings cr ON c.course_id = cr.course_id
-          LEFT JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
-          LEFT JOIN categories cat ON sub.category_id = cat.category_id
-          WHERE c.status = 'Published' AND c.approval_status = 'Approved'";
+          LEFT JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id AND sub.deleted_at IS NULL
+          LEFT JOIN categories cat ON sub.category_id = cat.category_id AND cat.deleted_at IS NULL
+          WHERE c.status = 'Published' AND c.approval_status = 'Approved'
+          AND c.deleted_at IS NULL";
 
 // Add filters
 if ($price_filter == 'free') {
@@ -96,15 +99,33 @@ switch ($sort) {
 
 // Count total for pagination
 $count_query = "SELECT COUNT(*) as total FROM ($query) as counted_courses";
-$count_result = $conn->query($count_query);
-$total_courses = $count_result->fetch_assoc()['total'];
+try {
+    $count_result = $conn->query($count_query);
+    $total_courses = $count_result->fetch_assoc()['total'];
+} catch (Exception $e) {
+    // Error handling
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error counting courses: ' . $e->getMessage()
+    ]);
+    exit;
+}
 $total_pages = ceil($total_courses / $items_per_page);
 
 // Add pagination LIMIT
 $query .= " LIMIT $offset, $items_per_page";
 
 // Execute query
-$result = $conn->query($query);
+try {
+    $result = $conn->query($query);
+} catch (Exception $e) {
+    // Error handling
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error retrieving courses: ' . $e->getMessage()
+    ]);
+    exit;
+}
 
 // Start building the HTML output
 $html = '';
@@ -131,6 +152,36 @@ if ($result && $result->num_rows > 0) {
             $priceHtml = '<h3 class="card-title text-success">Free</h3>';
         }
         
+        // Get all instructors for this course - new code to display multiple instructors
+        $instructors_query = "SELECT u.first_name, u.last_name, u.profile_pic 
+                             FROM course_instructors ci 
+                             JOIN instructors i ON ci.instructor_id = i.instructor_id 
+                             JOIN users u ON i.user_id = u.user_id 
+                             WHERE ci.course_id = " . $course['course_id'] . " 
+                             AND ci.deleted_at IS NULL
+                             ORDER BY ci.is_primary DESC
+                             LIMIT 3"; // Limit to 3 instructors to prevent overcrowding
+        
+        $instructors_result = $conn->query($instructors_query);
+        $instructors_html = '<div class="avatar-group avatar-group-xs">';
+        
+        if ($instructors_result && $instructors_result->num_rows > 0) {
+            while ($instructor = $instructors_result->fetch_assoc()) {
+                $profile_pic = !empty($instructor['profile_pic']) ? $instructor['profile_pic'] : 'default.png';
+                $instructors_html .= '<span class="avatar avatar-circle" data-bs-toggle="tooltip" data-bs-placement="top" title="' . 
+                                   htmlspecialchars($instructor['first_name'] . ' ' . $instructor['last_name']) . '">' .
+                                   '<img class="avatar-img" src="../uploads/profile/' . $profile_pic . '" alt="Instructor">' .
+                                   '</span>';
+            }
+        } else {
+            // Fallback if no instructors found
+            $instructors_html .= '<span class="avatar avatar-circle">' .
+                              '<span class="avatar-initials">?</span>' .
+                              '</span>';
+        }
+        
+        $instructors_html .= '</div>';
+        
         // Format the HTML in the same style as the real estate listings
         $html .= '
         <div class="col mb-3">
@@ -154,38 +205,40 @@ if ($result && $result->num_rows > 0) {
                 </a>
 
                 <!-- Body -->
-                <a class="card-body" href="course-overview.php?id=' . $course['course_id'] . '" style="height: 150px; overflow: hidden;">
-                    <span class="card-subtitle text-body">' . htmlspecialchars($course['category_name'] ?? 'Category') . '</span>
-
-                    <div class="row align-items-center mb-2">
-                        <div class="col">
-                            <h4 class="card-title text-inherit" style="font-size: 1rem; height: 44px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">' . htmlspecialchars($course['title']) . '</h4>
-                        </div>
-                        <!-- End Col -->
-
-                        <div class="col-auto">
-                            ' . $priceHtml . '
-                        </div>
-                        <!-- End Col -->
-                    </div>
-                    <!-- End Row -->
-
-                    <ul class="list-inline list-separator text-body small fs-xs mt-auto" style="font-size: 0.75rem; position: absolute; bottom: 15px; left: 20px; right: 20px;">
-                        <li class="list-inline-item">
-                            <i class="bi-collection text-muted me-1"></i>
-                            ' . intval($course['section_count']) . ' sections
-                        </li>
-                        <li class="list-inline-item">
-                            <i class="bi-question-circle text-muted me-1"></i>
-                            ' . intval($course['quiz_count']) . ' quizzes
-                        </li>
-                        <li class="list-inline-item">
-                            <i class="bi-' . ($course['certificate_enabled'] ? 'patch-check-fill text-primary' : 'patch-check text-muted') . ' me-1"></i> 
-                            ' . ($course['certificate_enabled'] ? 'Certificate' : 'No Certificate') . '
-                        </li>
-                    </ul>
-                </a>
-                <!-- End Body -->
+<a class="card-body d-flex flex-column position-relative" href="course-overview.php?id=' . $course['course_id'] . '" style="height: 150px; overflow: hidden;">
+    <!-- Category and price at the top -->
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="card-subtitle text-body small">' . htmlspecialchars($course['category_name'] ?? 'Category') . '</span>
+        <div>' . $priceHtml . '</div>
+    </div>
+    
+    <!-- Course title -->
+    <h4 class="card-title text-inherit mb-2" style="font-size: 1rem; height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+        ' . htmlspecialchars($course['title']) . '
+    </h4>
+    
+    <!-- Instructors - positioned after title -->
+    <div class="mt-auto mb-4">
+        ' . $instructors_html . '
+    </div>
+    
+    <!-- Bottom stats - absolute positioned at bottom -->
+    <ul class="list-inline list-separator text-body small m-0 p-0 position-absolute" style="font-size: 0.75rem; bottom: 12px; left: 20px; right: 20px;">
+        <li class="list-inline-item">
+            <i class="bi-collection text-muted me-1"></i>
+            ' . intval($course['section_count']) . ' sections
+        </li>
+        <li class="list-inline-item">
+            <i class="bi-question-circle text-muted me-1"></i>
+            ' . intval($course['quiz_count']) . ' quizzes
+        </li>
+        <li class="list-inline-item">
+            <i class="bi-' . ($course['certificate_enabled'] ? 'patch-check-fill text-primary' : 'patch-check text-muted') . ' me-1"></i> 
+            ' . ($course['certificate_enabled'] ? 'Certificate' : 'No Certificate') . '
+        </li>
+    </ul>
+</a>
+<!-- End Body -->
             </div>
             <!-- End Card -->
         </div>

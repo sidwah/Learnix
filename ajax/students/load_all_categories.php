@@ -1,15 +1,19 @@
 <?php
 // load_all_categories.php
-require_once('../backend/config.php');
+require_once('../../backend/config.php');
 
 // Check if this is an AJAX request
 header('Content-Type: application/json');
 
-// Fetch all categories and count their courses
-$query = "SELECT c.category_id, c.name, COUNT(co.course_id) as course_count 
+// Fetch all categories and count their courses, respecting soft deletion
+$query = "SELECT c.category_id, c.name, COUNT(DISTINCT co.course_id) as course_count 
           FROM categories c
-          LEFT JOIN subcategories s ON c.category_id = s.category_id
-          LEFT JOIN courses co ON s.subcategory_id = co.subcategory_id AND co.status = 'Published'
+          LEFT JOIN subcategories s ON c.category_id = s.category_id AND s.deleted_at IS NULL
+          LEFT JOIN courses co ON s.subcategory_id = co.subcategory_id 
+                              AND co.status = 'Published' 
+                              AND co.approval_status = 'Approved'
+                              AND co.deleted_at IS NULL
+          WHERE c.deleted_at IS NULL
           GROUP BY c.category_id
           ORDER BY c.name";
 
@@ -43,11 +47,15 @@ if ($result && $result->num_rows > 0) {
                         <div class="card-body">
                             <div class="d-grid gap-1">';
         
-        // For each category, fetch its subcategories
-        $subcategory_query = "SELECT s.subcategory_id, s.name, COUNT(c.course_id) as course_count
+        // For each category, fetch its subcategories, respecting soft deletion
+        $subcategory_query = "SELECT s.subcategory_id, s.name, COUNT(DISTINCT c.course_id) as course_count
                              FROM subcategories s
-                             LEFT JOIN courses c ON s.subcategory_id = c.subcategory_id AND c.status = 'Published'
+                             LEFT JOIN courses c ON s.subcategory_id = c.subcategory_id 
+                                                AND c.status = 'Published' 
+                                                AND c.approval_status = 'Approved'
+                                                AND c.deleted_at IS NULL
                              WHERE s.category_id = {$category['category_id']}
+                             AND s.deleted_at IS NULL
                              GROUP BY s.subcategory_id
                              ORDER BY s.name";
         

@@ -363,7 +363,7 @@
         }
 
         // Make AJAX request
-        fetch('../ajax/load_courses.php', {
+        fetch('../ajax/students/load_courses.php', {
                 method: 'POST',
                 body: data,
                 headers: {
@@ -418,7 +418,7 @@
 
     // Load categories for the all categories modal
     function loadAllCategories() {
-        fetch('../ajax/load_all_categories.php')
+        fetch('../ajax/students/load_all_categories.php')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {

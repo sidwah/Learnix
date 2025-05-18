@@ -42,13 +42,14 @@ $stmt->close();
 
 // Fetch enrolled courses for the current user
 $enrolled_courses_query = "
-    SELECT c.course_id, c.title, c.thumbnail, i.first_name, i.last_name, 
+    SELECT c.course_id, c.title, c.thumbnail, u.first_name, u.last_name, 
            e.completion_percentage, e.enrolled_at, e.last_accessed
     FROM enrollments e
     JOIN courses c ON e.course_id = c.course_id
-    JOIN instructors ins ON c.instructor_id = ins.instructor_id
-    JOIN users i ON ins.user_id = i.user_id
-    WHERE e.user_id = ?
+    JOIN course_instructors ci ON c.course_id = ci.course_id AND ci.is_primary = 1
+    JOIN instructors ins ON ci.instructor_id = ins.instructor_id
+    JOIN users u ON ins.user_id = u.user_id
+    WHERE e.user_id = ? AND e.deleted_at IS NULL AND c.deleted_at IS NULL
     ORDER BY e.enrolled_at DESC
     LIMIT 3
 ";

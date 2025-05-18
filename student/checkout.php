@@ -6,6 +6,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Include Stripe configuration
 require_once '../backend/stripe-config.php';
+// Include Paystack configuration
+require_once '../backend/paystack-config.php';
 
 // Include header
 include '../includes/student-header.php';
@@ -49,12 +51,15 @@ if ($enrollment_result->num_rows > 0) {
 // Fetch course details
 $sql = "SELECT c.*, u.first_name, u.last_name, u.profile_pic, 
                cat.name AS category_name, cat.slug AS category_slug,
-               sub.name AS subcategory_name
+               sub.name AS subcategory_name,
+               d.name AS department_name
         FROM courses c
-        JOIN instructors i ON c.instructor_id = i.instructor_id
+        JOIN course_instructors ci ON c.course_id = ci.course_id AND ci.is_primary = 1
+        JOIN instructors i ON ci.instructor_id = i.instructor_id
         JOIN users u ON i.user_id = u.user_id
         JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
         JOIN categories cat ON sub.category_id = cat.category_id
+        JOIN departments d ON c.department_id = d.department_id
         WHERE c.course_id = ? AND c.status = 'Published'";
 
 $stmt = $conn->prepare($sql);
@@ -81,7 +86,7 @@ if ($course['price'] == 0) {
 }
 
 // Get user data for auto-filling
-$sql = "SELECT first_name, last_name, email FROM users WHERE user_id = ?";
+$sql = "SELECT first_name, last_name, email, phone FROM users WHERE user_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -133,6 +138,9 @@ $review_count = 124; // Example count
 
     <!-- Stripe JS -->
     <script src="https://js.stripe.com/v3/"></script>
+    
+    <!-- Paystack JS -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <!-- Custom CSS for enhanced checkout -->
     <style>
@@ -143,6 +151,8 @@ $review_count = 124; // Example count
             --light-bg: #f8f9fa;
             --dark-bg: #343a40;
             --success-color: #28a745;
+            --momo-color: #f26522;
+            --momo-hover: #d65214;
         }
 
         body {
@@ -175,6 +185,10 @@ $review_count = 124; // Example count
             color: white;
             font-weight: 600;
             padding: 20px 25px;
+        }
+
+        .momo-header {
+            background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
         }
 
         .summary-card {
@@ -242,6 +256,16 @@ $review_count = 124; // Example count
             background: linear-gradient(135deg, #3a66db 0%, #4372e8 100%);
         }
 
+        .momo-btn {
+            background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
+            box-shadow: 0 4px 10px rgba(242, 101, 34, 0.25);
+        }
+
+        .momo-btn:hover {
+            box-shadow: 0 6px 15px rgba(242, 101, 34, 0.35);
+            background: linear-gradient(135deg, #e55a1a 0%, #ff7a40 100%);
+        }
+
         .course-details {
             padding: 20px;
             background-color: #f8f9fa;
@@ -291,6 +315,11 @@ $review_count = 124; // Example count
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             color: var(--primary-color);
             border-bottom: 2px solid var(--primary-color);
+        }
+
+        .payment-method-option.momo-option.active {
+            color: var(--momo-color);
+            border-bottom: 2px solid var(--momo-color);
         }
 
         .payment-method-option:hover:not(.active) {
@@ -463,6 +492,70 @@ $review_count = 124; // Example count
             text-align: center;
         }
 
+        .mobile-money-logos {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .mobile-money-logo {
+            background-color: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            height: 50px;
+        }
+
+        .mobile-money-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        /* Mobile Money Modal */
+        #momoModal .modal-header {
+            background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
+            color: white;
+        }
+        
+        #momoModal .modal-footer .btn-primary {
+            background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
+            border: none;
+        }
+        
+        #momoModal .network-selector {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        #momoModal .network-option {
+            flex: 1;
+            margin: 0 5px;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #momoModal .network-option.active {
+            border-color: var(--momo-color);
+            background-color: #fff4f0;
+        }
+        
+        #momoModal .network-option img {
+            max-width: 100%;
+            height: 40px;
+            object-fit: contain;
+        }
+
         /* Animation */
         @keyframes pulse {
             0% {
@@ -583,6 +676,10 @@ $review_count = 124; // Example count
                                 <span><?php echo $course['course_level']; ?> Level</span>
                             </div>
                             <div class="course-meta-item">
+                                <i class="bi-building"></i>
+                                <span><?php echo $course['department_name']; ?></span>
+                            </div>
+                            <div class="course-meta-item">
                                 <i class="bi-infinity"></i>
                                 <span>Lifetime Access</span>
                             </div>
@@ -594,9 +691,12 @@ $review_count = 124; // Example count
                         <div class="payment-method-option active" data-method="card">
                             <i class="bi-credit-card me-2"></i> Credit Card
                         </div>
+                        <div class="payment-method-option momo-option" data-method="momo">
+                            <i class="bi-phone me-2"></i> Mobile Money
+                        </div>
                     </div>
 
-                    <!-- Payment Form -->
+                    <!-- Credit Card Payment Form -->
                     <div class="checkout-card mb-4" id="card-payment-form">
                         <div class="card-header">
                             <h4 class="card-header-title m-0"><i class="bi-lock-fill me-2"></i> Secure Payment Information</h4>
@@ -604,6 +704,7 @@ $review_count = 124; // Example count
                         <div class="card-body p-4">
                             <form action="../backend/student/process-payment.php" method="post" id="payment-form">
                                 <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
+                                <input type="hidden" name="payment_method" value="card">
 
                                 <!-- Name -->
                                 <div class="mb-4">
@@ -637,12 +738,6 @@ $review_count = 124; // Example count
                                     <div id="card-errors" role="alert" class="text-danger mt-2"></div>
                                 </div>
 
-                                <!-- <div class="form-check mb-4">
-                                    <input class="form-check-input" type="checkbox" id="saveCard" name="saveCard">
-                                    <label class="form-check-label" for="saveCard">
-                                        Save this card for future purchases
-                                    </label>
-                                </div> -->
                                 <button type="submit" class="btn checkout-btn btn-lg w-100 pulse-animation text-white" id="submit-button">
                                     <i class="bi-lock-fill me-2"></i> Pay Securely ₵<?php echo $formatted_price; ?>
                                 </button>
@@ -653,20 +748,40 @@ $review_count = 124; // Example count
                             </form>
                         </div>
                     </div>
-                    <!-- End Payment Form -->
+                    <!-- End Credit Card Payment Form -->
 
-                    <!-- PayPal Form (hidden by default) -->
-                    <div class="checkout-card mb-4" id="paypal-payment-form" style="display: none;">
-                        <div class="card-header">
-                            <h4 class="card-header-title m-0"><i class="bi-paypal me-2"></i> Pay with PayPal</h4>
+                    <!-- Mobile Money Payment Form -->
+                    <div class="checkout-card mb-4" id="momo-payment-form" style="display: none;">
+                        <div class="card-header momo-header">
+                            <h4 class="card-header-title m-0"><i class="bi-phone me-2"></i> Pay with Mobile Money</h4>
                         </div>
-                        <div class="card-body p-4 text-center">
-                            <p>You'll be redirected to PayPal to complete your payment.</p>
-                            <button type="button" class="btn checkout-btn btn-lg" style="background: #0070ba;">
-                                <i class="bi-paypal me-2"></i> Continue to PayPal
+                        <div class="card-body p-4">
+                            <div class="mobile-money-logos mb-4">
+                                <div class="mobile-money-logo">
+                                    <img src="../assets/img/momo/mtn-momo.png" alt="MTN Mobile Money">
+                                </div>
+                                <div class="mobile-money-logo">
+                                    <img src="../assets/img/momo/vodafone-cash.png" alt="Vodafone Cash">
+                                </div>
+                                <div class="mobile-money-logo">
+                                    <img src="../assets/img/momo/airtel-tigo.png" alt="AirtelTigo Money">
+                                </div>
+                            </div>
+
+                            <p class="text-center mb-4">
+                                Pay securely using your mobile money account. Select your provider and enter your phone number.
+                            </p>
+
+                            <button type="button" class="btn checkout-btn momo-btn btn-lg w-100 pulse-animation text-white" id="momo-proceed-button" data-bs-toggle="modal" data-bs-target="#momoModal">
+                                <i class="bi-phone me-2"></i> Pay with Mobile Money ₵<?php echo $formatted_price; ?>
                             </button>
+
+                            <div class="secure-badge">
+                                <i class="bi-shield-lock-fill me-2"></i> Your mobile money payment is securely processed through Paystack
+                            </div>
                         </div>
                     </div>
+                    <!-- End Mobile Money Payment Form -->
 
                     <div class="guarantee-badge">
                         <i class="bi-shield-check me-2"></i>
@@ -687,6 +802,8 @@ $review_count = 124; // Example count
                                 <?php if (!empty($course['thumbnail'])): ?>
                                     <img class="course-image" src="../uploads/thumbnails/<?php echo htmlspecialchars($course['thumbnail']); ?>" alt="<?php echo $course_title; ?>">
                                     <div class="discount-badge">20% OFF</div>
+                                <?php else: ?>
+                                    <img class="course-image" src="../assets/img/default-course.jpg" alt="<?php echo $course_title; ?>">
                                 <?php endif; ?>
                             </div>
 
@@ -714,7 +831,7 @@ $review_count = 124; // Example count
                                     <span>Original price</span>
                                     <span class="text-decoration-line-through">₵<?php echo number_format($course_price * 1.25, 2); ?></span>
                                 </div>
-                                <div class="d-flex justify-content-between mb-2">
+<div class="d-flex justify-content-between mb-2">
                                     <span>Course price</span>
                                     <span>₵<?php echo $formatted_price; ?></span>
                                 </div>
@@ -777,15 +894,89 @@ $review_count = 124; // Example count
     </main>
     <!-- ========== END MAIN CONTENT ========== -->
 
-    <!-- Initialize Stripe.js -->
-    <script>
-        // Create a Stripe client.
-        var stripe = Stripe('<?php echo STRIPE_PUBLISHABLE_KEY; ?>');
+    <!-- Mobile Money Modal -->
+    <div class="modal fade" id="momoModal" tabindex="-1" aria-labelledby="momoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="momoModalLabel">Mobile Money Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="momo-details-form">
+                        <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
+                        <input type="hidden" name="amount" value="<?php echo $course_price; ?>">
+                        <input type="hidden" name="email" value="<?php echo htmlspecialchars($user['email']); ?>">
+                        
+                        <!-- Mobile Money Provider Selection -->
+                        <div class="mb-4">
+                            <label class="form-label">Select your mobile money provider</label>
+                            <div class="network-selector">
+                                <div class="network-option active" data-provider="mtn">
+                                    <img src="../assets/img/momo/mtn-momo.png" alt="MTN Mobile Money">
+                                    <div class="small mt-1">MTN</div>
+                                </div>
+                                <div class="network-option" data-provider="vodafone">
+                                    <img src="../assets/img/momo/vodafone-cash.png" alt="Vodafone Cash">
+                                    <div class="small mt-1">Vodafone</div>
+                                </div>
+                                <div class="network-option" data-provider="airtel">
+                                    <img src="../assets/img/momo/airtel-tigo.png" alt="AirtelTigo Money">
+                                    <div class="small mt-1">AirtelTigo</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="selectedProvider" name="provider" value="mtn">
+                        </div>
+                        
+                        <!-- Phone Number -->
+                        <div class="mb-4">
+                            <label class="form-label" for="momoPhone">Mobile Money Number</label>
+                            <div class="input-icon-group">
+                                <i class="bi-phone"></i>
+                                <input type="tel" class="form-control form-control-lg" id="momoPhone" name="phone"
+                                    placeholder="0201234567" required pattern="[0-9]{10}"
+                                    value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>">
+                            </div>
+                            <div class="form-text">Enter your 10-digit mobile money number (Test: 0551234987)</div>
+                        </div>
+                        
+                        <!-- Name -->
+                        <div class="mb-4">
+                            <label class="form-label" for="momoName">Full Name</label>
+                            <div class="input-icon-group">
+                                <i class="bi-person"></i>
+                                <input type="text" class="form-control form-control-lg" id="momoName" name="name"
+                                    placeholder="John Smith" required
+                                    value="<?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?>">
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="bi-info-circle me-2"></i>
+                            This is a test environment. For testing, you can use any valid phone number format.
+                            You will receive a success prompt without an actual mobile money charge.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="payWithPaystack">
+                        Pay ₵<?php echo $formatted_price; ?>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Create an instance of Elements.
+    <!-- Initialize Scripts -->
+    <script>
+        // Stripe setup
+        var stripe = Stripe('<?php echo STRIPE_PUBLISHABLE_KEY; ?>');
         var elements = stripe.elements();
 
-        // Custom styling
+        // Custom styling for Stripe Elements
         var style = {
             base: {
                 color: '#495057',
@@ -827,7 +1018,7 @@ $review_count = 124; // Example count
             }
         });
 
-        // Handle form submission.
+        // Handle form submission for Stripe.
         var form = document.getElementById('payment-form');
         form.addEventListener('submit', function(event) {
             event.preventDefault();
@@ -864,7 +1055,23 @@ $review_count = 124; // Example count
             form.submit();
         }
 
-        // Payment method selector
+        // Mobile Money provider selector in modal
+        document.querySelectorAll('.network-option').forEach(function(option) {
+            option.addEventListener('click', function() {
+                // Remove active class from all options
+                document.querySelectorAll('.network-option').forEach(function(opt) {
+                    opt.classList.remove('active');
+                });
+                
+                // Add active class to clicked option
+                this.classList.add('active');
+                
+                // Update hidden input with selected provider
+                document.getElementById('selectedProvider').value = this.getAttribute('data-provider');
+            });
+        });
+
+        // Payment method selector tabs
         document.querySelectorAll('.payment-method-option').forEach(function(option) {
             option.addEventListener('click', function() {
                 // Remove active class from all options
@@ -879,12 +1086,89 @@ $review_count = 124; // Example count
                 var method = this.getAttribute('data-method');
                 if (method === 'card') {
                     document.getElementById('card-payment-form').style.display = 'block';
-                    document.getElementById('paypal-payment-form').style.display = 'none';
-                } else if (method === 'paypal') {
+                    document.getElementById('momo-payment-form').style.display = 'none';
+                } else if (method === 'momo') {
                     document.getElementById('card-payment-form').style.display = 'none';
-                    document.getElementById('paypal-payment-form').style.display = 'block';
+                    document.getElementById('momo-payment-form').style.display = 'block';
                 }
             });
+        });
+
+        // Paystack Integration
+        document.getElementById('payWithPaystack').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            var phoneNumber = document.getElementById('momoPhone').value;
+            var fullName = document.getElementById('momoName').value;
+            var provider = document.getElementById('selectedProvider').value;
+            
+            // Basic validation
+            if (!phoneNumber || phoneNumber.length !== 10 || !/^\d+$/.test(phoneNumber)) {
+                alert('Please enter a valid 10-digit mobile number');
+                return;
+            }
+            
+            if (!fullName) {
+                alert('Please enter your full name');
+                return;
+            }
+            
+            // Initialize Paystack payment
+            var handler = PaystackPop.setup({
+                key: '<?php echo $PublicKey; ?>', // Your public key from paystack-config.php
+                email: '<?php echo htmlspecialchars($user['email']); ?>',
+                amount: <?php echo $course_price * 100; ?>, // Amount in kobo
+                currency: 'GHS',
+                ref: 'LRN'+Math.floor((Math.random() * 1000000000) + 1), // Generate a random reference
+                metadata: {
+                    custom_fields: [
+                        {
+                            display_name: "Mobile Number",
+                            variable_name: "mobile_number",
+                            value: phoneNumber
+                        },
+                        {
+                            display_name: "Course ID",
+                            variable_name: "course_id",
+                            value: "<?php echo $course_id; ?>"
+                        }
+                    ]
+                },
+                callback: function(response) {
+                    // After successful payment, submit form to backend
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '../backend/student/process-momo-payment.php';
+                    
+                    // Add necessary form fields
+                    var fields = {
+                        'course_id': '<?php echo $course_id; ?>',
+                        'payment_method': 'momo',
+                        'transaction_id': response.reference,
+                        'phone': phoneNumber,
+                        'provider': provider,
+                        'amount': '<?php echo $course_price; ?>'
+                    };
+                    
+                    for (var key in fields) {
+                        var hiddenField = document.createElement('input');
+                        hiddenField.setAttribute('type', 'hidden');
+                        hiddenField.setAttribute('name', key);
+                        hiddenField.setAttribute('value', fields[key]);
+                        form.appendChild(hiddenField);
+                    }
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                },
+                onClose: function() {
+                    // Handle when user closes the payment modal
+                    console.log('Payment window closed');
+                }
+            });
+            
+            handler.openIframe();
         });
 
         // Countdown timer with localStorage persistence
@@ -932,10 +1216,6 @@ $review_count = 124; // Example count
                 hours.textContent = "00";
                 minutes.textContent = "00";
                 seconds.textContent = "00";
-
-                // You could also hide the promo banner or show an "expired" message
-                // document.querySelector('.promo-banner').style.display = 'none';
-
                 return;
             }
 
@@ -954,4 +1234,4 @@ $review_count = 124; // Example count
         });
     </script>
 
-    <?php include '../includes/student-footer.php'; ?>
+<?php include '../includes/student-footer.php'; ?>

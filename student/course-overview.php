@@ -22,12 +22,9 @@ $course_id = intval($_GET['id']);
 require_once '../backend/config.php';
 
 // Fetch course details
-$sql = "SELECT c.*, u.first_name, u.last_name, u.profile_pic, u.username, 
-               i.bio, cat.name AS category_name, cat.slug AS category_slug,
+$sql = "SELECT c.*, cat.name AS category_name, cat.slug AS category_slug,
                sub.name AS subcategory_name, sub.slug AS subcategory_slug
         FROM courses c
-        JOIN instructors i ON c.instructor_id = i.instructor_id
-        JOIN users u ON i.user_id = u.user_id
         JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
         JOIN categories cat ON sub.category_id = cat.category_id
         WHERE c.course_id = ? AND c.status = 'Published'";
@@ -46,6 +43,34 @@ if ($result->num_rows === 0) {
 
 // Get course data
 $course = $result->fetch_assoc();
+
+// Fetch course instructors
+$sql = "SELECT ci.is_primary, i.instructor_id, i.bio, 
+               u.user_id, u.first_name, u.last_name, u.username, u.profile_pic
+        FROM course_instructors ci
+        JOIN instructors i ON ci.instructor_id = i.instructor_id
+        JOIN users u ON i.user_id = u.user_id
+        WHERE ci.course_id = ?
+        ORDER BY ci.is_primary DESC, u.first_name ASC";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $course_id);
+$stmt->execute();
+$instructors_result = $stmt->get_result();
+$instructors = [];
+$primary_instructor = null;
+
+while ($instructor = $instructors_result->fetch_assoc()) {
+    if ($instructor['is_primary'] == 1 && $primary_instructor === null) {
+        $primary_instructor = $instructor;
+    }
+    $instructors[] = $instructor;
+}
+
+// If no primary instructor is found, use the first one
+if (empty($primary_instructor) && !empty($instructors)) {
+    $primary_instructor = $instructors[0];
+}
 
 // Get course sections and topics
 $sql = "SELECT cs.*, COUNT(st.topic_id) as topic_count,
@@ -148,11 +173,13 @@ while ($review = $reviews_result->fetch_assoc()) {
 // Get instructor info and stats
 $sql = "SELECT 
             COUNT(DISTINCT c.course_id) as course_count,
-            COUNT(DISTINCT cr.user_id) as student_count,
+            COUNT(DISTINCT e.user_id) as student_count,
             COUNT(DISTINCT cr.rating_id) as review_count,
             AVG(cr.rating) as instructor_rating
         FROM instructors i
-        LEFT JOIN courses c ON i.instructor_id = c.instructor_id AND c.status = 'Published'
+        JOIN course_instructors ci ON i.instructor_id = ci.instructor_id
+        LEFT JOIN courses c ON ci.course_id = c.course_id AND c.status = 'Published'
+        LEFT JOIN enrollments e ON c.course_id = e.course_id
         LEFT JOIN course_ratings cr ON c.course_id = cr.course_id
         WHERE i.instructor_id = ?";
 $stmt = $conn->prepare($sql);
@@ -203,12 +230,16 @@ if (isset($_SESSION['user_id'])) {
 // Check if user is the instructor of this course
 $is_instructor = false;
 if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'instructor') {
-    $is_instructor = ($_SESSION['instructor_id'] == $course['instructor_id']);
-}
+    $sql = "SELECT 1 FROM course_instructors ci
+            JOIN instructors i ON ci.instructor_id = i.instructor_id
+            WHERE ci.course_id = ? AND i.user_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $course_id, $_SESSION['user_id']);
+    $stmt->execute();
+    $instructor_result = $stmt->get_result();
 
-// Close database connection
-$stmt->close();
-// $conn->close();
+    $is_instructor = ($instructor_result->num_rows > 0);
+}
 
 // Function to generate star rating HTML
 function generateStarRating($rating)
@@ -346,7 +377,7 @@ function timeAgo($datetime)
                         </ul>
                     </div>
 
-                   
+
                 </div>
                 <!-- End Row -->
 
@@ -608,334 +639,388 @@ function timeAgo($datetime)
                     </div>
                     <!-- End Tab 1: Details -->
 
-                   <!-- Tab 2: Curriculum -->
-<div class="tab-pane fade" id="courseOverviewNavTwo" role="tabpanel" aria-labelledby="courseOverviewNavTwo-tab">
-    <div class="row mb-4">
-        <div class="col-8">
-            <h4 class="mb-0">Course content</h4>
-        </div>
-        <!-- End Col -->
-
-        <div class="col-4 text-end">
-            <div class="row">
-                <div class="col-lg-6">
-                    <span class="small"><?php echo $total_lectures; ?> lectures</span>
-                </div>
-                <!-- End Col -->
-
-                <div class="col-lg-6">
-                    <span class="small"><?php echo $duration_text; ?></span>
-                </div>
-                <!-- End Col -->
-            </div>
-            <!-- End Row -->
-        </div>
-        <!-- End Col -->
-    </div>
-    <!-- End Row -->
-
-    <!-- Accordion -->
-    <div class="accordion accordion-btn-icon-start">
-        <?php foreach ($sections as $index => $section): ?>
-            <!-- Accordion Item -->
-            <div class="accordion-item">
-                <div class="accordion-header" id="heading<?php echo $section['section_id']; ?>">
-                    <a class="accordion-button <?php echo ($index !== 0) ? 'collapsed' : ''; ?>" role="button" data-bs-toggle="collapse" data-bs-target="#accordionCourse<?php echo $section['section_id']; ?>" aria-expanded="<?php echo ($index === 0) ? 'true' : 'false'; ?>" aria-controls="accordionCourse<?php echo $section['section_id']; ?>">
-                        <div class="flex-grow-1 ps-3">
-                            <div class="row">
-                                <div class="col-8">
-                                    <?php echo htmlspecialchars($section['title']); ?>
-                                </div>
-                                <!-- End Col -->
-
-                                <div class="col-4 text-end">
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <span class="small text-muted fw-normal"><?php echo $section['topic_count']; ?> lectures</span>
-                                        </div>
-                                        <!-- End Col -->
-
-                                        <div class="col-lg-6">
-                                            <?php
-                                            $section_duration = ($section['video_count'] * 10) + (($section['text_count'] + $section['link_count'] + $section['document_count']) * 5);
-                                            ?>
-                                            <span class="small text-muted fw-normal"><?php echo formatDuration($section_duration); ?></span>
-                                        </div>
-                                        <!-- End Col -->
-                                    </div>
-                                    <!-- End Row -->
-                                </div>
-                                <!-- End Col -->
-                            </div>
-                            <!-- End Row -->
-                        </div>
-                    </a>
-                </div>
-                <div id="accordionCourse<?php echo $section['section_id']; ?>" class="accordion-collapse collapse <?php echo ($index === 0) ? 'show' : ''; ?>" aria-labelledby="heading<?php echo $section['section_id']; ?>">
-                    <div class="accordion-body">
-                        <!-- List Group -->
-                        <div class="list-group list-group-flush list-group-no-gutters">
-                            <?php
-                            // Get topics and quizzes for this section
-                            require_once '../backend/config.php';
-                            
-                            // First, get all the topics for this section
-                            $sql = "SELECT st.*, tc.content_type, tc.title as content_title, tc.video_url, tc.content_text, tc.external_url, st.is_previewable
-                            FROM section_topics st
-                            LEFT JOIN topic_content tc ON st.topic_id = tc.topic_id
-                            WHERE st.section_id = ?
-                            ORDER BY st.position";
-
-                            $stmt = $conn->prepare($sql);
-                            $stmt->bind_param("i", $section['section_id']);
-                            $stmt->execute();
-                            $topics_result = $stmt->get_result();
-                            $topics = [];
-                            while ($topic = $topics_result->fetch_assoc()) {
-                                $topics[] = $topic;
-                            }
-                            
-                            // Now, get any quizzes for this section
-                            $sql = "SELECT sq.*, sq.quiz_id as content_id, 'quiz' as content_type, sq.quiz_title as content_title
-                            FROM section_quizzes sq
-                            WHERE sq.section_id = ?";
-                            
-                            $stmt = $conn->prepare($sql);
-                            $stmt->bind_param("i", $section['section_id']);
-                            $stmt->execute();
-                            $quizzes_result = $stmt->get_result();
-                            $quizzes = [];
-                            while ($quiz = $quizzes_result->fetch_assoc()) {
-                                $quizzes[] = $quiz;
-                            }
-                            
-                            // Combine and sort by position
-                            // For demonstration, we'll place quizzes at the end of the section
-                            // You may want to implement a different logic based on your requirements
-                            
-                            $combined_content = array_merge($topics, $quizzes);
-                            
-                            foreach ($combined_content as $item):
-                                $is_quiz = isset($item['content_type']) && $item['content_type'] === 'quiz';
-                                $is_locked = !$is_enrolled && !$is_instructor && (!isset($item['is_previewable']) || $item['is_previewable'] != 1);
-                            ?>
-                                <!-- Item -->
-                                <?php if ($is_locked): ?>
-                                    <!-- Locked content - grayed out -->
-                                    <div class="list-group-item text-muted">
-                                        <div class="row">
-                                            <div class="col-8">
-                                                <div class="d-flex">
-                                                    <div class="flex-shrink-0">
-                                                        <?php if ($is_quiz): ?>
-                                                            <i class="bi-patch-question small"></i>
-                                                        <?php elseif ($item['content_type'] === 'video'): ?>
-                                                            <i class="bi-play-circle-fill small"></i>
-                                                        <?php elseif ($item['content_type'] === 'text'): ?>
-                                                            <i class="bi-file-text small"></i>
-                                                        <?php elseif ($item['content_type'] === 'link'): ?>
-                                                            <i class="bi-link-45deg small"></i>
-                                                        <?php elseif ($item['content_type'] === 'document'): ?>
-                                                            <i class="bi-file-earmark-text small"></i>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <div class="flex-grow-1 ms-2">
-                                                        <span class="small"><?php echo htmlspecialchars($item['content_title'] ?? $item['title']); ?></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <!-- End Col -->
-
-                                            <div class="col-4 text-end">
-                                                <div class="row">
-                                                    <div class="col-lg-6">
-                                                        <i class="bi-lock-fill small"></i>
-                                                    </div>
-                                                    <!-- End Col -->
-
-                                                    <div class="col-lg-6">
-                                                        <?php if ($is_quiz): ?>
-                                                            <span class="small"><?php echo isset($item['time_limit']) ? $item['time_limit'].' mins' : 'Quiz'; ?></span>
-                                                        <?php elseif ($item['content_type'] === 'video'): ?>
-                                                            <span class="small"><?php echo ($item['duration'] ?? '~10 mins'); ?></span>
-                                                        <?php elseif ($item['content_type'] === 'text' || $item['content_type'] === 'link' || $item['content_type'] === 'document'): ?>
-                                                            <span class="small"><?php echo ($item['duration'] ?? '~5 mins'); ?></span>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <!-- End Col -->
-                                                </div>
-                                                <!-- End Row -->
-                                            </div>
-                                            <!-- End Col -->
-                                        </div>
-                                    </div>
-                                <?php else: ?>
-                                    <!-- Available or previewable content -->
-                                    <div class="list-group-item">
-                                        <div class="row">
-                                            <div class="col-8">
-                                                <?php if ($is_enrolled || $is_instructor): ?>
-                                                    <!-- For enrolled users, make the title a link -->
-                                                    <?php if ($is_quiz): ?>
-                                                        <a class="d-flex" href="take_quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>">
-                                                    <?php else: ?>
-                                                        <a class="d-flex" href="course-materials.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $item['topic_id']; ?>">
-                                                    <?php endif; ?>
-                                                <?php else: ?>
-                                                    <!-- For non-enrolled users viewing previewable content -->
-                                                    <?php if ($is_quiz): ?>
-                                                        <a class="d-flex preview-link" href="#previewModal" data-bs-toggle="modal" data-quiz-id="<?php echo $item['quiz_id']; ?>">
-                                                    <?php else: ?>
-                                                        <a class="d-flex preview-link" href="#previewModal" data-bs-toggle="modal" data-topic-id="<?php echo $item['topic_id']; ?>">
-                                                    <?php endif; ?>
-                                                <?php endif; ?>
-                                                <div class="flex-shrink-0">
-                                                    <?php if ($is_quiz): ?>
-                                                        <i class="bi-check-square-fill small"></i>
-                                                    <?php elseif ($item['content_type'] === 'video'): ?>
-                                                        <i class="bi-play-circle-fill small"></i>
-                                                    <?php elseif ($item['content_type'] === 'text'): ?>
-                                                        <i class="bi-file-text small"></i>
-                                                    <?php elseif ($item['content_type'] === 'link'): ?>
-                                                        <i class="bi-link-45deg small"></i>
-                                                    <?php elseif ($item['content_type'] === 'document'): ?>
-                                                        <i class="bi-file-earmark-text small"></i>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div class="flex-grow-1 ms-2">
-                                                    <span class="small"><?php echo htmlspecialchars($item['content_title'] ?? $item['title']); ?></span>
-                                                    <?php if ($is_quiz && isset($item['pass_mark'])): ?>
-                                                        <span class="badge bg-light text-dark ms-1">Pass: <?php echo $item['pass_mark']; ?>%</span>
-                                                    <?php endif; ?>
-                                                </div>
-                                                </a>
-                                            </div>
-                                            <!-- End Col -->
-
-                                            <div class="col-4 text-end">
-                                                <div class="row">
-                                                    <div class="col-lg-6">
-                                                        <?php if ($is_enrolled || $is_instructor): ?>
-                                                            <?php if ($is_quiz): ?>
-                                                                <a class="small" href="take_quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>">Take Quiz</a>
-                                                            <?php else: ?>
-                                                                <a class="small" href="course-materials.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $item['topic_id']; ?>">View</a>
-                                                            <?php endif; ?>
-                                                        <?php elseif (isset($item['is_previewable']) && $item['is_previewable'] == 1): ?>
-                                                            <?php if ($is_quiz): ?>
-                                                                <a class="small preview-link" href="#previewModal" data-bs-toggle="modal" data-quiz-id="<?php echo $item['quiz_id']; ?>">Preview</a>
-                                                            <?php else: ?>
-                                                                <a class="small preview-link" href="#previewModal" data-bs-toggle="modal" data-topic-id="<?php echo $item['topic_id']; ?>">Preview</a>
-                                                            <?php endif; ?>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <!-- End Col -->
-
-                                                    <div class="col-lg-6">
-                                                        <?php if ($is_quiz): ?>
-                                                            <span class="text-primary small"><?php echo isset($item['time_limit']) ? $item['time_limit'].' mins' : 'Quiz'; ?></span>
-                                                        <?php elseif ($item['content_type'] === 'video'): ?>
-                                                            <span class="text-primary small"><?php echo ($item['duration'] ?? '~10 mins'); ?></span>
-                                                        <?php elseif ($item['content_type'] === 'text' || $item['content_type'] === 'link' || $item['content_type'] === 'document'): ?>
-                                                            <span class="text-primary small"><?php echo ($item['duration'] ?? '~5 mins'); ?></span>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <!-- End Col -->
-                                                </div>
-                                                <!-- End Row -->
-                                            </div>
-                                            <!-- End Col -->
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-                                <!-- End Item -->
-                            <?php endforeach; ?>
-                        </div>
-                        <!-- End List Group -->
-                    </div>
-                </div>
-            </div>
-            <!-- End Accordion Item -->
-        <?php endforeach; ?>
-    </div>
-    <!-- End Accordion -->
-</div>
-<!-- End Tab 2: Curriculum -->
-
-                    <!-- Tab 3: Instructor -->
-                    <div class="tab-pane fade" id="courseOverviewNavThree" role="tabpanel" aria-labelledby="courseOverviewNavThree-tab">
-                        <div class="mb-4">
-                            <h4>About the instructor</h4>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-4 mb-4 mb-sm-0">
-                                <div class="mb-3">
-                                    <img class="avatar avatar-xl avatar-circle" src="../uploads/instructor-profile/<?php echo htmlspecialchars($course['profile_pic']); ?>" alt="<?php echo htmlspecialchars($course['first_name']); ?>">
-                                </div>
-
-                                <ul class="list-unstyled list-py-1">
-                                    <?php if (isset($instructor_stats['instructor_rating'])): ?>
-                                        <li><i class="bi-star dropdown-item-icon"></i> <?php echo number_format($instructor_stats['instructor_rating'], 2); ?> Instructor rating</li>
-                                    <?php endif; ?>
-                                    <li><i class="bi-chat-left-dots dropdown-item-icon"></i> <?php echo $instructor_stats['review_count']; ?> reviews</li>
-                                    <li><i class="bi-person dropdown-item-icon"></i> <?php echo $instructor_stats['student_count']; ?> students</li>
-                                    <li><i class="bi-play-circle dropdown-item-icon"></i> <?php echo $instructor_stats['course_count']; ?> courses</li>
-                                </ul>
+                    <!-- Tab 2: Curriculum -->
+                    <div class="tab-pane fade" id="courseOverviewNavTwo" role="tabpanel" aria-labelledby="courseOverviewNavTwo-tab">
+                        <div class="row mb-4">
+                            <div class="col-8">
+                                <h4 class="mb-0">Course content</h4>
                             </div>
                             <!-- End Col -->
 
-                            <div class="col-sm-8">
-                                <!-- Instructor Info -->
-                                <div class="mb-2">
-                                    <h4 class="mb-1">
-                                        <a href="instructor-profile.php?username=<?php echo htmlspecialchars($course['username']); ?>">
-                                            <?php echo htmlspecialchars($course['first_name'] . ' ' . $course['last_name']); ?>
-                                        </a>
-                                    </h4>
-                                    <p class="fw-semi-bold">Instructor</p>
-                                </div>
-
-                                <p><?php echo nl2br(htmlspecialchars($course['bio'] ?? 'No bio information available.')); ?></p>
-
-                                <?php if (!empty($socials)): ?>
-                                    <div class="d-flex mt-4">
-                                        <?php if (!empty($socials['facebook'])): ?>
-                                            <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['facebook']); ?>" target="_blank">
-                                                <i class="bi-facebook"></i>
-                                            </a>
-                                        <?php endif; ?>
-
-                                        <?php if (!empty($socials['twitter'])): ?>
-                                            <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['twitter']); ?>" target="_blank">
-                                                <i class="bi-twitter"></i>
-                                            </a>
-                                        <?php endif; ?>
-
-                                        <?php if (!empty($socials['instagram'])): ?>
-                                            <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['instagram']); ?>" target="_blank">
-                                                <i class="bi-instagram"></i>
-                                            </a>
-                                        <?php endif; ?>
-
-                                        <?php if (!empty($socials['linkedin'])): ?>
-                                            <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['linkedin']); ?>" target="_blank">
-                                                <i class="bi-linkedin"></i>
-                                            </a>
-                                        <?php endif; ?>
-
-                                        <?php if (!empty($socials['github'])): ?>
-                                            <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['github']); ?>" target="_blank">
-                                                <i class="bi-github"></i>
-                                            </a>
-                                        <?php endif; ?>
+                            <div class="col-4 text-end">
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <span class="small"><?php echo $total_lectures; ?> lectures</span>
                                     </div>
-                                <?php endif; ?>
-                                <!-- End Instructor Info -->
+                                    <!-- End Col -->
+
+                                    <div class="col-lg-6">
+                                        <span class="small"><?php echo $duration_text; ?></span>
+                                    </div>
+                                    <!-- End Col -->
+                                </div>
+                                <!-- End Row -->
                             </div>
                             <!-- End Col -->
                         </div>
                         <!-- End Row -->
+
+                        <!-- Accordion -->
+                        <div class="accordion accordion-btn-icon-start">
+                            <?php foreach ($sections as $index => $section): ?>
+                                <!-- Accordion Item -->
+                                <div class="accordion-item">
+                                    <div class="accordion-header" id="heading<?php echo $section['section_id']; ?>">
+                                        <a class="accordion-button <?php echo ($index !== 0) ? 'collapsed' : ''; ?>" role="button" data-bs-toggle="collapse" data-bs-target="#accordionCourse<?php echo $section['section_id']; ?>" aria-expanded="<?php echo ($index === 0) ? 'true' : 'false'; ?>" aria-controls="accordionCourse<?php echo $section['section_id']; ?>">
+                                            <div class="flex-grow-1 ps-3">
+                                                <div class="row">
+                                                    <div class="col-8">
+                                                        <?php echo htmlspecialchars($section['title']); ?>
+                                                    </div>
+                                                    <!-- End Col -->
+
+                                                    <div class="col-4 text-end">
+                                                        <div class="row">
+                                                            <div class="col-lg-6">
+                                                                <span class="small text-muted fw-normal"><?php echo $section['topic_count']; ?> lectures</span>
+                                                            </div>
+                                                            <!-- End Col -->
+
+                                                            <div class="col-lg-6">
+                                                                <?php
+                                                                $section_duration = ($section['video_count'] * 10) + (($section['text_count'] + $section['link_count'] + $section['document_count']) * 5);
+                                                                ?>
+                                                                <span class="small text-muted fw-normal"><?php echo formatDuration($section_duration); ?></span>
+                                                            </div>
+                                                            <!-- End Col -->
+                                                        </div>
+                                                        <!-- End Row -->
+                                                    </div>
+                                                    <!-- End Col -->
+                                                </div>
+                                                <!-- End Row -->
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div id="accordionCourse<?php echo $section['section_id']; ?>" class="accordion-collapse collapse <?php echo ($index === 0) ? 'show' : ''; ?>" aria-labelledby="heading<?php echo $section['section_id']; ?>">
+                                        <div class="accordion-body">
+                                            <!-- List Group -->
+                                            <div class="list-group list-group-flush list-group-no-gutters">
+                                                <?php
+                                                // Get topics and quizzes for this section
+                                                require_once '../backend/config.php';
+
+                                                // First, get all the topics for this section
+                                                $sql = "SELECT st.*, tc.content_type, tc.title as content_title, tc.video_url, tc.content_text, tc.external_url, st.is_previewable
+                                                FROM section_topics st
+                                                LEFT JOIN topic_content tc ON st.topic_id = tc.topic_id
+                                                WHERE st.section_id = ?
+                                                ORDER BY st.position";
+
+                                                $stmt = $conn->prepare($sql);
+                                                $stmt->bind_param("i", $section['section_id']);
+                                                $stmt->execute();
+                                                $topics_result = $stmt->get_result();
+                                                $topics = [];
+                                                while ($topic = $topics_result->fetch_assoc()) {
+                                                    $topics[] = $topic;
+                                                }
+
+                                                // Now, get any quizzes for this section
+                                                $sql = "SELECT sq.*, sq.quiz_id as content_id, 'quiz' as content_type, sq.quiz_title as content_title
+                                                FROM section_quizzes sq
+                                                WHERE sq.section_id = ?";
+
+                                                $stmt = $conn->prepare($sql);
+                                                $stmt->bind_param("i", $section['section_id']);
+                                                $stmt->execute();
+                                                $quizzes_result = $stmt->get_result();
+                                                $quizzes = [];
+                                                while ($quiz = $quizzes_result->fetch_assoc()) {
+                                                    $quizzes[] = $quiz;
+                                                }
+
+                                                // Combine and sort by position
+                                                // For demonstration, we'll place quizzes at the end of the section
+                                                // You may want to implement a different logic based on your requirements
+
+                                                $combined_content = array_merge($topics, $quizzes);
+
+                                                foreach ($combined_content as $item):
+                                                    $is_quiz = isset($item['content_type']) && $item['content_type'] === 'quiz';
+                                                    $is_locked = !$is_enrolled && !$is_instructor && (!isset($item['is_previewable']) || $item['is_previewable'] != 1);
+                                                ?>
+                                                    <!-- Item -->
+                                                    <?php if ($is_locked): ?>
+                                                        <!-- Locked content - grayed out -->
+                                                        <div class="list-group-item text-muted">
+                                                            <div class="row">
+                                                                <div class="col-8">
+                                                                    <div class="d-flex">
+                                                                        <div class="flex-shrink-0">
+                                                                            <?php if ($is_quiz): ?>
+                                                                                <i class="bi-patch-question small"></i>
+                                                                            <?php elseif ($item['content_type'] === 'video'): ?>
+                                                                                <i class="bi-play-circle-fill small"></i>
+                                                                            <?php elseif ($item['content_type'] === 'text'): ?>
+                                                                                <i class="bi-file-text small"></i>
+                                                                            <?php elseif ($item['content_type'] === 'link'): ?>
+                                                                                <i class="bi-link-45deg small"></i>
+                                                                            <?php elseif ($item['content_type'] === 'document'): ?>
+                                                                                <i class="bi-file-earmark-text small"></i>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                        <div class="flex-grow-1 ms-2">
+                                                                            <span class="small"><?php echo htmlspecialchars($item['content_title'] ?? $item['title']); ?></span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <!-- End Col -->
+
+                                                                <div class="col-4 text-end">
+                                                                    <div class="row">
+                                                                        <div class="col-lg-6">
+                                                                            <i class="bi-lock-fill small"></i>
+                                                                        </div>
+                                                                        <!-- End Col -->
+
+                                                                        <div class="col-lg-6">
+                                                                            <?php if ($is_quiz): ?>
+                                                                                <span class="small"><?php echo isset($item['time_limit']) ? $item['time_limit'] . ' mins' : 'Quiz'; ?></span>
+                                                                            <?php elseif ($item['content_type'] === 'video'): ?>
+                                                                                <span class="small"><?php echo ($item['duration'] ?? '~10 mins'); ?></span>
+                                                                            <?php elseif ($item['content_type'] === 'text' || $item['content_type'] === 'link' || $item['content_type'] === 'document'): ?>
+                                                                                <span class="small"><?php echo ($item['duration'] ?? '~5 mins'); ?></span>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                        <!-- End Col -->
+                                                                    </div>
+                                                                    <!-- End Row -->
+                                                                </div>
+                                                                <!-- End Col -->
+                                                            </div>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <!-- Available or previewable content -->
+                                                        <div class="list-group-item">
+                                                            <div class="row">
+                                                                <div class="col-8">
+                                                                    <?php if ($is_enrolled || $is_instructor): ?>
+                                                                        <!-- For enrolled users, make the title a link -->
+                                                                        <?php if ($is_quiz): ?>
+                                                                            <a class="d-flex" href="take_quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>">
+                                                                            <?php else: ?>
+                                                                                <a class="d-flex" href="course-materials.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $item['topic_id']; ?>">
+                                                                                <?php endif; ?>
+                                                                            <?php else: ?>
+                                                                                <!-- For non-enrolled users viewing previewable content -->
+                                                                                <?php if ($is_quiz): ?>
+                                                                                    <a class="d-flex preview-link" href="#previewModal" data-bs-toggle="modal" data-quiz-id="<?php echo $item['quiz_id']; ?>">
+                                                                                    <?php else: ?>
+                                                                                        <a class="d-flex preview-link" href="#previewModal" data-bs-toggle="modal" data-topic-id="<?php echo $item['topic_id']; ?>">
+                                                                                        <?php endif; ?>
+                                                                                    <?php endif; ?>
+                                                                                    <div class="flex-shrink-0">
+                                                                                        <?php if ($is_quiz): ?>
+                                                                                            <i class="bi-check-square-fill small"></i>
+                                                                                        <?php elseif ($item['content_type'] === 'video'): ?>
+                                                                                            <i class="bi-play-circle-fill small"></i>
+                                                                                        <?php elseif ($item['content_type'] === 'text'): ?>
+                                                                                            <i class="bi-file-text small"></i>
+                                                                                        <?php elseif ($item['content_type'] === 'link'): ?>
+                                                                                            <i class="bi-link-45deg small"></i>
+                                                                                        <?php elseif ($item['content_type'] === 'document'): ?>
+                                                                                            <i class="bi-file-earmark-text small"></i>
+                                                                                        <?php endif; ?>
+                                                                                    </div>
+                                                                                    <div class="flex-grow-1 ms-2">
+                                                                                        <span class="small"><?php echo htmlspecialchars($item['content_title'] ?? $item['title']); ?></span>
+                                                                                        <?php if ($is_quiz && isset($item['pass_mark'])): ?>
+                                                                                            <span class="badge bg-light text-dark ms-1">Pass: <?php echo $item['pass_mark']; ?>%</span>
+                                                                                        <?php endif; ?>
+                                                                                    </div>
+                                                                                        </a>
+                                                                </div>
+                                                                <!-- End Col -->
+
+                                                                <div class="col-4 text-end">
+                                                                    <div class="row">
+                                                                        <div class="col-lg-6">
+                                                                            <?php if ($is_enrolled || $is_instructor): ?>
+                                                                                <?php if ($is_quiz): ?>
+                                                                                    <a class="small" href="take_quiz.php?course_id=<?php echo $course_id; ?>&quiz_id=<?php echo $item['quiz_id']; ?>">Take Quiz</a>
+                                                                                <?php else: ?>
+                                                                                    <a class="small" href="course-materials.php?course_id=<?php echo $course_id; ?>&topic_id=<?php echo $item['topic_id']; ?>">View</a>
+                                                                                <?php endif; ?>
+                                                                            <?php elseif (isset($item['is_previewable']) && $item['is_previewable'] == 1): ?>
+                                                                                <?php if ($is_quiz): ?>
+                                                                                    <a class="small preview-link" href="#previewModal" data-bs-toggle="modal" data-quiz-id="<?php echo $item['quiz_id']; ?>">Preview</a>
+                                                                                <?php else: ?>
+                                                                                    <a class="small preview-link" href="#previewModal" data-bs-toggle="modal" data-topic-id="<?php echo $item['topic_id']; ?>">Preview</a>
+                                                                                <?php endif; ?>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                        <!-- End Col -->
+
+                                                                        <div class="col-lg-6">
+                                                                            <?php if ($is_quiz): ?>
+                                                                                <span class="text-primary small"><?php echo isset($item['time_limit']) ? $item['time_limit'] . ' mins' : 'Quiz'; ?></span>
+                                                                            <?php elseif ($item['content_type'] === 'video'): ?>
+                                                                                <span class="text-primary small"><?php echo ($item['duration'] ?? '~10 mins'); ?></span>
+                                                                            <?php elseif ($item['content_type'] === 'text' || $item['content_type'] === 'link' || $item['content_type'] === 'document'): ?>
+                                                                                <span class="text-primary small"><?php echo ($item['duration'] ?? '~5 mins'); ?></span>
+                                                                            <?php endif; ?>
+                                                                        </div>
+                                                                        <!-- End Col -->
+                                                                    </div>
+                                                                    <!-- End Row -->
+                                                                </div>
+                                                                <!-- End Col -->
+                                                            </div>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                    <!-- End Item -->
+                                                <?php endforeach; ?>
+                                            </div>
+                                            <!-- End List Group -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Accordion Item -->
+                            <?php endforeach; ?>
+                        </div>
+                        <!-- End Accordion -->
+                    </div>
+                    <!-- End Tab 2: Curriculum -->
+
+                    <!-- Tab 3: Instructor -->
+                    <div class="tab-pane fade" id="courseOverviewNavThree" role="tabpanel" aria-labelledby="courseOverviewNavThree-tab">
+                        <div class="mb-4">
+                            <h4><?php echo count($instructors) > 1 ? 'About the Instructors' : 'About the Instructor'; ?></h4>
+                        </div>
+
+                        <?php foreach ($instructors as $index => $instructor): ?>
+                            <?php if ($index > 0): ?>
+                                <hr class="my-5">
+                            <?php endif; ?>
+
+                            <div class="row">
+                                <div class="col-sm-4 mb-4 mb-sm-0">
+                                    <div class="mb-3">
+                                        <img class="avatar avatar-xl avatar-circle" src="../uploads/instructor-profile/<?php echo htmlspecialchars($instructor['profile_pic']); ?>" alt="<?php echo htmlspecialchars($instructor['first_name']); ?>">
+                                    </div>
+
+                                    <ul class="list-unstyled list-py-1">
+                                        <?php
+                                        // Get instructor stats
+                                        $sql = "SELECT 
+                        COUNT(DISTINCT ci.course_id) as course_count,
+                        COUNT(DISTINCT e.user_id) as student_count,
+                        COUNT(DISTINCT cr.rating_id) as review_count,
+                        AVG(cr.rating) as instructor_rating
+                    FROM instructors i
+                    LEFT JOIN course_instructors ci ON i.instructor_id = ci.instructor_id
+                    LEFT JOIN courses c ON ci.course_id = c.course_id AND c.status = 'Published'
+                    LEFT JOIN enrollments e ON c.course_id = e.course_id
+                    LEFT JOIN course_ratings cr ON c.course_id = cr.course_id
+                    WHERE i.instructor_id = ?";
+
+                                        $stmt = $conn->prepare($sql);
+                                        $stmt->bind_param("i", $instructor['instructor_id']);
+                                        $stmt->execute();
+                                        $stats_result = $stmt->get_result();
+                                        $stats = $stats_result->fetch_assoc();
+                                        ?>
+
+                                        <?php if (isset($stats['instructor_rating']) && $stats['instructor_rating']): ?>
+                                            <li><i class="bi-star dropdown-item-icon"></i> <?php echo number_format($stats['instructor_rating'], 2); ?> Instructor rating</li>
+                                        <?php endif; ?>
+                                        <li><i class="bi-chat-left-dots dropdown-item-icon"></i> <?php echo $stats['review_count']; ?> reviews</li>
+                                        <li><i class="bi-person dropdown-item-icon"></i> <?php echo $stats['student_count']; ?> students</li>
+                                        <li><i class="bi-play-circle dropdown-item-icon"></i> <?php echo $stats['course_count']; ?> courses</li>
+                                        <?php if ($instructor['is_primary']): ?>
+                                            <li class="mt-2"><span class="badge bg-primary">Primary Instructor</span></li>
+                                        <?php endif; ?>
+                                    </ul>
+                                </div>
+                                <!-- End Col -->
+
+                                <div class="col-sm-8">
+                                    <!-- Instructor Info -->
+                                    <div class="mb-2">
+                                        <h4 class="mb-1">
+                                            <a href="instructor-profile.php?username=<?php echo htmlspecialchars($instructor['username']); ?>">
+                                                <?php echo htmlspecialchars($instructor['first_name'] . ' ' . $instructor['last_name']); ?>
+                                            </a>
+                                        </h4>
+                                        <p class="fw-semi-bold">Instructor</p>
+                                    </div>
+
+                                    <p><?php echo nl2br(htmlspecialchars($instructor['bio'] ?? 'No bio information available.')); ?></p>
+
+                                    <?php
+                                    // Get instructor social links
+                                    $sql = "SELECT * FROM instructor_social_links WHERE instructor_id = ?";
+                                    $stmt = $conn->prepare($sql);
+                                    $stmt->bind_param("i", $instructor['instructor_id']);
+                                    $stmt->execute();
+                                    $socials_result = $stmt->get_result();
+                                    $socials = $socials_result->fetch_assoc() ?? [];
+
+                                    if (!empty($socials)):
+                                    ?>
+                                        <div class="d-flex mt-4">
+                                            <?php if (!empty($socials['facebook'])): ?>
+                                                <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['facebook']); ?>" target="_blank">
+                                                    <i class="bi-facebook"></i>
+                                                </a>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($socials['twitter'])): ?>
+                                                <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['twitter']); ?>" target="_blank">
+                                                    <i class="bi-twitter"></i>
+                                                </a>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($socials['instagram'])): ?>
+                                                <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['instagram']); ?>" target="_blank">
+                                                    <i class="bi-instagram"></i>
+                                                </a>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($socials['linkedin'])): ?>
+                                                <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['linkedin']); ?>" target="_blank">
+                                                    <i class="bi-linkedin"></i>
+                                                </a>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($socials['github'])): ?>
+                                                <a class="btn btn-soft-secondary btn-sm btn-icon rounded-circle me-2" href="<?php echo htmlspecialchars($socials['github']); ?>" target="_blank">
+                                                    <i class="bi-github"></i>
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <!-- End Instructor Info -->
+                                </div>
+                                <!-- End Col -->
+                            </div>
+                            <!-- End Row -->
+                        <?php endforeach; ?>
+
+                        <?php if (count($instructors) > 1): ?>
+                            <div class="alert alert-soft-info mt-5">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi-info-circle fs-3"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5 class="alert-heading">Collaborative Teaching</h5>
+                                        <p class="mb-0">This course features multiple instructors collaborating to provide a comprehensive learning experience.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <!-- End Tab 3: Instructor -->
 
@@ -1183,7 +1268,7 @@ function timeAgo($datetime)
                                                 <i class="bi-cart me-1"></i> Buy Now
                                             </a>
                                         <?php else: ?>
-                                            <a class="btn btn-primary btn-transition" href="../backend/student/enroll.php?course_id=<?php echo $course_id; ?>">
+                                            <a class="btn btn-primary btn-transition" href="../backend/student/enroll.php?course_id=echo $course_id; ?>">
                                                 <i class="bi-journal-check me-1"></i> Enroll Now
                                             </a>
                                         <?php endif; ?>
@@ -1210,6 +1295,25 @@ function timeAgo($datetime)
                                     <li><i class="bi-infinity nav-icon"></i> Full lifetime access</li>
                                 </ul>
 
+                                <?php if (count($instructors) > 1 && $primary_instructor): ?>
+                                    <div class="border-top pt-3 mt-3">
+                                        <h6 class="mb-2">Primary Instructor</h6>
+                                        <div class="d-flex align-items-center">
+                                            <img class="avatar avatar-xs avatar-circle me-2"
+                                                src="../uploads/instructor-profile/<?php echo htmlspecialchars($primary_instructor['profile_pic']); ?>"
+                                                alt="<?php echo htmlspecialchars($primary_instructor['first_name']); ?>">
+                                            <a href="instructor-profile.php?username=<?php echo htmlspecialchars($primary_instructor['username']); ?>">
+                                                <?php echo htmlspecialchars($primary_instructor['first_name'] . ' ' . $primary_instructor['last_name']); ?>
+                                            </a>
+                                        </div>
+
+                                        <?php if (count($instructors) > 1): ?>
+                                            <div class="mt-1 small text-muted">
+                                                +<?php echo count($instructors) - 1; ?> more instructor<?php echo count($instructors) > 2 ? 's' : ''; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
                                 <hr>
 
                                 <!-- Share Button Group -->
@@ -1244,36 +1348,72 @@ function timeAgo($datetime)
             <!-- End Heading -->
 
             <?php
-            // require_once 'db_connect.php';
-
+            // Get similar courses based on the same category or subcategory
             $query = "SELECT 
-    c.course_id,
-    c.title,
-    c.price,
-    c.thumbnail,
-    c.created_at,
-    s.name AS category,
-    COUNT(t.topic_id) AS lessons,
-    AVG(r.rating) AS rating,
-    cs.estimated_duration
-FROM courses c
-LEFT JOIN subcategories s ON c.subcategory_id = s.subcategory_id
-LEFT JOIN course_ratings r ON c.course_id = r.course_id
-LEFT JOIN course_settings cs ON c.course_id = cs.course_id
-LEFT JOIN course_sections sec ON c.course_id = sec.course_id
-LEFT JOIN section_topics t ON sec.section_id = t.section_id
-WHERE c.status = 'published'
-GROUP BY c.course_id
-ORDER BY c.created_at DESC
-LIMIT 3";
+                c.course_id,
+                c.title,
+                c.price,
+                c.thumbnail,
+                c.created_at,
+                s.name AS category,
+                COUNT(t.topic_id) AS lessons,
+                AVG(r.rating) AS rating,
+                cs.estimated_duration
+            FROM courses c
+            LEFT JOIN subcategories s ON c.subcategory_id = s.subcategory_id
+            LEFT JOIN course_ratings r ON c.course_id = r.course_id
+            LEFT JOIN course_settings cs ON c.course_id = cs.course_id
+            LEFT JOIN course_sections sec ON c.course_id = sec.course_id
+            LEFT JOIN section_topics t ON sec.section_id = t.section_id
+            WHERE c.status = 'Published' 
+            AND c.course_id != ? 
+            AND c.subcategory_id = ?
+            GROUP BY c.course_id
+            ORDER BY c.created_at DESC
+            LIMIT 3";
 
-            $result = mysqli_query($conn, $query);
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("ii", $course_id, $course['subcategory_id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            // If not enough similar courses in same subcategory, fall back to same category
+            if ($result->num_rows < 3) {
+                $query = "SELECT 
+                    c.course_id,
+                    c.title,
+                    c.price,
+                    c.thumbnail,
+                    c.created_at,
+                    s.name AS category,
+                    COUNT(t.topic_id) AS lessons,
+                    AVG(r.rating) AS rating,
+                    cs.estimated_duration
+                FROM courses c
+                LEFT JOIN subcategories s ON c.subcategory_id = s.subcategory_id
+                LEFT JOIN categories cat ON s.category_id = cat.category_id
+                LEFT JOIN course_ratings r ON c.course_id = r.course_id
+                LEFT JOIN course_settings cs ON c.course_id = cs.course_id
+                LEFT JOIN course_sections sec ON c.course_id = sec.course_id
+                LEFT JOIN section_topics t ON sec.section_id = t.section_id
+                WHERE c.status = 'Published' 
+                AND c.course_id != ? 
+                AND cat.category_id = (SELECT cat.category_id FROM subcategories s JOIN categories cat ON s.category_id = cat.category_id WHERE s.subcategory_id = ?)
+                GROUP BY c.course_id
+                ORDER BY c.created_at DESC
+                LIMIT 3";
+
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param("ii", $course_id, $course['subcategory_id']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            }
             ?>
 
             <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3">
-                <?php if (mysqli_num_rows($result) > 0): ?>
+                <?php if ($result->num_rows > 0): ?>
                     <?php $index = 0;
-                    while ($row = mysqli_fetch_assoc($result)): ?>
+                    while ($row = $result->fetch_assoc()): ?>
                         <div class="col mb-5">
                             <a class="card card-flush shadow-none h-100" href="course-overview.php?id=<?php echo $row['course_id']; ?>">
                                 <div class="card-pinned" style="height: 180px; overflow: hidden;">
@@ -1319,7 +1459,7 @@ LIMIT 3";
                     <?php $index++;
                     endwhile; ?>
                 <?php else: ?>
-                    <p>No published courses available at the moment.</p>
+                    <p>No similar courses available at the moment.</p>
                 <?php endif; ?>
             </div>
 
@@ -1377,6 +1517,7 @@ LIMIT 3";
             e.preventDefault();
 
             var topicId = $(this).data('topic-id');
+            var quizId = $(this).data('quiz-id');
             var previewModal = $('#previewModal');
             var previewContent = $('#previewModalContent');
             var loadingEl = $('#previewLoading');
@@ -1390,7 +1531,8 @@ LIMIT 3";
                 type: 'GET',
                 data: {
                     course_id: <?php echo $course_id; ?>,
-                    topic_id: topicId
+                    topic_id: topicId,
+                    quiz_id: quizId
                 },
                 success: function(response) {
                     setTimeout(function() {
@@ -1401,7 +1543,7 @@ LIMIT 3";
 
                             // Vimeo support
                             var vimeoIframe = document.querySelector('#vimeo-player');
-                            if (vimeoIframe) {
+                            if (vimeoIframe && typeof Vimeo !== 'undefined') {
                                 var vimeoPlayer = new Vimeo.Player(vimeoIframe);
                                 vimeoPlayer.on('ended', function() {
                                     $('#previewModal').modal('hide');
@@ -1429,11 +1571,9 @@ LIMIT 3";
                                     window.onYouTubeIframeAPIReady();
                                 }
                             }
-
                         }
                     }, 400);
                 },
-
                 error: function(xhr, status, error) {
                     previewContent.html(
                         '<div class="alert alert-danger">' +
