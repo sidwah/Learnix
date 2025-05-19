@@ -77,11 +77,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="View All">View All</div>
                     </a>
                 </li>
-                <li class="menu-item <?php echo ($currentPage == 'instructors-invite.php') ? 'active' : ''; ?>">
+                <!-- <li class="menu-item <?php //echo ($currentPage == 'instructors-invite.php') ? 'active' : ''; ?>">
                     <a href="instructors-invite.php" class="menu-link">
                         <div data-i18n="Invite New">Invite New</div>
                     </a>
-                </li>
+                </li> -->
             </ul>
         </li>
 
