@@ -589,25 +589,6 @@
             document.getElementById('resendCode').style.pointerEvents = "";
           });
       });
-
-      // Toggle password visibility
-      const passwordToggle = document.querySelector('.input-group-text');
-      if (passwordToggle) {
-        passwordToggle.addEventListener('click', function() {
-          const passwordInput = document.getElementById('password');
-          const icon = this.querySelector('i');
-
-          if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            icon.classList.remove('bx-hide');
-            icon.classList.add('bx-show');
-          } else {
-            passwordInput.type = 'password';
-            icon.classList.remove('bx-show');
-            icon.classList.add('bx-hide');
-          }
-        });
-      }
     });
   </script>
 

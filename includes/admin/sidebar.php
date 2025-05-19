@@ -49,16 +49,16 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="View All">View All</div>
                     </a>
                 </li>
-                <li class="menu-item <?php echo ($currentPage == 'create-departments.php') ? 'active' : ''; ?>" data-menu-slug="create-departments.php">
-                    <a href="create-departments.php" class="menu-link">
-                        <div data-i18n="Create New">Create New</div>
-                    </a>
-                </li>
-                <li class="menu-item <?php echo ($currentPage == 'departments-staff.php') ? 'active' : ''; ?>" data-menu-slug="departments-staff.php">
-                    <a href="departments-staff.php" class="menu-link">
+                <li class="menu-item <?php echo ($currentPage == 'department-staff.php') ? 'active' : ''; ?>" data-menu-slug="department-staff.php">
+                    <a href="department-staff.php" class="menu-link">
                         <div data-i18n="Department Staff">Department Staff</div>
                     </a>
                 </li>
+               <!--  <li class="menu-item <?php //echo ($currentPage == 'departments-staff.php') ? 'active' : ''; ?>" data-menu-slug="departments-staff.php">
+                    <a href="departments-staff.php" class="menu-link">
+                        <div data-i18n="Department Staff">Department Staff</div>
+                    </a>
+                </li> -->
             </ul>
         </li>
 
@@ -149,7 +149,17 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 </li>
                 <li class="menu-item <?php echo ($currentPage == 'reports-students.php') ? 'active' : ''; ?>">
                     <a href="reports-students.php" class="menu-link">
-                        <div data-i18n="Student Reports">Student Reports</div>
+                        <div data-i18n="Student Reports">Students Reports</div>
+                    </a>
+                </li>
+                <li class="menu-item <?php echo ($currentPage == 'reports-instructors.php') ? 'active' : ''; ?>">
+                    <a href="reports-instructors.php" class="menu-link">
+                        <div data-i18n="Instructors Reports">Instructors Reports</div>
+                    </a>
+                </li>
+                <li class="menu-item <?php echo ($currentPage == 'reports-departments.php') ? 'active' : ''; ?>">
+                    <a href="reports-departments.php" class="menu-link">
+                        <div data-i18n="Departments Reports">Departments Reports</div>
                     </a>
                 </li>
                 <li class="menu-item <?php echo ($currentPage == 'reports-revenue.php') ? 'active' : ''; ?>">
