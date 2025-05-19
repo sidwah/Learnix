@@ -9,67 +9,96 @@ if (isset($_GET['username'])) {
 
     try {
         $stmt = $conn->prepare("
-            SELECT 
-                u.user_id,
-                u.first_name, 
-                u.last_name, 
-                u.email,
-                u.profile_pic,
-                u.phone,
-                u.location,
-                u.created_at,
-                i.instructor_id,
-                i.bio,
-                i.verification_status,
-                
-                -- Social Links
-                sl.facebook,
-                sl.twitter,
-                sl.instagram,
-                sl.linkedin,
-                sl.github,
-                
-                -- Instructor Experience
-                (
-                    SELECT JSON_ARRAYAGG(
-                        JSON_OBJECT(
-                            'job_title', job_title,
-                            'company_name', company_name,
-                            'years_worked', years_worked,
-                            'job_description', job_description
-                        )
-                    )
-                    FROM instructor_experience ie 
-                    WHERE ie.instructor_id = i.instructor_id
-                ) AS professional_experience,
-                
-                -- Course Count
-                (
-                    SELECT COUNT(*) FROM courses c 
-                    WHERE c.instructor_id = i.instructor_id 
-                    AND c.status = 'Published'
-                ) AS published_courses_count,
-                
-                -- Total Course Enrollments
-                (
-                    SELECT COALESCE(SUM(e.enrollment_count), 0) 
-                    FROM (
-                        SELECT course_id, COUNT(*) as enrollment_count 
-                        FROM enrollments 
-                        WHERE course_id IN (
-                            SELECT course_id FROM courses 
-                            WHERE instructor_id = i.instructor_id
-                        )
-                        GROUP BY course_id
-                    ) e
-                ) AS total_student_enrollments
+    SELECT 
+        u.user_id,
+        u.first_name, 
+        u.last_name, 
+        u.email,
+        u.profile_pic,
+        u.phone,
+        u.location,
+        u.created_at,
+        i.instructor_id,
+        i.bio,
+        -- Check for verified status from verification requests
+        (SELECT 
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM instructor_verification_requests ivr 
+                    WHERE ivr.instructor_id = i.instructor_id 
+                    AND ivr.status = 'approved'
+                ) 
+                THEN 'verified' 
+                ELSE 'unverified' 
+            END
+        ) AS verification_status,
+        
+        -- Social Links
+        sl.facebook,
+        sl.twitter,
+        sl.instagram,
+        sl.linkedin,
+        sl.github,
+        
+        -- Instructor Experience
+        (
+            SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'job_title', job_title,
+                    'company_name', company_name,
+                    'years_worked', years_worked,
+                    'job_description', job_description
+                )
+            )
+            FROM instructor_experience ie 
+            WHERE ie.instructor_id = i.instructor_id
+            AND ie.deleted_at IS NULL
+        ) AS professional_experience,
+        
+        -- Course Count using course_instructors junction table
+        (
+            SELECT COUNT(*) FROM courses c 
+            JOIN course_instructors ci ON c.course_id = ci.course_id
+            WHERE ci.instructor_id = i.instructor_id 
+            AND c.status = 'Published'
+            AND c.deleted_at IS NULL
+        ) AS published_courses_count,
+        
+        -- Total Course Enrollments using course_instructors
+        (
+            SELECT COALESCE(SUM(e.enrollment_count), 0) 
+            FROM (
+                SELECT c.course_id, COUNT(*) as enrollment_count 
+                FROM enrollments e
+                JOIN courses c ON e.course_id = c.course_id
+                JOIN course_instructors ci ON c.course_id = ci.course_id  
+                WHERE ci.instructor_id = i.instructor_id
+                AND e.deleted_at IS NULL
+                AND c.deleted_at IS NULL
+                GROUP BY c.course_id
+            ) e
+        ) AS total_student_enrollments,
+        
+        -- Add average rating and review count using course_instructors
+        (SELECT COALESCE(AVG(cr.rating), 0) 
+         FROM course_ratings cr 
+         JOIN courses c ON cr.course_id = c.course_id
+         JOIN course_instructors ci ON c.course_id = ci.course_id
+         WHERE ci.instructor_id = i.instructor_id) AS average_rating,
+         
+        (SELECT COUNT(*) 
+         FROM course_ratings cr 
+         JOIN courses c ON cr.course_id = c.course_id
+         JOIN course_instructors ci ON c.course_id = ci.course_id
+         WHERE ci.instructor_id = i.instructor_id) AS review_count
 
-            FROM instructors i
-            JOIN users u ON i.user_id = u.user_id
-            LEFT JOIN instructor_social_links sl ON i.instructor_id = sl.instructor_id
-            WHERE u.username = ?
-            LIMIT 1
-        ");
+    FROM instructors i
+    JOIN users u ON i.user_id = u.user_id
+    LEFT JOIN instructor_social_links sl ON i.instructor_id = sl.instructor_id
+    WHERE u.username = ?
+    AND i.deleted_at IS NULL
+    LIMIT 1
+");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -386,42 +415,51 @@ if (isset($_GET['username'])) {
                     $courses = [];
 
                     try {
-                        $stmt = $conn->prepare("
-        SELECT 
-            c.course_id,
-            c.title,
-            c.thumbnail,
-            c.price,
-            c.created_at,
-            
-            -- Count number of lessons (topics)
-            (SELECT COUNT(*) FROM section_topics st 
-             JOIN course_sections cs ON st.section_id = cs.section_id 
-             WHERE cs.course_id = c.course_id) AS lesson_count,
-            
-            -- Calculate total duration from video content
-            (SELECT COALESCE(SUM(vs.duration_seconds), 0)
-             FROM video_sources vs
-             JOIN topic_content tc ON vs.content_id = tc.content_id
-             JOIN section_topics st ON tc.topic_id = st.topic_id
-             JOIN course_sections cs ON st.section_id = cs.section_id
-             WHERE cs.course_id = c.course_id) AS total_duration_seconds,
-            
-            -- Get average rating
-            (SELECT COALESCE(AVG(cr.rating), 0) 
-             FROM course_ratings cr 
-             WHERE cr.course_id = c.course_id) AS average_rating,
-            
-            -- Get review count
-            (SELECT COUNT(*) 
-             FROM course_ratings cr 
-             WHERE cr.course_id = c.course_id) AS review_count
-            
-        FROM courses c
-        WHERE c.instructor_id = ?
-        AND c.status = 'Published'
-        ORDER BY c.created_at DESC
-    ");
+                    $stmt = $conn->prepare("
+    SELECT 
+        c.course_id,
+        c.title,
+        c.thumbnail,
+        c.price,
+        c.created_at,
+        
+        -- Count number of lessons (topics)
+        (SELECT COUNT(*) FROM section_topics st 
+         JOIN course_sections cs ON st.section_id = cs.section_id 
+         WHERE cs.course_id = c.course_id
+         AND cs.deleted_at IS NULL) AS lesson_count,
+        
+        -- Calculate total duration from video content
+        (SELECT COALESCE(SUM(
+            CASE 
+                WHEN vs.duration_seconds IS NULL THEN 0
+                ELSE vs.duration_seconds
+            END), 0)
+         FROM video_sources vs
+         JOIN topic_content tc ON vs.content_id = tc.content_id
+         JOIN section_topics st ON tc.topic_id = st.topic_id
+         JOIN course_sections cs ON st.section_id = cs.section_id
+         WHERE cs.course_id = c.course_id
+         AND tc.deleted_at IS NULL
+         AND cs.deleted_at IS NULL) AS total_duration_seconds,
+        
+        -- Get average rating
+        (SELECT COALESCE(AVG(cr.rating), 0) 
+         FROM course_ratings cr 
+         WHERE cr.course_id = c.course_id) AS average_rating,
+        
+        -- Get review count
+        (SELECT COUNT(*) 
+         FROM course_ratings cr 
+         WHERE cr.course_id = c.course_id) AS review_count
+        
+    FROM courses c
+    JOIN course_instructors ci ON c.course_id = ci.course_id
+    WHERE ci.instructor_id = ?
+    AND c.status = 'Published'
+    AND c.deleted_at IS NULL
+    ORDER BY c.created_at DESC
+");
                         $stmt->bind_param("i", $instructor['instructor_id']);
                         $stmt->execute();
                         $result = $stmt->get_result();
@@ -534,18 +572,29 @@ if (isset($_GET['username'])) {
                             <?php
                             // Fetch all reviews for the instructor's courses
                             try {
-                                $stmt = $conn->prepare("
-            SELECT cr.rating_id, cr.review_text, cr.rating, cr.created_at,
-                   u.user_id, u.first_name, u.last_name, u.profile_pic,
-                   c.title as course_title, c.course_id
-            FROM course_ratings cr
-            JOIN courses c ON cr.course_id = c.course_id
-            JOIN users u ON cr.user_id = u.user_id
-            WHERE c.instructor_id = ? 
-            AND cr.review_text IS NOT NULL
-            ORDER BY cr.created_at DESC
-            LIMIT 5
-        ");
+           $stmt = $conn->prepare("
+    SELECT 
+        cr.rating_id, 
+        cr.review_text, 
+        cr.rating, 
+        cr.created_at,
+        u.user_id, 
+        u.first_name, 
+        u.last_name, 
+        u.profile_pic,
+        c.title as course_title, 
+        c.course_id
+    FROM course_ratings cr
+    JOIN courses c ON cr.course_id = c.course_id
+    JOIN users u ON cr.user_id = u.user_id
+    JOIN course_instructors ci ON c.course_id = ci.course_id
+    WHERE ci.instructor_id = ? 
+    AND ci.is_primary = 1
+    AND cr.review_text IS NOT NULL
+    AND c.deleted_at IS NULL
+    ORDER BY cr.created_at DESC
+    LIMIT 5
+");
                                 $stmt->bind_param("i", $instructor['instructor_id']);
                                 $stmt->execute();
                                 $reviews = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

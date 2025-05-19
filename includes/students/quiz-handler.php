@@ -105,17 +105,16 @@ if ($active_attempt && $quiz['time_limit'] > 0) {
     $time_limit_seconds = $quiz['time_limit'] * 60;
     $elapsed_time = time() - $start_time;
     $remaining_time = $time_limit_seconds - $elapsed_time;
-    
+
     if ($remaining_time <= 0) {
         $active_attempt = null; // Clear active attempt
     }
 }
 
 // Handle quiz start action (if POST request)
-// Handle quiz start action (if POST request)
 if (isset($_POST['action']) && $_POST['action'] === 'start_quiz') {
     header('Content-Type: application/json');
-    
+
     // Debug: Log the incoming request
     error_log("Start Quiz Request: quiz_id=$quiz_id, user_id=$user_id, course_id=$course_id");
 
@@ -168,5 +167,3 @@ if (isset($_POST['action']) && $_POST['action'] === 'start_quiz') {
     }
     exit;
 }
-
-?>
