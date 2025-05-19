@@ -682,12 +682,13 @@ foreach ($instructors as $key => $instructor) {
             <input type="hidden" id="deptUserName" name="user_name" value="">
 
             <div class="text-center mb-4">
-              <div class="avatar avatar-lg">
+              <div class="avatar avatar-lg mx-auto">
                 <img src="../assets/img/avatars/1.png" alt="Instructor Avatar" class="rounded-circle" id="dept-instructor-image">
               </div>
               <h5 class="mt-2 mb-0" id="dept-instructor-name"></h5>
               <p class="text-muted small mb-0" id="dept-instructor-email"></p>
             </div>
+
 
             <div class="mb-3">
               <label for="departmentSelect" class="form-label">Department</label>
@@ -714,476 +715,476 @@ foreach ($instructors as $key => $instructor) {
 <!-- / Content -->
 
 <script>
- document.addEventListener('DOMContentLoaded', function() {
-  // **Initialize Tooltips**
-  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  tooltipTriggerList.forEach(function(tooltipTriggerEl) {
-    new bootstrap.Tooltip(tooltipTriggerEl);
-  });
+  document.addEventListener('DOMContentLoaded', function() {
+    // **Initialize Tooltips**
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 
-  // **Toast Notification Function**
-  function showToast(message, type = 'success') {
-    const toastEl = document.getElementById(type === 'success' ? 'successToast' : 'errorToast');
-    const toastMessageEl = document.getElementById(type === 'success' ? 'successToastMessage' : 'errorToastMessage');
+    // **Toast Notification Function**
+    function showToast(message, type = 'success') {
+      const toastEl = document.getElementById(type === 'success' ? 'successToast' : 'errorToast');
+      const toastMessageEl = document.getElementById(type === 'success' ? 'successToastMessage' : 'errorToastMessage');
 
-    if (toastEl && toastMessageEl) {
-      toastMessageEl.textContent = message;
-      const toast = new bootstrap.Toast(toastEl);
-      toast.show();
-    }
-  }
-
-  // **Show/Hide Loading Overlay**
-  function showOverlay(message = 'Processing...') {
-    const overlay = document.getElementById('loadingOverlay');
-    const messageEl = document.getElementById('loading-message');
-
-    if (messageEl) {
-      messageEl.textContent = message;
+      if (toastEl && toastMessageEl) {
+        toastMessageEl.textContent = message;
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+      }
     }
 
-    overlay.style.display = 'flex';
-    overlay.dataset.startTime = Date.now();
-  }
+    // **Show/Hide Loading Overlay**
+    function showOverlay(message = 'Processing...') {
+      const overlay = document.getElementById('loadingOverlay');
+      const messageEl = document.getElementById('loading-message');
 
-  function removeOverlay() {
-    const overlay = document.getElementById('loadingOverlay');
-    const startTime = parseInt(overlay.dataset.startTime || 0);
-    const currentTime = Date.now();
-    const elapsedTime = currentTime - startTime;
+      if (messageEl) {
+        messageEl.textContent = message;
+      }
 
-    if (elapsedTime >= 1000) {
-      overlay.style.display = 'none';
-    } else {
-      setTimeout(() => {
+      overlay.style.display = 'flex';
+      overlay.dataset.startTime = Date.now();
+    }
+
+    function removeOverlay() {
+      const overlay = document.getElementById('loadingOverlay');
+      const startTime = parseInt(overlay.dataset.startTime || 0);
+      const currentTime = Date.now();
+      const elapsedTime = currentTime - startTime;
+
+      if (elapsedTime >= 1000) {
         overlay.style.display = 'none';
-      }, 1000 - elapsedTime);
-    }
-  }
-
-  // **Pagination Functionality**
-  const ITEMS_PER_PAGE = 10; // Max number of items per page
-  let currentPage = 1;
-
-  function setupPagination() {
-    const visibleRows = Array.from(document.querySelectorAll('.instructor-row'))
-      .filter(row => row.style.display !== 'none');
-
-    const totalItems = visibleRows.length;
-    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-
-    document.getElementById('showing-start').textContent =
-      totalItems > 0 ? ((currentPage - 1) * ITEMS_PER_PAGE + 1) : 0;
-    document.getElementById('showing-end').textContent =
-      Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
-    document.getElementById('total-entries').textContent = totalItems;
-
-    visibleRows.forEach(row => row.classList.add('d-none'));
-
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
-
-    for (let i = startIndex; i < endIndex; i++) {
-      visibleRows[i].classList.remove('d-none');
-    }
-
-    updatePaginationUI(totalPages);
-  }
-
-  function updatePaginationUI(totalPages) {
-    const paginationContainer = document.querySelector('#pagination-container ul');
-    const pageItems = document.querySelectorAll('#pagination-container ul li:not(.previous):not(.next)');
-    pageItems.forEach(item => item.remove());
-
-    const prevButton = document.getElementById('pagination-previous');
-    prevButton.classList.toggle('disabled', currentPage === 1);
-
-    const nextButton = document.getElementById('pagination-next');
-    nextButton.classList.toggle('disabled', currentPage === totalPages || totalPages === 0);
-
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages && startPage > 1) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      const li = document.createElement('li');
-      li.className = `paginate_button page-item ${i === currentPage ? 'active' : ''}`;
-      li.innerHTML = `<a href="#" class="page-link">${i}</a>`;
-      li.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (i !== currentPage) {
-          currentPage = i;
-          setupPagination();
-        }
-      });
-      paginationContainer.insertBefore(li, nextButton);
-    }
-
-    if (startPage > 1) {
-      const ellipsisStart = document.createElement('li');
-      ellipsisStart.className = 'paginate_button page-item disabled';
-      ellipsisStart.innerHTML = '<a href="#" class="page-link">...</a>';
-      paginationContainer.insertBefore(ellipsisStart, paginationContainer.querySelector(`li:nth-child(${2})`));
-    }
-
-    if (endPage < totalPages) {
-      const ellipsisEnd = document.createElement('li');
-      ellipsisEnd.className = 'paginate_button page-item disabled';
-      ellipsisEnd.innerHTML = '<a href="#" class="page-link">...</a>';
-      paginationContainer.insertBefore(ellipsisEnd, nextButton);
-    }
-  }
-
-  document.getElementById('pagination-previous').addEventListener('click', function(e) {
-    e.preventDefault();
-    if (currentPage > 1) {
-      currentPage--;
-      setupPagination();
-    }
-  });
-
-  document.getElementById('pagination-next').addEventListener('click', function(e) {
-    e.preventDefault();
-    const visibleRows = document.querySelectorAll('.instructor-row:not([style*="display: none"])');
-    const totalPages = Math.ceil(visibleRows.length / ITEMS_PER_PAGE);
-    if (currentPage < totalPages) {
-      currentPage++;
-      setupPagination();
-    }
-  });
-
-  // **Filter Functionality**
-  let currentStatusFilter = 'all';
-
-  document.getElementById('instructorSearch').addEventListener('keyup', filterInstructors);
-
-  document.querySelectorAll('.filter-status').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.filter-status').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      currentStatusFilter = this.getAttribute('data-status');
-      filterInstructors();
-    });
-  });
-
-  document.querySelectorAll('.status-card').forEach(card => {
-    card.addEventListener('click', function() {
-      const status = this.getAttribute('data-status');
-      document.querySelectorAll('.filter-status').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('data-status') === status) btn.classList.add('active');
-      });
-      currentStatusFilter = status;
-      filterInstructors();
-    });
-  });
-
-  document.getElementById('clearFiltersBtn').addEventListener('click', function() {
-    document.getElementById('instructorSearch').value = '';
-    currentStatusFilter = 'all';
-    document.querySelectorAll('.filter-status').forEach(btn => {
-      btn.classList.remove('active');
-      if (btn.getAttribute('data-status') === 'all') btn.classList.add('active');
-    });
-    filterInstructors();
-  });
-
-  function filterInstructors() {
-    const searchTerm = document.getElementById('instructorSearch').value.toLowerCase();
-    const rows = document.querySelectorAll('.instructor-row');
-    const emptySearchResults = document.getElementById('empty-search-results');
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-      const name = row.getAttribute('data-name').toLowerCase();
-      const email = row.getAttribute('data-email').toLowerCase();
-      const department = row.getAttribute('data-department-name').toLowerCase();
-      const status = row.getAttribute('data-status');
-
-      const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm) || department.includes(searchTerm);
-      const matchesStatus = currentStatusFilter === 'all' || status === currentStatusFilter;
-
-      if (matchesSearch && matchesStatus) {
-        row.style.display = '';
-        visibleCount++;
       } else {
-        row.style.display = 'none';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 1000 - elapsedTime);
+      }
+    }
+
+    // **Pagination Functionality**
+    const ITEMS_PER_PAGE = 10; // Max number of items per page
+    let currentPage = 1;
+
+    function setupPagination() {
+      const visibleRows = Array.from(document.querySelectorAll('.instructor-row'))
+        .filter(row => row.style.display !== 'none');
+
+      const totalItems = visibleRows.length;
+      const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+      document.getElementById('showing-start').textContent =
+        totalItems > 0 ? ((currentPage - 1) * ITEMS_PER_PAGE + 1) : 0;
+      document.getElementById('showing-end').textContent =
+        Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
+      document.getElementById('total-entries').textContent = totalItems;
+
+      visibleRows.forEach(row => row.classList.add('d-none'));
+
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
+
+      for (let i = startIndex; i < endIndex; i++) {
+        visibleRows[i].classList.remove('d-none');
+      }
+
+      updatePaginationUI(totalPages);
+    }
+
+    function updatePaginationUI(totalPages) {
+      const paginationContainer = document.querySelector('#pagination-container ul');
+      const pageItems = document.querySelectorAll('#pagination-container ul li:not(.previous):not(.next)');
+      pageItems.forEach(item => item.remove());
+
+      const prevButton = document.getElementById('pagination-previous');
+      prevButton.classList.toggle('disabled', currentPage === 1);
+
+      const nextButton = document.getElementById('pagination-next');
+      nextButton.classList.toggle('disabled', currentPage === totalPages || totalPages === 0);
+
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+      if (endPage - startPage + 1 < maxVisiblePages && startPage > 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        li.className = `paginate_button page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a href="#" class="page-link">${i}</a>`;
+        li.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (i !== currentPage) {
+            currentPage = i;
+            setupPagination();
+          }
+        });
+        paginationContainer.insertBefore(li, nextButton);
+      }
+
+      if (startPage > 1) {
+        const ellipsisStart = document.createElement('li');
+        ellipsisStart.className = 'paginate_button page-item disabled';
+        ellipsisStart.innerHTML = '<a href="#" class="page-link">...</a>';
+        paginationContainer.insertBefore(ellipsisStart, paginationContainer.querySelector(`li:nth-child(${2})`));
+      }
+
+      if (endPage < totalPages) {
+        const ellipsisEnd = document.createElement('li');
+        ellipsisEnd.className = 'paginate_button page-item disabled';
+        ellipsisEnd.innerHTML = '<a href="#" class="page-link">...</a>';
+        paginationContainer.insertBefore(ellipsisEnd, nextButton);
+      }
+    }
+
+    document.getElementById('pagination-previous').addEventListener('click', function(e) {
+      e.preventDefault();
+      if (currentPage > 1) {
+        currentPage--;
+        setupPagination();
       }
     });
 
-    if (visibleCount === 0 && rows.length > 0) {
-      if (emptySearchResults) emptySearchResults.classList.remove('d-none');
-    } else {
-      if (emptySearchResults) emptySearchResults.classList.add('d-none');
-      currentPage = 1;
-      setupPagination();
+    document.getElementById('pagination-next').addEventListener('click', function(e) {
+      e.preventDefault();
+      const visibleRows = document.querySelectorAll('.instructor-row:not([style*="display: none"])');
+      const totalPages = Math.ceil(visibleRows.length / ITEMS_PER_PAGE);
+      if (currentPage < totalPages) {
+        currentPage++;
+        setupPagination();
+      }
+    });
+
+    // **Filter Functionality**
+    let currentStatusFilter = 'all';
+
+    document.getElementById('instructorSearch').addEventListener('keyup', filterInstructors);
+
+    document.querySelectorAll('.filter-status').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-status').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentStatusFilter = this.getAttribute('data-status');
+        filterInstructors();
+      });
+    });
+
+    document.querySelectorAll('.status-card').forEach(card => {
+      card.addEventListener('click', function() {
+        const status = this.getAttribute('data-status');
+        document.querySelectorAll('.filter-status').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.getAttribute('data-status') === status) btn.classList.add('active');
+        });
+        currentStatusFilter = status;
+        filterInstructors();
+      });
+    });
+
+    document.getElementById('clearFiltersBtn').addEventListener('click', function() {
+      document.getElementById('instructorSearch').value = '';
+      currentStatusFilter = 'all';
+      document.querySelectorAll('.filter-status').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-status') === 'all') btn.classList.add('active');
+      });
+      filterInstructors();
+    });
+
+    function filterInstructors() {
+      const searchTerm = document.getElementById('instructorSearch').value.toLowerCase();
+      const rows = document.querySelectorAll('.instructor-row');
+      const emptySearchResults = document.getElementById('empty-search-results');
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const name = row.getAttribute('data-name').toLowerCase();
+        const email = row.getAttribute('data-email').toLowerCase();
+        const department = row.getAttribute('data-department-name').toLowerCase();
+        const status = row.getAttribute('data-status');
+
+        const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm) || department.includes(searchTerm);
+        const matchesStatus = currentStatusFilter === 'all' || status === currentStatusFilter;
+
+        if (matchesSearch && matchesStatus) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      if (visibleCount === 0 && rows.length > 0) {
+        if (emptySearchResults) emptySearchResults.classList.remove('d-none');
+      } else {
+        if (emptySearchResults) emptySearchResults.classList.add('d-none');
+        currentPage = 1;
+        setupPagination();
+      }
     }
-  }
 
-  // **Department Search for Add Instructor Modal**
-  const departmentSearchInput = document.getElementById('departmentSearch');
-  const departmentItems = document.querySelectorAll('.department-item');
-  const selectedDepartmentText = document.getElementById('selectedDepartment');
+    // **Department Search for Add Instructor Modal**
+    const departmentSearchInput = document.getElementById('departmentSearch');
+    const departmentItems = document.querySelectorAll('.department-item');
+    const selectedDepartmentText = document.getElementById('selectedDepartment');
 
-  if (departmentSearchInput) {
-    departmentSearchInput.addEventListener('keyup', function() {
-      const searchTerm = this.value.toLowerCase();
+    if (departmentSearchInput) {
+      departmentSearchInput.addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase();
+        departmentItems.forEach(item => {
+          const departmentName = item.textContent.toLowerCase();
+          item.style.display = departmentName.includes(searchTerm) ? '' : 'none';
+        });
+      });
+
       departmentItems.forEach(item => {
-        const departmentName = item.textContent.toLowerCase();
-        item.style.display = departmentName.includes(searchTerm) ? '' : 'none';
+        item.addEventListener('click', function() {
+          const deptId = this.getAttribute('data-id');
+          const deptName = this.textContent;
+          departmentSearchInput.value = deptName;
+          document.getElementById('departmentId').value = deptId;
+          selectedDepartmentText.textContent = `Selected: ${deptName}`;
+          selectedDepartmentText.classList.add('text-success');
+        });
       });
-    });
+    }
 
-    departmentItems.forEach(item => {
-      item.addEventListener('click', function() {
-        const deptId = this.getAttribute('data-id');
-        const deptName = this.textContent;
-        departmentSearchInput.value = deptName;
-        document.getElementById('departmentId').value = deptId;
-        selectedDepartmentText.textContent = `Selected: ${deptName}`;
-        selectedDepartmentText.classList.add('text-success');
-      });
-    });
-  }
+    // **View Instructor Details**
+    document.querySelectorAll('.view-instructor').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        const viewModal = document.getElementById('viewInstructorModal');
 
-  // **View Instructor Details**
-  document.querySelectorAll('.view-instructor').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const row = this.closest('tr');
-      const viewModal = document.getElementById('viewInstructorModal');
+        document.getElementById('view-instructor-image').src = row.getAttribute('data-profile-pic');
+        document.getElementById('view-instructor-name').textContent = row.getAttribute('data-name');
+        document.getElementById('view-instructor-email').textContent = row.getAttribute('data-email');
 
-      document.getElementById('view-instructor-image').src = row.getAttribute('data-profile-pic');
-      document.getElementById('view-instructor-name').textContent = row.getAttribute('data-name');
-      document.getElementById('view-instructor-email').textContent = row.getAttribute('data-email');
+        const status = row.getAttribute('data-status');
+        const statusBadgeClass = status === 'active' ? 'bg-label-success' :
+          status === 'pending' ? 'bg-label-warning' :
+          status === 'inactive' ? 'bg-label-info' : 'bg-label-danger';
+        document.getElementById('view-instructor-status').className = `badge ${statusBadgeClass}`;
+        document.getElementById('view-instructor-status').textContent = ucfirst(status);
 
-      const status = row.getAttribute('data-status');
-      const statusBadgeClass = status === 'active' ? 'bg-label-success' :
-        status === 'pending' ? 'bg-label-warning' :
-        status === 'inactive' ? 'bg-label-info' : 'bg-label-danger';
-      document.getElementById('view-instructor-status').className = `badge ${statusBadgeClass}`;
-      document.getElementById('view-instructor-status').textContent = ucfirst(status);
+        document.getElementById('view-instructor-bio').textContent = row.getAttribute('data-bio') || 'No bio available';
+        document.getElementById('view-instructor-department').textContent = row.getAttribute('data-department-name');
+        document.getElementById('view-instructor-joined').textContent = row.getAttribute('data-created');
 
-      document.getElementById('view-instructor-bio').textContent = row.getAttribute('data-bio') || 'No bio available';
-      document.getElementById('view-instructor-department').textContent = row.getAttribute('data-department-name');
-      document.getElementById('view-instructor-joined').textContent = row.getAttribute('data-created');
-
-      document.getElementById('view-course-list').innerHTML = '';
-      const coursesCount = parseInt(row.getAttribute('data-courses'));
-      document.getElementById('view-course-list').innerHTML = coursesCount > 0 ?
-        `<div class="alert alert-info w-100 mb-0">
+        document.getElementById('view-course-list').innerHTML = '';
+        const coursesCount = parseInt(row.getAttribute('data-courses'));
+        document.getElementById('view-course-list').innerHTML = coursesCount > 0 ?
+          `<div class="alert alert-info w-100 mb-0">
             <div class="d-flex">
               <i class="bx bx-info-circle me-2 mt-1"></i>
               <div>This instructor has ${coursesCount} assigned courses.</div>
             </div>
           </div>` :
-        `<div class="alert alert-light w-100 mb-0">
+          `<div class="alert alert-light w-100 mb-0">
             <div class="d-flex">
               <i class="bx bx-error-circle me-2 mt-1"></i>
               <div>No courses assigned to this instructor.</div>
             </div>
           </div>`;
 
-      viewModal.setAttribute('data-instructor-id', row.getAttribute('data-id'));
-      viewModal.setAttribute('data-instructor-name', row.getAttribute('data-name'));
-      viewModal.setAttribute('data-instructor-email', row.getAttribute('data-email'));
-      viewModal.setAttribute('data-instructor-img', row.getAttribute('data-profile-pic'));
-      viewModal.setAttribute('data-department-id', row.getAttribute('data-department') || '');
-      viewModal.setAttribute('data-department-name', row.getAttribute('data-department-name') || 'Not Assigned');
-    });
-  });
-
-  // **Change Status Buttons**
-  document.querySelectorAll('.change-status').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const row = this.closest('tr');
-      const instructorId = row.getAttribute('data-id');
-      const newStatus = this.getAttribute('data-status');
-
-      document.getElementById('statusInstructorId').value = instructorId;
-      document.getElementById('statusAction').value = newStatus;
-      document.getElementById('statusUserEmail').value = row.getAttribute('data-email');
-      document.getElementById('statusUserName').value = row.getAttribute('data-name');
-
-      document.getElementById('status-instructor-image').src = row.getAttribute('data-profile-pic');
-      document.getElementById('status-instructor-name').textContent = row.getAttribute('data-name');
-      document.getElementById('status-instructor-email').textContent = row.getAttribute('data-email');
-      document.getElementById('status-instructor-department').textContent = row.getAttribute('data-department-name');
-
-      document.getElementById('activate-message').classList.add('d-none');
-      document.getElementById('deactivate-message').classList.add('d-none');
-      document.getElementById('suspend-message').classList.add('d-none');
-
-      if (newStatus === 'active') document.getElementById('activate-message').classList.remove('d-none');
-      else if (newStatus === 'inactive') document.getElementById('deactivate-message').classList.remove('d-none');
-      else if (newStatus === 'suspended') document.getElementById('suspend-message').classList.remove('d-none');
-
-      const modal = new bootstrap.Modal(document.getElementById('changeStatusModal'));
-      modal.show();
-    });
-  });
-
-  // **Suspend Instructor**
-  document.querySelectorAll('.suspend-instructor').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const row = this.closest('tr');
-      const instructorId = row.getAttribute('data-id');
-
-      document.getElementById('statusInstructorId').value = instructorId;
-      document.getElementById('statusAction').value = 'suspended';
-      document.getElementById('statusUserEmail').value = row.getAttribute('data-email');
-      document.getElementById('statusUserName').value = row.getAttribute('data-name');
-
-      document.getElementById('status-instructor-image').src = row.getAttribute('data-profile-pic');
-      document.getElementById('status-instructor-name').textContent = row.getAttribute('data-name');
-      document.getElementById('status-instructor-email').textContent = row.getAttribute('data-email');
-      document.getElementById('status-instructor-department').textContent = row.getAttribute('data-department-name');
-
-      document.getElementById('activate-message').classList.add('d-none');
-      document.getElementById('deactivate-message').classList.add('d-none');
-      document.getElementById('suspend-message').classList.remove('d-none');
-
-      const modal = new bootstrap.Modal(document.getElementById('changeStatusModal'));
-      modal.show();
-    });
-  });
-
-  // **Delete Instructor**
-  document.querySelectorAll('.delete-instructor').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const row = this.closest('tr');
-      const instructorId = row.getAttribute('data-id');
-      const courseCount = parseInt(row.getAttribute('data-courses'));
-
-      document.getElementById('deleteInstructorId').value = instructorId;
-      document.getElementById('delete-instructor-name').textContent = row.getAttribute('data-name');
-      document.getElementById('delete-course-count').textContent = courseCount;
-
-      document.getElementById('delete-warning').classList.toggle('d-none', courseCount <= 0);
-    });
-  });
-
-  // **AJAX Form Submission Handler**
-  function handleFormSubmit(formId, url) {
-    const form = document.getElementById(formId);
-    if (!form) return;
-
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      showOverlay('Processing...');
-
-      fetch(url, {
-        method: 'POST',
-        body: new FormData(form)
-      })
-        .then(response => {
-          if (!response.ok) throw new Error('Network response was not ok');
-          return response.json();
-        })
-        .then(data => {
-          removeOverlay();
-          if (data.status === 'success') {
-            showToast(data.message, 'success');
-            const modal = bootstrap.Modal.getInstance(form.closest('.modal'));
-            if (modal) modal.hide();
-            setTimeout(() => window.location.reload(), 1500);
-          } else {
-            showToast(data.message || 'An error occurred', 'error');
-          }
-        })
-        .catch(error => {
-          removeOverlay();
-          console.error('Error:', error);
-          showToast('An unexpected error occurred. Please try again.', 'error');
-        });
-    });
-  }
-
-  handleFormSubmit('addInstructorForm', '../backend/admin/add-instructor.php');
-  handleFormSubmit('changeStatusForm', '../backend/admin/update-instructor-status.php');
-  handleFormSubmit('deleteInstructorForm', '../backend/admin/delete-instructor.php');
-  handleFormSubmit('changeDepartmentForm', '../backend/admin/update-instructor-department.php');
-
-  // **Export Functionality**
-  document.getElementById('exportBtn').addEventListener('click', function() {
-    showOverlay('Generating export...');
-    const table = document.getElementById('instructorsTable');
-    const rows = table.querySelectorAll('tbody tr:not([style*="display: none"])');
-
-    let csvContent = "data:text/csv;charset=utf-8,Name,Email,Status,Department,Courses\n";
-    rows.forEach(row => {
-      const name = row.getAttribute('data-name').replace(/"/g, '""');
-      const email = row.getAttribute('data-email').replace(/"/g, '""');
-      const status = row.getAttribute('data-status');
-      const department = row.getAttribute('data-department-name').replace(/"/g, '""');
-      const courseCount = row.getAttribute('data-courses');
-      csvContent += `"${name}","${email}","${ucfirst(status)}","${department}","${courseCount}"\n`;
+        viewModal.setAttribute('data-instructor-id', row.getAttribute('data-id'));
+        viewModal.setAttribute('data-instructor-name', row.getAttribute('data-name'));
+        viewModal.setAttribute('data-instructor-email', row.getAttribute('data-email'));
+        viewModal.setAttribute('data-instructor-img', row.getAttribute('data-profile-pic'));
+        viewModal.setAttribute('data-department-id', row.getAttribute('data-department') || '');
+        viewModal.setAttribute('data-department-name', row.getAttribute('data-department-name') || 'Not Assigned');
+      });
     });
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `instructors_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
+    // **Change Status Buttons**
+    document.querySelectorAll('.change-status').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        const instructorId = row.getAttribute('data-id');
+        const newStatus = this.getAttribute('data-status');
 
-    setTimeout(() => {
-      link.click();
-      document.body.removeChild(link);
-      removeOverlay();
-      showToast('Instructors list exported successfully', 'success');
-    }, 1000);
-  });
+        document.getElementById('statusInstructorId').value = instructorId;
+        document.getElementById('statusAction').value = newStatus;
+        document.getElementById('statusUserEmail').value = row.getAttribute('data-email');
+        document.getElementById('statusUserName').value = row.getAttribute('data-name');
 
-  // **Change Department Functionality (Updated)**
-  document.addEventListener('click', function(e) {
-    if (e.target.matches('.change-department') || e.target.closest('.change-department')) {
-      const viewModal = document.getElementById('viewInstructorModal');
-      const instructorId = viewModal.getAttribute('data-instructor-id');
-      const instructorName = viewModal.getAttribute('data-instructor-name');
-      const instructorEmail = viewModal.getAttribute('data-instructor-email');
-      const instructorImg = viewModal.getAttribute('data-instructor-img');
-      const departmentId = viewModal.getAttribute('data-department-id');
-      const departmentName = viewModal.getAttribute('data-department-name');
+        document.getElementById('status-instructor-image').src = row.getAttribute('data-profile-pic');
+        document.getElementById('status-instructor-name').textContent = row.getAttribute('data-name');
+        document.getElementById('status-instructor-email').textContent = row.getAttribute('data-email');
+        document.getElementById('status-instructor-department').textContent = row.getAttribute('data-department-name');
 
-      if (!instructorId) {
-        console.error('No instructor ID found in the modal');
-        showToast('Instructor data not found. Please refresh the page.', 'error');
-        return;
+        document.getElementById('activate-message').classList.add('d-none');
+        document.getElementById('deactivate-message').classList.add('d-none');
+        document.getElementById('suspend-message').classList.add('d-none');
+
+        if (newStatus === 'active') document.getElementById('activate-message').classList.remove('d-none');
+        else if (newStatus === 'inactive') document.getElementById('deactivate-message').classList.remove('d-none');
+        else if (newStatus === 'suspended') document.getElementById('suspend-message').classList.remove('d-none');
+
+        const modal = new bootstrap.Modal(document.getElementById('changeStatusModal'));
+        modal.show();
+      });
+    });
+
+    // **Suspend Instructor**
+    document.querySelectorAll('.suspend-instructor').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        const instructorId = row.getAttribute('data-id');
+
+        document.getElementById('statusInstructorId').value = instructorId;
+        document.getElementById('statusAction').value = 'suspended';
+        document.getElementById('statusUserEmail').value = row.getAttribute('data-email');
+        document.getElementById('statusUserName').value = row.getAttribute('data-name');
+
+        document.getElementById('status-instructor-image').src = row.getAttribute('data-profile-pic');
+        document.getElementById('status-instructor-name').textContent = row.getAttribute('data-name');
+        document.getElementById('status-instructor-email').textContent = row.getAttribute('data-email');
+        document.getElementById('status-instructor-department').textContent = row.getAttribute('data-department-name');
+
+        document.getElementById('activate-message').classList.add('d-none');
+        document.getElementById('deactivate-message').classList.add('d-none');
+        document.getElementById('suspend-message').classList.remove('d-none');
+
+        const modal = new bootstrap.Modal(document.getElementById('changeStatusModal'));
+        modal.show();
+      });
+    });
+
+    // **Delete Instructor**
+    document.querySelectorAll('.delete-instructor').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        const instructorId = row.getAttribute('data-id');
+        const courseCount = parseInt(row.getAttribute('data-courses'));
+
+        document.getElementById('deleteInstructorId').value = instructorId;
+        document.getElementById('delete-instructor-name').textContent = row.getAttribute('data-name');
+        document.getElementById('delete-course-count').textContent = courseCount;
+
+        document.getElementById('delete-warning').classList.toggle('d-none', courseCount <= 0);
+      });
+    });
+
+    // **AJAX Form Submission Handler**
+    function handleFormSubmit(formId, url) {
+      const form = document.getElementById(formId);
+      if (!form) return;
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        showOverlay('Processing...');
+
+        fetch(url, {
+            method: 'POST',
+            body: new FormData(form)
+          })
+          .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          })
+          .then(data => {
+            removeOverlay();
+            if (data.status === 'success') {
+              showToast(data.message, 'success');
+              const modal = bootstrap.Modal.getInstance(form.closest('.modal'));
+              if (modal) modal.hide();
+              setTimeout(() => window.location.reload(), 1500);
+            } else {
+              showToast(data.message || 'An error occurred', 'error');
+            }
+          })
+          .catch(error => {
+            removeOverlay();
+            console.error('Error:', error);
+            showToast('An unexpected error occurred. Please try again.', 'error');
+          });
+      });
+    }
+
+    handleFormSubmit('addInstructorForm', '../backend/admin/add-instructor.php');
+    handleFormSubmit('changeStatusForm', '../backend/admin/update-instructor-status.php');
+    handleFormSubmit('deleteInstructorForm', '../backend/admin/delete-instructor.php');
+    handleFormSubmit('changeDepartmentForm', '../backend/admin/update-instructor-department.php');
+
+    // **Export Functionality**
+    document.getElementById('exportBtn').addEventListener('click', function() {
+      showOverlay('Generating export...');
+      const table = document.getElementById('instructorsTable');
+      const rows = table.querySelectorAll('tbody tr:not([style*="display: none"])');
+
+      let csvContent = "data:text/csv;charset=utf-8,Name,Email,Status,Department,Courses\n";
+      rows.forEach(row => {
+        const name = row.getAttribute('data-name').replace(/"/g, '""');
+        const email = row.getAttribute('data-email').replace(/"/g, '""');
+        const status = row.getAttribute('data-status');
+        const department = row.getAttribute('data-department-name').replace(/"/g, '""');
+        const courseCount = row.getAttribute('data-courses');
+        csvContent += `"${name}","${email}","${ucfirst(status)}","${department}","${courseCount}"\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `instructors_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+
+      setTimeout(() => {
+        link.click();
+        document.body.removeChild(link);
+        removeOverlay();
+        showToast('Instructors list exported successfully', 'success');
+      }, 1000);
+    });
+
+    // **Change Department Functionality (Updated)**
+    document.addEventListener('click', function(e) {
+      if (e.target.matches('.change-department') || e.target.closest('.change-department')) {
+        const viewModal = document.getElementById('viewInstructorModal');
+        const instructorId = viewModal.getAttribute('data-instructor-id');
+        const instructorName = viewModal.getAttribute('data-instructor-name');
+        const instructorEmail = viewModal.getAttribute('data-instructor-email');
+        const instructorImg = viewModal.getAttribute('data-instructor-img');
+        const departmentId = viewModal.getAttribute('data-department-id');
+        const departmentName = viewModal.getAttribute('data-department-name');
+
+        if (!instructorId) {
+          console.error('No instructor ID found in the modal');
+          showToast('Instructor data not found. Please refresh the page.', 'error');
+          return;
+        }
+
+        document.getElementById('deptInstructorId').value = instructorId;
+        document.getElementById('deptUserEmail').value = instructorEmail;
+        document.getElementById('deptUserName').value = instructorName;
+        document.getElementById('dept-instructor-image').src = instructorImg;
+        document.getElementById('dept-instructor-name').textContent = instructorName;
+        document.getElementById('dept-instructor-email').textContent = instructorEmail;
+        document.getElementById('current-department').textContent = departmentName || 'None';
+
+        document.getElementById('departmentSelect').value = departmentId || '';
+
+        document.getElementById('changeDepartmentModal').setAttribute('data-return-modal', 'viewInstructorModal');
       }
+    });
 
-      document.getElementById('deptInstructorId').value = instructorId;
-      document.getElementById('deptUserEmail').value = instructorEmail;
-      document.getElementById('deptUserName').value = instructorName;
-      document.getElementById('dept-instructor-image').src = instructorImg;
-      document.getElementById('dept-instructor-name').textContent = instructorName;
-      document.getElementById('dept-instructor-email').textContent = instructorEmail;
-      document.getElementById('current-department').textContent = departmentName || 'None';
+    document.getElementById('changeDepartmentModal').addEventListener('hidden.bs.modal', function() {
+      const returnModalId = this.getAttribute('data-return-modal');
+      if (returnModalId) {
+        const returnModal = new bootstrap.Modal(document.getElementById(returnModalId));
+        returnModal.show();
+      }
+    });
 
-      document.getElementById('departmentSelect').value = departmentId || '';
-
-      document.getElementById('changeDepartmentModal').setAttribute('data-return-modal', 'viewInstructorModal');
+    // **Utility Function**
+    function ucfirst(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
     }
+
+    // **Initialize Pagination**
+    setupPagination();
   });
-
-  document.getElementById('changeDepartmentModal').addEventListener('hidden.bs.modal', function() {
-    const returnModalId = this.getAttribute('data-return-modal');
-    if (returnModalId) {
-      const returnModal = new bootstrap.Modal(document.getElementById(returnModalId));
-      returnModal.show();
-    }
-  });
-
-  // **Utility Function**
-  function ucfirst(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  }
-
-  // **Initialize Pagination**
-  setupPagination();
-});
 </script>
 
 <?php include_once '../includes/admin/footer.php'; ?>
