@@ -5,7 +5,7 @@ require_once '../backend/config.php';
 
 // Check if user is logged in as department head
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'department_head') {
-    header('Location: ../admin/login.php');
+    header('Location: ../admin/index.php');
     exit;
 }
 

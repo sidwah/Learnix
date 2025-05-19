@@ -12,7 +12,7 @@ session_start();
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     // Not logged in, redirect to login page
-    header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+    header('Location: index.php');
     exit;
 }
 

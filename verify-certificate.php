@@ -86,7 +86,7 @@ function formatDate($dateString) {
         }
 
         .certificate-container {
-            max-width: 900px;
+            min-width: 900px;
             background: #FFF;
             border: 10px double var(--border);
             border-radius: 20px;

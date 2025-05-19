@@ -8,7 +8,7 @@ require_once '../includes/functions.php';
 
 // Check if user is logged in, if not redirect to login page
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: index.php");
     exit;
 }
 
