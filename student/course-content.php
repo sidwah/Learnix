@@ -599,6 +599,9 @@ function extractVimeoID($url)
 
 // Handle topic completion (mark as completed)
 if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
+    // Add debugging log to track execution
+    error_log("Topic completion process started - enrollment_id: $enrollment_id, topic_id: $topic_id, course_id: $course_id");
+    
     // Check if there's already a progress record
     $check_progress = "SELECT progress_id FROM progress WHERE enrollment_id = ? AND topic_id = ?";
     $stmt = $conn->prepare($check_progress);
@@ -615,6 +618,7 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         $stmt = $conn->prepare($update_progress);
         $stmt->bind_param("ii", $enrollment_id, $topic_id);
         $stmt->execute();
+        error_log("Updated existing progress record for topic $topic_id");
     } else {
         // Insert new progress record
         $insert_progress = "INSERT INTO progress 
@@ -623,6 +627,7 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         $stmt = $conn->prepare($insert_progress);
         $stmt->bind_param("ii", $enrollment_id, $topic_id);
         $stmt->execute();
+        error_log("Created new progress record for topic $topic_id");
     }
 
     // Calculate overall course progress to update enrollments table
@@ -644,6 +649,9 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         $completed_percentage = round(($progress_data['completed_topics'] / $progress_data['total_topics']) * 100);
     }
 
+    // Log progress data
+    error_log("Progress data: completed_topics={$progress_data['completed_topics']}, total_topics={$progress_data['total_topics']}, completion_percentage=$completed_percentage");
+
     // Update the completion percentage in enrollments table
     $update_enrollment = "UPDATE enrollments 
                          SET completion_percentage = ?, 
@@ -653,8 +661,10 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     $stmt->bind_param("di", $completed_percentage, $enrollment_id);
     $stmt->execute();
 
-    // Check if course is now 100% complete
-    if ($completed_percentage >= 100) {
+    // Check if course is now fully complete for topics
+    if ($progress_data['completed_topics'] == $progress_data['total_topics']) {
+        error_log("All topics completed. Checking quiz requirements.");
+        
         // Check if all quizzes have been passed
         $quiz_check_query = "SELECT 
                         COUNT(sq.quiz_id) as total_quizzes,
@@ -674,33 +684,59 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         $quiz_result = $stmt->get_result();
         $quiz_data = $quiz_result->fetch_assoc();
 
+        // Log quiz data
+        error_log("Quiz data: total_quizzes={$quiz_data['total_quizzes']}, passed_quizzes={$quiz_data['passed_quizzes']}");
+
         $all_requirements_met = true;
 
         // Check if all quizzes were passed
         if ($quiz_data['total_quizzes'] > 0 && $quiz_data['passed_quizzes'] < $quiz_data['total_quizzes']) {
             $all_requirements_met = false;
+            error_log("Not all quizzes passed. Certificate generation skipped.");
         }
 
         // Check if there are any other completion requirements (e.g., assignments)
         // You can add additional checks here for other requirements
 
+        error_log("All requirements met: " . ($all_requirements_met ? 'YES' : 'NO'));
+
         // Only proceed with certificate and badge if all requirements are met
         if ($all_requirements_met) {
+            error_log("Attempting certificate generation for user $user_id, course $course_id, enrollment $enrollment_id");
+            
             // Include certificate and badge handlers
             require_once '../backend/certificates/CertificateHandler.php';
 
             // Generate certificate
-            $certificateHandler = new CertificateHandler();
-            $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
-
-            // Store results for notification
-            $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
-            $_SESSION['completion_notification'] = true;
+            try {
+                $certificateHandler = new CertificateHandler();
+                $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
+                
+                // Log certificate generation result
+                error_log("Certificate generation result: " . json_encode($certificateResult));
+                
+                // Store results for notification
+                $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
+                $_SESSION['completion_notification'] = true;
+                
+                // Add additional session variable with more details
+                $_SESSION['certificate_message'] = $certificateResult['message'] ?? '';
+                $_SESSION['certificate_id'] = $certificateResult['certificate_id'] ?? null;
+                
+                // Set a flag to show the completion modal with certificate info
+                $_SESSION['show_completion_modal'] = true;
+            } catch (Exception $e) {
+                error_log("Exception during certificate generation: " . $e->getMessage());
+                $_SESSION['certificate_error'] = $e->getMessage();
+            }
         } else {
             // Store a notification that course is not fully complete
             $_SESSION['incomplete_requirements'] = true;
             $_SESSION['quizzes_remaining'] = $quiz_data['total_quizzes'] - $quiz_data['passed_quizzes'];
+            error_log("Incomplete requirements notification set. Quizzes remaining: " . $_SESSION['quizzes_remaining']);
         }
+    } else {
+        error_log("Not all topics completed yet. Topics: {$progress_data['completed_topics']}/{$progress_data['total_topics']}");
     }
 
     // Check if this section has any more uncompleted topics
@@ -717,15 +753,20 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     $remaining_data = $remaining_result->fetch_assoc();
     $remaining_topics = $remaining_data['remaining_count'];
 
+    error_log("Remaining topics in section: $remaining_topics");
+
     if ($remaining_topics > 0 && $next_topic_id) {
         // If there are more topics to complete in this section, go to the next topic
+        error_log("Redirecting to next topic: $next_topic_id");
         header("Location: course-content.php?course_id=" . $course_id . "&topic=" . $next_topic_id);
     } else {
         // If all topics in this section are completed, go back to the course overview
-        header("Location: course-materials.php?course_id=" . $course_id . "§ion=" . $section_id);
+        error_log("All section topics completed. Redirecting to course materials page.");
+        header("Location: course-materials.php?course_id=" . $course_id . "&section=" . $section_id);
     }
     exit();
 }
+
 // At the end of your file, after all processing:
 ob_end_flush();
 

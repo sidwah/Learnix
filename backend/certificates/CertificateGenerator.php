@@ -31,17 +31,17 @@ class CertificateGenerator
     /**
      * Path to favicon
      */
-    private $faviconPath = '../assets/img/favicon/favicon.ico';
+    private $faviconPath = 'assets/img/favicon/favicon.ico';
 
     /**
      * Directory to store generated certificates
      */
-    private $certificatesDir = '../uploads/certificates/';
+    private $certificatesDir = 'uploads/certificates/';
 
     /**
      * Directory to store QR codes
      */
-    private $qrCodesDir = '../uploads/certificates/qrcodes/';
+    private $qrCodesDir = 'uploads/certificates/qrcodes/';
 
     /**
      * Database connection
@@ -363,24 +363,24 @@ HTML;
             $certificateId = $this->saveCertificateInfo($userId, $courseId, $enrollmentId, $verificationCode, $htmlPath);
             error_log("Saved certificate in database with ID: {$certificateId}");
 
-        // Insert notification for certificate earned
-$notificationSql = "
+            // Insert notification for certificate earned
+            $notificationSql = "
 INSERT INTO user_notifications (user_id, title, type, message, created_at, is_read)
 VALUES (?, ?, ?, ?, NOW(), 0)
 ";
-$notificationStmt = $this->db->prepare($notificationSql);
+            $notificationStmt = $this->db->prepare($notificationSql);
 
-$title = 'Certificate Earned'; // ✅ New Title
-$type = 'Certificate Awarded';
-$message = 'Congratulations! You have successfully earned a certificate for the course "' . $course['title'] . '". You can view or verify your certificate anytime.';
+            $title = 'Certificate Earned'; // ✅ New Title
+            $type = 'Certificate Awarded';
+            $message = 'Congratulations! You have successfully earned a certificate for the course "' . $course['title'] . '". You can view or verify your certificate anytime.';
 
-$notificationStmt->bind_param("isss", $userId, $title, $type, $message); // ✅ 4 fields bound here
+            $notificationStmt->bind_param("isss", $userId, $title, $type, $message); // ✅ 4 fields bound here
 
-if (!$notificationStmt->execute()) {
-error_log("Failed to insert certificate notification: " . $this->db->error);
-}
+            if (!$notificationStmt->execute()) {
+                error_log("Failed to insert certificate notification: " . $this->db->error);
+            }
 
-$notificationStmt->close();
+            $notificationStmt->close();
 
 
 
@@ -546,14 +546,16 @@ $notificationStmt->close();
      */
     private function getCourseInfo($courseId)
     {
-        $stmt = $this->db->prepare("
-            SELECT c.course_id, c.title, c.instructor_id, 
-                   CONCAT(u.first_name, ' ', u.last_name) AS instructor_name
-            FROM courses c
-            JOIN instructors i ON c.instructor_id = i.instructor_id
-            JOIN users u ON i.user_id = u.user_id
-            WHERE c.course_id = ?
-        ");
+      $stmt = $this->db->prepare("
+    SELECT c.course_id, c.title,
+           GROUP_CONCAT(CONCAT(u.first_name, ' ', u.last_name) ORDER BY ci.is_primary DESC SEPARATOR ', ') AS instructors
+    FROM courses c
+    JOIN course_instructors ci ON c.course_id = ci.course_id
+    JOIN instructors i ON ci.instructor_id = i.instructor_id
+    JOIN users u ON i.user_id = u.user_id
+    WHERE c.course_id = ?
+    GROUP BY c.course_id
+");
         $stmt->bind_param("i", $courseId);
         $stmt->execute();
         $result = $stmt->get_result();

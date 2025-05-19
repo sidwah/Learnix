@@ -427,7 +427,7 @@ if ($all_requirements_met && !$has_certificate && !isset($_SESSION['certificate_
     $_SESSION['certificate_generated'] = true;
     echo "<script>
         setTimeout(function() {
-            window.location.href = 'generate-certificate.php?course_id=$course_id&enrollment_id=$enrollment_id';
+            window.location.href = '../generate-certificate.php?course_id=$course_id&enrollment_id=$enrollment_id';
         }, 5000);
     </script>";
 }
