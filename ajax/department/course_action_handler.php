@@ -188,7 +188,7 @@ function loadCourseDetails($course_id, $department_id) {
             <?php if (!empty($course['full_description'])): ?>
                 <div class="mb-3">
                     <h5>Description</h5>
-                    <div><?php echo nl2br(htmlspecialchars($course['full_description'])); ?></div>
+                    <div><?php echo $course['full_description'] ?></div>
                 </div>
             <?php endif; ?>
         </div>
