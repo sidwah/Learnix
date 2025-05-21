@@ -21,8 +21,9 @@ require_once '../backend/config.php';
 // Fetch all courses with their details
 $query = "SELECT c.course_id, c.title, c.short_description, c.thumbnail, c.status, c.approval_status, 
                  c.created_at, c.department_id, d.name as department_name, c.financial_approval_date,
-                 (SELECT IFNULL(MAX(instructor_share), 0) FROM course_financial_history 
-                  WHERE course_id = c.course_id) as instructor_share,
+                 (SELECT cfh.instructor_share FROM course_financial_history cfh 
+                  WHERE cfh.course_id = c.course_id 
+                  ORDER BY cfh.change_date DESC LIMIT 1) as instructor_share,
                  COUNT(DISTINCT e.enrollment_id) AS enrolled_students,
                  GROUP_CONCAT(DISTINCT CONCAT(u.first_name, ' ', u.last_name) SEPARATOR '|') as instructor_names,
                  GROUP_CONCAT(DISTINCT ci.instructor_id) as instructor_ids
@@ -42,12 +43,17 @@ $result = mysqli_query($conn, $query);
 $totalCourses = 0;
 $publishedCounts = 0;
 $draftCounts = 0;
+$pendingFinancialCounts = 0;
+$financiallyApprovedCounts = 0;
 $pendingCounts = 0;
 $approvedCounts = 0;
 $rejectedCounts = 0;
-$revisionsRequestedCounts = 0;
-$pendingFinancialApprovalCounts = 0;
-$financiallyApprovedCounts = 0;
+
+// Fetch default instructor share from revenue_settings
+$settingsQuery = "SELECT setting_value FROM revenue_settings WHERE setting_name = 'instructor_split' LIMIT 1";
+$settingsResult = mysqli_query($conn, $settingsQuery);
+$defaultInstructorShare = ($settingsResult && mysqli_num_rows($settingsResult) > 0) ? 
+                        mysqli_fetch_assoc($settingsResult)['setting_value'] : 80;
 
 $courses = [];
 if ($result && mysqli_num_rows($result) > 0) {
@@ -59,15 +65,14 @@ if ($result && mysqli_num_rows($result) > 0) {
     if ($row['status'] == 'Published') $publishedCounts++;
     if ($row['status'] == 'Draft') $draftCounts++;
 
-    // Count by approval status
+    // Count by financial approval
+    if ($row['financial_approval_date'] === NULL) $pendingFinancialCounts++;
+    else $financiallyApprovedCounts++;
+
+    // Count by approval status (for backward compatibility)
     if ($row['approval_status'] == 'pending') $pendingCounts++;
     if ($row['approval_status'] == 'approved') $approvedCounts++;
     if ($row['approval_status'] == 'rejected') $rejectedCounts++;
-    if ($row['approval_status'] == 'revisions_requested') $revisionsRequestedCounts++;
-    
-    // Count by financial approval
-    if ($row['financial_approval_date'] === NULL) $pendingFinancialApprovalCounts++;
-    if ($row['financial_approval_date'] !== NULL) $financiallyApprovedCounts++;
   }
 }
 ?>
@@ -149,13 +154,13 @@ if ($result && mysqli_num_rows($result) > 0) {
     </div>
 
     <div class="col-md-3 col-sm-6 mb-3">
-      <div class="card status-card" data-status="null" data-type="financial">
+      <div class="card status-card" data-financial="pending" data-type="financial">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div class="card-info">
-              <p class="card-text">Pending Financial Approval</p>
+              <p class="card-text">Awaiting Financial Approval</p>
               <div class="d-flex align-items-end mb-2">
-                <h4 class="card-title mb-0 me-2"><?php echo $pendingFinancialApprovalCounts; ?></h4>
+                <h4 class="card-title mb-0 me-2"><?php echo $pendingFinancialCounts; ?></h4>
               </div>
             </div>
             <div class="card-icon">
@@ -169,7 +174,7 @@ if ($result && mysqli_num_rows($result) > 0) {
     </div>
 
     <div class="col-md-3 col-sm-6 mb-3">
-      <div class="card status-card" data-status="approved" data-type="financial">
+      <div class="card status-card" data-financial="approved" data-type="financial">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div class="card-info">
@@ -223,40 +228,10 @@ if ($result && mysqli_num_rows($result) > 0) {
                 <a class="dropdown-item filter-financial-item active" href="javascript:void(0);" data-status="all">All Statuses</a>
               </li>
               <li>
-                <a class="dropdown-item filter-financial-item" href="javascript:void(0);" data-status="null">Pending Financial Approval</a>
+                <a class="dropdown-item filter-financial-item" href="javascript:void(0);" data-status="pending">Awaiting Financial Approval</a>
               </li>
               <li>
                 <a class="dropdown-item filter-financial-item" href="javascript:void(0);" data-status="approved">Financially Approved</a>
-              </li>
-              <li>
-                <hr class="dropdown-divider">
-              </li>
-              <li>
-                <a class="dropdown-item" href="javascript:void(0);" id="clearFiltersBtn">
-                  <i class="bx bx-reset me-1"></i> Clear All Filters
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div class="dropdown me-3">
-            <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bx bx-filter-alt me-1"></i> Approval Status
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li>
-                <a class="dropdown-item filter-approval-item active" href="javascript:void(0);" data-status="all">All Statuses</a>
-              </li>
-              <li>
-                <a class="dropdown-item filter-approval-item" href="javascript:void(0);" data-status="pending">Pending</a>
-              </li>
-              <li>
-                <a class="dropdown-item filter-approval-item" href="javascript:void(0);" data-status="approved">Approved</a>
-              </li>
-              <li>
-                <a class="dropdown-item filter-approval-item" href="javascript:void(0);" data-status="rejected">Rejected</a>
-              </li>
-              <li>
-                <a class="dropdown-item filter-approval-item" href="javascript:void(0);" data-status="revisions_requested">Revisions Requested</a>
               </li>
               <li>
                 <hr class="dropdown-divider">
@@ -294,14 +269,15 @@ if ($result && mysqli_num_rows($result) > 0) {
             <?php foreach ($courses as $course): 
               $instructorNames = $course['instructor_names'] ? explode('|', $course['instructor_names']) : [];
               $instructorIds = $course['instructor_ids'] ? explode(',', $course['instructor_ids']) : [];
-              $financialStatus = $course['financial_approval_date'] === NULL ? 'null' : 'approved';
-              $instructorShare = $course['instructor_share'] ?: 0;
+              $hasFinancialApproval = !is_null($course['financial_approval_date']);
+              $instructorShare = $course['instructor_share'] ?: $defaultInstructorShare;
               ?>
               <tr class="course-row"
                 data-id="<?php echo $course['course_id']; ?>"
                 data-status="<?php echo $course['status']; ?>"
                 data-approval="<?php echo $course['approval_status']; ?>"
-                data-financial="<?php echo $financialStatus; ?>"
+                data-financial="<?php echo $hasFinancialApproval ? 'approved' : 'pending'; ?>"
+                data-financial-date="<?php echo $hasFinancialApproval ? date('F d, Y', strtotime($course['financial_approval_date'])) : ''; ?>"
                 data-instructor-share="<?php echo $instructorShare; ?>"
                 data-department="<?php echo $course['department_id']; ?>"
                 data-title="<?php echo htmlspecialchars($course['title']); ?>"
@@ -334,18 +310,8 @@ if ($result && mysqli_num_rows($result) > 0) {
                     <br>
                     <small class="text-muted mt-1">
                       <span class="badge bg-label-<?php 
-                                                  echo $course['approval_status'] == 'approved' ? 'success' : 
-                                                      ($course['approval_status'] == 'pending' ? 'warning' : 
-                                                      ($course['approval_status'] == 'rejected' ? 'danger' : 
-                                                      ($course['approval_status'] == 'revisions_requested' ? 'info' : 'secondary'))); ?>">
-                        <?php echo ucfirst(str_replace('_', ' ', $course['approval_status'])); ?>
-                      </span>
-                      <br>
-                      <span class="badge bg-label-<?php echo $financialStatus == 'approved' ? 'success' : 'warning'; ?> mt-1">
-                        <?php echo $financialStatus == 'approved' ? 'Financially Approved' : 'Pending Financial Approval'; ?>
-                        <?php if ($financialStatus == 'approved'): ?>
-                        <span class="ms-1">(<?php echo $instructorShare; ?>%)</span>
-                        <?php endif; ?>
+                                                  echo $hasFinancialApproval ? 'success' : 'warning'; ?>">
+                        <?php echo $hasFinancialApproval ? 'Financially Approved' : 'Awaiting Financial Approval'; ?>
                       </span>
                     </small>
                   </div>
@@ -373,32 +339,19 @@ if ($result && mysqli_num_rows($result) > 0) {
                       <i class="bx bx-show-alt"></i>
                     </button>
 
-                    <?php if ($financialStatus == 'null'): ?>
+                    <?php if (!$hasFinancialApproval): ?>
                       <button type="button" class="btn btn-sm btn-icon btn-outline-success rounded-pill btn-icon financial-approve" 
-                              title="Approve Financial Terms">
-                        <i class="bx bx-money"></i>
-                        
-                      </button>
-                    <?php endif; ?>
-
-                    <?php if ($course['approval_status'] == 'pending' || $course['approval_status'] == 'under_review'): ?>
-                      <button type="button" class="btn btn-sm btn-icon btn-outline-success rounded-pill btn-icon change-status" 
-                              data-status="" data-approval="approved" title="Approve Content">
+                              title="Approve Financially">
                         <i class="bx bx-check"></i>
                       </button>
 
-                      <button type="button" class="btn btn-sm btn-icon btn-outline-info rounded-pill btn-icon change-status" 
-                              data-status="" data-approval="revisions_requested" title="Request Revisions">
-                        <i class="bx bx-revision"></i>
-                      </button>
-
-                      <button type="button" class="btn btn-sm btn-icon btn-outline-danger rounded-pill btn-icon change-status" 
-                              data-status="" data-approval="rejected" title="Reject">
+                      <button type="button" class="btn btn-sm btn-icon btn-outline-danger rounded-pill btn-icon financial-reject" 
+                              title="Reject">
                         <i class="bx bx-x"></i>
                       </button>
                     <?php endif; ?>
 
-                    <?php if ($course['approval_status'] == 'approved'): ?>
+                    <?php if ($hasFinancialApproval): ?>
                       <?php if ($course['status'] == 'Draft'): ?>
                         <button type="button" class="btn btn-sm btn-icon btn-outline-success rounded-pill btn-icon change-status" 
                                 data-status="Published" data-approval="" title="Publish">
@@ -498,14 +451,13 @@ if ($result && mysqli_num_rows($result) > 0) {
         <div class="modal-body">
           <div class="row">
             <div class="col-md-4 text-center mb-4 mb-md-0">
-              <img src="../uploads/thumbnails/default.jpg" alt="Course Thumbnail" class="rounded border img-fluid" id="view-course-image">
+              <img src="../assets/img/backgrounds/course-default.jpg" alt="Course Thumbnail" class="rounded border img-fluid" id="view-course-image">
               <div class="mt-3">
                 <h5 id="view-course-title" class="mb-1"></h5>
                 <p class="text-muted small" id="view-course-department"></p>
                 <div id="view-course-status-badges" class="mt-2">
                   <span class="badge bg-label-success" id="view-course-status"></span>
-                  <span class="badge bg-label-warning" id="view-approval-status"></span>
-                  <span class="badge bg-label-warning mt-1" id="view-financial-status"></span>
+                  <span class="badge bg-label-warning" id="view-financial-status"></span>
                 </div>
               </div>
             </div>
@@ -531,9 +483,17 @@ if ($result && mysqli_num_rows($result) > 0) {
                   <h6 class="fw-semibold">Students Enrolled</h6>
                   <p id="view-course-students" class="text-muted"></p>
                 </div>
-                <div class="col-md-6" id="instructor-share-container">
-                  <h6 class="fw-semibold">Instructor Share</h6>
-                  <p id="view-instructor-share" class="text-muted"></p>
+                <div class="col-md-6" id="view-financial-details-container">
+                  <h6 class="fw-semibold">Financial Details</h6>
+                  <p class="mb-1">
+                    <strong>Status:</strong> <span id="view-financial-approval"></span>
+                  </p>
+                  <p class="mb-1" id="view-approval-date-container">
+                    <strong>Approved On:</strong> <span id="view-financial-approval-date"></span>
+                  </p>
+                  <p class="mb-0" id="view-instructor-share-container">
+                    <strong>Instructor Share:</strong> <span id="view-instructor-share"></span>%
+                  </p>
                 </div>
               </div>
               
@@ -542,9 +502,6 @@ if ($result && mysqli_num_rows($result) > 0) {
                 <h6 class="fw-semibold mb-3">Actions</h6>
                 <div id="view-course-actions">
                   <div id="financial-actions" class="mb-3">
-                    <!-- Will be filled dynamically -->
-                  </div>
-                  <div id="approval-actions" class="mb-3">
                     <!-- Will be filled dynamically -->
                   </div>
                   <div id="publish-actions" class="mb-3">
@@ -568,66 +525,69 @@ if ($result && mysqli_num_rows($result) > 0) {
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Financial Approval</h5>
+          <h5 class="modal-title" id="financial-approval-title">Financial Approval</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form id="financialApprovalForm" action="../backend/admin/approve-course-financials.php" method="POST">
+        <form id="financialApprovalForm" action="../backend/admin/update-financial-approval.php" method="POST">
           <div class="modal-body">
             <input type="hidden" id="financialCourseId" name="course_id" value="">
+            <input type="hidden" id="financialAction" name="action" value="approve">
 
             <div class="text-center mb-4">
               <div class="avatar avatar-lg">
-                <img src="../uploads/thumbnails/default.jpg" alt="Course Thumbnail" class="rounded" id="financial-course-image">
+                <img src="../assets/img/backgrounds/course-default.jpg" alt="Course Thumbnail" class="rounded" id="financial-course-image">
               </div>
               <h5 class="mt-2 mb-0" id="financial-course-title"></h5>
               <p class="text-muted small mb-0" id="financial-course-department"></p>
+              <p class="text-muted small" id="financial-course-instructor"></p>
             </div>
 
-            <div class="alert alert-info">
-              <h6 class="alert-heading mb-1">Financial Approval</h6>
-              <p class="mb-0">You are about to approve the financial terms for this course. This will allow the department head to assign instructors.</p>
+            <div id="financial-message" class="alert alert-info">
+              <h6 class="alert-heading mb-1" id="financial-alert-title">Financial Approval</h6>
+              <p class="mb-0" id="financial-alert-message">You are about to financially approve this course.</p>
             </div>
             
-            <div class="row mb-4">
-             <div class="col-md-6">
-               <div class="mb-3">
-                 <label for="instructorShare" class="form-label">Instructor's Revenue Share (%)</label>
-                 <div class="input-group">
-                   <input type="number" class="form-control" id="instructorShare" name="instructor_share" min="1" max="100" value="80" required>
-                   <span class="input-group-text">%</span>
-                 </div>
-                 <div class="form-text">Default platform share is 20%. Adjust if needed.</div>
-               </div>
-             </div>
-             <div class="col-md-6">
-               <div class="mb-3">
-                 <label class="form-label">Platform Share</label>
-                 <div class="input-group">
-                   <input type="text" class="form-control" id="platformShare" value="20" disabled>
-                   <span class="input-group-text">%</span>
-                 </div>
-                 <div class="form-text">Automatically calculated</div>
-               </div>
-             </div>
-           </div>
+            <!-- Instructor Share Input - Only shown when approving -->
+            <div id="instructor-share-container" class="row mb-3">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="instructorShare" class="form-label">Instructor's Revenue Share (%)</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="instructorShare" name="instructor_share" min="1" max="100" value="<?php echo $defaultInstructorShare; ?>" required>
+                    <span class="input-group-text">%</span>
+                  </div>
+                  <div class="form-text">Default platform share is <?php echo 100 - $defaultInstructorShare; ?>%. Adjust if needed.</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="platformShare" class="form-label">Platform's Revenue Share (%)</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="platformShare" value="<?php echo 100 - $defaultInstructorShare; ?>" readonly>
+                    <span class="input-group-text">%</span>
+                  </div>
+                  <div class="form-text">This value is automatically calculated.</div>
+                </div>
+              </div>
+            </div>
 
-           <div class="mb-3">
-             <label for="financialFeedback" class="form-label">Comments (Optional)</label>
-             <textarea class="form-control" id="financialFeedback" name="feedback" rows="4" placeholder="Enter any comments about the financial terms..."></textarea>
-           </div>
-         </div>
-         <div class="modal-footer">
-           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-           <button type="submit" class="btn btn-primary">Approve Financial Terms</button>
-         </div>
-       </form>
-     </div>
-   </div>
- </div>
-
- <!-- Course Status Change Modal -->
+            <div class="mb-3">
+              <label for="feedbackText" class="form-label">Feedback/Comments (Optional)</label>
+              <textarea class="form-control" id="feedbackText" name="feedback" rows="4" placeholder="Enter any feedback or comments about the financial approval..."></textarea>
+              <div class="form-text">This feedback will be sent to the department head.</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="confirmFinancialBtn">Confirm Approval</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Course Status Change Modal (for publish/unpublish) -->
  <div class="modal fade" id="courseStatusModal" tabindex="-1" aria-hidden="true">
-   <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+   <div class="modal-dialog modal-dialog-centered" role="document">
      <div class="modal-content">
        <div class="modal-header">
          <h5 class="modal-title" id="status-change-title">Change Course Status</h5>
@@ -637,11 +597,10 @@ if ($result && mysqli_num_rows($result) > 0) {
          <div class="modal-body">
            <input type="hidden" id="statusCourseId" name="course_id" value="">
            <input type="hidden" id="statusCourseStatus" name="course_status" value="">
-           <input type="hidden" id="statusApprovalStatus" name="approval_status" value="">
 
            <div class="text-center mb-4">
              <div class="avatar avatar-lg">
-               <img src="../uploads/thumbnails/default.jpg" alt="Course Thumbnail" class="rounded" id="status-course-image">
+               <img src="../assets/img/backgrounds/course-default.jpg" alt="Course Thumbnail" class="rounded" id="status-course-image">
              </div>
              <h5 class="mt-2 mb-0" id="status-course-title"></h5>
              <p class="text-muted small mb-0" id="status-course-department"></p>
@@ -652,17 +611,10 @@ if ($result && mysqli_num_rows($result) > 0) {
              <h6 class="alert-heading mb-1" id="status-alert-title">Status Change</h6>
              <p class="mb-0" id="status-alert-message">You are about to change the status of this course.</p>
            </div>
-           
-           <!-- Publish After Approval Option - Only shown when approving -->
-           <div id="publish-option" class="form-check form-switch mb-3 d-none">
-             <input class="form-check-input" type="checkbox" id="publishAfterApproval">
-             <label class="form-check-label" for="publishAfterApproval">Publish course after approval</label>
-             <div class="form-text">If checked, the course will be published immediately after approval.</div>
-           </div>
 
            <div class="mb-3">
-             <label for="feedbackText" class="form-label">Feedback/Comments (Optional)</label>
-             <textarea class="form-control" id="feedbackText" name="feedback" rows="4" placeholder="Enter any feedback or comments for the instructor..."></textarea>
+             <label for="statusFeedbackText" class="form-label">Feedback/Comments (Optional)</label>
+             <textarea class="form-control" id="statusFeedbackText" name="feedback" rows="4" placeholder="Enter any feedback or comments about the status change..."></textarea>
              <div class="form-text">This feedback will be sent to the course instructor(s).</div>
            </div>
          </div>
@@ -763,6 +715,15 @@ if ($result && mysqli_num_rows($result) > 0) {
      }
    }
 
+   // **Instructor Share Calculator**
+   if (document.getElementById('instructorShare')) {
+     document.getElementById('instructorShare').addEventListener('input', function() {
+       const instructorShare = parseInt(this.value) || 0;
+       const platformShare = 100 - instructorShare;
+       document.getElementById('platformShare').value = platformShare;
+     });
+   }
+
    // **Pagination Functionality**
    const ITEMS_PER_PAGE = 10; // Max number of items per page
    let currentPage = 1;
@@ -861,7 +822,6 @@ if ($result && mysqli_num_rows($result) > 0) {
    // **Filter Functionality**
    let currentStatusFilter = 'all';
    let currentStatusType = 'all';
-   let currentApprovalFilter = 'all';
    let currentFinancialFilter = 'all';
 
    document.getElementById('courseSearch').addEventListener('keyup', filterCourses);
@@ -884,15 +844,6 @@ if ($result && mysqli_num_rows($result) > 0) {
          
          currentStatusFilter = status;
          currentStatusType = type;
-       } else if (type === 'approval') {
-         document.querySelectorAll('.filter-approval-item').forEach(item => {
-           item.classList.remove('active');
-           if (item.getAttribute('data-status') === status) {
-             item.classList.add('active');
-           }
-         });
-         
-         currentApprovalFilter = status;
        } else if (type === 'financial') {
          document.querySelectorAll('.filter-financial-item').forEach(item => {
            item.classList.remove('active');
@@ -925,16 +876,6 @@ if ($result && mysqli_num_rows($result) > 0) {
      });
    });
    
-   document.querySelectorAll('.filter-approval-item').forEach(item => {
-     item.addEventListener('click', function() {
-       document.querySelectorAll('.filter-approval-item').forEach(i => i.classList.remove('active'));
-       this.classList.add('active');
-       
-       currentApprovalFilter = this.getAttribute('data-status');
-       filterCourses();
-     });
-   });
-   
    document.querySelectorAll('.filter-financial-item').forEach(item => {
      item.addEventListener('click', function() {
        document.querySelectorAll('.filter-financial-item').forEach(i => i.classList.remove('active'));
@@ -951,19 +892,11 @@ if ($result && mysqli_num_rows($result) > 0) {
        document.getElementById('courseSearch').value = '';
        currentStatusFilter = 'all';
        currentStatusType = 'all';
-       currentApprovalFilter = 'all';
        currentFinancialFilter = 'all';
        
        document.querySelectorAll('.filter-status').forEach(item => {
          item.classList.remove('active');
          if (item.getAttribute('data-type') === 'all') {
-           item.classList.add('active');
-         }
-       });
-       
-       document.querySelectorAll('.filter-approval-item').forEach(item => {
-         item.classList.remove('active');
-         if (item.getAttribute('data-status') === 'all') {
            item.classList.add('active');
          }
        });
@@ -991,7 +924,6 @@ if ($result && mysqli_num_rows($result) > 0) {
        const instructorNames = row.getAttribute('data-instructor-names').toLowerCase();
        const departmentName = row.getAttribute('data-department-name').toLowerCase();
        const status = row.getAttribute('data-status');
-       const approvalStatus = row.getAttribute('data-approval');
        const financialStatus = row.getAttribute('data-financial');
 
        const matchesSearch = title.includes(searchTerm) || 
@@ -1002,13 +934,10 @@ if ($result && mysqli_num_rows($result) > 0) {
        const matchesStatus = currentStatusFilter === 'all' || 
                             (currentStatusType === 'status' && status === currentStatusFilter);
                            
-       const matchesApproval = currentApprovalFilter === 'all' || 
-                              approvalStatus === currentApprovalFilter;
-                              
        const matchesFinancial = currentFinancialFilter === 'all' || 
                               financialStatus === currentFinancialFilter;
 
-       if (matchesSearch && matchesStatus && matchesApproval && matchesFinancial) {
+       if (matchesSearch && matchesStatus && matchesFinancial) {
          row.style.display = '';
          visibleCount++;
        } else {
@@ -1025,23 +954,14 @@ if ($result && mysqli_num_rows($result) > 0) {
      }
    }
 
-   // **Instructor Share Calculator**
-   if (document.getElementById('instructorShare')) {
-     document.getElementById('instructorShare').addEventListener('input', function() {
-       const instructorShare = parseInt(this.value) || 0;
-       const platformShare = 100 - instructorShare;
-       document.getElementById('platformShare').value = platformShare;
-     });
-   }
-
    // **View Course Details**
    document.querySelectorAll('.view-course').forEach(btn => {
      btn.addEventListener('click', function() {
        const row = this.closest('tr');
        const courseId = row.getAttribute('data-id');
        const courseStatus = row.getAttribute('data-status');
-       const approvalStatus = row.getAttribute('data-approval');
-       const financialStatus = row.getAttribute('data-financial');
+       const hasFinancialApproval = row.getAttribute('data-financial') === 'approved';
+       const financialApprovalDate = row.getAttribute('data-financial-date');
        const instructorShare = row.getAttribute('data-instructor-share');
        
        // Set the details in the modal
@@ -1058,88 +978,68 @@ if ($result && mysqli_num_rows($result) > 0) {
        courseStatusBadge.textContent = courseStatus;
        courseStatusBadge.className = `badge ${courseStatus === 'Published' ? 'bg-label-success' : 'bg-label-secondary'}`;
        
-       const approvalStatusBadge = document.getElementById('view-approval-status');
-       approvalStatusBadge.textContent = approvalStatus.replace(/_/g, ' ');
-       approvalStatusBadge.className = `badge ${
-         approvalStatus === 'approved' ? 'bg-label-success' : 
-         (approvalStatus === 'pending' ? 'bg-label-warning' : 
-         (approvalStatus === 'rejected' ? 'bg-label-danger' : 
-         (approvalStatus === 'revisions_requested' ? 'bg-label-info' : 'bg-label-secondary')))
-       }`;
-       
        const financialStatusBadge = document.getElementById('view-financial-status');
-       financialStatusBadge.textContent = financialStatus === 'approved' ? 'Financially Approved' : 'Pending Financial Approval';
-       if (financialStatus === 'approved') {
-         financialStatusBadge.textContent += ` (${instructorShare}% to Instructor)`;
-       }
-       financialStatusBadge.className = `badge ${financialStatus === 'approved' ? 'bg-label-success' : 'bg-label-warning'}`;
+       financialStatusBadge.textContent = hasFinancialApproval ? 'Financially Approved' : 'Awaiting Financial Approval';
+       financialStatusBadge.className = `badge ${hasFinancialApproval ? 'bg-label-success' : 'bg-label-warning'}`;
        
-       // Show/hide instructor share
-       const instructorShareContainer = document.getElementById('instructor-share-container');
-       if (financialStatus === 'approved') {
-         instructorShareContainer.classList.remove('d-none');
-         document.getElementById('view-instructor-share').textContent = `${instructorShare}% (Platform: ${100 - instructorShare}%)`;
+       // Set financial details
+       document.getElementById('view-financial-approval').textContent = hasFinancialApproval ? 'Approved' : 'Pending Approval';
+       
+       const approvalDateContainer = document.getElementById('view-approval-date-container');
+       const instructorShareContainer = document.getElementById('view-instructor-share-container');
+       
+       if (hasFinancialApproval) {
+         approvalDateContainer.style.display = '';
+         instructorShareContainer.style.display = '';
+         document.getElementById('view-financial-approval-date').textContent = financialApprovalDate;
+         document.getElementById('view-instructor-share').textContent = instructorShare;
        } else {
-         instructorShareContainer.classList.add('d-none');
+         approvalDateContainer.style.display = 'none';
+         instructorShareContainer.style.display = 'none';
        }
        
        // Setup available actions in the modal
        const financialActionsContainer = document.getElementById('financial-actions');
-       const approvalActionsContainer = document.getElementById('approval-actions');
        const publishActionsContainer = document.getElementById('publish-actions');
        
        financialActionsContainer.innerHTML = '';
-       approvalActionsContainer.innerHTML = '';
        publishActionsContainer.innerHTML = '';
        
-       // Add financial approval action if needed
-       if (financialStatus === 'null') {
+       // Add financial approval actions if pending
+       if (!hasFinancialApproval) {
          financialActionsContainer.innerHTML = `
-           <h6>Financial Approval</h6>
-           <button type="button" class="btn btn-primary modal-financial-approve">
-             <i class="bx bx-money me-1"></i> Approve Financial Terms
-           </button>
-         `;
-       }
-       
-       // Add approval actions if pending
-       if (approvalStatus === 'pending' || approvalStatus === 'under_review') {
-         approvalActionsContainer.innerHTML = `
-           <h6>Content Approval Actions</h6>
+           <h6>Financial Approval Actions</h6>
            <div class="btn-group" role="group">
-             <button type="button" class="btn btn-success modal-change-status" data-status="" data-approval="approved">
-               <i class="bx bx-check me-1"></i> Approve
+             <button type="button" class="btn btn-success modal-financial-approve">
+               <i class="bx bx-check me-1"></i> Approve Financially
              </button>
-             <button type="button" class="btn btn-info modal-change-status" data-status="" data-approval="revisions_requested">
-               <i class="bx bx-revision me-1"></i> Request Revisions
-             </button>
-             <button type="button" class="btn btn-danger modal-change-status" data-status="" data-approval="rejected">
+             <button type="button" class="btn btn-danger modal-financial-reject">
                <i class="bx bx-x me-1"></i> Reject
              </button>
            </div>
          `;
        }
        
-       // Add publish actions if approved
-       if (approvalStatus === 'approved') {
+       // Add publish actions if financially approved
+       if (hasFinancialApproval) {
          if (courseStatus === 'Draft') {
            publishActionsContainer.innerHTML = `
              <h6>Publication Actions</h6>
-             <button type="button" class="btn btn-success modal-change-status" data-status="Published" data-approval="">
+             <button type="button" class="btn btn-success modal-change-status" data-status="Published">
                <i class="bx bx-globe me-1"></i> Publish Course
              </button>
            `;
          } else {
            publishActionsContainer.innerHTML = `
              <h6>Publication Actions</h6>
-             <button type="button" class="btn btn-secondary modal-change-status" data-status="Draft" data-approval="">
+             <button type="button" class="btn btn-secondary modal-change-status" data-status="Draft">
                <i class="bx bx-hide me-1"></i> Unpublish Course
              </button>
            `;
          }
        }
        
-       // Add event listeners to the financial approval button
+       // Add event listeners to the financial approval buttons in the modal
        document.querySelectorAll('.modal-financial-approve').forEach(button => {
          button.addEventListener('click', function() {
            // Close the view modal and open the financial approval modal
@@ -1147,106 +1047,87 @@ if ($result && mysqli_num_rows($result) > 0) {
            viewModal.hide();
            
            document.getElementById('financialCourseId').value = courseId;
+           document.getElementById('financialAction').value = 'approve';
            document.getElementById('financial-course-image').src = row.getAttribute('data-thumbnail');
            document.getElementById('financial-course-title').textContent = row.getAttribute('data-title');
            document.getElementById('financial-course-department').textContent = row.getAttribute('data-department-name');
+           document.getElementById('financial-course-instructor').textContent = `Instructor: ${row.getAttribute('data-instructor-names') || 'None'}`;
            
-           // Get default instructor share from revenue settings
-           fetch('../backend/admin/get-default-revenue-share.php')
-             .then(response => response.json())
-             .then(data => {
-               if (data.status === 'success') {
-                 document.getElementById('instructorShare').value = data.instructor_share;
-                 document.getElementById('platformShare').value = 100 - data.instructor_share;
-               }
-             })
-             .catch(error => {
-               console.error('Error fetching default share:', error);
-               // Use default values if fetch fails
-               document.getElementById('instructorShare').value = 80;
-               document.getElementById('platformShare').value = 20;
-             });
+           // Set approval-specific content
+           document.getElementById('financial-approval-title').textContent = 'Financial Approval';
+           document.getElementById('financial-alert-title').textContent = 'Financial Approval';
+           document.getElementById('financial-alert-message').textContent = 'You are about to financially approve this course, setting the revenue sharing terms.';
+           document.getElementById('financial-message').className = 'alert alert-success';
+           document.getElementById('confirmFinancialBtn').textContent = 'Approve';
+           document.getElementById('confirmFinancialBtn').className = 'btn btn-success';
+           
+           // Show instructor share inputs
+           document.getElementById('instructor-share-container').style.display = '';
            
            const financialModal = new bootstrap.Modal(document.getElementById('financialApprovalModal'));
            financialModal.show();
          });
        });
        
-       // Add event listeners to the buttons in the modal
+       document.querySelectorAll('.modal-financial-reject').forEach(button => {
+         button.addEventListener('click', function() {
+           // Close the view modal and open the financial approval modal
+           const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewCourseModal'));
+           viewModal.hide();
+           
+           document.getElementById('financialCourseId').value = courseId;
+           document.getElementById('financialAction').value = 'reject';
+           document.getElementById('financial-course-image').src = row.getAttribute('data-thumbnail');
+           document.getElementById('financial-course-title').textContent = row.getAttribute('data-title');
+           document.getElementById('financial-course-department').textContent = row.getAttribute('data-department-name');
+           document.getElementById('financial-course-instructor').textContent = `Instructor: ${row.getAttribute('data-instructor-names') || 'None'}`;
+           
+           // Set rejection-specific content
+           document.getElementById('financial-approval-title').textContent = 'Financial Rejection';
+           document.getElementById('financial-alert-title').textContent = 'Financial Rejection';
+           document.getElementById('financial-alert-message').textContent = 'You are about to reject this course on financial grounds. The department head will need to make adjustments and resubmit.';
+           document.getElementById('financial-message').className = 'alert alert-danger';
+           document.getElementById('confirmFinancialBtn').textContent = 'Reject';
+           document.getElementById('confirmFinancialBtn').className = 'btn btn-danger';
+           
+           // Hide instructor share inputs
+           document.getElementById('instructor-share-container').style.display = 'none';
+           
+           const financialModal = new bootstrap.Modal(document.getElementById('financialApprovalModal'));
+           financialModal.show();
+         });
+       });
+       
+       // Add event listeners to the status change buttons in the modal
        document.querySelectorAll('.modal-change-status').forEach(button => {
          button.addEventListener('click', function() {
-           const courseStatus = this.getAttribute('data-status') || '';
-           const approvalStatus = this.getAttribute('data-approval') || '';
+           const courseStatus = this.getAttribute('data-status');
            
-           console.log('Modal button clicked with:', {
-             courseId,
-             courseStatus,
-             approvalStatus
-           });
+           // Close the view modal and open the status change modal
+           const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewCourseModal'));
+           viewModal.hide();
            
-           // Fill in the status change modal
            document.getElementById('statusCourseId').value = courseId;
            document.getElementById('statusCourseStatus').value = courseStatus;
-           document.getElementById('statusApprovalStatus').value = approvalStatus;
-           
            document.getElementById('status-course-image').src = row.getAttribute('data-thumbnail');
            document.getElementById('status-course-title').textContent = row.getAttribute('data-title');
            document.getElementById('status-course-department').textContent = row.getAttribute('data-department-name');
            document.getElementById('status-course-instructor').textContent = `Instructor: ${row.getAttribute('data-instructor-names') || 'None'}`;
            
-           // Set the appropriate status message
-           const statusTitle = document.getElementById('status-alert-title');
-           const statusMessage = document.getElementById('status-alert-message');
-           const statusAlert = document.getElementById('status-message');
-           const modalTitle = document.getElementById('status-change-title');
-           const publishOption = document.getElementById('publish-option');
-           
-           // Hide publish option by default
-           publishOption.classList.add('d-none');
-           
-           // Set modal content based on action type
-           if (courseStatus) {
-             if (courseStatus === 'Published') {
-               modalTitle.textContent = 'Publish Course';
-               statusTitle.textContent = 'Publish Course';
-               statusMessage.textContent = 'You are about to publish this course, making it visible to students.';
-               statusAlert.className = 'alert alert-success';
-               document.getElementById('confirmStatusBtn').textContent = 'Publish';
-             } else {
-               modalTitle.textContent = 'Unpublish Course';
-               statusTitle.textContent = 'Unpublish Course';
-               statusMessage.textContent = 'You are about to unpublish this course, hiding it from students.';
-               statusAlert.className = 'alert alert-secondary';
-               document.getElementById('confirmStatusBtn').textContent = 'Unpublish';
-             }
-           } else if (approvalStatus) {
-             if (approvalStatus === 'approved') {
-               modalTitle.textContent = 'Approve Course Content';
-               statusTitle.textContent = 'Approve Course Content';
-               statusMessage.textContent = 'You are about to approve this course content, allowing it to be published.';
-               statusAlert.className = 'alert alert-success';
-               document.getElementById('confirmStatusBtn').textContent = 'Approve';
-               
-               // Show publish option when approving
-               publishOption.classList.remove('d-none');
-             } else if (approvalStatus === 'rejected') {
-               modalTitle.textContent = 'Reject Course';
-               statusTitle.textContent = 'Reject Course';
-               statusMessage.textContent = 'You are about to reject this course. The instructor will need to make significant changes before resubmitting.';
-               statusAlert.className = 'alert alert-danger';
-               document.getElementById('confirmStatusBtn').textContent = 'Reject';
-             } else if (approvalStatus === 'revisions_requested') {
-               modalTitle.textContent = 'Request Revisions';
-               statusTitle.textContent = 'Request Revisions';
-               statusMessage.textContent = 'You are about to request revisions for this course. The instructor will need to make the requested changes and resubmit.';
-               statusAlert.className = 'alert alert-info';
-               document.getElementById('confirmStatusBtn').textContent = 'Request Revisions';
-             }
+           // Set modal content based on status change
+           if (courseStatus === 'Published') {
+             document.getElementById('status-change-title').textContent = 'Publish Course';
+             document.getElementById('status-alert-title').textContent = 'Publish Course';
+             document.getElementById('status-alert-message').textContent = 'You are about to publish this course, making it visible to students.';
+             document.getElementById('status-message').className = 'alert alert-success';
+             document.getElementById('confirmStatusBtn').textContent = 'Publish';
+           } else {
+             document.getElementById('status-change-title').textContent = 'Unpublish Course';
+             document.getElementById('status-alert-title').textContent = 'Unpublish Course';
+             document.getElementById('status-alert-message').textContent = 'You are about to unpublish this course, hiding it from students.';
+             document.getElementById('status-message').className = 'alert alert-secondary';
+             document.getElementById('confirmStatusBtn').textContent = 'Unpublish';
            }
-           
-           // Close the view modal and open the status change modal
-           const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewCourseModal'));
-           viewModal.hide();
            
            const statusModal = new bootstrap.Modal(document.getElementById('courseStatusModal'));
            statusModal.show();
@@ -1255,123 +1136,97 @@ if ($result && mysqli_num_rows($result) > 0) {
      });
    });
 
-   // **Financial Approval**
+   // **Financial Approval Actions**
    document.querySelectorAll('.financial-approve').forEach(btn => {
      btn.addEventListener('click', function() {
        const row = this.closest('tr');
        const courseId = row.getAttribute('data-id');
        
        document.getElementById('financialCourseId').value = courseId;
+       document.getElementById('financialAction').value = 'approve';
        document.getElementById('financial-course-image').src = row.getAttribute('data-thumbnail');
        document.getElementById('financial-course-title').textContent = row.getAttribute('data-title');
-document.getElementById('financial-course-department').textContent = row.getAttribute('data-department-name');
+       document.getElementById('financial-course-department').textContent = row.getAttribute('data-department-name');
+       document.getElementById('financial-course-instructor').textContent = `Instructor: ${row.getAttribute('data-instructor-names') || 'None'}`;
        
-       // Get default instructor share from revenue settings
-       fetch('../backend/admin/get-default-revenue-share.php')
-         .then(response => response.json())
-         .then(data => {
-           if (data.status === 'success') {
-             document.getElementById('instructorShare').value = data.instructor_share;
-             document.getElementById('platformShare').value = 100 - data.instructor_share;
-           }
-         })
-         .catch(error => {
-           console.error('Error fetching default share:', error);
-           // Use default values if fetch fails
-           document.getElementById('instructorShare').value = 80;
-           document.getElementById('platformShare').value = 20;
-         });
+       // Set approval-specific content
+       document.getElementById('financial-approval-title').textContent = 'Financial Approval';
+       document.getElementById('financial-alert-title').textContent = 'Financial Approval';
+       document.getElementById('financial-alert-message').textContent = 'You are about to financially approve this course, setting the revenue sharing terms.';
+       document.getElementById('financial-message').className = 'alert alert-success';
+       document.getElementById('confirmFinancialBtn').textContent = 'Approve';
+       document.getElementById('confirmFinancialBtn').className = 'btn btn-success';
+       
+       // Show instructor share inputs
+       document.getElementById('instructor-share-container').style.display = '';
        
        const modal = new bootstrap.Modal(document.getElementById('financialApprovalModal'));
        modal.show();
      });
    });
    
-   // **Change Course Status**
+   document.querySelectorAll('.financial-reject').forEach(btn => {
+     btn.addEventListener('click', function() {
+       const row = this.closest('tr');
+       const courseId = row.getAttribute('data-id');
+       
+       document.getElementById('financialCourseId').value = courseId;
+       document.getElementById('financialAction').value = 'reject';
+       document.getElementById('financial-course-image').src = row.getAttribute('data-thumbnail');
+       document.getElementById('financial-course-title').textContent = row.getAttribute('data-title');
+       document.getElementById('financial-course-department').textContent = row.getAttribute('data-department-name');
+       document.getElementById('financial-course-instructor').textContent = `Instructor: ${row.getAttribute('data-instructor-names') || 'None'}`;
+       
+       // Set rejection-specific content
+       document.getElementById('financial-approval-title').textContent = 'Financial Rejection';
+       document.getElementById('financial-alert-title').textContent = 'Financial Rejection';
+       document.getElementById('financial-alert-message').textContent = 'You are about to reject this course on financial grounds. The department head will need to make adjustments and resubmit.';
+       document.getElementById('financial-message').className = 'alert alert-danger';
+       document.getElementById('confirmFinancialBtn').textContent = 'Reject';
+       document.getElementById('confirmFinancialBtn').className = 'btn btn-danger';
+       
+       // Hide instructor share inputs
+       document.getElementById('instructor-share-container').style.display = 'none';
+       
+       const modal = new bootstrap.Modal(document.getElementById('financialApprovalModal'));
+       modal.show();
+     });
+   });
+
+   // **Status Change (Publish/Unpublish)**
    document.querySelectorAll('.change-status').forEach(btn => {
      btn.addEventListener('click', function() {
        const row = this.closest('tr');
        const courseId = row.getAttribute('data-id');
-       const courseStatus = this.getAttribute('data-status') || '';
-       const approvalStatus = this.getAttribute('data-approval') || '';
-       
-       console.log('Button clicked with:', {
-         courseId,
-         courseStatus,
-         approvalStatus
-       });
+       const courseStatus = this.getAttribute('data-status');
        
        // Set values in the modal
        document.getElementById('statusCourseId').value = courseId;
        document.getElementById('statusCourseStatus').value = courseStatus;
-       document.getElementById('statusApprovalStatus').value = approvalStatus;
        
        document.getElementById('status-course-image').src = row.getAttribute('data-thumbnail');
        document.getElementById('status-course-title').textContent = row.getAttribute('data-title');
        document.getElementById('status-course-department').textContent = row.getAttribute('data-department-name');
-       document.getElementById('status-course-instructor').textContent = `Instructor: ${row.getAttribute('data-instructor-names') || 'None'}`;
+       document.getElementById('status-course-instructor').textContent = `Instructor: ${row.getAttribute('data-instructor-names')}`;
        
        // Set the appropriate status message
-       const statusTitle = document.getElementById('status-alert-title');
-       const statusMessage = document.getElementById('status-alert-message');
-       const statusAlert = document.getElementById('status-message');
-       const modalTitle = document.getElementById('status-change-title');
-       const publishOption = document.getElementById('publish-option');
-       
-       // Hide publish option by default
-       publishOption.classList.add('d-none');
-       
-       if (courseStatus) {
-         if (courseStatus === 'Published') {
-           modalTitle.textContent = 'Publish Course';
-           statusTitle.textContent = 'Publish Course';
-           statusMessage.textContent = 'You are about to publish this course, making it visible to students.';
-           statusAlert.className = 'alert alert-success';
-           document.getElementById('confirmStatusBtn').textContent = 'Publish';
-         } else {
-           modalTitle.textContent = 'Unpublish Course';
-           statusTitle.textContent = 'Unpublish Course';
-           statusMessage.textContent = 'You are about to unpublish this course, hiding it from students.';
-           statusAlert.className = 'alert alert-secondary';
-           document.getElementById('confirmStatusBtn').textContent = 'Unpublish';
-         }
-       } else if (approvalStatus) {
-         if (approvalStatus === 'approved') {
-           modalTitle.textContent = 'Approve Course Content';
-           statusTitle.textContent = 'Approve Course Content';
-           statusMessage.textContent = 'You are about to approve this course content, allowing it to be published.';
-           statusAlert.className = 'alert alert-success';
-           document.getElementById('confirmStatusBtn').textContent = 'Approve';
-           
-           // Show publish option when approving
-           publishOption.classList.remove('d-none');
-         } else if (approvalStatus === 'rejected') {
-           modalTitle.textContent = 'Reject Course';
-           statusTitle.textContent = 'Reject Course';
-           statusMessage.textContent = 'You are about to reject this course. The instructor will need to make significant changes before resubmitting.';
-           statusAlert.className = 'alert alert-danger';
-           document.getElementById('confirmStatusBtn').textContent = 'Reject';
-         } else if (approvalStatus === 'revisions_requested') {
-           modalTitle.textContent = 'Request Revisions';
-           statusTitle.textContent = 'Request Revisions';
-           statusMessage.textContent = 'You are about to request revisions for this course. The instructor will need to make the requested changes and resubmit.';
-           statusAlert.className = 'alert alert-info';
-           document.getElementById('confirmStatusBtn').textContent = 'Request Revisions';
-         }
+       if (courseStatus === 'Published') {
+         document.getElementById('status-change-title').textContent = 'Publish Course';
+         document.getElementById('status-alert-title').textContent = 'Publish Course';
+         document.getElementById('status-alert-message').textContent = 'You are about to publish this course, making it visible to students.';
+         document.getElementById('status-message').className = 'alert alert-success';
+         document.getElementById('confirmStatusBtn').textContent = 'Publish';
+       } else {
+         document.getElementById('status-change-title').textContent = 'Unpublish Course';
+         document.getElementById('status-alert-title').textContent = 'Unpublish Course';
+         document.getElementById('status-alert-message').textContent = 'You are about to unpublish this course, hiding it from students.';
+         document.getElementById('status-message').className = 'alert alert-secondary';
+         document.getElementById('confirmStatusBtn').textContent = 'Unpublish';
        }
        
        const modal = new bootstrap.Modal(document.getElementById('courseStatusModal'));
        modal.show();
      });
-   });
-   
-   // Handle the publish after approval checkbox
-   document.getElementById('publishAfterApproval').addEventListener('change', function() {
-     if (this.checked) {
-       document.getElementById('statusCourseStatus').value = 'Published';
-     } else {
-       document.getElementById('statusCourseStatus').value = '';
-     }
    });
 
    // **Delete Course**
@@ -1432,8 +1287,8 @@ document.getElementById('financial-course-department').textContent = row.getAttr
      });
    }
 
+   handleFormSubmit('financialApprovalForm', '../backend/admin/update-financial-approval.php');
    handleFormSubmit('courseStatusForm', '../backend/admin/update-course-status.php');
-   handleFormSubmit('financialApprovalForm', '../backend/admin/approve-course-financials.php');
    handleFormSubmit('deleteCourseForm', '../backend/admin/delete-course.php');
 
    // **Export Functionality**
@@ -1442,18 +1297,17 @@ document.getElementById('financial-course-department').textContent = row.getAttr
      const table = document.getElementById('coursesTable');
      const rows = table.querySelectorAll('tbody tr:not([style*="display: none"])');
 
-     let csvContent = "data:text/csv;charset=utf-8,Course Title,Status,Approval Status,Financial Status,Department,Instructors,Enrolled Students,Created Date\n";
+     let csvContent = "data:text/csv;charset=utf-8,Course Title,Status,Financial Approval,Department,Instructors,Enrolled Students,Created Date\n";
      rows.forEach(row => {
        const title = row.getAttribute('data-title').replace(/"/g, '""');
        const status = row.getAttribute('data-status');
-       const approvalStatus = ucfirst(row.getAttribute('data-approval').replace(/_/g, ' '));
-       const financialStatus = row.getAttribute('data-financial') === 'approved' ? 'Financially Approved' : 'Pending Financial Approval';
+       const financialStatus = row.getAttribute('data-financial') === 'approved' ? 'Approved' : 'Pending';
        const department = row.getAttribute('data-department-name').replace(/"/g, '""');
        const instructors = row.getAttribute('data-instructor-names').replace(/"/g, '""');
        const students = row.getAttribute('data-students');
        const created = row.getAttribute('data-created');
        
-       csvContent += `"${title}","${status}","${approvalStatus}","${financialStatus}","${department}","${instructors}","${students}","${created}"\n`;
+       csvContent += `"${title}","${status}","${financialStatus}","${department}","${instructors}","${students}","${created}"\n`;
      });
 
      const encodedUri = encodeURI(csvContent);
