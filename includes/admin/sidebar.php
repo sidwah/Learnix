@@ -99,11 +99,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="View All">View All</div>
                     </a>
                 </li>
-                <li class="menu-item <?php echo ($currentPage == 'students-progress.php') ? 'active' : ''; ?>">
+                <!-- <li class="menu-item <?php //echo ($currentPage == 'students-progress.php') ? 'active' : ''; ?>">
                     <a href="students-progress.php" class="menu-link">
                         <div data-i18n="Progress Tracking">Progress Tracking</div>
                     </a>
-                </li>
+                </li> -->
             </ul>
         </li>
 
@@ -215,8 +215,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <div data-i18n="Settings">Settings</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item <?php echo ($currentPage == 'settings-general.php') ? 'active' : ''; ?>">
-                    <a href="settings-general.php" class="menu-link">
+                <li class="menu-item <?php echo ($currentPage == 'general-settings.php') ? 'active' : ''; ?>">
+                    <a href="general-settings.php" class="menu-link">
                         <div data-i18n="General">General</div>
                     </a>
                 </li>

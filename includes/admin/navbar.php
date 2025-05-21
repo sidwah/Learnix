@@ -144,7 +144,7 @@
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="settings-general.php">
+                        <a class="dropdown-item" href="general-settings.php">
                             <i class="bx bx-cog me-2"></i>
                             <span class="align-middle">Settings</span>
                         </a>
