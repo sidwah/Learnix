@@ -128,8 +128,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="Performance">Performance</div>
                     </a>
                 </li> -->
-                <li class="menu-item <?php echo ($currentPage == 'courses-categories.php') ? 'active' : ''; ?>">
-                    <a href="courses-categories.php" class="menu-link">
+                <li class="menu-item <?php echo ($currentPage == 'course-categories.php') ? 'active' : ''; ?>">
+                    <a href="course-categories.php" class="menu-link">
                         <div data-i18n="Categories & Subcategories">Categories & Subcategories</div>
                     </a>
                 </li>
