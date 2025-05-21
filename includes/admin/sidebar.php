@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Admin Sidebar Component for Learnix LMS - Fixed version with Finance section
  * 
@@ -54,7 +55,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="Department Staff">Department Staff</div>
                     </a>
                 </li>
-               <!--  <li class="menu-item <?php //echo ($currentPage == 'departments-staff.php') ? 'active' : ''; ?>" data-menu-slug="departments-staff.php">
+                <!--  <li class="menu-item <?php //echo ($currentPage == 'departments-staff.php') ? 'active' : ''; 
+                                            ?>" data-menu-slug="departments-staff.php">
                     <a href="departments-staff.php" class="menu-link">
                         <div data-i18n="Department Staff">Department Staff</div>
                     </a>
@@ -77,7 +79,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="View All">View All</div>
                     </a>
                 </li>
-                <!-- <li class="menu-item <?php //echo ($currentPage == 'instructors-invite.php') ? 'active' : ''; ?>">
+                <!-- <li class="menu-item <?php //echo ($currentPage == 'instructors-invite.php') ? 'active' : ''; 
+                                            ?>">
                     <a href="instructors-invite.php" class="menu-link">
                         <div data-i18n="Invite New">Invite New</div>
                     </a>
@@ -119,7 +122,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="All Courses">All Courses</div>
                     </a>
                 </li>
-                <!-- <li class="menu-item <?php //echo ($currentPage == 'courses-performance.php') ? 'active' : ''; ?>">
+                <!-- <li class="menu-item <?php //echo ($currentPage == 'courses-performance.php') ? 'active' : ''; 
+                                            ?>">
                     <a href="courses-performance.php" class="menu-link">
                         <div data-i18n="Performance">Performance</div>
                     </a>
@@ -176,7 +180,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </li>
         <li class="menu-item <?php echo (strpos($currentPage, 'finance') !== false) ? 'active open' : ''; ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
-            <span class="menu-icon" style="font-weight: bold;">₵</span>
+                <span class="menu-icon" style="font-weight: bold;">₵</span>
                 <div data-i18n="Finance">Finance</div>
             </a>
             <ul class="menu-sub">
@@ -185,7 +189,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="Transactions">Transactions</div>
                     </a>
                 </li>
-                <!-- <li class="menu-item <?php // echo ($currentPage == 'finance-refunds.php') ? 'active' : ''; ?>" data-menu-slug="finance-refunds.php">
+                <!-- <li class="menu-item <?php // echo ($currentPage == 'finance-refunds.php') ? 'active' : ''; 
+                                            ?>" data-menu-slug="finance-refunds.php">
                     <a href="finance-refunds.php" class="menu-link">
                         <div data-i18n="Refunds">Refunds</div>
                     </a>
@@ -218,8 +223,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="Email">Email</div>
                     </a>
                 </li>
-                <li class="menu-item <?php echo ($currentPage == 'settings-payment.php') ? 'active' : ''; ?>">
-                    <a href="settings-payment.php" class="menu-link">
+                <li class="menu-item <?php echo ($currentPage == 'payment-settings.php') ? 'active' : ''; ?>">
+                    <a href="payment-settings.php" class="menu-link">
                         <div data-i18n="Payment">Payment</div>
                     </a>
                 </li>
@@ -260,7 +265,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             menuItems.forEach(menuItem => {
                 if (menuItem !== item && !menuItem.contains(item)) {
                     menuItem.classList.remove('active');
-                    
+
                     // Only remove 'open' class from items that aren't parents of the active item
                     if (!item || !menuItem.contains(item)) {
                         menuItem.classList.remove('open');
@@ -346,7 +351,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             toggle.addEventListener('click', function(e) {
                 e.preventDefault(); // Prevent default link behavior
                 e.stopPropagation(); // Stop event from bubbling up
-                
+
                 const parentItem = this.closest('.menu-item');
                 if (parentItem) {
                     // Toggle only this item's open state without affecting others

@@ -61,7 +61,7 @@ if ($approval_status !== null && $approval_status !== '' &&
 // Process the request
 try {
     // Get current course details
-    $query = "SELECT c.course_id, c.title, c.status, c.approval_status, c.department_id,
+    $query = "SELECT c.course_id, c.title, c.status, c.approval_status, c.financial_approval_date, c.department_id,
                      GROUP_CONCAT(DISTINCT ci.instructor_id) as instructor_ids
               FROM courses c
               LEFT JOIN course_instructors ci ON c.course_id = ci.course_id AND ci.deleted_at IS NULL
