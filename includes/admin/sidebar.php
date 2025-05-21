@@ -151,13 +151,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="Overview">Overview</div>
                     </a>
                 </li>
-                <li class="menu-item <?php echo ($currentPage == 'reports-students.php') ? 'active' : ''; ?>">
-                    <a href="reports-students.php" class="menu-link">
+                <li class="menu-item <?php echo ($currentPage == 'student-reports.php') ? 'active' : ''; ?>">
+                    <a href="student-reports.php" class="menu-link">
                         <div data-i18n="Student Reports">Students Reports</div>
                     </a>
                 </li>
-                <li class="menu-item <?php echo ($currentPage == 'reports-instructors.php') ? 'active' : ''; ?>">
-                    <a href="reports-instructors.php" class="menu-link">
+                <li class="menu-item <?php echo ($currentPage == 'instructors-reports.php') ? 'active' : ''; ?>">
+                    <a href="instructors-reports.php" class="menu-link">
                         <div data-i18n="Instructors Reports">Instructors Reports</div>
                     </a>
                 </li>
@@ -175,10 +175,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </li>
 
         <!-- Finance Management -->
-        <li class="menu-header small text-uppercase">
+        <!-- <li class="menu-header small text-uppercase">
             <span class="menu-header-text">Finance Management</span>
         </li>
-        <li class="menu-item <?php echo (strpos($currentPage, 'finance') !== false) ? 'active open' : ''; ?>">
+        <li class="menu-item <?php //echo (strpos($currentPage, 'finance') !== false) ? 'active open' : ''; 
+                                ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <span class="menu-icon" style="font-weight: bold;">₵</span>
                 <div data-i18n="Finance">Finance</div>
@@ -189,19 +190,20 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="Transactions">Transactions</div>
                     </a>
                 </li>
-                <!-- <li class="menu-item <?php // echo ($currentPage == 'finance-refunds.php') ? 'active' : ''; 
-                                            ?>" data-menu-slug="finance-refunds.php">
+                <li class="menu-item <?php // echo ($currentPage == 'finance-refunds.php') ? 'active' : ''; 
+                                        ?>" data-menu-slug="finance-refunds.php">
                     <a href="finance-refunds.php" class="menu-link">
                         <div data-i18n="Refunds">Refunds</div>
                     </a>
-                </li> -->
-                <li class="menu-item <?php echo ($currentPage == 'finance-reports.php') ? 'active' : ''; ?>" data-menu-slug="finance-reports.php">
+                </li>
+                <li class="menu-item <?php //echo ($currentPage == 'finance-reports.php') ? 'active' : ''; 
+                                        ?>" data-menu-slug="finance-reports.php">
                     <a href="finance-reports.php" class="menu-link">
                         <div data-i18n="Financial Reports">Financial Reports</div>
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> -->
 
         <!-- System Settings -->
         <li class="menu-header small text-uppercase">
@@ -218,11 +220,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="General">General</div>
                     </a>
                 </li>
-                <li class="menu-item <?php echo ($currentPage == 'settings-email.php') ? 'active' : ''; ?>">
+                <!-- <li class="menu-item <?php //echo ($currentPage == 'settings-email.php') ? 'active' : ''; ?>">
                     <a href="settings-email.php" class="menu-link">
                         <div data-i18n="Email">Email</div>
                     </a>
-                </li>
+                </li> -->
                 <li class="menu-item <?php echo ($currentPage == 'payment-settings.php') ? 'active' : ''; ?>">
                     <a href="payment-settings.php" class="menu-link">
                         <div data-i18n="Payment">Payment</div>
@@ -231,22 +233,23 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </ul>
         </li>
 
-        <!-- Help & Support -->
+        <!-- Help Center -->
         <li class="menu-header small text-uppercase">
-            <span class="menu-header-text">Help & Support</span>
+            <span class="menu-header-text">Help Center</span>
         </li>
-        <li class="menu-item <?php echo ($currentPage == 'documentation.php') ? 'active' : ''; ?>">
-            <a href="documentation.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-file"></i>
-                <div data-i18n="Documentation">Documentation</div>
+        <li class="menu-item <?php echo ($currentPage == 'faqs.php') ? 'active' : ''; ?>">
+            <a href="faqs.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-question-mark"></i>
+                <div data-i18n="FAQs">FAQs</div>
             </a>
         </li>
-        <li class="menu-item <?php echo ($currentPage == 'support.php') ? 'active' : ''; ?>">
-            <a href="support.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-support"></i>
-                <div data-i18n="Support">Technical Support</div>
+        <li class="menu-item <?php echo ($currentPage == 'contact.php') ? 'active' : ''; ?>">
+            <a href="contact.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-envelope"></i>
+                <div data-i18n="Contact">Contact Us</div>
             </a>
         </li>
+
     </ul>
 </aside>
 <!-- Add the dynamic sidebar functionality -->

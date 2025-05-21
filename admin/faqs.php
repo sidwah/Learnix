@@ -3,7 +3,7 @@
 require_once '../backend/auth/admin/admin-auth-check.php';
 
 // Set page title
-$pageTitle = "Support - Admin | Learnix";
+$pageTitle = "FAQs - Admin | Learnix";
 
 include_once '../includes/admin/header.php';
 
