@@ -84,17 +84,37 @@ try {
     $historyStmt = $conn->prepare("INSERT INTO revenue_settings_history (setting_name, previous_value, new_value, changed_by, change_reason) VALUES (?, ?, ?, ?, ?)");
     
     $changesCount = 0;
+    $changedSettings = [];
     
     foreach ($settingsToUpdate as $settingName => $newValue) {
-        if (!isset($currentSettings[$settingName]) || $currentSettings[$settingName] != $newValue) {
+        // Always get the current value from the database directly for accurate history
+        $currentValueQuery = "SELECT setting_value FROM revenue_settings WHERE setting_name = ?";
+        $currentValueStmt = $conn->prepare($currentValueQuery);
+        $currentValueStmt->bind_param("s", $settingName);
+        $currentValueStmt->execute();
+        $currentValueResult = $currentValueStmt->get_result();
+        $currentValue = 0; // Default if not found
+        
+        if ($currentValueResult && $currentValueResult->num_rows > 0) {
+            $currentValueRow = $currentValueResult->fetch_assoc();
+            $currentValue = $currentValueRow['setting_value'];
+        }
+        
+        // Only update and record history if there's an actual change
+        if ($currentValue != $newValue) {
             // Update the setting
             $updateStmt->bind_param("ds", $newValue, $settingName);
             $updateStmt->execute();
             
             // Record history
-            $previousValue = isset($currentSettings[$settingName]) ? $currentSettings[$settingName] : 0;
-            $historyStmt->bind_param("sddis", $settingName, $previousValue, $newValue, $admin_id, $changeReason);
+            $historyStmt->bind_param("sddis", $settingName, $currentValue, $newValue, $admin_id, $changeReason);
             $historyStmt->execute();
+            
+            // Track the changed setting for notifications
+            $changedSettings[$settingName] = [
+                'previous' => $currentValue,
+                'new' => $newValue
+            ];
             
             $changesCount++;
         }
@@ -116,11 +136,79 @@ try {
         $log_stmt->bind_param("iss", $admin_id, $log_details, $ip);
         $log_stmt->execute();
         
+        // Get admin details for notification
+        $admin_query = "SELECT CONCAT(first_name, ' ', last_name) AS admin_name FROM users WHERE user_id = ?";
+        $admin_stmt = $conn->prepare($admin_query);
+        $admin_stmt->bind_param("i", $admin_id);
+        $admin_stmt->execute();
+        $admin_result = $admin_stmt->get_result();
+        $admin_name = "An administrator";
+        
+        if ($admin_result && $admin_result->num_rows > 0) {
+            $admin_row = $admin_result->fetch_assoc();
+            $admin_name = $admin_row['admin_name'];
+        }
+        
+        // Create notification message
+        $notification_title = "Payment Policy Update";
+        $notification_message = "The platform payment policies have been updated by " . $admin_name . ". ";
+        
+        // Add details about what changed
+        $changes = [];
+        $readableSettingNames = [
+            'instructor_split' => 'Instructor Revenue Share',
+            'platform_fee' => 'Platform Fee',
+            'holding_period' => 'Payment Holding Period',
+            'minimum_payout' => 'Minimum Payout Threshold'
+        ];
+        
+        foreach ($changedSettings as $setting => $values) {
+            $readableName = isset($readableSettingNames[$setting]) ? $readableSettingNames[$setting] : $setting;
+            
+            if ($setting == 'instructor_split' || $setting == 'platform_fee') {
+                $changes[] = $readableName . " changed from " . $values['previous'] . "% to " . $values['new'] . "%";
+            } elseif ($setting == 'holding_period') {
+                $changes[] = $readableName . " changed from " . $values['previous'] . " days to " . $values['new'] . " days";
+            } else {
+                $changes[] = $readableName . " changed from $" . $values['previous'] . " to $" . $values['new'];
+            }
+        }
+        
+        $notification_message .= "Changes: " . implode(", ", $changes) . ".";
+        
+        if (!empty($changeReason)) {
+            $notification_message .= " Reason: \"" . $changeReason . "\"";
+        }
+        
+        // Get all users except students to notify them
+        $users_query = "SELECT user_id FROM users 
+                        WHERE role != 'student' AND deleted_at IS NULL AND status = 'active'";
+        $users_result = mysqli_query($conn, $users_query);
+        
+        if ($users_result && mysqli_num_rows($users_result) > 0) {
+            // Prepare notification insertion statement
+            $notification_stmt = $conn->prepare("INSERT INTO user_notifications 
+                                            (user_id, type, title, message, related_id, related_type) 
+                                            VALUES (?, 'payment_update', ?, ?, NULL, 'system')");
+            
+            // Send in-app notifications to each user
+            while ($user = mysqli_fetch_assoc($users_result)) {
+                // Skip sending to the admin who made the change
+                if ($user['user_id'] == $admin_id) {
+                    continue;
+                }
+                
+                // Insert in-app notification
+                $notification_stmt->bind_param("iss", $user['user_id'], $notification_title, $notification_message);
+                $notification_stmt->execute();
+            }
+        }
+        
         $conn->commit();
         
         $_SESSION['payment_settings_message'] = [
             'status' => 'success', 
-            'message' => 'Payment settings updated successfully'
+            'message' => 'Payment settings updated successfully. In-app notifications sent to all relevant users.'
         ];
     } else {
         $conn->commit();
