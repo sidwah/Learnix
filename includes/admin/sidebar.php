@@ -156,8 +156,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="Student Reports">Students Reports</div>
                     </a>
                 </li>
-                <li class="menu-item <?php echo ($currentPage == 'instructors-reports.php') ? 'active' : ''; ?>">
-                    <a href="instructors-reports.php" class="menu-link">
+                <li class="menu-item <?php echo ($currentPage == 'instructor-reports.php') ? 'active' : ''; ?>">
+                    <a href="instructor-reports.php" class="menu-link">
                         <div data-i18n="Instructors Reports">Instructors Reports</div>
                     </a>
                 </li>
@@ -220,7 +220,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                         <div data-i18n="General">General</div>
                     </a>
                 </li>
-                <!-- <li class="menu-item <?php //echo ($currentPage == 'settings-email.php') ? 'active' : ''; ?>">
+                <!-- <li class="menu-item <?php //echo ($currentPage == 'settings-email.php') ? 'active' : ''; 
+                                            ?>">
                     <a href="settings-email.php" class="menu-link">
                         <div data-i18n="Email">Email</div>
                     </a>
@@ -232,6 +233,18 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 </li>
             </ul>
         </li>
+
+        <!-- Issue Management -->
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">Issue Management</span>
+        </li>
+        <li class="menu-item <?php echo ($currentPage == 'issue-reports.php') ? 'active' : ''; ?>">
+            <a href="issue-reports.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-error-circle"></i>
+                <div data-i18n="Issue Reports">Issue Reports</div>
+            </a>
+        </li>
+
 
         <!-- Help Center -->
         <li class="menu-header small text-uppercase">
