@@ -126,11 +126,11 @@ if ($result->num_rows === 0) {
 $conn->begin_transaction();
 
 try {
-    // Update user as verified
-    $stmt = $conn->prepare("UPDATE users SET is_verified = 1 WHERE user_id = ?");
+    // Update user as verified and set status to active
+    $stmt = $conn->prepare("UPDATE users SET is_verified = 1, status = 'active' WHERE user_id = ?");
     $stmt->bind_param("i", $userId);
     if (!$stmt->execute()) {
-        throw new Exception("Failed to update user verification status");
+        throw new Exception("Failed to update user verification status or account status");
     }
 
     // Mark verification record as verified
@@ -153,24 +153,21 @@ try {
     // Commit transaction
     $conn->commit();
 
+    // Insert Notification
+    $notificationSql = "INSERT INTO user_notifications (user_id, title, type, message, created_at, is_read) 
+                        VALUES (?, ?, ?, ?, NOW(), 0)";
+    $notificationStmt = $conn->prepare($notificationSql);
 
-// --- Insert Notification Here ---
-$notificationSql = "INSERT INTO user_notifications (user_id, title, type, message, created_at, is_read) 
-                    VALUES (?, ?, ?, ?, NOW(), 0)";
-$notificationStmt = $conn->prepare($notificationSql);
+    $title = 'Verification Successful';
+    $type = 'Account Verification';
+    $message = 'Your Learnix account has been successfully verified. Welcome aboard!';
 
-$title = 'Verification Successful'; // ✅ Must have a title
-$type = 'Account Verification';
-$message = 'Your Learnix account has been successfully verified. Welcome aboard!';
+    $notificationStmt->bind_param("isss", $userId, $title, $type, $message);
 
-$notificationStmt->bind_param("isss", $userId, $title, $type, $message); // ✅ 4 fields bound here
-
-if (!$notificationStmt->execute()) {
-    error_log("Failed to insert verification notification: " . $conn->error);
-}
-$notificationStmt->close();
-// --- End of Notification ---
-
+    if (!$notificationStmt->execute()) {
+        error_log("Failed to insert verification notification: " . $conn->error);
+    }
+    $notificationStmt->close();
 
     // Get user details to personalize the success message
     $stmt = $conn->prepare("SELECT first_name FROM users WHERE user_id = ?");

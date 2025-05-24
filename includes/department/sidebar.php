@@ -169,20 +169,14 @@ $user_data = [
         <a class="nav-link" href="enrollments.php">Course Enrollments</a>
       </li>
 
-      <li class="nav-item my-2 my-lg-5"></li>
-
+      
       <!-- Student Management -->
-      <li class="nav-item">
-        <span class="nav-subtitle">Student Management</span>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="students.php">Students</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="student-progress.php">Student Progress</a>
-      </li>
       
       <?php if ($user_role === 'department_secretary'): ?>
+        <li class="nav-item my-2 my-lg-5"></li>
+        <li class="nav-item">
+          <span class="nav-subtitle">Student Management</span>
+        </li>
       <li class="nav-item">
         <a class="nav-link" href="student-records.php">Student Records</a>
       </li>
