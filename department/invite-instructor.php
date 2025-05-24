@@ -1,10 +1,11 @@
-<?php 
+<?php
+//department/invite-instructor.php
 // Set page title for the header
 $pageTitle = "Invite Instructor";
 $currentPage = "invite-instructor";
 
 // Include header with navigation
-include '../includes/department/header.php'; 
+include '../includes/department/header.php';
 
 // Get department info from session
 $departmentId = $_SESSION['department_id'];
@@ -50,6 +51,17 @@ $stmt->execute();
 $result = $stmt->get_result();
 while ($row = $result->fetch_assoc()) {
     $pendingInvitations[] = $row;
+}
+
+$invitationExpiryHours = 48; // Default fallback
+
+// Get department settings for invitation expiry
+$stmt = $conn->prepare("SELECT invitation_expiry_hours FROM department_settings WHERE department_id = ?");
+$stmt->bind_param("i", $departmentId);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($row = $result->fetch_assoc()) {
+    $invitationExpiryHours = $row['invitation_expiry_hours'] ?? 48;
 }
 $stmt->close();
 
@@ -168,22 +180,22 @@ $conn->close();
                                 </div>
                                 <div class="flex-grow-1 ms-3">
                                     <h5>Invitation Process</h5>
-                                    <p class="mb-0">Instructors will receive an email with temporary login credentials. The invitation expires after 48 hours.</p>
+                                    <p class="mb-0">Instructors will receive an email with temporary login credentials. The invitation expires after <?php echo $invitationExpiryHours; ?> hours.</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="list-group list-group-bordered">
                             <div class="list-group-item">
-                                <div class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <i class="bi bi-1-circle text-primary"></i>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <span class="fw-bold">Send invitation</span> to the instructor's email
-                                    </div>
-                                </div>
-                            </div>
+    <div class="d-flex">
+        <div class="flex-shrink-0">
+            <i class="bi bi-1-circle text-primary"></i>
+        </div>
+        <div class="flex-grow-1 ms-3">
+            <span class="fw-bold">Send invitation</span> to the instructor's email (expires in <?php echo $invitationExpiryHours; ?> hours)
+        </div>
+    </div>
+</div>
                             <div class="list-group-item">
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
@@ -267,9 +279,9 @@ $conn->close();
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <p>Are you sure you want to send an invitation to <span id="confirmEmail" class="fw-bold"></span>?</p>
-                            <p class="text-muted">The instructor will receive an email with instructions to create their account.</p>
-                        </div>
+    <p>Are you sure you want to send an invitation to <span id="confirmEmail" class="fw-bold"></span>?</p>
+    <p class="text-muted">The instructor will receive an email with instructions to create their account. The invitation will expire after <?php echo $invitationExpiryHours; ?> hours.</p>
+</div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-white" data-bs-dismiss="modal">Cancel</button>
                             <button type="button" id="confirmSendBtn" class="btn btn-primary">Send Invitation</button>
@@ -291,97 +303,97 @@ $conn->close();
                 </div>
                 <div class="card-body p-0">
                     <?php if (empty($pendingInvitations)): ?>
-                    <div class="text-center p-4">
-                        <div class="mb-3">
-                            <i class="bi bi-envelope text-muted" style="font-size: 2rem;"></i>
+                        <div class="text-center p-4">
+                            <div class="mb-3">
+                                <i class="bi bi-envelope text-muted" style="font-size: 2rem;"></i>
+                            </div>
+                            <h5>No pending invitations</h5>
+                            <p class="text-muted">When you invite instructors, they will appear here until they accept the invitation.</p>
                         </div>
-                        <h5>No pending invitations</h5>
-                        <p class="text-muted">When you invite instructors, they will appear here until they accept the invitation.</p>
-                    </div>
                     <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-borderless table-thead-bordered table-nowrap table-align-middle card-table">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Email</th>
-                                    <th>Invited By</th>
-                                    <th>Date Sent</th>
-                                    <th>Expires</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($pendingInvitations as $invitation): 
-                                    // Calculate expiration status
-                                    $expiryTime = new DateTime($invitation['expiry_time']);
-                                    $now = new DateTime();
-                                    $diff = $now->diff($expiryTime);
-                                    $hoursLeft = ($diff->days * 24) + $diff->h;
-                                    
-                                    $statusClass = 'bg-soft-warning text-warning';
-                                    $statusText = 'Pending';
-                                    
-                                    if ($hoursLeft < 6) {
-                                        $statusClass = 'bg-soft-danger text-danger';
-                                        $statusText = 'Expiring soon';
-                                    }
-                                    
-                                    // Generate avatar initials from email
-                                    $emailParts = explode('@', $invitation['email']);
-                                    $nameParts = explode('.', $emailParts[0]);
-                                    $initials = '';
-                                    if (count($nameParts) >= 2) {
-                                        $initials = strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1));
-                                    } else {
-                                        $initials = strtoupper(substr($emailParts[0], 0, 2));
-                                    }
-                                    
-                                    // Generate a color class based on email for avatar
-                                    $colors = ['primary', 'info', 'success', 'warning', 'danger'];
-                                    $colorIndex = crc32($invitation['email']) % count($colors);
-                                    $avatarColorClass = 'avatar-soft-' . $colors[$colorIndex];
-                                ?>
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar avatar-sm avatar-circle">
-                                                <div class="<?php echo $avatarColorClass; ?> avatar-circle">
-                                                    <span class="avatar-initials"><?php echo htmlspecialchars($initials); ?></span>
+                        <div class="table-responsive">
+                            <table class="table table-borderless table-thead-bordered table-nowrap table-align-middle card-table">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Invited By</th>
+                                        <th>Date Sent</th>
+                                        <th>Expires</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($pendingInvitations as $invitation):
+                                        // Calculate expiration status
+                                        $expiryTime = new DateTime($invitation['expiry_time']);
+                                        $now = new DateTime();
+                                        $diff = $now->diff($expiryTime);
+                                        $hoursLeft = ($diff->days * 24) + $diff->h;
+
+                                        $statusClass = 'bg-soft-warning text-warning';
+                                        $statusText = 'Pending';
+
+                                        if ($hoursLeft < 6) {
+                                            $statusClass = 'bg-soft-danger text-danger';
+                                            $statusText = 'Expiring soon';
+                                        }
+
+                                        // Generate avatar initials from email
+                                        $emailParts = explode('@', $invitation['email']);
+                                        $nameParts = explode('.', $emailParts[0]);
+                                        $initials = '';
+                                        if (count($nameParts) >= 2) {
+                                            $initials = strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1));
+                                        } else {
+                                            $initials = strtoupper(substr($emailParts[0], 0, 2));
+                                        }
+
+                                        // Generate a color class based on email for avatar
+                                        $colors = ['primary', 'info', 'success', 'warning', 'danger'];
+                                        $colorIndex = crc32($invitation['email']) % count($colors);
+                                        $avatarColorClass = 'avatar-soft-' . $colors[$colorIndex];
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar avatar-sm avatar-circle">
+                                                        <div class="<?php echo $avatarColorClass; ?> avatar-circle">
+                                                            <span class="avatar-initials"><?php echo htmlspecialchars($initials); ?></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ms-3">
+                                                        <span class="d-block h5 text-inherit mb-0"><?php echo htmlspecialchars($invitation['email']); ?></span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="ms-3">
-                                                <span class="d-block h5 text-inherit mb-0"><?php echo htmlspecialchars($invitation['email']); ?></span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($invitation['invited_by_name']); ?></td>
-                                    <td><?php echo date('M j, Y', strtotime($invitation['created_at'])); ?></td>
-                                    <td><?php echo date('M j, Y', strtotime($invitation['expiry_time'])); ?></td>
-                                    <td>
-                                        <span class="badge <?php echo $statusClass; ?>"><?php echo $statusText; ?></span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-soft-warning ms-2 btn-resend" 
-                                                    data-id="<?php echo $invitation['id']; ?>" 
-                                                    data-email="<?php echo htmlspecialchars($invitation['email']); ?>"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Resend">
-                                                <i class="bi bi-arrow-repeat"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-soft-danger btn-cancel" 
-                                                    data-id="<?php echo $invitation['id']; ?>" 
-                                                    data-email="<?php echo htmlspecialchars($invitation['email']); ?>"
-                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Cancel">
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($invitation['invited_by_name']); ?></td>
+                                            <td><?php echo date('M j, Y', strtotime($invitation['created_at'])); ?></td>
+                                            <td><?php echo date('M j, Y', strtotime($invitation['expiry_time'])); ?></td>
+                                            <td>
+                                                <span class="badge <?php echo $statusClass; ?>"><?php echo $statusText; ?></span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-soft-warning ms-2 btn-resend"
+                                                        data-id="<?php echo $invitation['id']; ?>"
+                                                        data-email="<?php echo htmlspecialchars($invitation['email']); ?>"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Resend">
+                                                        <i class="bi bi-arrow-repeat"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-soft-danger btn-cancel"
+                                                        data-id="<?php echo $invitation['id']; ?>"
+                                                        data-email="<?php echo htmlspecialchars($invitation['email']); ?>"
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Cancel">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -435,9 +447,9 @@ $conn->close();
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Are you sure you want to resend the invitation to <span id="resendEmail" class="fw-bold"></span>?</p>
-                        <p class="text-muted">A new email will be sent with a fresh invitation link valid for 48 hours.</p>
-                    </div>
+    <p>Are you sure you want to resend the invitation to <span id="resendEmail" class="fw-bold"></span>?</p>
+    <p class="text-muted">A new email will be sent with a fresh invitation link valid for <?php echo $invitationExpiryHours; ?> hours.</p>
+</div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-white" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" id="confirmResendBtn" class="btn btn-primary">Resend Invitation</button>
@@ -456,93 +468,95 @@ $conn->close();
         </div>
 
         <script src="../assets/js/department/invite-instructor.js"></script>
-        
+
         <script>
+            const INVITATION_EXPIRY_HOURS = <?php echo $invitationExpiryHours; ?>;
+
             // Additional script for handling resend and cancel actions
             document.addEventListener('DOMContentLoaded', function() {
                 // Initialize resend and cancel modals
                 const resendModal = new bootstrap.Modal(document.getElementById('resendInvitationModal'));
                 const cancelModal = new bootstrap.Modal(document.getElementById('cancelInvitationModal'));
-                
+
                 // Resend buttons
                 document.querySelectorAll('.btn-resend').forEach(button => {
                     button.addEventListener('click', function() {
                         const id = this.dataset.id;
                         const email = this.dataset.email;
-                        
+
                         document.getElementById('resendEmail').textContent = email;
                         document.getElementById('confirmResendBtn').dataset.id = id;
-                        
+
                         resendModal.show();
                     });
                 });
-                
+
                 // Cancel buttons
                 document.querySelectorAll('.btn-cancel').forEach(button => {
                     button.addEventListener('click', function() {
                         const id = this.dataset.id;
                         const email = this.dataset.email;
-                        
+
                         document.getElementById('cancelEmail').textContent = email;
                         document.getElementById('confirmCancelBtn').dataset.id = id;
-                        
+
                         cancelModal.show();
                     });
                 });
-                
+
                 // Confirm resend button handler
                 document.getElementById('confirmResendBtn').addEventListener('click', function() {
                     const id = this.dataset.id;
-                    
+
                     // Hide modal and show loading
                     resendModal.hide();
                     showOverlay('Resending invitation...');
-                    
+
                     // AJAX call to resend invitation would go here
                     // For now, just simulate with a timeout
                     setTimeout(function() {
                         removeOverlay();
                         showToast('success', 'Invitation Resent', 'The invitation has been resent successfully.');
-                        
+
                         // Refresh the page to show updated list
                         setTimeout(() => {
                             window.location.reload();
                         }, 1500);
                     }, 1500);
                 });
-                
+
                 // Confirm cancel button handler
                 document.getElementById('confirmCancelBtn').addEventListener('click', function() {
                     const id = this.dataset.id;
-                    
+
                     // Hide modal and show loading
                     cancelModal.hide();
                     showOverlay('Cancelling invitation...');
-                    
+
                     // AJAX call to cancel invitation would go here
                     // For now, just simulate with a timeout
                     setTimeout(function() {
                         removeOverlay();
                         showToast('success', 'Invitation Cancelled', 'The invitation has been cancelled successfully.');
-                        
+
                         // Refresh the page to show updated list
                         setTimeout(() => {
                             window.location.reload();
                         }, 1500);
                     }, 1500);
                 });
-                
+
                 // Refresh button handler
                 document.getElementById('refreshInvitations').addEventListener('click', function() {
                     showOverlay('Refreshing invitations...');
-                    
+
                     // Simply reload the page
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
                 });
             });
-            
+
             // Function to refresh pending invitations - used by main script
             function refreshPendingInvitations() {
                 // In a real implementation, this would fetch fresh data via AJAX
