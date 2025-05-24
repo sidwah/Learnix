@@ -1,3 +1,4 @@
+<?php //department/enrollments.php ?>
 <?php include '../includes/department/header.php'; ?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
