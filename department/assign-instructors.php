@@ -13,8 +13,8 @@
     <!-- End Navbar -->
 
     <!-- Content -->
-    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-3">
-        
+    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-5">
+
     </div>
     <!-- End Content -->
 

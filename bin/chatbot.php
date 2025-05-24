@@ -7,11 +7,11 @@ session_start();
 if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || !isset($_SESSION['department_id']) || !isset($_SESSION['role']) || !in_array($_SESSION['role'], ['department_head', 'department_secretary'])) {
     // Log unauthorized access attempt for security auditing
     error_log("Unauthorized access attempt to protected page: " . $_SERVER['REQUEST_URI'] . " | IP: " . $_SERVER['REMOTE_ADDR']);
-  
+
     // Redirect unauthorized users to the sign-in page
     header('Location: signin.php');
     exit;
-  }
+}
 
 include '../includes/department/header.php';
 include '../backend/config.php';
@@ -29,7 +29,7 @@ include '../backend/config.php';
     <!-- End Navbar -->
 
     <!-- Content -->
-    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-10">
+    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-5">
         <!-- Page Header -->
         <div class="docs-page-header">
             <div class="row align-items-center">

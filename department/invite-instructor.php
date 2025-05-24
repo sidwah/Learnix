@@ -82,7 +82,7 @@ $conn->close();
     <!-- End Navbar -->
 
     <!-- Content -->
-    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-3">
+    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-5">
         <!-- Toast -->
         <div id="liveToast" class="position-fixed toast hide" role="alert" aria-live="assertive" aria-atomic="true" style="top: 20px; right: 20px; z-index: 1000;">
             <div class="toast-header">
@@ -187,15 +187,15 @@ $conn->close();
 
                         <div class="list-group list-group-bordered">
                             <div class="list-group-item">
-    <div class="d-flex">
-        <div class="flex-shrink-0">
-            <i class="bi bi-1-circle text-primary"></i>
-        </div>
-        <div class="flex-grow-1 ms-3">
-            <span class="fw-bold">Send invitation</span> to the instructor's email (expires in <?php echo $invitationExpiryHours; ?> hours)
-        </div>
-    </div>
-</div>
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-1-circle text-primary"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <span class="fw-bold">Send invitation</span> to the instructor's email (expires in <?php echo $invitationExpiryHours; ?> hours)
+                                    </div>
+                                </div>
+                            </div>
                             <div class="list-group-item">
                                 <div class="d-flex">
                                     <div class="flex-shrink-0">
@@ -279,9 +279,9 @@ $conn->close();
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-    <p>Are you sure you want to send an invitation to <span id="confirmEmail" class="fw-bold"></span>?</p>
-    <p class="text-muted">The instructor will receive an email with instructions to create their account. The invitation will expire after <?php echo $invitationExpiryHours; ?> hours.</p>
-</div>
+                            <p>Are you sure you want to send an invitation to <span id="confirmEmail" class="fw-bold"></span>?</p>
+                            <p class="text-muted">The instructor will receive an email with instructions to create their account. The invitation will expire after <?php echo $invitationExpiryHours; ?> hours.</p>
+                        </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-white" data-bs-dismiss="modal">Cancel</button>
                             <button type="button" id="confirmSendBtn" class="btn btn-primary">Send Invitation</button>
@@ -447,9 +447,9 @@ $conn->close();
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-    <p>Are you sure you want to resend the invitation to <span id="resendEmail" class="fw-bold"></span>?</p>
-    <p class="text-muted">A new email will be sent with a fresh invitation link valid for <?php echo $invitationExpiryHours; ?> hours.</p>
-</div>
+                        <p>Are you sure you want to resend the invitation to <span id="resendEmail" class="fw-bold"></span>?</p>
+                        <p class="text-muted">A new email will be sent with a fresh invitation link valid for <?php echo $invitationExpiryHours; ?> hours.</p>
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-white" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" id="confirmResendBtn" class="btn btn-primary">Resend Invitation</button>

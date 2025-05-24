@@ -1,4 +1,5 @@
-<?php // department/secretary.php ?>
+<?php // department/secretary.php 
+?>
 <?php include '../includes/department/header.php'; ?>
 
 <?php
@@ -91,7 +92,7 @@ if ($settingsResult->num_rows > 0) {
     <!-- End Navbar -->
 
     <!-- Content -->
-    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-10">
+    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-5">
         <!-- Page Header -->
         <div class="page-header">
             <div class="row align-items-end mb-3">
@@ -101,9 +102,9 @@ if ($settingsResult->num_rows > 0) {
                 </div>
                 <div class="col-sm-auto">
                     <?php if (!$has_secretary && !$pending_invitation): ?>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#appointSecretaryModal">
-                        <i class="bi bi-person-plus-fill me-2"></i>Appoint Secretary
-                    </button>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#appointSecretaryModal">
+                            <i class="bi bi-person-plus-fill me-2"></i>Appoint Secretary
+                        </button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -121,91 +122,91 @@ if ($settingsResult->num_rows > 0) {
             </div>
             <div class="card-body">
                 <?php if ($pending_invitation): ?>
-                <!-- Pending Invitation -->
-                <div class="text-center py-5">
-                    <div class="avatar avatar-xl avatar-soft-warning avatar-circle mx-auto mb-3">
-                        <i class="bi bi-clock-history avatar-icon"></i>
+                    <!-- Pending Invitation -->
+                    <div class="text-center py-5">
+                        <div class="avatar avatar-xl avatar-soft-warning avatar-circle mx-auto mb-3">
+                            <i class="bi bi-clock-history avatar-icon"></i>
+                        </div>
+                        <h5>Secretary Invitation Pending</h5>
+                        <p class="text-muted mb-3">
+                            Invitation sent to <strong><?php echo htmlspecialchars($pending_invitation['email']); ?></strong><br>
+                            <small class="text-muted">Sent: <?php echo date('M d, Y - H:i', strtotime($pending_invitation['created_at'])); ?></small><br>
+                            <small class="text-danger">
+                                <i class="bi bi-clock me-1"></i>
+                                Expires: <?php echo date('M d, Y - H:i', strtotime($pending_invitation['expiry_time'])); ?>
+                            </small>
+                        </p>
+
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resendInvitationModal">
+                                <i class="bi bi-arrow-repeat me-2"></i>Resend Invitation
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelInvitationModal">
+                                <i class="bi bi-x-circle me-2"></i>Cancel Invitation
+                            </button>
+                        </div>
                     </div>
-                    <h5>Secretary Invitation Pending</h5>
-                    <p class="text-muted mb-3">
-                        Invitation sent to <strong><?php echo htmlspecialchars($pending_invitation['email']); ?></strong><br>
-                        <small class="text-muted">Sent: <?php echo date('M d, Y - H:i', strtotime($pending_invitation['created_at'])); ?></small><br>
-                        <small class="text-danger">
-                            <i class="bi bi-clock me-1"></i>
-                            Expires: <?php echo date('M d, Y - H:i', strtotime($pending_invitation['expiry_time'])); ?>
-                        </small>
-                    </p>
-                    
-                    <div class="d-flex justify-content-center gap-2">
-                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resendInvitationModal">
-                            <i class="bi bi-arrow-repeat me-2"></i>Resend Invitation
-                        </button>
-                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelInvitationModal">
-                            <i class="bi bi-x-circle me-2"></i>Cancel Invitation
-                        </button>
-                    </div>
-                </div>
-                
+
                 <?php elseif ($has_secretary && $current_secretary): ?>
-                <!-- Secretary Assigned -->
-                <div class="row align-items-center">
-                    <div class="col-auto">
-                        <div class="avatar avatar-xl avatar-soft-primary avatar-circle">
-                            <img class="avatar-img" src="../uploads/<?php echo $current_secretary['profile_pic'] ?? 'default.png'; ?>" alt="Secretary Profile">
+                    <!-- Secretary Assigned -->
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="avatar avatar-xl avatar-soft-primary avatar-circle">
+                                <img class="avatar-img" src="../uploads/<?php echo $current_secretary['profile_pic'] ?? 'default.png'; ?>" alt="Secretary Profile">
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5 class="mb-1"><?php echo htmlspecialchars($current_secretary['first_name'] . ' ' . $current_secretary['last_name']); ?></h5>
+                            <span class="badge bg-soft-primary text-primary"><?php echo htmlspecialchars($current_secretary['email']); ?></span>
+                            <div class="mt-2">
+                                <span class="badge bg-soft-success text-success me-2">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Active
+                                </span>
+                                <span class="badge bg-soft-info text-info">
+                                    <i class="bi bi-calendar3 me-1"></i>Appointed: <?php echo date('M d, Y', strtotime($current_secretary['appointment_date'])); ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <!-- Replace the dropdown section around line 158 -->
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-ghost-secondary btn-icon btn-sm rounded-circle"
+                                    id="secretaryActionsDropdown"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="secretaryActionsDropdown">
+                                    <a class="dropdown-item" href="#" data-bs-target="#viewSecretaryModal">
+                                        <i class="bi bi-eye dropdown-item-icon"></i> View Details
+                                    </a>
+                                    <a class="dropdown-item" href="#" data-bs-target="#contactSecretaryModal">
+                                        <i class="bi bi-envelope dropdown-item-icon"></i> Contact Secretary
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#" data-bs-target="#replaceSecretaryModal">
+                                        <i class="bi bi-person-fill-gear dropdown-item-icon"></i> Replace Secretary
+                                    </a>
+                                    <a class="dropdown-item text-danger" href="#" data-bs-target="#removeSecretaryModal">
+                                        <i class="bi bi-person-dash dropdown-item-icon"></i> Remove Secretary
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col">
-                        <h5 class="mb-1"><?php echo htmlspecialchars($current_secretary['first_name'] . ' ' . $current_secretary['last_name']); ?></h5>
-                        <span class="badge bg-soft-primary text-primary"><?php echo htmlspecialchars($current_secretary['email']); ?></span>
-                        <div class="mt-2">
-                            <span class="badge bg-soft-success text-success me-2">
-                                <i class="bi bi-check-circle-fill me-1"></i>Active
-                            </span>
-                            <span class="badge bg-soft-info text-info">
-                                <i class="bi bi-calendar3 me-1"></i>Appointed: <?php echo date('M d, Y', strtotime($current_secretary['appointment_date'])); ?>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <!-- Replace the dropdown section around line 158 -->
-<div class="dropdown">
-    <button type="button" class="btn btn-ghost-secondary btn-icon btn-sm rounded-circle" 
-            id="secretaryActionsDropdown" 
-            data-bs-toggle="dropdown" 
-            aria-expanded="false">
-        <i class="bi bi-three-dots-vertical"></i>
-    </button>
-    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="secretaryActionsDropdown">
-        <a class="dropdown-item" href="#" data-bs-target="#viewSecretaryModal">
-            <i class="bi bi-eye dropdown-item-icon"></i> View Details
-        </a>
-        <a class="dropdown-item" href="#" data-bs-target="#contactSecretaryModal">
-            <i class="bi bi-envelope dropdown-item-icon"></i> Contact Secretary
-        </a>
-        <div class="dropdown-divider"></div>
-        <a class="dropdown-item" href="#" data-bs-target="#replaceSecretaryModal">
-            <i class="bi bi-person-fill-gear dropdown-item-icon"></i> Replace Secretary
-        </a>
-        <a class="dropdown-item text-danger" href="#" data-bs-target="#removeSecretaryModal">
-            <i class="bi bi-person-dash dropdown-item-icon"></i> Remove Secretary
-        </a>
-    </div>
-</div>
-                    </div>
-                </div>
-                
+
                 <?php else: ?>
-                <!-- No Secretary -->
-                <div class="text-center py-5">
-                    <div class="avatar avatar-xl avatar-soft-secondary avatar-circle mx-auto mb-3">
-                        <i class="bi bi-person-plus avatar-icon"></i>
+                    <!-- No Secretary -->
+                    <div class="text-center py-5">
+                        <div class="avatar avatar-xl avatar-soft-secondary avatar-circle mx-auto mb-3">
+                            <i class="bi bi-person-plus avatar-icon"></i>
+                        </div>
+                        <h5>No Secretary Appointed</h5>
+                        <p class="text-muted mb-3">You haven't appointed a secretary for your department yet.</p>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#appointSecretaryModal">
+                            <i class="bi bi-person-plus-fill me-2"></i>Appoint Secretary
+                        </button>
                     </div>
-                    <h5>No Secretary Appointed</h5>
-                    <p class="text-muted mb-3">You haven't appointed a secretary for your department yet.</p>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#appointSecretaryModal">
-                        <i class="bi bi-person-plus-fill me-2"></i>Appoint Secretary
-                    </button>
-                </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -247,7 +248,7 @@ if ($settingsResult->num_rows > 0) {
     <!-- End Content -->
 
     <!-- ALL MODALS -->
-    
+
     <!-- Appoint Secretary Modal -->
     <div class="modal fade" id="appointSecretaryModal" tabindex="-1" aria-labelledby="appointSecretaryModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -305,7 +306,7 @@ if ($settingsResult->num_rows > 0) {
                         <p class="mb-0">This will generate a new temporary password and extend the invitation expiry time. The previous invitation will be invalidated.</p>
                     </div>
                     <?php if ($pending_invitation): ?>
-                    <p>Resending invitation to: <strong><?php echo htmlspecialchars($pending_invitation['email']); ?></strong></p>
+                        <p>Resending invitation to: <strong><?php echo htmlspecialchars($pending_invitation['email']); ?></strong></p>
                     <?php endif; ?>
                 </div>
                 <div class="modal-footer">
@@ -332,7 +333,7 @@ if ($settingsResult->num_rows > 0) {
                         <p class="mb-0">This will permanently cancel the pending invitation. The invitee will no longer be able to accept the secretary position.</p>
                     </div>
                     <?php if ($pending_invitation): ?>
-                    <p>Canceling invitation for: <strong><?php echo htmlspecialchars($pending_invitation['email']); ?></strong></p>
+                        <p>Canceling invitation for: <strong><?php echo htmlspecialchars($pending_invitation['email']); ?></strong></p>
                     <?php endif; ?>
                 </div>
                 <div class="modal-footer">
@@ -355,37 +356,37 @@ if ($settingsResult->num_rows > 0) {
                 </div>
                 <div class="modal-body">
                     <?php if ($has_secretary && $current_secretary): ?>
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <div class="avatar avatar-xl avatar-circle mx-auto mb-3">
-                                <img class="avatar-img" src="../uploads/<?php echo $current_secretary['profile_pic'] ?? 'default.png'; ?>" alt="Secretary Profile">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="avatar avatar-xl avatar-circle mx-auto mb-3">
+                                    <img class="avatar-img" src="../uploads/<?php echo $current_secretary['profile_pic'] ?? 'default.png'; ?>" alt="Secretary Profile">
+                                </div>
+                                <h5><?php echo htmlspecialchars($current_secretary['first_name'] . ' ' . $current_secretary['last_name']); ?></h5>
+                                <p class="text-muted"><?php echo htmlspecialchars($current_secretary['email']); ?></p>
                             </div>
-                            <h5><?php echo htmlspecialchars($current_secretary['first_name'] . ' ' . $current_secretary['last_name']); ?></h5>
-                            <p class="text-muted"><?php echo htmlspecialchars($current_secretary['email']); ?></p>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <p><strong>Appointment Date</strong></p>
-                                    <p class="text-muted"><?php echo date('M d, Y', strtotime($current_secretary['appointment_date'])); ?></p>
-                                </div>
-                                <div class="col-sm-6">
-                                    <p><strong>Status</strong></p>
-                                    <span class="badge bg-soft-success text-success">Active</span>
-                                </div>
-                                <div class="col-sm-6">
-                                    <p><strong>MFA Enabled</strong></p>
-                                    <p class="text-muted">
-                                        <?php echo $current_secretary['mfa_enabled'] ? 'Yes' : 'No'; ?>
-                                    </p>
-                                </div>
-                                <div class="col-sm-6">
-                                    <p><strong>User ID</strong></p>
-                                    <p class="text-muted">#<?php echo $current_secretary['user_id']; ?></p>
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <p><strong>Appointment Date</strong></p>
+                                        <p class="text-muted"><?php echo date('M d, Y', strtotime($current_secretary['appointment_date'])); ?></p>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <p><strong>Status</strong></p>
+                                        <span class="badge bg-soft-success text-success">Active</span>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <p><strong>MFA Enabled</strong></p>
+                                        <p class="text-muted">
+                                            <?php echo $current_secretary['mfa_enabled'] ? 'Yes' : 'No'; ?>
+                                        </p>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <p><strong>User ID</strong></p>
+                                        <p class="text-muted">#<?php echo $current_secretary['user_id']; ?></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
                     <?php endif; ?>
                 </div>
                 <div class="modal-footer">
@@ -532,7 +533,7 @@ if ($settingsResult->num_rows > 0) {
 <!-- COMPLETE JAVASCRIPT -->
 <!-- JavaScript Functions -->
 <script>
-   // Utility Functions
+    // Utility Functions
     function showOverlay(message = 'Processing...') {
         const overlay = document.getElementById('loadingOverlay');
         const messageEl = document.getElementById('loadingMessage');
@@ -586,22 +587,22 @@ if ($settingsResult->num_rows > 0) {
     // Bootstrap Dropdown Handler
     function initializeDropdowns() {
         const dropdownToggle = document.getElementById('secretaryActionsDropdown');
-        
+
         if (dropdownToggle) {
             // Initialize Bootstrap dropdown
             const dropdown = new bootstrap.Dropdown(dropdownToggle);
-            
+
             // Handle dropdown item clicks
             const dropdownMenu = dropdownToggle.nextElementSibling;
             const dropdownItems = dropdownMenu.querySelectorAll('.dropdown-item');
-            
+
             dropdownItems.forEach(item => {
                 item.addEventListener('click', function(e) {
                     e.preventDefault();
-                    
+
                     // Close dropdown
                     dropdown.hide();
-                    
+
                     // Get the target modal from data-bs-target attribute
                     const targetModal = this.getAttribute('data-bs-target');
                     if (targetModal) {
@@ -637,87 +638,87 @@ if ($settingsResult->num_rows > 0) {
         showOverlay('Sending invitation...');
 
         fetch('../backend/department/appoint-secretary.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            if (data.success) {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('appointSecretaryModal'));
-                modal.hide();
-                showToast('Success', data.message, 'success');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                showToast('Error', data.message || 'Failed to send invitation.', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('Error', 'An error occurred. Please try again.', 'error');
-        });
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('appointSecretaryModal'));
+                    modal.hide();
+                    showToast('Success', data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showToast('Error', data.message || 'Failed to send invitation.', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('Error', 'An error occurred. Please try again.', 'error');
+            });
     }
 
     function resendInvitation() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('resendInvitationModal'));
         modal.hide();
-        
+
         showOverlay('Resending invitation...');
-        
+
         fetch('../backend/department/resend-secretary-invitation.php', {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            if (data.success) {
-                showToast('Success', data.message, 'success');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                showToast('Error', data.message || 'Failed to resend invitation.', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('Error', 'An error occurred. Please try again.', 'error');
-        });
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+                if (data.success) {
+                    showToast('Success', data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showToast('Error', data.message || 'Failed to resend invitation.', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('Error', 'An error occurred. Please try again.', 'error');
+            });
     }
 
     function cancelInvitation() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('cancelInvitationModal'));
         modal.hide();
-        
+
         showOverlay('Canceling invitation...');
-        
+
         fetch('../backend/department/cancel-secretary-invitation.php', {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            if (data.success) {
-                showToast('Success', data.message, 'success');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                showToast('Error', data.message || 'Failed to cancel invitation.', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('Error', 'An error occurred. Please try again.', 'error');
-        });
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+                if (data.success) {
+                    showToast('Success', data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showToast('Error', data.message || 'Failed to cancel invitation.', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('Error', 'An error occurred. Please try again.', 'error');
+            });
     }
 
     function replaceSecretary() {
@@ -725,7 +726,7 @@ if ($settingsResult->num_rows > 0) {
         const lastName = document.getElementById('newSecretaryLastName').value.trim();
         const email = document.getElementById('newSecretaryEmail').value.trim();
         const reason = document.getElementById('replaceReason').value.trim();
-        
+
         if (!firstName || !lastName || !email || !reason) {
             showToast('Error', 'Please fill in all required fields.', 'error');
             return;
@@ -735,47 +736,47 @@ if ($settingsResult->num_rows > 0) {
             showToast('Error', 'Please enter a valid email address.', 'error');
             return;
         }
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('replaceSecretaryModal'));
         modal.hide();
-        
+
         showOverlay('Processing replacement...');
-        
+
         fetch('../backend/department/replace-secretary.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                first_name: firstName,
-                last_name: lastName,
-                email: email,
-                reason: reason
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    reason: reason
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            if (data.success) {
-                showToast('Success', data.message, 'success');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                showToast('Error', data.message || 'Failed to replace secretary.', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('Error', 'An error occurred. Please try again.', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+                if (data.success) {
+                    showToast('Success', data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showToast('Error', data.message || 'Failed to replace secretary.', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('Error', 'An error occurred. Please try again.', 'error');
+            });
     }
 
     function removeSecretary() {
         const reasonField = document.getElementById('removeReason');
         const confirmCheckbox = document.getElementById('confirmRemoval');
-        
+
         const reason = reasonField ? reasonField.value.trim() : '';
         const confirmed = confirmCheckbox ? confirmCheckbox.checked : false;
 
@@ -820,79 +821,79 @@ if ($settingsResult->num_rows > 0) {
 
         const modal = bootstrap.Modal.getInstance(document.getElementById('removeSecretaryModal'));
         modal.hide();
-        
+
         showOverlay('Removing secretary...');
-        
+
         fetch('../backend/department/remove-secretary.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                reason: reason
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    reason: reason
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            if (data.success) {
-                showToast('Success', data.message, 'success');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                showToast('Error', data.message || 'Failed to remove secretary.', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('Error', 'An error occurred. Please try again.', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+                if (data.success) {
+                    showToast('Success', data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showToast('Error', data.message || 'Failed to remove secretary.', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('Error', 'An error occurred. Please try again.', 'error');
+            });
     }
 
     function sendMessage() {
         const subject = document.getElementById('messageSubject').value.trim();
         const body = document.getElementById('messageBody').value.trim();
         const ccMyself = document.getElementById('ccMyselfCheck').checked;
-        
+
         if (!subject || !body) {
             showToast('Error', 'Please fill in all required fields.', 'error');
             return;
         }
-        
+
         const modal = bootstrap.Modal.getInstance(document.getElementById('contactSecretaryModal'));
         modal.hide();
-        
+
         showOverlay('Sending message...');
-        
+
         fetch('../backend/department/contact-secretary.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                subject: subject,
-                body: body,
-                cc_myself: ccMyself
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    subject: subject,
+                    body: body,
+                    cc_myself: ccMyself
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            if (data.success) {
-                showToast('Success', data.message, 'success');
-                // Clear form
-                document.getElementById('contactSecretaryForm').reset();
-            } else {
-                showToast('Error', data.message || 'Failed to send message.', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('Error', 'An error occurred. Please try again.', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+                if (data.success) {
+                    showToast('Success', data.message, 'success');
+                    // Clear form
+                    document.getElementById('contactSecretaryForm').reset();
+                } else {
+                    showToast('Error', data.message || 'Failed to send message.', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('Error', 'An error occurred. Please try again.', 'error');
+            });
     }
 
     // Modal chain handling for view -> contact
@@ -902,7 +903,7 @@ if ($settingsResult->num_rows > 0) {
         if (viewModal) {
             viewModal.hide();
         }
-        
+
         // Open contact modal after view modal closes
         setTimeout(() => {
             const contactModal = new bootstrap.Modal(document.getElementById('contactSecretaryModal'));
@@ -935,7 +936,7 @@ if ($settingsResult->num_rows > 0) {
                         }
                     }
                 });
-                
+
                 field.addEventListener('input', function() {
                     if (this.classList.contains('is-invalid') && isValidEmail(this.value)) {
                         this.classList.remove('is-invalid');
@@ -955,7 +956,7 @@ if ($settingsResult->num_rows > 0) {
             if (field) {
                 const maxLength = 500;
                 const counter = field.parentNode.querySelector('.form-text');
-                
+
                 if (counter) {
                     counter.textContent = `0/${maxLength} characters`;
                 }
@@ -965,7 +966,7 @@ if ($settingsResult->num_rows > 0) {
                     if (counter) {
                         counter.textContent = `${length}/${maxLength} characters`;
                     }
-                    
+
                     if (length > maxLength) {
                         this.classList.add('is-invalid');
                         if (counter) {
@@ -1000,7 +1001,7 @@ if ($settingsResult->num_rows > 0) {
     function setupModalCleanup() {
         const modalsToClean = [
             'appointSecretaryModal',
-            'replaceSecretaryModal', 
+            'replaceSecretaryModal',
             'removeSecretaryModal',
             'contactSecretaryModal'
         ];
@@ -1012,11 +1013,11 @@ if ($settingsResult->num_rows > 0) {
                     const form = this.querySelector('form');
                     if (form) {
                         form.reset();
-                        
+
                         // Remove validation classes
                         const invalidFields = form.querySelectorAll('.is-invalid');
                         invalidFields.forEach(field => field.classList.remove('is-invalid'));
-                        
+
                         // Remove feedback messages
                         const feedbacks = form.querySelectorAll('.invalid-feedback');
                         feedbacks.forEach(feedback => feedback.remove());
@@ -1052,7 +1053,7 @@ if ($settingsResult->num_rows > 0) {
         setupFormValidation();
         setupModalCleanup();
         setupToastCleanup();
-        
+
         // Handle view modal contact button click
         const viewModalContactBtn = document.querySelector('#viewSecretaryModal .btn-primary');
         if (viewModalContactBtn) {

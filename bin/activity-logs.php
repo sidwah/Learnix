@@ -13,7 +13,7 @@
     <!-- End Navbar -->
 
     <!-- Content -->
-    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-10">
+    <div class="navbar-sidebar-aside-content content-space-1 content-space-md-2 px-lg-5 px-xl-5">
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h3 mb-0">Activity Logs</h1>
