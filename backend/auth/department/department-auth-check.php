@@ -5,7 +5,7 @@ session_start();
 if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || 
     !isset($_SESSION['role']) || ($_SESSION['role'] !== 'department_head' && $_SESSION['role'] !== 'department_secretary')) {
     // Not logged in or not department staff, redirect to login page
-    header("Location: signin.php");
+    header("Location: ../../signin.php");
     exit;
 }
 
@@ -22,7 +22,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
     // Session has expired, destroy session and redirect to login
     session_unset();
     session_destroy();
-    header("Location: signin.php?timeout=1");
+    header("Location: ../department/signin.php?timeout=1");
     exit;
 }
 

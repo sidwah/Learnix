@@ -1,4 +1,5 @@
 <?php
+// backend/auth/department/signin.php
 session_start();
 
 header("Content-Type: application/json"); // Ensure JSON response format
@@ -318,6 +319,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $forcePasswordReset = (bool)$row['force_password_reset'];
                 
                 if ($forcePasswordReset) {
+                    // Mark invitation as used when secretary signs in for the first time
+                    if ($row['role'] === 'department_secretary') {
+                        $markInvitationUsed = $conn->prepare("UPDATE department_staff_invitations 
+                                                              SET is_used = 1 
+                                                              WHERE email = ? AND department_id = ? AND role = 'secretary' AND is_used = 0");
+                        $markInvitationUsed->bind_param("si", $email, $row['department_id']);
+                        $markInvitationUsed->execute();
+                    }
+                    
                     // Store temp user data and indicate password reset needed
                     $_SESSION['temp_user_id'] = $row['user_id'];
                     
@@ -370,6 +380,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     }
                 } else {
                     // MFA is disabled, complete login immediately
+                    
+                    // Mark invitation as used when login is complete
+                    if ($row['role'] === 'department_secretary') {
+                        $markInvitationUsed = $conn->prepare("UPDATE department_staff_invitations 
+                                                              SET is_used = 1 
+                                                              WHERE email = ? AND department_id = ? AND role = 'secretary' AND is_used = 0");
+                        $markInvitationUsed->bind_param("si", $email, $row['department_id']);
+                        $markInvitationUsed->execute();
+                    }
+                    
                     // Create session data
                     $_SESSION['user_id'] = $row['user_id'];
                     $_SESSION['email'] = $row['email'];

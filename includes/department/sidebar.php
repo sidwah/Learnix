@@ -163,15 +163,7 @@ $user_data = [
       </li>
       <?php endif; ?>
       
-      <?php if ($user_role === 'department_head'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="review-courses.php">Course Review & Approval</a>
-      </li>
-      <?php else: ?>
-      <li class="nav-item">
-        <a class="nav-link" href="track-reviews.php">Track Course Reviews</a>
-      </li>
-      <?php endif; ?>
+      
       
       <li class="nav-item">
         <a class="nav-link" href="enrollments.php">Course Enrollments</a>
@@ -206,11 +198,6 @@ $user_data = [
         <span class="nav-subtitle">Communication</span>
       </li>
       
-      <?php if ($user_role === 'department_head'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="create-announcement.php">Create Announcements</a>
-      </li>
-      <?php endif; ?>
       
       <li class="nav-item">
         <a class="nav-link" href="announcements.php">
@@ -282,44 +269,10 @@ $user_data = [
       <li class="nav-item">
         <a class="nav-link" href="documents.php">Documents</a>
       </li>
+    
       
-      <?php if ($user_role === 'department_secretary'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="document-management.php">Manage Documentation</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="schedule-management.php">Schedule</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="calendar-management.php">Calendar Management</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="filing-system.php">Filing System</a>
-      </li>
-      <?php endif; ?>
-      
-      <li class="nav-item">
-        <a class="nav-link" href="resources.php">Shared Resources</a>
-      </li>
 
       <li class="nav-item my-2 my-lg-5"></li>
-
-      <!-- Administrative Tools (Secretary specific) -->
-      <?php if ($user_role === 'department_secretary'): ?>
-      <li class="nav-item">
-        <span class="nav-subtitle">Administrative Tools</span>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="workflow-management.php">Workflow Management</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="task-coordination.php">Task Coordination</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="approval-tracking.php">Approval Tracking</a>
-      </li>
-      <li class="nav-item my-2 my-lg-5"></li>
-      <?php endif; ?>
 
       <!-- Profile & Support -->
       <li class="nav-item">
@@ -339,7 +292,7 @@ $user_data = [
         <a class="nav-link" href="help-center.php">Help Center</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="contact-admin.php">Contact Admin</a>
+        <a class="nav-link" href="report.php">Report</a>
       </li>
 
       <li class="nav-item my-2 my-lg-5"></li>
