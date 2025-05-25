@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                           COUNT(DISTINCT CASE WHEN sqa.passed = 1 THEN sq.quiz_id END) as passed_quizzes,
                           AVG(CASE WHEN sqa.score IS NOT NULL THEN sqa.score ELSE 0 END) as average_score
                        FROM course_sections cs
-                       LEFT JOIN section_quizzes sq ON cs.section_id = sq.section_id AND sq.deleted_at IS NULL
+                       LEFT JOIN section_quizzes sq ON cs.section_id = sq.section_id  
                        LEFT JOIN student_quiz_attempts sqa ON sq.quiz_id = sqa.quiz_id 
                            AND sqa.user_id = ? AND sqa.is_completed = 1 AND sqa.deleted_at IS NULL
                        WHERE cs.course_id = ? AND cs.deleted_at IS NULL";
