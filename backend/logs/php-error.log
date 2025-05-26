@@ -219,3 +219,54 @@ Stack trace:
     [course_id] => 173
 )
 
+[26-May-2025 07:46:09 UTC] Step: 1, Input: Array
+(
+    [title] => the title of the course
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 1-2 hours
+    [short_description] => the short description
+    [has_thumbnail] => true
+)
+
+[26-May-2025 07:46:09 UTC] Thumbnail file data: Array
+(
+    [name] => Credits _@_flourvx ON TikTok #onepiece #luffy #gear5 #roblucci #onepieceedit-2.jpg
+    [full_path] => Credits _@_flourvx ON TikTok #onepiece #luffy #gear5 #roblucci #onepieceedit-2.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpYlFgm6
+    [error] => 0
+    [size] => 52423
+)
+
+[26-May-2025 07:46:49 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p><span style="color: rgb(210, 204, 194); --darkreader-inline-color: #c6bfb4;" data-darkreader-inline-color="">this Wii be the full description this Wii be the full description this Wii be the full description this Wii be the full description this Wii be the full description this Wii be the full description this Wii be the full description this Wii be the full description this Wii be the full description this Wii be the full description </span></p>
+    [outcomes] => Array
+        (
+            [0] => the requirement 1
+        )
+
+    [requirements] => Array
+        (
+            [0] => the requirement 2
+        )
+
+    [course_id] => 174
+)
+
+[26-May-2025 07:46:49 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[26-May-2025 07:46:49 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[26-May-2025 07:46:53 UTC] Step: 3, Input: Array
+(
+    [price] => 0.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 0
+    [estimated_duration] => 1-2 hours
+    [course_id] => 174
+)
+

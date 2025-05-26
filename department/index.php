@@ -581,7 +581,7 @@
             <div class="col-xl-3 col-md-6">
                 <div class="metric-card">
                     <div class="metric-icon" style="background: var(--warning-soft); color: var(--warning);">
-                        <i class="bi bi-currency-dollar"></i>
+                        <span class="fs-4 fw-bold">₵</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-end">
                         <div>
@@ -1040,7 +1040,7 @@
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0 me-3">
                                         <div style="width: 32px; height: 32px; background: var(--info-soft); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="bi bi-currency-dollar" style="color: var(--info);"></i>
+                                            <span style="color: var(--info); font-weight: bold; font-size: 18px;">₵</span>
                                         </div>
                                     </div>
                                     <div class="flex-grow-1">

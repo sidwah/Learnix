@@ -1,4 +1,4 @@
-<?php 
+<?php
 include '../includes/department/header.php';
 
 // Check if user is logged in and has proper role
@@ -17,69 +17,72 @@ if (!$course_id) {
 
 try {
     $user_id = $_SESSION['user_id'];
-    
+
     // Get department info for the logged-in user
     $dept_query = "SELECT d.department_id, d.name as department_name 
                    FROM departments d 
                    INNER JOIN department_staff ds ON d.department_id = ds.department_id 
                    WHERE ds.user_id = ? AND ds.role = 'head' AND ds.status = 'active' AND ds.deleted_at IS NULL";
-    
+
     $dept_stmt = $conn->prepare($dept_query);
     $dept_stmt->bind_param("i", $user_id);
     $dept_stmt->execute();
     $dept_result = $dept_stmt->get_result();
-    
+
     if ($dept_result->num_rows === 0) {
         header('Location: ../auth/login.php');
         exit();
     }
-    
+
     $department = $dept_result->fetch_assoc();
     $department_id = $department['department_id'];
-    
+
     // Get course details with instructor information
     $course_query = "SELECT 
-                        c.*,
-                        sub.name as subcategory_name,
-                        cat.name as category_name,
-                        GROUP_CONCAT(
-                            CONCAT(u.first_name, ' ', u.last_name) 
-                            ORDER BY ci.is_primary DESC, u.first_name ASC 
-                            SEPARATOR ', '
-                        ) as instructor_names,
-                        GROUP_CONCAT(
-                            u.user_id 
-                            ORDER BY ci.is_primary DESC, u.first_name ASC 
-                            SEPARATOR ','
-                        ) as instructor_ids,
-                        COUNT(DISTINCT ci.instructor_id) as instructor_count
-                     FROM courses c
-                     LEFT JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
-                     LEFT JOIN categories cat ON sub.category_id = cat.category_id
-                     LEFT JOIN course_instructors ci ON c.course_id = ci.course_id AND ci.deleted_at IS NULL
-                     LEFT JOIN instructors i ON ci.instructor_id = i.instructor_id AND i.deleted_at IS NULL
-                     LEFT JOIN users u ON i.user_id = u.user_id AND u.deleted_at IS NULL
-                     WHERE c.course_id = ? AND c.department_id = ? AND c.deleted_at IS NULL
-                     GROUP BY c.course_id";
-    
+                    c.*,
+                    sub.name as subcategory_name,
+                    cat.name as category_name,
+                    GROUP_CONCAT(
+                        CONCAT(u.first_name, ' ', u.last_name) 
+                        ORDER BY ci.is_primary DESC, u.first_name ASC 
+                        SEPARATOR ', '
+                    ) as instructor_names,
+                    GROUP_CONCAT(
+                        u.user_id 
+                        ORDER BY ci.is_primary DESC, u.first_name ASC 
+                        SEPARATOR ','
+                    ) as instructor_ids,
+                    COUNT(DISTINCT ci.instructor_id) as instructor_count,
+                    GROUP_CONCAT(t.tag_name SEPARATOR ', ') as tags
+                 FROM courses c
+                 LEFT JOIN subcategories sub ON c.subcategory_id = sub.subcategory_id
+                 LEFT JOIN categories cat ON sub.category_id = cat.category_id
+                 LEFT JOIN course_instructors ci ON c.course_id = ci.course_id AND ci.deleted_at IS NULL
+                 LEFT JOIN instructors i ON ci.instructor_id = i.instructor_id AND i.deleted_at IS NULL
+                 LEFT JOIN users u ON i.user_id = u.user_id AND u.deleted_at IS NULL
+                 LEFT JOIN course_tag_mapping ctm ON c.course_id = ctm.course_id
+                 LEFT JOIN tags t ON ctm.tag_id = t.tag_id
+                 WHERE c.course_id = ? AND c.department_id = ? AND c.deleted_at IS NULL
+                 GROUP BY c.course_id";
+
     $course_stmt = $conn->prepare($course_query);
     $course_stmt->bind_param("ii", $course_id, $department_id);
     $course_stmt->execute();
     $course_result = $course_stmt->get_result();
-    
+
     if ($course_result->num_rows === 0) {
         header('Location: courses.php');
         exit();
     }
-    
+
     $course = $course_result->fetch_assoc();
-    
+
     // Check if course can be reviewed
     if (!in_array($course['approval_status'], ['submitted_for_review', 'under_review']) || empty($course['financial_approval_date'])) {
         header('Location: courses.php');
         exit();
     }
-    
+
     // Get course sections and topics with quizzes
     $sections_query = "SELECT 
                           cs.section_id,
@@ -111,13 +114,13 @@ try {
                        WHERE cs.course_id = ? AND cs.deleted_at IS NULL
                        GROUP BY cs.section_id
                        ORDER BY cs.position ASC";
-    
+
     $sections_stmt = $conn->prepare($sections_query);
     $sections_stmt->bind_param("i", $course_id);
     $sections_stmt->execute();
     $sections_result = $sections_stmt->get_result();
     $sections = $sections_result->fetch_all(MYSQLI_ASSOC);
-    
+
     // Get learning outcomes
     $outcomes_query = "SELECT outcome_text FROM course_learning_outcomes WHERE course_id = ? AND deleted_at IS NULL ORDER BY outcome_id";
     $outcomes_stmt = $conn->prepare($outcomes_query);
@@ -125,7 +128,7 @@ try {
     $outcomes_stmt->execute();
     $outcomes_result = $outcomes_stmt->get_result();
     $outcomes = $outcomes_result->fetch_all(MYSQLI_ASSOC);
-    
+
     // Get course requirements
     $requirements_query = "SELECT requirement_text FROM course_requirements WHERE course_id = ? AND deleted_at IS NULL ORDER BY requirement_id";
     $requirements_stmt = $conn->prepare($requirements_query);
@@ -133,20 +136,18 @@ try {
     $requirements_stmt->execute();
     $requirements_result = $requirements_stmt->get_result();
     $requirements = $requirements_result->fetch_all(MYSQLI_ASSOC);
-    
+
     // Get course detailed description
-    $description_query = "SELECT description_content FROM course_detailed_descriptions WHERE course_id = ? AND deleted_at IS NULL";
-    $description_stmt = $conn->prepare($description_query);
-    $description_stmt->bind_param("i", $course_id);
-    $description_stmt->execute();
-    $description_result = $description_stmt->get_result();
-    $course_description = $description_result->fetch_assoc();
-    
+    // Get course detailed description from the courses table (full_description)
+    $course_description = [
+        'description_content' => $course['full_description'] ?? ''
+    ];
+
     // Calculate review progress
     $total_sections = count($sections);
     $reviewed_sections = 0; // This would be calculated based on review tracking
     $progress_percentage = $total_sections > 0 ? ($reviewed_sections / $total_sections) * 100 : 0;
-    
+
     // Get instructor share for financial display
     $financial_query = "SELECT instructor_share FROM course_financial_history WHERE course_id = ? ORDER BY change_date DESC LIMIT 1";
     $financial_stmt = $conn->prepare($financial_query);
@@ -155,7 +156,6 @@ try {
     $financial_result = $financial_stmt->get_result();
     $financial_data = $financial_result->fetch_assoc();
     $instructor_share = $financial_data ? $financial_data['instructor_share'] : 70;
-    
 } catch (Exception $e) {
     error_log("Error fetching course review data: " . $e->getMessage());
     header('Location: courses.php');
@@ -163,14 +163,16 @@ try {
 }
 
 // Helper functions
-function getCourseThumbnail($thumbnail) {
+function getCourseThumbnail($thumbnail)
+{
     if (!empty($thumbnail) && file_exists("../uploads/thumbnails/" . $thumbnail)) {
         return "../uploads/thumbnails/" . $thumbnail;
     }
     return "../uploads/thumbnails/default.jpg";
 }
 
-function formatDuration($minutes) {
+function formatDuration($minutes)
+{
     if ($minutes < 60) {
         return $minutes . " mins";
     }
@@ -229,6 +231,17 @@ function formatDuration($minutes) {
                                     <i class="bi-currency-dollar me-1"></i>Financially Approved
                                 </span>
                             </div>
+                        </div>
+                        <!-- Tags -->
+                        <div class="mt-2">
+                            <span class="fw-medium me-2">Tags:</span>
+                            <?php if (!empty($course['tags'])): ?>
+                                <?php foreach (explode(', ', $course['tags']) as $tag): ?>
+                                    <span class="badge bg-soft-secondary text-secondary me-1"><?php echo htmlspecialchars($tag); ?></span>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <span class="text-muted">No tags assigned</span>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -360,63 +373,103 @@ function formatDuration($minutes) {
                                     <small class="text-white-75">Navigate through course content</small>
                                 </div>
                                 <div class="accordion" id="sectionsAccordion">
-                                    <?php foreach ($sections as $index => $section): 
+                                    <?php foreach ($sections as $index => $section):
                                         $topics = !empty($section['topics']) ? json_decode('[' . $section['topics'] . ']', true) : [];
                                         $quizzes = !empty($section['quizzes']) ? json_decode('[' . $section['quizzes'] . ']', true) : [];
                                         $section_status = 'pending'; // This would be determined by review tracking
                                         $is_expanded = $index === 0; // First section expanded by default
                                         $total_items = count($topics) + count($quizzes);
                                     ?>
-                                    <div class="accordion-item border-0 border-bottom">
-                                        <h2 class="accordion-header" id="heading<?php echo $section['section_id']; ?>">
-                                            <button class="accordion-button <?php echo $is_expanded ? '' : 'collapsed'; ?> section-header" type="button" data-bs-toggle="collapse" data-bs-target="#section<?php echo $section['section_id']; ?>" aria-expanded="<?php echo $is_expanded ? 'true' : 'false'; ?>" aria-controls="section<?php echo $section['section_id']; ?>">
-                                                <div class="d-flex align-items-center w-100">
-                                                    <?php if ($section_status === 'completed'): ?>
-                                                        <span class="badge bg-soft-success text-success me-3">
-                                                            <i class="bi-check-circle"></i>
-                                                        </span>
-                                                    <?php elseif ($section_status === 'current'): ?>
-                                                        <span class="badge bg-primary me-3">
-                                                            <i class="bi-eye"></i>
-                                                        </span>
-                                                    <?php else: ?>
-                                                        <span class="badge bg-soft-secondary text-secondary me-3">
-                                                            <i class="bi-clock"></i>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <span class="flex-grow-1 fw-medium"><?php echo htmlspecialchars($section['section_title']); ?></span>
-                                                    <small class="text-muted"><?php echo $total_items; ?> items</small>
-                                                </div>
-                                            </button>
-                                        </h2>
-                                        <div id="section<?php echo $section['section_id']; ?>" class="accordion-collapse collapse <?php echo $is_expanded ? 'show' : ''; ?>" aria-labelledby="heading<?php echo $section['section_id']; ?>" data-bs-parent="#sectionsAccordion">
-                                            <div class="accordion-body pt-0">
-                                                <div class="topic-list">
-                                                    <?php 
-                                                    // Combine topics and quizzes and sort them
-                                                    $all_items = array_merge($topics, $quizzes);
-                                                    
-                                                    foreach ($all_items as $item): 
-                                                        $is_quiz = $item['type'] === 'quiz';
-                                                        $item_id = $is_quiz ? $item['quiz_id'] : $item['topic_id'];
-                                                        $click_function = $is_quiz ? "loadQuiz({$item_id})" : "loadTopic({$item_id})";
-                                                        $icon = $is_quiz ? 'bi-question-circle' : 'bi-play';
-                                                    ?>
-                                                        <div class="topic-item" data-item-id="<?php echo $item_id; ?>" data-item-type="<?php echo $item['type']; ?>" onclick="<?php echo $click_function; ?>">
-                                                            <div class="d-flex align-items-center">
-                                                                <i class="<?php echo $icon; ?> me-2"></i>
-                                                                <span class="flex-grow-1"><?php echo htmlspecialchars($item['title']); ?></span>
-                                                                <?php if ($is_quiz): ?>
-                                                                    <span class="badge bg-soft-info text-info me-2 small">Quiz</span>
-                                                                <?php endif; ?>
-                                                                <span class="topic-status"><i class="bi-circle text-muted"></i></span>
-                                                            </div>
-                                                        </div>
-                                                    <?php endforeach; ?>
+                                        <div class="accordion-item border-0 border-bottom">
+                                            <h2 class="accordion-header" id="heading<?php echo $section['section_id']; ?>">
+                                                <button class="accordion-button <?php echo $is_expanded ? '' : 'collapsed'; ?> section-header" type="button" data-bs-toggle="collapse" data-bs-target="#section<?php echo $section['section_id']; ?>" aria-expanded="<?php echo $is_expanded ? 'true' : 'false'; ?>" aria-controls="section<?php echo $section['section_id']; ?>">
+                                                    <div class="d-flex align-items-center w-100">
+                                                        <?php if ($section_status === 'completed'): ?>
+                                                            <span class="badge bg-soft-success text-success me-3">
+                                                                <i class="bi-check-circle"></i>
+                                                            </span>
+                                                        <?php elseif ($section_status === 'current'): ?>
+                                                            <span class="badge bg-primary me-3">
+                                                                <i class="bi-eye"></i>
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-soft-secondary text-secondary me-3">
+                                                                <i class="bi-clock"></i>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                        <span class="flex-grow-1 fw-medium"><?php echo htmlspecialchars($section['section_title']); ?></span>
+                                                        <small class="text-muted"><?php echo $total_items; ?> items</small>
+                                                    </div>
+                                                </button>
+                                            </h2>
+                                            <div id="section<?php echo $section['section_id']; ?>" class="accordion-collapse collapse <?php echo $is_expanded ? 'show' : ''; ?>" aria-labelledby="heading<?php echo $section['section_id']; ?>" data-bs-parent="#sectionsAccordion">
+                                                <div class="accordion-body pt-0">
+                                                    <div class="topic-list">
+                                                        <?php
+                                                        // Separate topics and quizzes, sort each by created_at, then merge (topics first)
+                                                        $sorted_topics = [];
+                                                        $sorted_quizzes = [];
+
+                                                        if (is_array($topics) && count($topics) > 0) {
+                                                            // Sort topics by created_at ASC
+                                                            usort($topics, function($a, $b) {
+                                                                $a_time = isset($a['created_at']) ? strtotime($a['created_at']) : 0;
+                                                                $b_time = isset($b['created_at']) ? strtotime($b['created_at']) : 0;
+                                                                return $a_time - $b_time;
+                                                            });
+                                                            foreach ($topics as $t) {
+                                                                if ($t !== null) $sorted_topics[] = $t;
+                                                            }
+                                                        }
+                                                        if (is_array($quizzes) && count($quizzes) > 0) {
+                                                            // Sort quizzes by created_at ASC
+                                                            usort($quizzes, function($a, $b) {
+                                                                $a_time = isset($a['created_at']) ? strtotime($a['created_at']) : 0;
+                                                                $b_time = isset($b['created_at']) ? strtotime($b['created_at']) : 0;
+                                                                return $a_time - $b_time;
+                                                            });
+                                                            foreach ($quizzes as $q) {
+                                                                if ($q !== null) $sorted_quizzes[] = $q;
+                                                            }
+                                                        }
+
+                                                        // Merge: topics first, then quizzes
+                                                        $all_items = array_merge($sorted_topics, $sorted_quizzes);
+
+                                                        if (empty($all_items)) {
+                                                            echo '<div class="text-muted text-center py-3">No topics or quizzes in this section.</div>';
+                                                        } else {
+                                                            foreach ($all_items as $item):
+                                                                if ($item === null) continue;
+                                                                $is_quiz = isset($item['type']) && $item['type'] === 'quiz';
+                                                                $item_id = $is_quiz ? ($item['quiz_id'] ?? null) : ($item['topic_id'] ?? null);
+                                                                $item_title = $item['title'] ?? ($is_quiz ? ($item['quiz_title'] ?? 'Untitled Quiz') : 'Untitled Topic');
+                                                                $click_function = $is_quiz
+                                                                    ? ($item_id !== null ? "loadQuiz({$item_id})" : '')
+                                                                    : ($item_id !== null ? "loadTopic({$item_id})" : '');
+                                                                $icon = $is_quiz ? 'bi-question-circle' : 'bi-play';
+
+                                                                // If item_id is null, skip rendering this item
+                                                                if ($item_id === null) continue;
+                                                        ?>
+                                                                <div class="topic-item" data-item-id="<?php echo $item_id; ?>" data-item-type="<?php echo $is_quiz ? 'quiz' : 'topic'; ?>" <?php if ($click_function) echo 'onclick="' . $click_function . '"'; ?>>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <i class="<?php echo $icon; ?> me-2"></i>
+                                                                        <span class="flex-grow-1"><?php echo htmlspecialchars($item_title); ?></span>
+                                                                        <?php if ($is_quiz): ?>
+                                                                            <span class="badge bg-soft-info text-info me-2 small">Quiz</span>
+                                                                        <?php endif; ?>
+                                                                        <span class="topic-status"><i class="bi-circle text-muted"></i></span>
+                                                                    </div>
+                                                                </div>
+                                                        <?php
+                                                            endforeach;
+                                                        }
+                                                        ?>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
                                     <?php endforeach; ?>
                                 </div>
                             </div>
@@ -902,6 +955,7 @@ function formatDuration($minutes) {
             opacity: 0;
             transform: translateY(20px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -912,9 +966,11 @@ function formatDuration($minutes) {
         0% {
             box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
         }
+
         70% {
             box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
         }
+
         100% {
             box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
         }
@@ -1227,98 +1283,98 @@ function formatDuration($minutes) {
     }
 
     /* Text Content Styling */
-.text-content {
-    background-color: white;
-}
+    .text-content {
+        background-color: white;
+    }
 
-.topic-text-content {
-    font-size: 1rem;
-    line-height: 1.8;
-    color: #495057;
-}
+    .topic-text-content {
+        font-size: 1rem;
+        line-height: 1.8;
+        color: #495057;
+    }
 
-.topic-text-content h1,
-.topic-text-content h2,
-.topic-text-content h3,
-.topic-text-content h4,
-.topic-text-content h5,
-.topic-text-content h6 {
-    color: #1e2022;
-    margin-top: 1.5rem;
-    margin-bottom: 1rem;
-    font-weight: 600;
-}
+    .topic-text-content h1,
+    .topic-text-content h2,
+    .topic-text-content h3,
+    .topic-text-content h4,
+    .topic-text-content h5,
+    .topic-text-content h6 {
+        color: #1e2022;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
 
-.topic-text-content p {
-    margin-bottom: 1rem;
-}
+    .topic-text-content p {
+        margin-bottom: 1rem;
+    }
 
-.topic-text-content ul,
-.topic-text-content ol {
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
-}
+    .topic-text-content ul,
+    .topic-text-content ol {
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+    }
 
-.topic-text-content li {
-    margin-bottom: 0.5rem;
-}
+    .topic-text-content li {
+        margin-bottom: 0.5rem;
+    }
 
-.topic-text-content blockquote {
-    border-left: 4px solid #377dff;
-    padding-left: 1rem;
-    margin: 1rem 0;
-    font-style: italic;
-    color: #6c757d;
-}
+    .topic-text-content blockquote {
+        border-left: 4px solid #377dff;
+        padding-left: 1rem;
+        margin: 1rem 0;
+        font-style: italic;
+        color: #6c757d;
+    }
 
-.topic-text-content img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin: 1rem 0;
-}
+    .topic-text-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 1rem 0;
+    }
 
-.topic-text-content code {
-    background-color: #f8f9fa;
-    padding: 0.2rem 0.4rem;
-    border-radius: 3px;
-    font-size: 0.9em;
-    color: #e83e8c;
-}
+    .topic-text-content code {
+        background-color: #f8f9fa;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-size: 0.9em;
+        color: #e83e8c;
+    }
 
-.topic-text-content pre {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin: 1rem 0;
-}
+    .topic-text-content pre {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 1rem 0;
+    }
 
-.topic-text-content strong {
-    font-weight: 600;
-}
+    .topic-text-content strong {
+        font-weight: 600;
+    }
 
-.topic-text-content em {
-    font-style: italic;
-}
+    .topic-text-content em {
+        font-style: italic;
+    }
 
-.topic-text-content table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1rem 0;
-}
+    .topic-text-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }
 
-.topic-text-content th,
-.topic-text-content td {
-    border: 1px solid #dee2e6;
-    padding: 0.75rem;
-    text-align: left;
-}
+    .topic-text-content th,
+    .topic-text-content td {
+        border: 1px solid #dee2e6;
+        padding: 0.75rem;
+        text-align: left;
+    }
 
-.topic-text-content th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-}
+    .topic-text-content th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
 
     /* Responsive Design */
     @media (max-width: 992px) {
@@ -1418,31 +1474,31 @@ function formatDuration($minutes) {
 
         // Load topic content via AJAX
         fetch('../backend/department/get_topic_content.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                topic_id: topicId,
-                course_id: courseId
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    topic_id: topicId,
+                    course_id: courseId
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            
-            if (data.success) {
-                displayTopicContent(data.topic);
-                showToast('Topic loaded successfully', 'success');
-            } else {
-                showToast(data.message || 'Failed to load topic', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('An error occurred while loading the topic', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+
+                if (data.success) {
+                    displayTopicContent(data.topic);
+                    showToast('Topic loaded successfully', 'success');
+                } else {
+                    showToast(data.message || 'Failed to load topic', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('An error occurred while loading the topic', 'error');
+            });
     }
 
     function loadQuiz(quizId) {
@@ -1468,37 +1524,37 @@ function formatDuration($minutes) {
 
         // Load quiz content via AJAX
         fetch('../backend/department/get_quiz_content.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                quiz_id: quizId,
-                course_id: courseId
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    quiz_id: quizId,
+                    course_id: courseId
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            
-            if (data.success) {
-                displayQuizContent(data.quiz);
-                showToast('Quiz loaded successfully', 'success');
-            } else {
-                showToast(data.message || 'Failed to load quiz', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('An error occurred while loading the quiz', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+
+                if (data.success) {
+                    displayQuizContent(data.quiz);
+                    showToast('Quiz loaded successfully', 'success');
+                } else {
+                    showToast(data.message || 'Failed to load quiz', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('An error occurred while loading the quiz', 'error');
+            });
     }
 
     function displayTopicContent(topic) {
-    const contentMain = document.querySelector('.content-main');
-    
-    let contentHtml = `
+        const contentMain = document.querySelector('.content-main');
+
+        let contentHtml = `
         <div class="content-header bg-white p-4 border-bottom">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -1514,13 +1570,13 @@ function formatDuration($minutes) {
         </div>
     `;
 
-    // Main content area based on type
-    if (topic.content_type === 'video') {
-        if (topic.video_url) {
-            // Convert YouTube URLs to embed format
-            let embedUrl = convertToEmbedUrl(topic.video_url);
-            
-            contentHtml += `
+        // Main content area based on type
+        if (topic.content_type === 'video') {
+            if (topic.video_url) {
+                // Convert YouTube URLs to embed format
+                let embedUrl = convertToEmbedUrl(topic.video_url);
+
+                contentHtml += `
                 <div class="video-container">
                     <div class="ratio ratio-16x9">
                         <iframe src="${embedUrl}" 
@@ -1531,9 +1587,9 @@ function formatDuration($minutes) {
                     </div>
                 </div>
             `;
-        } else if (topic.video_file) {
-            // For uploaded video files
-            contentHtml += `
+            } else if (topic.video_file) {
+                // For uploaded video files
+                contentHtml += `
                 <div class="video-container">
                     <div class="ratio">
                         <video controls class="video-player">
@@ -1543,10 +1599,10 @@ function formatDuration($minutes) {
                     </div>
                 </div>
             `;
-        }
-    } else if (topic.content_type === 'document') {
-        if (topic.file_path) {
-            contentHtml += `
+            }
+        } else if (topic.content_type === 'document') {
+            if (topic.file_path) {
+                contentHtml += `
                 <div class="document-container p-4">
                     <div class="card">
                         <div class="card-body text-center">
@@ -1562,10 +1618,10 @@ function formatDuration($minutes) {
                     </div>
                 </div>
             `;
-        }
-    } else if (topic.content_type === 'link') {
-        if (topic.external_url) {
-            contentHtml += `
+            }
+        } else if (topic.content_type === 'link') {
+            if (topic.external_url) {
+                contentHtml += `
                 <div class="link-container p-4">
                     <div class="card">
                         <div class="card-body text-center">
@@ -1581,20 +1637,20 @@ function formatDuration($minutes) {
                     </div>
                 </div>
             `;
-        }
-    } else if (topic.content_type === 'text') {
-        // For text content, display it as the main content
-        contentHtml += `
+            }
+        } else if (topic.content_type === 'text') {
+            // For text content, display it as the main content
+            contentHtml += `
             <div class="text-content p-4">
                 <div class="content-body">
                     ${topic.content_text ? `<div class="topic-text-content">${topic.content_text}</div>` : '<p class="text-muted">No text content available for this topic.</p>'}
                 </div>
             </div>
         `;
-    }
+        }
 
-    // Add content tabs
-    contentHtml += `
+        // Add content tabs
+        contentHtml += `
         <div class="content-tabs">
             <ul class="nav nav-tabs" id="contentTabs" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -1648,36 +1704,36 @@ function formatDuration($minutes) {
         </div>
     `;
 
-    contentMain.innerHTML = contentHtml;
-}
+        contentMain.innerHTML = contentHtml;
+    }
 
-// Add this function to convert YouTube URLs to embed format
-function convertToEmbedUrl(url) {
-    // Handle different YouTube URL formats
-    let embedUrl = url;
-    
-    // Standard YouTube watch URL
-    if (url.includes('youtube.com/watch?v=')) {
-        const videoId = url.split('v=')[1].split('&')[0];
-        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    // Add this function to convert YouTube URLs to embed format
+    function convertToEmbedUrl(url) {
+        // Handle different YouTube URL formats
+        let embedUrl = url;
+
+        // Standard YouTube watch URL
+        if (url.includes('youtube.com/watch?v=')) {
+            const videoId = url.split('v=')[1].split('&')[0];
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+        // YouTube short URL
+        else if (url.includes('youtu.be/')) {
+            const videoId = url.split('youtu.be/')[1].split('?')[0];
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+        // Vimeo URL
+        else if (url.includes('vimeo.com/')) {
+            const videoId = url.split('vimeo.com/')[1].split('/')[0];
+            embedUrl = `https://player.vimeo.com/video/${videoId}`;
+        }
+
+        return embedUrl;
     }
-    // YouTube short URL
-    else if (url.includes('youtu.be/')) {
-        const videoId = url.split('youtu.be/')[1].split('?')[0];
-        embedUrl = `https://www.youtube.com/embed/${videoId}`;
-    }
-    // Vimeo URL
-    else if (url.includes('vimeo.com/')) {
-        const videoId = url.split('vimeo.com/')[1].split('/')[0];
-        embedUrl = `https://player.vimeo.com/video/${videoId}`;
-    }
-    
-    return embedUrl;
-}
 
     function displayQuizContent(quiz) {
         const contentMain = document.querySelector('.content-main');
-        
+
         let contentHtml = `
             <div class="content-header bg-white p-4 border-bottom">
                 <div class="d-flex justify-content-between align-items-center">
@@ -1801,14 +1857,14 @@ function convertToEmbedUrl(url) {
     }
 
     function getContentTypeIcon(type) {
-    const icons = {
-        'video': 'play-circle',
-        'text': 'file-text',
-        'link': 'link-45deg',
-        'document': 'file-earmark'
-    };
-    return icons[type] || 'file-text';
-}
+        const icons = {
+            'video': 'play-circle',
+            'text': 'file-text',
+            'link': 'link-45deg',
+            'document': 'file-earmark'
+        };
+        return icons[type] || 'file-text';
+    }
 
     function approveCourse() {
         const modal = new bootstrap.Modal(document.getElementById('approvalModal'));
@@ -1817,39 +1873,39 @@ function convertToEmbedUrl(url) {
 
     function confirmApproval() {
         const comments = document.getElementById('approvalComments').value;
-        
+
         showOverlay('Approving course...');
-        
+
         fetch('../backend/department/review_course.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                course_id: courseId,
-                action: 'approve',
-                comments: comments
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    action: 'approve',
+                    comments: comments
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
-            
-            if (data.success) {
-                showToast('Course approved successfully! Instructor has been notified.', 'success');
-                setTimeout(() => {
-                    window.location.href = 'courses.php';
-                }, 2000);
-            } else {
-                showToast(data.message || 'Failed to approve course', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('An error occurred while approving the course', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+                bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+
+                if (data.success) {
+                    showToast('Course approved successfully! Instructor has been notified.', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'courses.php';
+                    }, 2000);
+                } else {
+                    showToast(data.message || 'Failed to approve course', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('An error occurred while approving the course', 'error');
+            });
     }
 
     function requestRevisions() {
@@ -1869,40 +1925,40 @@ function convertToEmbedUrl(url) {
         showOverlay('Sending revision request...');
 
         fetch('../backend/department/review_course.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                course_id: courseId,
-                action: 'request_revisions',
-                feedback: feedback,
-                priority: priority
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    action: 'request_revisions',
+                    feedback: feedback,
+                    priority: priority
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            bootstrap.Modal.getInstance(document.getElementById('revisionModal')).hide();
-            
-            if (data.success) {
-                showToast('Revision request sent to instructor with your feedback.', 'info');
-                
-                // Clear form
-                document.getElementById('revisionFeedback').value = '';
-                
-                setTimeout(() => {
-                    window.location.href = 'courses.php';
-                }, 2000);
-            } else {
-                showToast(data.message || 'Failed to send revision request', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('An error occurred while sending revision request', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+                bootstrap.Modal.getInstance(document.getElementById('revisionModal')).hide();
+
+                if (data.success) {
+                    showToast('Revision request sent to instructor with your feedback.', 'info');
+
+                    // Clear form
+                    document.getElementById('revisionFeedback').value = '';
+
+                    setTimeout(() => {
+                        window.location.href = 'courses.php';
+                    }, 2000);
+                } else {
+                    showToast(data.message || 'Failed to send revision request', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('An error occurred while sending revision request', 'error');
+            });
     }
 
     function rejectCourse() {
@@ -1921,67 +1977,67 @@ function convertToEmbedUrl(url) {
         showOverlay('Rejecting course...');
 
         fetch('../backend/department/review_course.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                course_id: courseId,
-                action: 'reject',
-                reason: reason
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    action: 'reject',
+                    reason: reason
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            removeOverlay();
-            bootstrap.Modal.getInstance(document.getElementById('rejectionModal')).hide();
-            
-            if (data.success) {
-                showToast('Course has been rejected. Instructor has been notified.', 'error');
-                
-                // Clear form
-                document.getElementById('rejectionReason').value = '';
-                
-                setTimeout(() => {
-                    window.location.href = 'courses.php';
-                }, 2000);
-            } else {
-                showToast(data.message || 'Failed to reject course', 'error');
-            }
-        })
-        .catch(error => {
-            removeOverlay();
-            console.error('Error:', error);
-            showToast('An error occurred while rejecting the course', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                removeOverlay();
+                bootstrap.Modal.getInstance(document.getElementById('rejectionModal')).hide();
+
+                if (data.success) {
+                    showToast('Course has been rejected. Instructor has been notified.', 'error');
+
+                    // Clear form
+                    document.getElementById('rejectionReason').value = '';
+
+                    setTimeout(() => {
+                        window.location.href = 'courses.php';
+                    }, 2000);
+                } else {
+                    showToast(data.message || 'Failed to reject course', 'error');
+                }
+            })
+            .catch(error => {
+                removeOverlay();
+                console.error('Error:', error);
+                showToast('An error occurred while rejecting the course', 'error');
+            });
     }
 
     function loadReviewNotes() {
         fetch('../backend/department/get_review_notes.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                course_id: courseId
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    course_id: courseId
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                reviewNotes = data.notes;
-                displayReviewNotes();
-                updateNoteCount();
-            }
-        })
-        .catch(error => {
-            console.error('Error loading review notes:', error);
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    reviewNotes = data.notes;
+                    displayReviewNotes();
+                    updateNoteCount();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading review notes:', error);
+            });
     }
 
     function displayReviewNotes() {
         const notesList = document.getElementById('reviewNotesList');
-        
+
         if (reviewNotes.length === 0) {
             notesList.innerHTML = `
                 <div class="text-center py-4">
@@ -2031,7 +2087,7 @@ function convertToEmbedUrl(url) {
     // Add note form handler
     document.getElementById('addNoteForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        
+
         const noteType = document.getElementById('noteType').value;
         const noteContent = document.getElementById('noteContent').value;
 
@@ -2041,36 +2097,36 @@ function convertToEmbedUrl(url) {
         }
 
         fetch('../backend/department/add_review_note.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                course_id: courseId,
-                topic_id: currentTopicId,
-                quiz_id: currentQuizId,
-                note_type: noteType,
-                note_content: noteContent
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    course_id: courseId,
+                    topic_id: currentTopicId,
+                    quiz_id: currentQuizId,
+                    note_type: noteType,
+                    note_content: noteContent
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Review note added successfully', 'success');
-                
-                // Clear form
-                document.getElementById('noteContent').value = '';
-                
-                // Reload notes
-                loadReviewNotes();
-            } else {
-                showToast(data.message || 'Failed to add note', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('An error occurred while adding the note', 'error');
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Review note added successfully', 'success');
+
+                    // Clear form
+                    document.getElementById('noteContent').value = '';
+
+                    // Reload notes
+                    loadReviewNotes();
+                } else {
+                    showToast(data.message || 'Failed to add note', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred while adding the note', 'error');
+            });
     });
 
     function showToast(message, type = 'info') {
