@@ -464,7 +464,7 @@ try {
                                     </div>
                                 </div>
                                 <div class="col-auto">
-                                    <span class="badge bg-soft-primary p-2">
+                                    <span class="bg-soft-primary p-2">
                                         <i class="bi-people fs-3"></i>
                                     </span>
                                 </div>
@@ -485,7 +485,7 @@ try {
                                     </div>
                                 </div>
                                 <div class="col-auto">
-                                    <span class="badge bg-soft-primary p-2">
+                                    <span class="bg-soft-primary p-2">
                                         <i class="bi-book fs-3"></i>
                                     </span>
                                 </div>
@@ -506,9 +506,10 @@ try {
                                     </div>
                                 </div>
                                 <div class="col-auto">
-                                    <span class="badge bg-soft-primary p-2">
-                                        <i class="bi-currency-dollar fs-3"></i>
+                                    <span class="bg-soft-primary p-2">
+                                        <span class="fs-3">₵</span>
                                     </span>
+
                                 </div>
                             </div>
                         </div>
@@ -527,7 +528,7 @@ try {
                                     </div>
                                 </div>
                                 <div class="col-auto">
-                                    <span class="badge bg-soft-primary p-2">
+                                    <span class="bg-soft-primary p-2">
                                         <i class="bi-check-circle fs-3"></i>
                                     </span>
                                 </div>

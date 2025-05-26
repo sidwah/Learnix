@@ -1,211 +1,203 @@
-[24-May-2025 18:16:07 UTC] Step: 1, Input: Array
+[26-May-2025 00:34:37 UTC] Step: 1, Input: Array
 (
-    [title] => test
-    [category_id] => 4
-    [subcategory_id] => 12
-    [course_level] => Beginner
-    [estimated_duration] => Less than 1 hour
-    [short_description] => the short description
+    [title] => test 112
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => the description
     [has_thumbnail] => true
+    [course_id] => 173
 )
 
-[24-May-2025 18:16:07 UTC] Thumbnail file data: Array
+[26-May-2025 00:34:37 UTC] Thumbnail file data: Array
 (
-    [name] => pexels-punttim-52608.jpg
-    [full_path] => pexels-punttim-52608.jpg
+    [name] => 3d render Glassy background modern Glass Morphism style | Premium PSD.jpg
+    [full_path] => 3d render Glassy background modern Glass Morphism style | Premium PSD.jpg
     [type] => image/jpeg
-    [tmp_name] => /Applications/MAMP/tmp/php/phpQnSsJD
+    [tmp_name] => /Applications/MAMP/tmp/php/phpM0SuN2
     [error] => 0
-    [size] => 123591
+    [size] => 18317
 )
 
-[24-May-2025 18:16:36 UTC] Step: 2, Input: Array
+[26-May-2025 00:34:37 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:248
+Stack trace:
+#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(248): mysqli_stmt->bind_param('ssssdsi', 'test 112', 'the description', '88', 'Intermediate', 0.0, 'course_17482196...', '173', 5)
+#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(86): saveStep1(Object(mysqli), Array, 5)
+#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(55): handleStep(Object(mysqli), '1', 5, 81)
+#3 {main}
+  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 248
+[26-May-2025 00:36:24 UTC] Step: 1, Input: Array
 (
-    [full_description] => <p>this is the full description</p>
+    [title] => test 112
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => the description
+    [has_thumbnail] => true
+    [course_id] => 173
+)
+
+[26-May-2025 00:36:24 UTC] Thumbnail file data: Array
+(
+    [name] => 3d render Glassy background modern Glass Morphism style | Premium PSD.jpg
+    [full_path] => 3d render Glassy background modern Glass Morphism style | Premium PSD.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpp0ahd1
+    [error] => 0
+    [size] => 18317
+)
+
+[26-May-2025 00:36:40 UTC] Step: 1, Input: Array
+(
+    [title] => test 112
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => the description
+    [has_thumbnail] => true
+    [course_id] => 173
+)
+
+[26-May-2025 00:36:40 UTC] Thumbnail file data: Array
+(
+    [name] => Premium PSD | Glass Morphism.jpg
+    [full_path] => Premium PSD | Glass Morphism.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpklmN6A
+    [error] => 0
+    [size] => 24283
+)
+
+[26-May-2025 00:37:51 UTC] Step: 1, Input: Array
+(
+    [title] => test 112
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 3-5 hours
+    [short_description] => the description
+    [has_thumbnail] => 
+    [course_id] => 173
+)
+
+[26-May-2025 00:37:58 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p>the description</p>
     [outcomes] => Array
         (
-            [0] => the learning outcome
+            [0] => the 1
         )
 
     [requirements] => Array
         (
-            [0] => the learning requirement
+            [0] => the 1
         )
 
-    [course_id] => 171
+    [course_id] => 173
 )
 
-[24-May-2025 18:16:36 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
-[24-May-2025 18:16:36 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
-[24-May-2025 18:16:48 UTC] Step: 3, Input: Array
+[26-May-2025 00:37:58 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[26-May-2025 00:37:58 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[26-May-2025 00:38:06 UTC] Step: 3, Input: Array
 (
-    [price] => 600
+    [price] => 10.00
     [access_level] => Public
     [visibility] => Public
     [enrollment_limit] => 
     [access_password] => 
     [certificate_enabled] => 0
-    [estimated_duration] => Less than 1 hour
-    [course_id] => 171
+    [estimated_duration] => 3-5 hours
+    [course_id] => 173
 )
 
-[24-May-2025 18:18:34 UTC] Step: 1, Input: Array
+[26-May-2025 00:44:50 UTC] Step: 1, Input: Array
 (
-    [title] => test 2
-    [category_id] => 4
-    [subcategory_id] => 12
-    [course_level] => Advanced
-    [estimated_duration] => 1-2 hours
-    [short_description] => the test
-    [has_thumbnail] => true
-)
-
-[24-May-2025 18:18:34 UTC] Thumbnail file data: Array
-(
-    [name] => pexels-luis-gomes-166706-546819.jpg
-    [full_path] => pexels-luis-gomes-166706-546819.jpg
-    [type] => image/jpeg
-    [tmp_name] => /Applications/MAMP/tmp/php/phpgKGwQ4
-    [error] => 0
-    [size] => 553617
-)
-
-[24-May-2025 18:18:50 UTC] Step: 2, Input: Array
-(
-    [full_description] => <p>the full description</p>
-    [outcomes] => Array
-        (
-            [0] => the outcome
-        )
-
-    [requirements] => Array
-        (
-            [0] => the outcome
-        )
-
-    [course_id] => 172
-)
-
-[24-May-2025 18:18:50 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
-[24-May-2025 18:18:50 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
-[24-May-2025 18:19:04 UTC] Step: 1, Input: Array
-(
-    [title] => test 2
-    [category_id] => 4
-    [subcategory_id] => 12
-    [course_level] => Advanced
-    [estimated_duration] => 1-2 hours
-    [short_description] => the test
-    [has_thumbnail] => true
-    [course_id] => 172
-)
-
-[24-May-2025 18:19:04 UTC] Thumbnail file data: Array
-(
-    [name] => pexels-luis-gomes-166706-546819.jpg
-    [full_path] => pexels-luis-gomes-166706-546819.jpg
-    [type] => image/jpeg
-    [tmp_name] => /Applications/MAMP/tmp/php/php5iu6HL
-    [error] => 0
-    [size] => 553617
-)
-
-[24-May-2025 18:19:04 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:222
-Stack trace:
-#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(222): mysqli_stmt->bind_param('ssssdsi', 'test 2', 'the test', '12', 'Advanced', 0.0, 'course_17481107...', '172', 5)
-#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(86): saveStep1(Object(mysqli), Array, 5)
-#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(55): handleStep(Object(mysqli), '1', 5, 81)
-#3 {main}
-  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 222
-[24-May-2025 18:19:08 UTC] Step: 1, Input: Array
-(
-    [title] => test 2
-    [category_id] => 4
-    [subcategory_id] => 12
-    [course_level] => Advanced
-    [estimated_duration] => 1-2 hours
-    [short_description] => the test
-    [has_thumbnail] => true
-    [course_id] => 172
-)
-
-[24-May-2025 18:19:08 UTC] Thumbnail file data: Array
-(
-    [name] => pexels-luis-gomes-166706-546819.jpg
-    [full_path] => pexels-luis-gomes-166706-546819.jpg
-    [type] => image/jpeg
-    [tmp_name] => /Applications/MAMP/tmp/php/phpJSpTTL
-    [error] => 0
-    [size] => 553617
-)
-
-[24-May-2025 18:19:08 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:222
-Stack trace:
-#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(222): mysqli_stmt->bind_param('ssssdsi', 'test 2', 'the test', '12', 'Advanced', 0.0, 'course_17481107...', '172', 5)
-#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(86): saveStep1(Object(mysqli), Array, 5)
-#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(55): handleStep(Object(mysqli), '1', 5, 81)
-#3 {main}
-  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 222
-[24-May-2025 18:19:17 UTC] Step: 1, Input: Array
-(
-    [title] => test 2
-    [category_id] => 4
-    [subcategory_id] => 12
-    [course_level] => Advanced
-    [estimated_duration] => 1-2 hours
-    [short_description] => the test
-    [has_thumbnail] => true
-    [course_id] => 172
-)
-
-[24-May-2025 18:19:17 UTC] Thumbnail file data: Array
-(
-    [name] => pexels-luis-gomes-166706-546819.jpg
-    [full_path] => pexels-luis-gomes-166706-546819.jpg
-    [type] => image/jpeg
-    [tmp_name] => /Applications/MAMP/tmp/php/phplpf3wr
-    [error] => 0
-    [size] => 553617
-)
-
-[24-May-2025 18:19:17 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php:222
-Stack trace:
-#0 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(222): mysqli_stmt->bind_param('ssssdsi', 'test 2', 'the test', '12', 'Advanced', 0.0, 'course_17481107...', '172', 5)
-#1 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(86): saveStep1(Object(mysqli), Array, 5)
-#2 /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php(55): handleStep(Object(mysqli), '1', 5, 81)
-#3 {main}
-  thrown in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 222
-[24-May-2025 18:19:38 UTC] Step: 1, Input: Array
-(
-    [title] => test 2
-    [category_id] => 4
-    [subcategory_id] => 12
-    [course_level] => Advanced
-    [estimated_duration] => 1-2 hours
-    [short_description] => the test
+    [title] => test 112
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 
+    [short_description] => the description
     [has_thumbnail] => 
-    [course_id] => 172
+    [course_id] => 173
 )
 
-[24-May-2025 18:19:39 UTC] Step: 2, Input: Array
+[26-May-2025 00:53:50 UTC] Step: 1, Input: Array
 (
-    [full_description] => <p>the full description</p>
+    [title] => test 112
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 
+    [short_description] => the description
+    [has_thumbnail] => 
+    [course_id] => 173
+)
+
+[26-May-2025 00:55:25 UTC] Step: 1, Input: Array
+(
+    [title] => test 112
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 
+    [short_description] => the description
+    [has_thumbnail] => 
+    [course_id] => 173
+)
+
+[26-May-2025 00:55:33 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p>the description, <span style="color: rgb(210, 204, 194); --darkreader-inline-color: #c6bfb4;" data-darkreader-inline-color="">the description the description the description the description the description the description</span></p>
     [outcomes] => Array
         (
-            [0] => the outcome
+            [0] => the 1
         )
 
     [requirements] => Array
         (
-            [0] => the outcome
+            [0] => the 1
         )
 
-    [course_id] => 172
+    [course_id] => 173
 )
 
-[24-May-2025 18:19:39 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
-[24-May-2025 18:19:39 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
-[24-May-2025 18:19:41 UTC] Step: 3, Input: Array
+[26-May-2025 00:55:33 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[26-May-2025 00:55:33 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[26-May-2025 00:55:43 UTC] Step: 1, Input: Array
+(
+    [title] => test 112
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 
+    [short_description] => the description
+    [has_thumbnail] => 
+    [course_id] => 173
+)
+
+[26-May-2025 00:55:59 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p><span style="color: rgb(210, 204, 194); --darkreader-inline-color: #c6bfb4;" data-darkreader-inline-color="">the description the description the description the description the description the description</span></p>
+    [outcomes] => Array
+        (
+            [0] => the 1
+        )
+
+    [requirements] => Array
+        (
+            [0] => the 1
+        )
+
+    [course_id] => 173
+)
+
+[26-May-2025 00:55:59 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[26-May-2025 00:55:59 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[26-May-2025 00:56:20 UTC] Step: 3, Input: Array
 (
     [price] => 0.00
     [access_level] => Public
@@ -213,7 +205,17 @@ Stack trace:
     [enrollment_limit] => 
     [access_password] => 
     [certificate_enabled] => 0
-    [estimated_duration] => 1-2 hours
-    [course_id] => 172
+    [course_id] => 173
+)
+
+[26-May-2025 00:56:31 UTC] Step: 3, Input: Array
+(
+    [price] => 10.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 0
+    [course_id] => 173
 )
 

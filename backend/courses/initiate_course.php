@@ -219,7 +219,7 @@ if (!file_exists($upload_dir)) {
                         price = ?, thumbnail = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE course_id = ? AND department_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssdsi", 
+            $stmt->bind_param("ssssdsii", 
                 $data['title'], 
                 $data['short_description'], 
                 $data['subcategory_id'], 
