@@ -170,7 +170,7 @@ if ($result && $result->num_rows > 0) {
                 $profile_pic = !empty($instructor['profile_pic']) ? $instructor['profile_pic'] : 'default.png';
                 $instructors_html .= '<span class="avatar avatar-circle" data-bs-toggle="tooltip" data-bs-placement="top" title="' . 
                                    htmlspecialchars($instructor['first_name'] . ' ' . $instructor['last_name']) . '">' .
-                                   '<img class="avatar-img" src="../uploads/profile/' . $profile_pic . '" alt="Instructor">' .
+                                   '<img class="avatar-img" src="../uploads/instructor-profile/' . $profile_pic . '" alt="Instructor">' .
                                    '</span>';
             }
         } else {
@@ -205,7 +205,7 @@ if ($result && $result->num_rows > 0) {
                 </a>
 
                 <!-- Body -->
-<a class="card-body d-flex flex-column position-relative" href="course-overview.php?id=' . $course['course_id'] . '" style="height: 150px; overflow: hidden;">
+<a class="card-body d-flex flex-column position-relative" href="course-overview.php?id=' . $course['course_id'] . '" style="height: 200px; overflow: hidden;">
     <!-- Category and price at the top -->
     <div class="d-flex justify-content-between align-items-center mb-1">
         <span class="card-subtitle text-body small">' . htmlspecialchars($course['category_name'] ?? 'Category') . '</span>

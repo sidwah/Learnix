@@ -270,3 +270,158 @@ Stack trace:
     [course_id] => 174
 )
 
+[27-May-2025 15:22:36 UTC] Step: 1, Input: Array
+(
+    [title] => UI Design Fundamentals
+    [category_id] => 43
+    [subcategory_id] => 101
+    [course_level] => Beginner
+    [estimated_duration] => 3-5 hours
+    [short_description] => Learn the essentials of UI design — from creating wireframes to crafting stunning, user-friendly interfaces using Figma and design best practices.
+    [has_thumbnail] => true
+)
+
+[27-May-2025 15:22:36 UTC] Thumbnail file data: Array
+(
+    [name] => do-ui-ux-design-for-your-website.png
+    [full_path] => do-ui-ux-design-for-your-website.png
+    [type] => image/png
+    [tmp_name] => /Applications/MAMP/tmp/php/phpfpQu00
+    [error] => 0
+    [size] => 283046
+)
+
+[27-May-2025 15:22:36 UTC] Error in handleStep: Invalid file type. Only JPG, JPEG, and PNG are allowed. Got: image/webp
+[27-May-2025 15:22:45 UTC] Step: 1, Input: Array
+(
+    [title] => UI Design Fundamentals
+    [category_id] => 43
+    [subcategory_id] => 101
+    [course_level] => Beginner
+    [estimated_duration] => 3-5 hours
+    [short_description] => Learn the essentials of UI design — from creating wireframes to crafting stunning, user-friendly interfaces using Figma and design best practices.
+    [has_thumbnail] => true
+)
+
+[27-May-2025 15:22:45 UTC] Thumbnail file data: Array
+(
+    [name] => do-ui-ux-design-for-your-website.png
+    [full_path] => do-ui-ux-design-for-your-website.png
+    [type] => image/png
+    [tmp_name] => /Applications/MAMP/tmp/php/php1A9K2l
+    [error] => 0
+    [size] => 283046
+)
+
+[27-May-2025 15:22:45 UTC] Error in handleStep: Invalid file type. Only JPG, JPEG, and PNG are allowed. Got: image/webp
+[27-May-2025 15:22:45 UTC] Step: 1, Input: Array
+(
+    [title] => UI Design Fundamentals
+    [category_id] => 43
+    [subcategory_id] => 101
+    [course_level] => Beginner
+    [estimated_duration] => 3-5 hours
+    [short_description] => Learn the essentials of UI design — from creating wireframes to crafting stunning, user-friendly interfaces using Figma and design best practices.
+    [has_thumbnail] => true
+)
+
+[27-May-2025 15:22:45 UTC] Thumbnail file data: Array
+(
+    [name] => do-ui-ux-design-for-your-website.png
+    [full_path] => do-ui-ux-design-for-your-website.png
+    [type] => image/png
+    [tmp_name] => /Applications/MAMP/tmp/php/php6ilJTV
+    [error] => 0
+    [size] => 283046
+)
+
+[27-May-2025 15:22:45 UTC] Error in handleStep: Invalid file type. Only JPG, JPEG, and PNG are allowed. Got: image/webp
+[27-May-2025 15:23:42 UTC] Step: 1, Input: Array
+(
+    [title] => UI Design Fundamentals
+    [category_id] => 43
+    [subcategory_id] => 101
+    [course_level] => Beginner
+    [estimated_duration] => 3-5 hours
+    [short_description] => Learn the essentials of UI design — from creating wireframes to crafting stunning, user-friendly interfaces using Figma and design best practices.
+    [has_thumbnail] => true
+)
+
+[27-May-2025 15:23:42 UTC] Thumbnail file data: Array
+(
+    [name] => uiux-thumbnail.jpg
+    [full_path] => uiux-thumbnail.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpJh2Mwn
+    [error] => 0
+    [size] => 283046
+)
+
+[27-May-2025 15:23:42 UTC] Error in handleStep: Invalid file type. Only JPG, JPEG, and PNG are allowed. Got: image/webp
+[27-May-2025 15:25:53 UTC] Step: 1, Input: Array
+(
+    [title] => UI Design Fundamentals
+    [category_id] => 43
+    [subcategory_id] => 101
+    [course_level] => Beginner
+    [estimated_duration] => 3-5 hours
+    [short_description] => Learn the essentials of UI design — from creating wireframes to crafting stunning, user-friendly interfaces using Figma and design best practices.
+    [has_thumbnail] => true
+)
+
+[27-May-2025 15:25:53 UTC] Thumbnail file data: Array
+(
+    [name] => ui:ux-thumbnail.jpg
+    [full_path] => ui:ux-thumbnail.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpPUbhxn
+    [error] => 0
+    [size] => 603090
+)
+
+[27-May-2025 15:28:27 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p><span style="color: rgb(0, 0, 0);">This course guides you through the fundamentals of UI design. You’ll learn how to create clear and user-friendly interfaces by understanding design principles such as spacing, alignment, typography, and color theory. Using Figma, a popular UI design tool, you’ll practice wireframing, building high-fidelity mockups, and designing responsive layouts. By the end, you’ll have the skills to design professional-looking web and mobile interfaces ready for development handoff.</span></p>
+    [outcomes] => Array
+        (
+            [0] => Understand key UI design principles and terminology.
+            [1] => Create wireframes and prototypes using Figma.
+            [2] => Design polished, responsive user interfaces.
+            [3] => Apply color theory and typography effectively in UI designs.
+            [4] => Build reusable UI components like buttons, forms, and cards.
+            [5] => Prepare design files for developer handoff.
+        )
+
+    [requirements] => Array
+        (
+            [0] => A computer with internet access.
+            [1] => Basic computer skills (file management, using software).
+            [2] => A free Figma account (we’ll guide you on how to set it up).
+            [3] => Willingness to practice design exercises.
+        )
+
+    [course_id] => 175
+)
+
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[27-May-2025 15:28:27 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[27-May-2025 15:29:17 UTC] Step: 3, Input: Array
+(
+    [price] => 0.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 5
+    [access_password] => 
+    [certificate_enabled] => 1
+    [estimated_duration] => 3-5 hours
+    [course_id] => 175
+)
+

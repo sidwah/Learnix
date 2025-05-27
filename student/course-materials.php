@@ -996,6 +996,7 @@ if ($all_requirements_met && !$has_certificate && !isset($_SESSION['certificate_
                     'quiz' as content_type, 
                     sq.time_limit,
                     sq.pass_mark,
+                    sq.is_required,
                     COALESCE(sqa.is_completed, 0) as is_completed,
                     IF(sqa.is_completed = 1, 'Completed', 'Not Started') as completion_status
                 FROM section_quizzes sq
@@ -1084,7 +1085,7 @@ if ($all_requirements_met && !$has_certificate && !isset($_SESSION['certificate_
                                                     <?php if (isset($item['is_required']) && $item['is_required'] == 1): ?>
                                                         <span class="badge bg-danger text-white ms-1">Required</span>
                                                     <?php else: ?>
-                                                        <span class="badge bg-secondary text-white ms-1">Optional</span>
+                                                        <span class="badge bg-secondary text-white ms-1">Optional </span>
                                                     <?php endif; ?>
                                                 <?php endif; ?>
                                             </a>

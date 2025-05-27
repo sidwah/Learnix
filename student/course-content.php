@@ -2090,7 +2090,7 @@ function getLinkDisplay($topic)
             const confirmResumeQuizBtn = document.getElementById('confirmResumeQuiz');
             const forfeitQuizBtn = document.getElementById('forfeitQuizBtn');
             const confirmForfeitQuizBtn = document.getElementById('confirmForfeitQuiz');
-            const timeLimit = <?php echo isset($quiz) ? (int)$quiz['time_limit'] : 0; ?>;
+const timeLimit = <?php echo isset($quiz['time_limit']) ? (int)$quiz['time_limit'] : 0; ?>;
             let timerInterval;
             let autosaveInterval;
 
@@ -2232,9 +2232,9 @@ function getLinkDisplay($topic)
             // Start Quiz
             if (startQuizBtn && confirmStartQuizBtn) {
                 startQuizBtn.addEventListener('click', function() {
-                    const maxAttempts = parseInt(this.getAttribute('data-max-attempts')) || 0;
-                    const currentAttempts = parseInt(this.getAttribute('data-current-attempts')) || 0;
-                    const hasActiveAttempt = <?php echo $active_attempt ? 'true' : 'false'; ?>;
+                  const maxAttempts = parseInt(this.getAttribute('data-max-attempts')) || 0;
+const currentAttempts = parseInt(this.getAttribute('data-current-attempts')) || 0;
+const hasActiveAttempt = <?php echo isset($active_attempt) && $active_attempt ? 'true' : 'false'; ?>;
 
                     if (hasActiveAttempt) {
                         queueNotification('Active Attempt', 'You have an active quiz attempt. Please resume or forfeit it before starting a new one.');

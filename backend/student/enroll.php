@@ -51,14 +51,34 @@ if (!$course_id) {
 $user_id = $_SESSION['user_id'];
 
 // First, check if the course exists and is published
-$sql = "SELECT c.*, i.instructor_id, u.email AS instructor_email, u.first_name AS instructor_first_name, 
-        u.last_name AS instructor_last_name, s.email AS student_email, s.first_name AS student_first_name,
-        s.last_name AS student_last_name
-        FROM courses c 
-        JOIN instructors i ON c.instructor_id = i.instructor_id 
-        JOIN users u ON i.user_id = u.user_id
-        JOIN users s ON s.user_id = ?
-        WHERE c.course_id = ? AND c.status = 'Published'";
+$sql = "SELECT 
+    c.course_id,
+    c.title,
+    c.short_description,
+    c.full_description,
+    c.status,
+    ci.instructor_id,
+    u.user_id AS instructor_user_id,
+    u.email AS instructor_email,
+    u.first_name AS instructor_first_name,
+    u.last_name AS instructor_last_name,
+    ci.is_primary,
+    s.user_id AS student_user_id,
+    s.email AS student_email,
+    s.first_name AS student_first_name,
+    s.last_name AS student_last_name
+FROM 
+    courses c
+    INNER JOIN course_instructors ci ON c.course_id = ci.course_id
+    INNER JOIN instructors i ON ci.instructor_id = i.instructor_id
+    INNER JOIN users u ON i.user_id = u.user_id
+    INNER JOIN users s ON s.user_id = ?
+WHERE 
+    c.course_id = ?
+    AND c.status = 'Published'
+    AND c.deleted_at IS NULL
+    AND ci.deleted_at IS NULL
+    AND i.deleted_at IS NULL;";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $user_id, $course_id);
 $stmt->execute();
