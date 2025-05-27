@@ -1,4 +1,9 @@
-<?php include '../includes/department/header.php'; ?>
+<?php 
+
+include '../includes/department/header.php'; 
+// a connection file is included in the header and it is $conn so no need to create a new connection here
+// these are the sessions we have $_SESSION['user_id'], $_SESSION['email'] ,$_SESSION['first_name'], $_SESSION['last_name'] , $_SESSION['role'] , $_SESSION['staff_id'] , $_SESSION['department_id'] , $_SESSION['department_name'] , $_SESSION['signin'] 
+?>
 <!-- ========== MAIN CONTENT ========== -->
 <main id="content" role="main">
     <!-- Navbar -->

@@ -225,7 +225,7 @@ $user_data = [
       </li>
       
       <li class="nav-item">
-        <a class="nav-link" href="reports.php">
+        <a class="nav-link" href="analytic-overview.php">
           <?php echo $user_role === 'department_head' ? 'Analytics' : 'Standard Reports'; ?>
         </a>
       </li>
