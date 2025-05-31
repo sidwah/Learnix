@@ -1334,6 +1334,7 @@ function getTimeAgo($datetime)
             });
 
             // Mark all as read functionality
+            // Mark all as read functionality
             const markAllReadBtn = document.querySelector('.mark-all-read-btn');
             if (markAllReadBtn) {
                 markAllReadBtn.addEventListener('click', function(e) {
@@ -1364,7 +1365,7 @@ function getTimeAgo($datetime)
                                 });
 
                                 // If in unread filter view, these items should be hidden
-                                if (document.getElementById('showUnreadNotifs').classList.contains('active')) {
+                                if (document.getElementById('unread-notifications-tab').classList.contains('active')) {
                                     unreadItems.forEach(item => {
                                         item.style.display = 'none';
                                     });
@@ -1386,7 +1387,7 @@ function getTimeAgo($datetime)
             } else {
                 console.error('Mark all read button not found');
             }
-
+            // Filter buttons functionality
             // Filter buttons functionality
             const showAllBtn = document.getElementById('all-notifications-tab');
             const showUnreadBtn = document.getElementById('unread-notifications-tab');
@@ -1438,6 +1439,7 @@ function getTimeAgo($datetime)
                     showUnreadBtn
                 });
             }
+
 
             // Helper function to update the unread badge count
             function updateUnreadCount() {

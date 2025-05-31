@@ -78,11 +78,11 @@ $user_data = [
           <span class="nav-indicator">🎯</span> Daily Tasks
         </a>
       </li>
-      <li class="nav-item">
+      <!-- <li class="nav-item">
         <a class="nav-link" href="pending-requests.php">
           <span class="nav-indicator">📝</span> Pending Requests
         </a>
-      </li>
+      </li> -->
       <li class="nav-item">
         <a class="nav-link" href="urgent-actions.php">
           <span class="nav-indicator">⚡</span> Urgent Actions

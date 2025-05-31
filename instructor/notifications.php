@@ -1,4 +1,3 @@
-
 <?php
 require '../backend/session_start.php'; // Ensure session is started
 
@@ -42,6 +41,11 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
         .notification-item.unread { 
             background-color: #f8f9fa; 
             font-weight: 500; 
+        }
+        .notification-item.hidden { 
+            background-color: #e9ecef; 
+            opacity: 0.7; 
+            font-style: italic; 
         }
         .notification-item:hover { 
             background-color: #f1f3f5; 
@@ -105,25 +109,26 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                     <h5 class="card-title">Filter Notifications</h5>
                                     <form id="filterForm">
                                         <div class="row">
-                                            <div class="col-md-4 mb-3">
+                                            <div class="col-md-6 mb-3">
                                                 <label for="typeFilter" class="form-label">Type</label>
                                                 <select class="form-select" id="typeFilter" aria-label="Filter by type">
                                                     <option value="all">All Types</option>
                                                     <option value="course">Course</option>
                                                     <option value="student">Student</option>
                                                     <option value="system">System</option>
+                                                    <option value="comment">Comment</option>
+                                                    <option value="new_user">New User</option>
+                                                    <option value="profile">Profile</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-4 mb-3">
+                                            <div class="col-md-6 mb-3">
                                                 <label for="statusFilter" class="form-label">Status</label>
                                                 <select class="form-select" id="statusFilter" aria-label="Filter by status">
                                                     <option value="all">All Statuses</option>
                                                     <option value="unread">Unread</option>
                                                     <option value="read">Read</option>
+                                                    <option value="hidden">Hidden</option>
                                                 </select>
-                                            </div>
-                                            <div class="col-md-4 mb-3 d-flex align-items-end">
-                                                <button type="button" class="btn btn-primary w-100" onclick="filterNotifications()">Apply Filters</button>
                                             </div>
                                         </div>
                                     </form>
@@ -138,8 +143,9 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                             <div class="card notification-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Your Notifications</h5>
-                                    <div id="notificationList">
-                                        <!-- Dynamically populated -->
+                                    <div id="notificationList"></div>
+                                    <div class="text-center" id="loading-spinner" style="display: none;">
+                                        <i class="mdi mdi-dots-circle mdi-spin text-muted h3 mt-0"></i>
                                     </div>
                                 </div>
                             </div>
@@ -193,118 +199,147 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     <script src="assets/js/app.min.js"></script>
     <script src="assets/js/vendor/jquery-jvectormap-1.2.2.min.js"></script>
     <script src="assets/js/vendor/jquery-jvectormap-world-mill-en.js"></script>
-    <!-- Custom JS for Notification Simulation -->
+    <!-- Custom JS for Notifications -->
     <script>
-        // Mock data for notifications
-        const notifications = [
-            {
-                id: 1,
-                message: 'New enrollment in "Intro to Programming" by John Doe.',
-                type: 'course',
-                timestamp: '2025-04-29 10:30',
-                status: 'unread'
-            },
-            {
-                id: 2,
-                message: 'Student Jane Smith submitted a quiz in "Data Science".',
-                type: 'student',
-                timestamp: '2025-04-28 15:45',
-                status: 'unread'
-            },
-            {
-                id: 3,
-                message: 'System update: New analytics features available.',
-                type: 'system',
-                timestamp: '2025-04-27 09:00',
-                status: 'read'
-            },
-            {
-                id: 4,
-                message: '"Intro to Programming" course approved for publication.',
-                type: 'course',
-                timestamp: '2025-04-26 12:15',
-                status: 'read'
-            },
-            {
-                id: 5,
-                message: 'Student feedback received for "Data Science".',
-                type: 'student',
-                timestamp: '2025-04-25 14:20',
-                status: 'unread'
-            }
-        ];
+        document.addEventListener("DOMContentLoaded", async function() {
+            const notificationList = document.getElementById("notificationList");
+            const loadingSpinner = document.getElementById("loading-spinner");
+            const typeFilter = document.getElementById("typeFilter");
+            const statusFilter = document.getElementById("statusFilter");
 
-        function renderNotifications(filteredNotifications) {
-            const notificationList = document.querySelector('#notificationList');
-            notificationList.innerHTML = '';
-            if (filteredNotifications.length === 0) {
-                notificationList.innerHTML = '<p class="text-muted">No notifications found.</p>';
-                return;
+            // Function to fetch and display notifications
+            async function fetchNotifications() {
+                try {
+                    loadingSpinner.style.display = "block";
+                    const type = typeFilter.value;
+                    const status = statusFilter.value;
+                    const response = await fetch(`../backend/filter_notifications.php?type=${type}&status=${status}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        renderNotifications(data.notifications);
+                    } else {
+                        notificationList.innerHTML = '<p class="text-muted">No notifications found.</p>';
+                    }
+                } catch (error) {
+                    console.error("Error fetching notifications:", error);
+                    notificationList.innerHTML = '<p class="text-muted">Error loading notifications.</p>';
+                } finally {
+                    loadingSpinner.style.display = "none";
+                }
             }
-            filteredNotifications.forEach(notification => {
-                const notificationItem = document.createElement('div');
-                notificationItem.className = `notification-item ${notification.status}`;
-                notificationItem.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="mb-0">${notification.message}</p>
-                            <small class="text-muted">Type: ${notification.type.charAt(0).toUpperCase() + notification.type.slice(1)} | ${notification.timestamp}</small>
+
+            // Function to render notifications
+            function renderNotifications(notifications) {
+                notificationList.innerHTML = '';
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = '<p class="text-muted">No notifications found.</p>';
+                    return;
+                }
+                notifications.forEach(notification => {
+                    const notificationItem = document.createElement('div');
+                    notificationItem.className = `notification-item ${notification.is_hidden ? 'hidden' : notification.is_read ? 'read' : 'unread'}`;
+                    notificationItem.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-0">${notification.title}</p>
+                                <small class="text-muted">Type: ${notification.type.charAt(0).toUpperCase() + notification.type.slice(1)} | ${formatTime(notification.created_at)}</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary action-btn me-2" onclick="toggleReadStatus(${notification.notification_id})">
+                                    ${notification.is_read ? 'Mark as Unread' : 'Mark as Read'}
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger action-btn" onclick="hideNotification(${notification.notification_id})">
+                                    ${notification.is_hidden ? 'Unhide' : 'Delete'}
+                                </button>
+                            </div>
                         </div>
-                        <div>
-                            <button class="btn btn-sm btn-outline-primary action-btn me-2" onclick="toggleReadStatus(${notification.id})">
-                                ${notification.status === 'unread' ? 'Mark as Read' : 'Mark as Unread'}
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger action-btn" onclick="deleteNotification(${notification.id})">Delete</button>
-                        </div>
-                    </div>
-                `;
-                notificationList.appendChild(notificationItem);
-            });
-        }
-
-        function filterNotifications() {
-            const typeFilter = document.querySelector('#typeFilter').value;
-            const statusFilter = document.querySelector('#statusFilter').value;
-
-            const filteredNotifications = notifications.filter(notification => {
-                const matchesType = typeFilter === 'all' || notification.type === typeFilter;
-                const matchesStatus = statusFilter === 'all' || notification.status === statusFilter;
-                return matchesType && matchesStatus;
-            });
-
-            renderNotifications(filteredNotifications);
-        }
-
-        function toggleReadStatus(id) {
-            const notification = notifications.find(n => n.id === id);
-            if (notification) {
-                notification.status = notification.status === 'unread' ? 'read' : 'unread';
-                filterNotifications();
+                    `;
+                    notificationList.appendChild(notificationItem);
+                });
             }
-        }
 
-        function deleteNotification(id) {
-            const index = notifications.findIndex(n => n.id === id);
-            if (index !== -1) {
-                notifications.splice(index, 1);
-                filterNotifications();
+            // Function to format time
+            function formatTime(createdAt) {
+                const now = new Date();
+                const created = new Date(createdAt);
+                const diff = Math.floor((now - created) / 1000);
+
+                if (diff < 60) return `${diff} seconds ago`;
+                if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+                return created.toLocaleDateString();
             }
-        }
 
-        function markAllRead() {
-            notifications.forEach(notification => {
-                notification.status = 'read';
-            });
-            filterNotifications();
-        }
+            // Function to toggle read status
+            async function toggleReadStatus(notificationId) {
+                try {
+                    const response = await fetch(`../backend/mark_notification_read.php?id=${notificationId}`);
+                    const data = await response.json();
+                    if (data.success) {
+                        fetchNotifications();
+                    } else {
+                        console.error("Error toggling read status:", data.error);
+                    }
+                } catch (error) {
+                    console.error("Error toggling read status:", error);
+                }
+            }
 
-        function clearAllNotifications() {
-            notifications.length = 0;
-            renderNotifications(notifications);
-        }
+            // Function to hide or unhide a notification
+            async function hideNotification(notificationId) {
+                try {
+                    const response = await fetch(`../backend/hide_notification.php?id=${notificationId}`);
+                    const data = await response.json();
+                    if (data.success) {
+                        fetchNotifications();
+                    } else {
+                        console.error("Error hiding/unhiding notification:", data.error);
+                    }
+                } catch (error) {
+                    console.error("Error hiding/unhiding notification:", error);
+                }
+            }
 
-        // Initial render
-        renderNotifications(notifications);
+            // Function to mark all notifications as read
+            async function markAllRead() {
+                try {
+                    const response = await fetch("../backend/mark_all_notifications_read.php");
+                    const data = await response.json();
+                    if (data.success) {
+                        fetchNotifications();
+                    } else {
+                        console.error("Error marking all notifications as read:", data.error);
+                    }
+                } catch (error) {
+                    console.error("Error marking all notifications:", error);
+                }
+            }
+
+            // Function to clear all notifications (hide them)
+            async function clearAllNotifications() {
+                try {
+                    const notifications = document.querySelectorAll('.notification-item:not(.hidden)');
+                    for (const notification of notifications) {
+                        const notificationId = notification.querySelector('.btn-outline-danger').getAttribute('onclick').match(/\d+/)[0];
+                        await hideNotification(notificationId);
+                    }
+                    fetchNotifications();
+                } catch (error) {
+                    console.error("Error clearing all notifications:", error);
+                }
+            }
+
+            // Add event listeners for immediate filter application
+            typeFilter.addEventListener("change", fetchNotifications);
+            statusFilter.addEventListener("change", fetchNotifications);
+
+            // Initial fetch
+            fetchNotifications();
+
+            // Poll every 5 seconds
+            setInterval(fetchNotifications, 5000);
+        });
     </script>
 </body>
 </html>

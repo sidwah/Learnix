@@ -1,6 +1,7 @@
 <?php
+// backend/mark_notification_read.php
 require 'session_start.php';
-require 'config.php';
+require 'config.php'; 
 
 header('Content-Type: application/json');
 

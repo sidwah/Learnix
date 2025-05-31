@@ -12,27 +12,6 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || !isset($_SESS
   header('Location: signin.php');
   exit;
 }
-
-// Add is_deleted column to user_notifications table if it doesn't exist
-try {
-  $conn = new mysqli('localhost', 'root', 'root', 'learnix_db');
-  if (!$conn->connect_error) {
-    // Check if is_deleted column exists
-    $checkColQuery = "SHOW COLUMNS FROM user_notifications LIKE 'is_deleted'";
-    $result = $conn->query($checkColQuery);
-
-    if ($result->num_rows == 0) {
-      // Add the column if it doesn't exist
-      $addColQuery = "ALTER TABLE user_notifications ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0";
-      $conn->query($addColQuery);
-    }
-
-    // $conn->close();
-  }
-} catch (Exception $e) {
-  // Log the error but continue execution
-  error_log("Error updating database schema: " . $e->getMessage());
-}
 $pageTitle = $_SESSION['department_name']. ' - Department';
 ?>
 

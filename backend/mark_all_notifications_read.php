@@ -1,4 +1,5 @@
 <?php
+// backend/mark_all_notifications_read.php
 require 'session_start.php';
 require 'config.php';
 
@@ -21,6 +22,6 @@ if ($success) {
     echo json_encode(['success' => false, 'error' => $conn->error]);
 }
 
-$stmt->close();
+$stmt->close(); 
 $conn->close();
 ?>

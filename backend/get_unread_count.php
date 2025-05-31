@@ -1,5 +1,6 @@
 <?php
-require 'session_start.php';
+// backend/get_unread_count.php
+require 'session_start.php'; 
 require 'config.php';
 
 header('Content-Type: application/json');

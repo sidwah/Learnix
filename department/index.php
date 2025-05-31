@@ -517,7 +517,7 @@
                     </div>
                     <div class="flex-shrink-0">
                         <?php if ($is_head): ?>
-                            <a href="pending-reviews.php" class="btn btn-soft" style="background: var(--warning); color: white;">Review Now</a>
+                            <a href="courses.php" class="btn btn-soft" style="background: var(--warning); color: white;">Review Now</a>
                         <?php else: ?>
                             <a href="courses.php" class="btn btn-soft" style="background: var(--warning); color: white;">View Courses</a>
                         <?php endif; ?>
@@ -1032,7 +1032,7 @@
                                         <div class="fw-medium small" style="color: var(--neutral-800);">Course Reviews</div>
                                         <div class="text-muted small"><?php echo $pending_course_count; ?> courses awaiting your review</div>
                                     </div>
-                                    <a href="pending-reviews.php" class="btn btn-xs btn-soft" style="background: var(--warning-light); color: var(--warning);">Review</a>
+                                    <a href="courses.php" class="btn btn-xs btn-soft" style="background: var(--warning-light); color: var(--warning);">Review</a>
                                 </div>
                             <?php endif; ?>
 
