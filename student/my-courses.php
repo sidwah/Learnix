@@ -57,7 +57,7 @@
                   <li class="nav-item">
                     <a class="nav-link" href="account-notifications.php">
                       <i class="bi-bell nav-icon"></i> Notifications
-                      <span class="badge bg-soft-dark text-dark rounded-pill nav-link-badge">0</span>
+                      <!-- <span class="badge bg-soft-dark text-dark rounded-pill nav-link-badge">0</span> -->
                     </a>
                   </li>
                 </ul>
@@ -70,11 +70,11 @@
                       <i class="bi-person-badge nav-icon"></i> Enrolled Courses
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <!-- <li class="nav-item">
                     <a class="nav-link" href="my-badges.php">
                       <i class="bi-chat-dots nav-icon"></i> Badges
                     </a>
-                  </li>
+                  </li> -->
                   <li class="nav-item">
                     <a class="nav-link" href="my-certifications.php">
                       <i class="bi-award nav-icon"></i> Certifications

@@ -61,7 +61,7 @@ include '../includes/student-header.php';
                   <li class="nav-item">
                     <a class="nav-link" href="account-notifications.php">
                       <i class="bi-bell nav-icon"></i> Notifications
-                      <span class="badge bg-soft-dark text-dark rounded-pill nav-link-badge">0</span>
+                      <!-- <span class="badge bg-soft-dark text-dark rounded-pill nav-link-badge">0</span> -->
                     </a>
                   </li>
                 </ul>
@@ -74,11 +74,11 @@ include '../includes/student-header.php';
                       <i class="bi-person-badge nav-icon"></i> Enrolled Courses
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <!-- <li class="nav-item">
                     <a class="nav-link" href="my-badges.php">
                       <i class="bi-chat-dots nav-icon"></i> Badges
                     </a>
-                  </li>
+                  </li> -->
                   <li class="nav-item">
                     <a class="nav-link" href="my-certifications.php">
                       <i class="bi-award nav-icon"></i> Certifications
@@ -147,105 +147,105 @@ include '../includes/student-header.php';
             <div class="card-header border-bottom">
               <h4 class="card-header-title">My Notes</h4>
             </div>
-            
-  <?php
+
+            <?php
 
 
-// Handle AJAX requests
-if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-  header('Content-Type: application/json');
+            // Handle AJAX requests
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+              header('Content-Type: application/json');
 
-  // Save new note
-  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_note') {
-    $course_id = intval($_POST['course_id']);
-    $topic_id = intval($_POST['topic_id']);
-    $content = trim($_POST['content']);
+              // Save new note
+              if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_note') {
+                $course_id = intval($_POST['course_id']);
+                $topic_id = intval($_POST['topic_id']);
+                $content = trim($_POST['content']);
 
-    if ($course_id <= 0 || $topic_id <= 0 || empty($content)) {
-      echo json_encode(['success' => false, 'message' => 'Invalid course, topic, or content']);
-      exit();
-    }
+                if ($course_id <= 0 || $topic_id <= 0 || empty($content)) {
+                  echo json_encode(['success' => false, 'message' => 'Invalid course, topic, or content']);
+                  exit();
+                }
 
-    // Verify enrollment
-    $check_query = "SELECT * FROM enrollments WHERE user_id = ? AND course_id = ? AND status = 'Active'";
-    $stmt = $conn->prepare($check_query);
-    $stmt->bind_param("ii", $user_id, $course_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+                // Verify enrollment
+                $check_query = "SELECT * FROM enrollments WHERE user_id = ? AND course_id = ? AND status = 'Active'";
+                $stmt = $conn->prepare($check_query);
+                $stmt->bind_param("ii", $user_id, $course_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
 
-    if ($result->num_rows === 0) {
-      echo json_encode(['success' => false, 'message' => 'Not enrolled in this course']);
-      exit();
-    }
+                if ($result->num_rows === 0) {
+                  echo json_encode(['success' => false, 'message' => 'Not enrolled in this course']);
+                  exit();
+                }
 
-    // Save note
-    $insert_query = "INSERT INTO student_notes (user_id, topic_id, content, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())";
-    $stmt = $conn->prepare($insert_query);
-    $stmt->bind_param("iis", $user_id, $topic_id, $content);
-    $success = $stmt->execute();
+                // Save note
+                $insert_query = "INSERT INTO student_notes (user_id, topic_id, content, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())";
+                $stmt = $conn->prepare($insert_query);
+                $stmt->bind_param("iis", $user_id, $topic_id, $content);
+                $success = $stmt->execute();
 
-    if ($success) {
-      $note_id = $stmt->insert_id;
-      echo json_encode(['success' => true, 'note_id' => $note_id]);
-    } else {
-      echo json_encode(['success' => false, 'message' => 'Failed to save note']);
-    }
-    exit();
-  }
+                if ($success) {
+                  $note_id = $stmt->insert_id;
+                  echo json_encode(['success' => true, 'note_id' => $note_id]);
+                } else {
+                  echo json_encode(['success' => false, 'message' => 'Failed to save note']);
+                }
+                exit();
+              }
 
-  // Delete note
-  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_note') {
-    $note_id = intval($_POST['note_id']);
+              // Delete note
+              if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_note') {
+                $note_id = intval($_POST['note_id']);
 
-    $check_query = "SELECT * FROM student_notes WHERE note_id = ? AND user_id = ?";
-    $stmt = $conn->prepare($check_query);
-    $stmt->bind_param("ii", $note_id, $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+                $check_query = "SELECT * FROM student_notes WHERE note_id = ? AND user_id = ?";
+                $stmt = $conn->prepare($check_query);
+                $stmt->bind_param("ii", $note_id, $user_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
 
-    if ($result->num_rows === 0) {
-      echo json_encode(['success' => false, 'message' => 'Note not found or access denied']);
-      exit();
-    }
+                if ($result->num_rows === 0) {
+                  echo json_encode(['success' => false, 'message' => 'Note not found or access denied']);
+                  exit();
+                }
 
-    $delete_query = "DELETE FROM student_notes WHERE note_id = ?";
-    $stmt = $conn->prepare($delete_query);
-    $stmt->bind_param("i", $note_id);
-    $success = $stmt->execute();
+                $delete_query = "DELETE FROM student_notes WHERE note_id = ?";
+                $stmt = $conn->prepare($delete_query);
+                $stmt->bind_param("i", $note_id);
+                $success = $stmt->execute();
 
-    echo json_encode(['success' => $success]);
-    exit();
-  }
-}
+                echo json_encode(['success' => $success]);
+                exit();
+              }
+            }
 
-// Fetch all courses and topics the student is enrolled in
-$courses_query = "SELECT c.course_id, c.title, c.thumbnail, st.topic_id, st.title as topic_title
+            // Fetch all courses and topics the student is enrolled in
+            $courses_query = "SELECT c.course_id, c.title, c.thumbnail, st.topic_id, st.title as topic_title
                FROM courses c 
                JOIN enrollments e ON c.course_id = e.course_id 
                JOIN course_sections cs ON c.course_id = cs.course_id
                JOIN section_topics st ON cs.section_id = st.section_id
                WHERE e.user_id = ? AND e.status = 'Active'
                ORDER BY c.title ASC, st.title ASC";
-$stmt = $conn->prepare($courses_query);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$courses_result = $stmt->get_result();
+            $stmt = $conn->prepare($courses_query);
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $courses_result = $stmt->get_result();
 
-$courses = [];
-$topics = [];
-while ($row = $courses_result->fetch_assoc()) {
-  $courses[$row['course_id']] = [
-    'title' => $row['title'],
-    'thumbnail' => $row['thumbnail']
-  ];
-  $topics[$row['course_id']][] = [
-    'topic_id' => $row['topic_id'],
-    'title' => $row['topic_title']
-  ];
-}
+            $courses = [];
+            $topics = [];
+            while ($row = $courses_result->fetch_assoc()) {
+              $courses[$row['course_id']] = [
+                'title' => $row['title'],
+                'thumbnail' => $row['thumbnail']
+              ];
+              $topics[$row['course_id']][] = [
+                'topic_id' => $row['topic_id'],
+                'title' => $row['topic_title']
+              ];
+            }
 
-// Fetch notes
-$notes_query = "SELECT 
+            // Fetch notes
+            $notes_query = "SELECT 
               sn.note_id, 
               sn.content, 
               sn.created_at,
@@ -264,43 +264,43 @@ $notes_query = "SELECT
               JOIN enrollments e ON c.course_id = e.course_id AND e.user_id = ?
               WHERE sn.user_id = ?
               ORDER BY sn.updated_at DESC";
-$stmt = $conn->prepare($notes_query);
-$stmt->bind_param("ii", $user_id, $user_id);
-$stmt->execute();
-$notes_result = $stmt->get_result();
+            $stmt = $conn->prepare($notes_query);
+            $stmt->bind_param("ii", $user_id, $user_id);
+            $stmt->execute();
+            $notes_result = $stmt->get_result();
 
-$notes = [];
-while ($note = $notes_result->fetch_assoc()) {
-  $notes[] = [
-    'id' => $note['note_id'],
-    'course_id' => $note['course_id'],
-    'course' => $note['course_title'],
-    'section' => $note['section_title'],
-    'topic_id' => $note['topic_id'],
-    'topic' => $note['topic_title'],
-    'thumbnail' => $note['course_thumbnail'],
-    'content' => $note['content'],
-    'created_at' => $note['created_at'],
-    'updated_at' => $note['updated_at']
-  ];
-}
+            $notes = [];
+            while ($note = $notes_result->fetch_assoc()) {
+              $notes[] = [
+                'id' => $note['note_id'],
+                'course_id' => $note['course_id'],
+                'course' => $note['course_title'],
+                'section' => $note['section_title'],
+                'topic_id' => $note['topic_id'],
+                'topic' => $note['topic_title'],
+                'thumbnail' => $note['course_thumbnail'],
+                'content' => $note['content'],
+                'created_at' => $note['created_at'],
+                'updated_at' => $note['updated_at']
+              ];
+            }
 
-// Function to count words
-function countWords($string)
-{
-  return str_word_count(strip_tags($string));
-}
+            // Function to count words
+            function countWords($string)
+            {
+              return str_word_count(strip_tags($string));
+            }
 
-// Function to get summary
-function getSummary($text, $maxLength = 150)
-{
-  $text = strip_tags($text);
-  if (strlen($text) > $maxLength) {
-    $text = substr($text, 0, $maxLength) . '...';
-  }
-  return $text;
-}
-?>
+            // Function to get summary
+            function getSummary($text, $maxLength = 150)
+            {
+              $text = strip_tags($text);
+              if (strlen($text) > $maxLength) {
+                $text = substr($text, 0, $maxLength) . '...';
+              }
+              return $text;
+            }
+            ?>
 
 
             <!-- Body -->

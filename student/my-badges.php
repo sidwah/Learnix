@@ -61,7 +61,7 @@
                   <li class="nav-item">
                     <a class="nav-link" href="account-notifications.php">
                       <i class="bi-bell nav-icon"></i> Notifications
-                      <span class="badge bg-soft-dark text-dark rounded-pill nav-link-badge">0</span>
+                      <!-- <span class="badge bg-soft-dark text-dark rounded-pill nav-link-badge">0</span> -->
                     </a>
                   </li>
                 </ul>
