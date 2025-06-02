@@ -1,4 +1,5 @@
 <?php
+// includes/students/quiz-questions.php
 require_once '../../backend/config.php';
 session_start();
 
@@ -10,9 +11,17 @@ if (!isset($_GET['quiz_id']) || !is_numeric($_GET['quiz_id'])) {
 $quiz_id = intval($_GET['quiz_id']);
 $user_id = $_SESSION['user_id'] ?? 0;
 
-// Default shuffle settings (adjust these as needed)
-$shuffle_questions = true; // Set to true to shuffle questions, false to keep original order
-$shuffle_answers = true;   // Set to true to shuffle answers, false to keep original order
+// Fetch quiz settings for shuffling
+$quiz_query = "SELECT randomize_questions, shuffle_answers FROM section_quizzes WHERE quiz_id = ?";
+$quiz_stmt = $conn->prepare($quiz_query);
+$quiz_stmt->bind_param("i", $quiz_id);
+$quiz_stmt->execute();
+$quiz_result = $quiz_stmt->get_result();
+$quiz_settings = $quiz_result->num_rows > 0 ? $quiz_result->fetch_assoc() : ['randomize_questions' => 0, 'shuffle_answers' => 0];
+$quiz_stmt->close();
+
+$shuffle_questions = (bool)$quiz_settings['randomize_questions'];
+$shuffle_answers = (bool)$quiz_settings['shuffle_answers'];
 
 // Query questions
 $questions_query = "SELECT question_id, question_text FROM quiz_questions WHERE quiz_id = ?";
