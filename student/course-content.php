@@ -601,7 +601,7 @@ function extractVimeoID($url)
 if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     // Add debugging log to track execution
     error_log("Topic completion process started - enrollment_id: $enrollment_id, topic_id: $topic_id, course_id: $course_id");
-    
+
     // Check if there's already a progress record
     $check_progress = "SELECT progress_id FROM progress WHERE enrollment_id = ? AND topic_id = ?";
     $stmt = $conn->prepare($check_progress);
@@ -664,7 +664,7 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
     // Check if course is now fully complete for topics
     if ($progress_data['completed_topics'] == $progress_data['total_topics']) {
         error_log("All topics completed. Checking quiz requirements.");
-        
+
         // Check if all quizzes have been passed
         $quiz_check_query = "SELECT 
                         COUNT(sq.quiz_id) as total_quizzes,
@@ -703,7 +703,7 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
         // Only proceed with certificate and badge if all requirements are met
         if ($all_requirements_met) {
             error_log("Attempting certificate generation for user $user_id, course $course_id, enrollment $enrollment_id");
-            
+
             // Include certificate and badge handlers
             require_once '../backend/certificates/CertificateHandler.php';
 
@@ -711,18 +711,18 @@ if (isset($_POST['mark_completed']) && $_POST['mark_completed'] == 1) {
             try {
                 $certificateHandler = new CertificateHandler();
                 $certificateResult = $certificateHandler->generateCertificateIfEligible($enrollment_id, $course_id, $user_id);
-                
+
                 // Log certificate generation result
                 error_log("Certificate generation result: " . json_encode($certificateResult));
-                
+
                 // Store results for notification
                 $_SESSION['certificate_generated'] = $certificateResult['success'] ?? false;
                 $_SESSION['completion_notification'] = true;
-                
+
                 // Add additional session variable with more details
                 $_SESSION['certificate_message'] = $certificateResult['message'] ?? '';
                 $_SESSION['certificate_id'] = $certificateResult['certificate_id'] ?? null;
-                
+
                 // Set a flag to show the completion modal with certificate info
                 $_SESSION['show_completion_modal'] = true;
             } catch (Exception $e) {
@@ -1465,34 +1465,44 @@ function getLinkDisplay($topic)
                                             </div>
                                         </div>
 
-                                        <div class="text-center">
-                                            <?php if ($active_attempt): ?>
-                                                <div id="activeAttempt" class="mb-3 text-muted" data-time-remaining="<?php echo $remaining_time; ?>">
-                                                    Active Attempt: <span id="remainingTime"><?php echo $remaining_time > 0 ? gmdate('i:s', $remaining_time) . ' sec remaining' : 'Time is up!'; ?></span>
-                                                </div>
-                                                <button class="btn btn-success btn-lg me-2" id="resumeQuizBtn" data-bs-toggle="modal" data-bs-target="#resumeQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>" data-remaining-time="<?php echo $remaining_time; ?>">
-                                                    <i class="bi bi-play-circle me-2"></i>Resume Quiz
-                                                </button>
-                                                <button class="btn btn-danger btn-lg" id="forfeitQuizBtn" data-bs-toggle="modal" data-bs-target="#forfeitQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>">
-                                                    <i class="bi bi-x-circle me-2"></i>Forfeit Quiz
-                                                </button>
-                                            <?php elseif (!empty($attempts)): ?>
-                                                <button class="btn btn-info btn-lg me-2" id="reviewLastAttemptBtn" data-bs-toggle="modal" data-bs-target="#reviewAttemptModal" data-attempt-id="<?php echo $attempts[0]['attempt_id']; ?>" data-attempt-number="<?php echo $attempts[0]['attempt_number']; ?>">
-                                                    <i class="bi bi-eye-fill me-2"></i>Review Last Attempt
-                                                </button>
-                                                <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
-                                                    <i class="bi bi-play-circle me-2"></i>Start Quiz
-                                                </button>
-                                            <?php else: ?>
-                                                <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
-                                                    <i class="bi bi-play-circle me-2"></i>Start Quiz
-                                                </button>
-                                            <?php endif; ?>
-                                            <div id="cooldownTimer" class="mt-2 text-muted" style="display: none;">
-                                                Cooldown: <span id="cooldownSeconds">10</span>s
-                                            </div>
-                                        </div>
-
+                                        <div class="text-center" id="quizButtonsContainer">
+    <?php if ($active_attempt): ?>
+        <div id="activeAttempt" class="mb-3 text-muted" data-time-remaining="<?php echo $remaining_time; ?>">
+            Active Attempt: <span id="remainingTime"><?php echo $remaining_time > 0 ? gmdate('i:s', $remaining_time) . ' sec remaining' : 'Time is up!'; ?></span>
+        </div>
+        <div class="active-attempt-buttons">
+            <button class="btn btn-success btn-lg me-2" id="resumeQuizBtn" data-bs-toggle="modal" data-bs-target="#resumeQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>" data-remaining-time="<?php echo $remaining_time; ?>">
+                <i class="bi bi-play-circle me-2"></i>Resume Quiz
+            </button>
+            <button class="btn btn-danger btn-lg" id="forfeitQuizBtn" data-bs-toggle="modal" data-bs-target="#forfeitQuizModal" data-attempt-id="<?php echo $active_attempt['attempt_id']; ?>">
+                <i class="bi bi-x-circle me-2"></i>Forfeit Quiz
+            </button>
+        </div>
+        <div class="post-attempt-buttons" style="display:none">
+            <?php if (!empty($attempts)): ?>
+                <button class="btn btn-info btn-lg me-2" id="reviewLastAttemptBtn" data-bs-toggle="modal" data-bs-target="#reviewAttemptModal" data-attempt-id="<?php echo $attempts[0]['attempt_id']; ?>" data-attempt-number="<?php echo $attempts[0]['attempt_number']; ?>">
+                    <i class="bi bi-eye-fill me-2"></i>Review Last Attempt
+                </button>
+            <?php endif; ?>
+            <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
+                <i class="bi bi-play-circle me-2"></i>Start Quiz
+            </button>
+        </div>
+    <?php else: ?>
+        <!-- Original non-active attempt buttons -->
+        <?php if (!empty($attempts)): ?>
+            <button class="btn btn-info btn-lg me-2" id="reviewLastAttemptBtn" data-bs-toggle="modal" data-bs-target="#reviewAttemptModal" data-attempt-id="<?php echo $attempts[0]['attempt_id']; ?>" data-attempt-number="<?php echo $attempts[0]['attempt_number']; ?>">
+                <i class="bi bi-eye-fill me-2"></i>Review Last Attempt
+            </button>
+        <?php endif; ?>
+        <button class="btn btn-primary btn-lg" id="startQuizBtn" data-bs-toggle="modal" data-bs-target="#startQuizModal" data-max-attempts="<?php echo $max_attempts; ?>" data-current-attempts="<?php echo $current_attempts; ?>">
+            <i class="bi bi-play-circle me-2"></i>Start Quiz
+        </button>
+    <?php endif; ?>
+    <div id="cooldownTimer" class="mt-2 text-muted" style="display: none;">
+        Cooldown: <span id="cooldownSeconds">10</span>s
+    </div>
+</div>
                                         <!-- Include Previous Attempts -->
                                         <?php include '../includes/students/previous-attempts.php'; ?>
                                     </div>
@@ -1626,14 +1636,20 @@ function getLinkDisplay($topic)
                                 <!-- Blinking CSS for Attempt Reset -->
                                 <style>
                                     @keyframes blink {
-                                        50% {
-                                            opacity: 0;
-                                        }
-                                    }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.blink {
+  animation: blink 1s linear infinite;
+}
 
-                                    .blink {
-                                        animation: blink 0.5s step-end infinite;
-                                    }
+#quizButtonsContainer {
+  transition: all 0.3s ease;
+}
+.active-attempt-buttons,
+.post-attempt-buttons {
+  margin: 10px 0;
+}
                                 </style>
                             </div>
                         <?php else: ?>
@@ -2090,7 +2106,7 @@ function getLinkDisplay($topic)
             const confirmResumeQuizBtn = document.getElementById('confirmResumeQuiz');
             const forfeitQuizBtn = document.getElementById('forfeitQuizBtn');
             const confirmForfeitQuizBtn = document.getElementById('confirmForfeitQuiz');
-const timeLimit = <?php echo isset($quiz['time_limit']) ? (int)$quiz['time_limit'] : 0; ?>;
+            const timeLimit = <?php echo isset($quiz['time_limit']) ? (int)$quiz['time_limit'] : 0; ?>;
             let timerInterval;
             let autosaveInterval;
 
@@ -2232,9 +2248,9 @@ const timeLimit = <?php echo isset($quiz['time_limit']) ? (int)$quiz['time_limit
             // Start Quiz
             if (startQuizBtn && confirmStartQuizBtn) {
                 startQuizBtn.addEventListener('click', function() {
-                  const maxAttempts = parseInt(this.getAttribute('data-max-attempts')) || 0;
-const currentAttempts = parseInt(this.getAttribute('data-current-attempts')) || 0;
-const hasActiveAttempt = <?php echo isset($active_attempt) && $active_attempt ? 'true' : 'false'; ?>;
+                    const maxAttempts = parseInt(this.getAttribute('data-max-attempts')) || 0;
+                    const currentAttempts = parseInt(this.getAttribute('data-current-attempts')) || 0;
+                    const hasActiveAttempt = <?php echo isset($active_attempt) && $active_attempt ? 'true' : 'false'; ?>;
 
                     if (hasActiveAttempt) {
                         queueNotification('Active Attempt', 'You have an active quiz attempt. Please resume or forfeit it before starting a new one.');
@@ -2582,51 +2598,53 @@ const hasActiveAttempt = <?php echo isset($active_attempt) && $active_attempt ? 
     });
 
     // Real-time countdown timer for active attempt and modal
-    function startCountdown() {
-        const activeAttemptDiv = document.getElementById('activeAttempt');
-        const activeTimer = document.getElementById('remainingTime');
-        const modalTimer = document.getElementById('modalRemainingTime');
+function startCountdown() {
+    const activeAttemptDiv = document.getElementById('activeAttempt');
+    const activeTimer = document.getElementById('remainingTime');
+    const activeButtons = document.querySelector('.active-attempt-buttons');
+    const postButtons = document.querySelector('.post-attempt-buttons');
 
-        console.log('Starting countdown:', {
-            activeAttemptDiv: !!activeAttemptDiv,
-            activeTimer: !!activeTimer,
-            modalTimer: !!modalTimer,
-            initialTimeRemaining: activeAttemptDiv ? activeAttemptDiv.getAttribute('data-time-remaining') : null
-        });
+    if (activeAttemptDiv && activeTimer) {
+        let timeRemaining = parseInt(activeAttemptDiv.getAttribute('data-time-remaining')) || 0;
 
-        if (activeAttemptDiv && activeTimer) {
-            let timeRemaining = parseInt(activeAttemptDiv.getAttribute('data-time-remaining')) || 0;
+        const countdown = setInterval(() => {
+            if (timeRemaining <= 0) {
+                clearInterval(countdown);
+                
+                // Make "Time is up!" text blink
+                activeTimer.textContent = 'Time is up!';
+                activeTimer.classList.add('blink');
 
-            const countdown = setInterval(() => {
-                if (timeRemaining <= 0) {
-                    clearInterval(countdown);
-                    activeTimer.textContent = 'Time is up!';
-                    if (modalTimer) {
-                        modalTimer.textContent = 'Time is up!';
-                    }
-                    console.log('Countdown ended, auto-submitting if quiz is active');
-                    const quizQuestionsDiv = document.getElementById('quizQuestions');
-                    if (quizQuestionsDiv && quizQuestionsDiv.style.display !== 'none') {
-                        submitQuiz(true); // Auto-submit if quiz is active
-                    }
-                    return;
+                // After 3 seconds, switch buttons
+                setTimeout(() => {
+                    // Stop blinking
+                    activeTimer.classList.remove('blink');
+                    
+                    // Hide active buttons and show post-attempt buttons
+                    if (activeButtons) activeButtons.style.display = 'none';
+                    if (postButtons) postButtons.style.display = 'block';
+                    
+                }, 3000);
+
+                // Auto-submit if quiz is active
+                const quizQuestionsDiv = document.getElementById('quizQuestions');
+                if (quizQuestionsDiv && quizQuestionsDiv.style.display !== 'none') {
+                    submitQuiz(true);
                 }
+                return;
+            }
 
-                const minutes = Math.floor(timeRemaining / 60);
-                const seconds = timeRemaining % 60;
-                const formattedTime = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            // Update timer display
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const formattedTime = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
-                activeTimer.textContent = `${formattedTime} sec remaining`;
-                if (modalTimer) {
-                    modalTimer.textContent = `${formattedTime} sec remaining`;
-                }
-
-                timeRemaining--;
-            }, 1000);
-        } else {
-            console.warn('Countdown not started: missing elements');
-        }
+            activeTimer.textContent = `${formattedTime} sec remaining`;
+            timeRemaining--;
+        }, 1000);
     }
+}
+
     // Start the countdown when the page loads
     document.addEventListener('DOMContentLoaded', startCountdown);
 </script>
