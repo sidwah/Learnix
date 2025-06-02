@@ -16,7 +16,7 @@ if (!isset($attempts) || !isset($question_count)) {
     <div class="card-body">
         <div id="attemptsList" class="d-flex flex-column gap-3">
             <?php if (empty($attempts)): ?>
-                <div class="alert alert-info text-center">No previous attempts found.</div>
+                <div class="alert alert-soft-info text-center">No previous attempts found.</div>
             <?php else: ?>
                 <?php foreach ($attempts as $index => $attempt): ?>
                     <div class="border rounded p-3 bg-white shadow-sm d-flex justify-content-between align-items-center attempt-item" 

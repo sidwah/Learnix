@@ -27,28 +27,11 @@ if (!$user_id || !$notification_type || !$message) {
     exit;
 }
 
-try {
-    // Insert notification into database
-    $query = "INSERT INTO user_notifications 
-              (user_id, type, title, message, related_id, related_type) 
-              VALUES (?, ?, ?, ?, ?, ?)";
-    
-    $related_id = $data['related_id'] ?? null;
-    $related_type = $data['related_type'] ?? null;
-    
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("isssss", $user_id, $notification_type, $title, $message, $related_id, $related_type);
-    $success = $stmt->execute();
-    $stmt->close();
-    
-    if ($success) {
-        echo json_encode(['success' => true, 'notification_id' => $conn->insert_id]);
-    } else {
-        echo json_encode(['success' => false, 'error' => 'Failed to save notification']);
-    }
-} catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
-}
-
-$conn->close();
+// Simulate success without saving to database
+echo json_encode([
+    'success' => true,
+    'notification_id' => null, // or any dummy value if needed
+    'message' => 'Notification queued (not saved to database)'
+]);
+exit;
 ?>
