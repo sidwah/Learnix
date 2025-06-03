@@ -1,12 +1,10 @@
 <?php
+// instructor/all-students.php
 require '../backend/session_start.php';
 
 // Check if the user is signed in and has the 'instructor' role
 if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['role'] !== 'instructor') {
-    // Log unauthorized access attempt for security auditing
     error_log("Unauthorized access attempt detected: " . json_encode($_SERVER));
-
-    // Redirect unauthorized users to a custom unauthorized access page or login page
     header('Location: landing.php');
     exit;
 }
@@ -31,9 +29,14 @@ if ($stmt->num_rows > 0) {
 }
 $stmt->close();
 
-// Get course filter (if provided)
+// Sanitize course filter (must be a positive integer)
 $course_filter = isset($_GET['course']) ? intval($_GET['course']) : 0;
-$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
+if ($course_filter < 0) $course_filter = 0;
+
+// Sanitize status filter (allow only specific values)
+$allowed_statuses = ['Active', 'Completed', 'Expired', 'Suspended', 'Refunded', ''];
+$status_filter = isset($_GET['status']) ? trim($_GET['status']) : '';
+if (!in_array($status_filter, $allowed_statuses)) $status_filter = '';
 
 // Get all instructor's courses for filter dropdown
 $courses_query = "SELECT c.course_id, c.title 
@@ -112,7 +115,6 @@ $row = $result->fetch_assoc();
 $has_students = $row['has_students'];
 $stmt->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 

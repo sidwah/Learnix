@@ -1,5 +1,5 @@
 <?php
-// Add these lines at the top of your get-quiz-details.php file:
+// ajax/instructors/get-quiz-details.php
 error_reporting(0); // Turn off error reporting for production
 header('Content-Type: application/json'); // Force JSON content type
 require_once '../../backend/config.php';
@@ -22,13 +22,16 @@ if (!$quizId || !$studentId) {
 }
 
 // Verify that the student is enrolled in the instructor's course
+// Verify that the student is enrolled in the instructor's course
 $verify_query = "SELECT EXISTS(
                     SELECT 1 FROM enrollments e
                     JOIN courses c ON e.course_id = c.course_id
-                    WHERE e.user_id = ? AND c.instructor_id = ?
+                    JOIN course_instructors ci ON c.course_id = ci.course_id
+                    JOIN instructors i ON ci.instructor_id = i.instructor_id
+                    WHERE e.user_id = ? AND i.user_id = ?
                 ) as valid_student";
 $stmt = $conn->prepare($verify_query);
-$stmt->bind_param("ii", $studentId, $instructorId);
+$stmt->bind_param("ii", $studentId, $_SESSION['user_id']);
 $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
@@ -52,10 +55,12 @@ $quiz_summary_query = "SELECT
             JOIN section_quizzes sq ON sqa.quiz_id = sq.quiz_id
             JOIN course_sections cs ON sq.section_id = cs.section_id
             JOIN courses c ON cs.course_id = c.course_id
-            WHERE sqa.user_id = ? AND sqa.quiz_id = ? AND c.instructor_id = ?
+            JOIN course_instructors ci ON c.course_id = ci.course_id
+            JOIN instructors i ON ci.instructor_id = i.instructor_id
+            WHERE sqa.user_id = ? AND sqa.quiz_id = ? AND i.user_id = ?
             GROUP BY sq.quiz_id";
 $stmt = $conn->prepare($quiz_summary_query);
-$stmt->bind_param("iii", $studentId, $quizId, $instructorId);
+$stmt->bind_param("iii", $studentId, $quizId, $_SESSION['user_id']);
 $stmt->execute();
 $result = $stmt->get_result();
 $summary = $result->fetch_assoc();

@@ -1,4 +1,5 @@
 <?php
+// ajax/instructors/get_students.php
 require_once '../../backend/config.php';
 require_once '../../backend/session_start.php';
 
@@ -12,12 +13,12 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
     exit;
 }
 
-// Get instructor ID from POST data (sent by all-students.php)
+// Get instructor ID from POST data
 $instructor_id = isset($_POST['instructor_id']) ? intval($_POST['instructor_id']) : 0;
 
 // Validate instructor ID by mapping user_id to instructor_id
 $user_id = $_SESSION['user_id'];
-$query = "SELECT instructor_id FROM instructors WHERE user_id = ?";
+$query = "SELECT instructor_id FROM instructors WHERE user_id = ? AND deleted_at IS NULL";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -26,7 +27,6 @@ $stmt->store_result();
 if ($stmt->num_rows > 0) {
     $stmt->bind_result($db_instructor_id);
     $stmt->fetch();
-    // Ensure the POST instructor_id matches the database instructor_id
     if ($instructor_id !== $db_instructor_id) {
         header('Content-Type: application/json');
         echo json_encode([
@@ -45,10 +45,22 @@ if ($stmt->num_rows > 0) {
 }
 $stmt->close();
 
-// Get filters if provided
+// Get and validate filters
 $course_filter = isset($_POST['course']) ? intval($_POST['course']) : 0;
 $status_filter = isset($_POST['status']) ? trim($_POST['status']) : '';
 $activity_filter = isset($_POST['activity']) ? trim($_POST['activity']) : '';
+
+// Validate status_filter
+$allowed_statuses = ['Active', 'Completed', 'Expired', 'Suspended', 'Refunded'];
+if (!empty($status_filter) && !in_array($status_filter, $allowed_statuses)) {
+    $status_filter = '';
+}
+
+// Validate activity_filter
+$allowed_activities = ['active-now', 'active-recent', 'inactive'];
+if (!empty($activity_filter) && !in_array($activity_filter, $allowed_activities)) {
+    $activity_filter = '';
+}
 
 // Log the received parameters for debugging
 error_log("get_students.php received filters: course=$course_filter, status=$status_filter, activity=$activity_filter, instructor_id=$instructor_id");
@@ -60,10 +72,10 @@ $query = "SELECT
             u.last_name,
             u.email,
             u.profile_pic,
-            MAX(e.enrolled_at) as enrolled_at,
-            MAX(e.last_accessed) as last_activity,
-            COUNT(DISTINCT e.course_id) as enrolled_courses,
-            AVG(e.completion_percentage) as avg_completion,
+            MAX(e.enrolled_at) AS enrolled_at,
+            MAX(e.last_accessed) AS last_activity,
+            COUNT(DISTINCT e.course_id) AS enrolled_courses,
+            AVG(e.completion_percentage) AS avg_completion,
             (
                 SELECT AVG(sqa.score) 
                 FROM student_quiz_attempts sqa
@@ -71,14 +83,22 @@ $query = "SELECT
                 JOIN course_sections cs ON sq.section_id = cs.section_id
                 JOIN courses c_sub ON cs.course_id = c_sub.course_id
                 JOIN course_instructors ci_sub ON c_sub.course_id = ci_sub.course_id
-                WHERE sqa.user_id = u.user_id AND ci_sub.instructor_id = ?
-            ) as quiz_avg,
-            MAX(e.status) as status
+                WHERE sqa.user_id = u.user_id 
+                    AND ci_sub.instructor_id = ?
+                    AND sqa.deleted_at IS NULL
+                    AND c_sub.deleted_at IS NULL
+                    AND ci_sub.deleted_at IS NULL
+            ) AS quiz_avg,
+            GROUP_CONCAT(DISTINCT e.status ORDER BY e.status) AS status
           FROM users u
           JOIN enrollments e ON u.user_id = e.user_id
           JOIN courses c ON e.course_id = c.course_id
           JOIN course_instructors ci ON c.course_id = ci.course_id
-          WHERE ci.instructor_id = ? ";
+          WHERE ci.instructor_id = ? 
+            AND u.deleted_at IS NULL
+            AND e.deleted_at IS NULL
+            AND c.deleted_at IS NULL
+            AND ci.deleted_at IS NULL ";
 
 // Parameters array with types
 $params = [$instructor_id, $instructor_id];
@@ -95,7 +115,7 @@ if ($course_filter > 0) {
 if (!empty($status_filter)) {
     $query .= " AND e.status = ? ";
     $params[] = $status_filter;
-    $param_types .= "s"; // Status is a string
+    $param_types .= "s";
     error_log("Applied status filter: '$status_filter'");
 }
 
@@ -107,7 +127,7 @@ if (!empty($activity_filter)) {
             break;
         case 'active-recent':
             $query .= " AND e.last_accessed >= DATE_SUB(NOW(), INTERVAL 30 DAY) 
-                       AND e.last_accessed < DATE_SUB(NOW(), INTERVAL 7 DAY) ";
+                        AND e.last_accessed < DATE_SUB(NOW(), INTERVAL 7 DAY) ";
             break;
         case 'inactive':
             $query .= " AND (e.last_accessed < DATE_SUB(NOW(), INTERVAL 30 DAY) OR e.last_accessed IS NULL) ";
@@ -140,7 +160,6 @@ try {
     // Fetch all records
     $records = [];
     while ($row = $result->fetch_assoc()) {
-        // Format data for display
         $records[] = [
             'user_id' => $row['user_id'],
             'first_name' => htmlspecialchars($row['first_name']),
@@ -167,20 +186,13 @@ try {
     ]);
     
 } catch (Exception $e) {
-    // Log the error
     error_log('Error in get_students.php: ' . $e->getMessage());
-    
-    // Close connection if open
-    if (isset($stmt)) {
-        $stmt->close();
-    }
+    if (isset($stmt)) $stmt->close();
     $conn->close();
-    
-    // Return error response
     header('Content-Type: application/json');
     echo json_encode([
         'error' => 'Database error',
-        'message' => 'An error occurred while fetching student data: ' . $e->getMessage(),
+        'message' => 'An error occurred while fetching student data.',
         'data' => []
     ]);
 }

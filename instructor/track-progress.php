@@ -1,26 +1,36 @@
 <?php
+// instructor/track-progress.php
 require '../backend/session_start.php';
 
 // Check if the user is signed in and has the 'instructor' role
 if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['role'] !== 'instructor') {
-    // Log unauthorized access attempt for security auditing
     error_log("Unauthorized access attempt detected: " . json_encode($_SERVER));
-
-    // Redirect unauthorized users to a custom unauthorized access page or login page
     header('Location: landing.php');
     exit;
 }
 
 require_once '../backend/config.php';
 
-// Get instructor ID from the session
-$instructor_id = $_SESSION['user_id'];
+// Get user ID from the session and fetch instructor ID
+$user_id = $_SESSION['user_id'];
+$query = "SELECT instructor_id FROM instructors WHERE user_id = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$stmt->store_result();
+
+if ($stmt->num_rows > 0) {
+    $stmt->bind_result($instructor_id);
+    $stmt->fetch();
+} else {
+    die("Instructor not found.");
+}
+$stmt->close();
 
 // Get student ID from URL parameter
 $student_id = isset($_GET['student_id']) ? intval($_GET['student_id']) : 0;
 
 if ($student_id <= 0) {
-    // Invalid student ID, redirect to all students page
     header('Location: all-students.php');
     exit;
 }
@@ -29,7 +39,8 @@ if ($student_id <= 0) {
 $verify_query = "SELECT EXISTS(
                     SELECT 1 FROM enrollments e
                     JOIN courses c ON e.course_id = c.course_id
-                    WHERE e.user_id = ? AND c.instructor_id = ?
+                    JOIN course_instructors ci ON c.course_id = ci.course_id
+                    WHERE e.user_id = ? AND ci.instructor_id = ?
                 ) as valid_student";
 $stmt = $conn->prepare($verify_query);
 $stmt->bind_param("ii", $student_id, $instructor_id);
@@ -38,7 +49,6 @@ $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 
 if (!$row['valid_student']) {
-    // Student not found or not enrolled in instructor's courses
     header('Location: all-students.php');
     exit;
 }
@@ -56,7 +66,8 @@ $student_query = "SELECT
                 FROM users u
                 JOIN enrollments e ON u.user_id = e.user_id
                 JOIN courses c ON e.course_id = c.course_id
-                WHERE u.user_id = ? AND c.instructor_id = ?
+                JOIN course_instructors ci ON c.course_id = ci.course_id
+                WHERE u.user_id = ? AND ci.instructor_id = ?
                 GROUP BY u.user_id";
 $stmt = $conn->prepare($student_query);
 $stmt->bind_param("ii", $student_id, $instructor_id);
@@ -75,7 +86,8 @@ $courses_query = "SELECT
                     e.status
                 FROM enrollments e
                 JOIN courses c ON e.course_id = c.course_id
-                WHERE e.user_id = ? AND c.instructor_id = ?
+                JOIN course_instructors ci ON c.course_id = ci.course_id
+                WHERE e.user_id = ? AND ci.instructor_id = ?
                 ORDER BY e.enrolled_at DESC";
 $stmt = $conn->prepare($courses_query);
 $stmt->bind_param("ii", $student_id, $instructor_id);
@@ -101,7 +113,8 @@ $quiz_query = "SELECT
             JOIN section_quizzes sq ON sqa.quiz_id = sq.quiz_id
             JOIN course_sections cs ON sq.section_id = cs.section_id
             JOIN courses c ON cs.course_id = c.course_id
-            WHERE sqa.user_id = ? AND c.instructor_id = ?
+            JOIN course_instructors ci ON c.course_id = ci.course_id
+            WHERE sqa.user_id = ? AND ci.instructor_id = ?
             GROUP BY sq.quiz_id
             ORDER BY last_attempt_date DESC";
 $stmt = $conn->prepare($quiz_query);
@@ -134,8 +147,9 @@ $sections_query = "SELECT
                         ELSE 0 
                       END) as completed_sections
                 FROM courses c
+                JOIN course_instructors ci ON c.course_id = ci.course_id
                 JOIN course_sections cs ON c.course_id = cs.course_id
-                WHERE c.instructor_id = ? 
+                WHERE ci.instructor_id = ? 
                 AND c.course_id IN (SELECT course_id FROM enrollments WHERE user_id = ?)
                 GROUP BY c.course_id
                 ORDER BY c.title";
@@ -155,7 +169,13 @@ while ($section = $sections_result->fetch_assoc()) {
 // Calculate total time spent on learning
 $time_query = "SELECT SUM(time_spent) as total_time 
                FROM student_learning_sessions 
-               WHERE user_id = ? AND course_id IN (SELECT course_id FROM courses WHERE instructor_id = ?)";
+               WHERE user_id = ? 
+               AND course_id IN (
+                   SELECT c.course_id 
+                   FROM courses c 
+                   JOIN course_instructors ci ON c.course_id = ci.course_id 
+                   WHERE ci.instructor_id = ?
+               )";
 $stmt = $conn->prepare($time_query);
 $stmt->bind_param("ii", $student_id, $instructor_id);
 $stmt->execute();
@@ -164,28 +184,26 @@ $time_data = $result->fetch_assoc();
 $total_time_spent = $time_data['total_time'] ?? 0;
 
 // Format dates for display
-function formatDate($dateString) {
+function formatDate($dateString)
+{
     if (!$dateString) return 'Never';
-    
     $date = new DateTime($dateString);
     return $date->format('M d, Y');
 }
 
 // Format time duration
-function formatDuration($seconds) {
+function formatDuration($seconds)
+{
     if (!$seconds) return '0 sec';
-    
-    if ($seconds < 60) {
-        return $seconds . ' sec';
-    } else if ($seconds < 3600) {
+    if ($seconds < 60) return $seconds . ' sec';
+    if ($seconds < 3600) {
         $minutes = floor($seconds / 60);
         $secs = $seconds % 60;
         return $minutes . 'm ' . $secs . 's';
-    } else {
-        $hours = floor($seconds / 3600);
-        $minutes = floor(($seconds % 3600) / 60);
-        return $hours . 'h ' . $minutes . 'm';
     }
+    $hours = floor($seconds / 3600);
+    $minutes = floor(($seconds % 3600) / 60);
+    return $hours . 'h ' . $minutes . 'm';
 }
 
 // Check if we have empty data
@@ -196,9 +214,9 @@ $has_sections_data = count($sections_data) > 0;
 // Calculate section completion percentage
 $section_completion_percent = $total_sections > 0 ? round(($completed_sections / $total_sections) * 100, 1) : 0;
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <title>Student Progress | Learnix - Empowering Education</title>
@@ -216,12 +234,13 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
 
     <!-- App css -->
     <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
-    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style"/>
-    
+    <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" id="app-style" />
+
     <style>
         .progress {
             height: 8px;
         }
+
         .student-profile-header {
             background: linear-gradient(to right, #1a2942, #121a2f);
             color: #fff;
@@ -229,6 +248,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
+
         .profile-img {
             width: 100px;
             height: 100px;
@@ -236,9 +256,11 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
             border-radius: 50%;
             border: 3px solid #fff;
         }
+
         .chart-container {
             height: 300px;
         }
+
         .course-card .course-progress {
             height: 6px;
             width: 100%;
@@ -246,17 +268,21 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
             background-color: #e3eaef;
             border-radius: 3px;
         }
+
         .course-card .progress-bar {
             height: 100%;
             border-radius: 3px;
         }
+
         #download-link {
             display: none;
         }
+
         .donut-completion {
             position: relative;
             text-align: center;
         }
+
         .completion-center {
             position: absolute;
             top: 50%;
@@ -265,6 +291,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
             font-size: 24px;
             font-weight: bold;
         }
+
         .completion-label {
             font-size: 14px;
             color: #6c757d;
@@ -289,10 +316,10 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                 <!-- Topbar Start -->
                 <?php include '../includes/instructor-topnavbar.php'; ?>
                 <!-- end Topbar -->
-                
+
                 <!-- Start Content-->
                 <div class="container-fluid">
-                
+
                     <!-- start page title -->
                     <div class="row">
                         <div class="col-12">
@@ -307,15 +334,15 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                                 <h4 class="page-title">Student Progress</h4>
                             </div>
                         </div>
-                    </div>     
+                    </div>
                     <!-- end page title -->
 
                     <!-- Student profile header -->
                     <div class="student-profile-header">
                         <div class="row align-items-center">
                             <div class="col-auto">
-                                <img src="<?php echo $student['profile_pic'] ? '../uploads/profile/' . $student['profile_pic'] : 'assets/images/users/default.png'; ?>" 
-                                     class="profile-img" alt="Student Profile">
+                                <img src="<?php echo $student['profile_pic'] ? '../uploads/profile/' . $student['profile_pic'] : 'assets/images/users/default.png'; ?>"
+                                    class="profile-img" alt="Student Profile">
                             </div>
                             <div class="col">
                                 <h2 class="m-0"><?php echo htmlspecialchars($student['first_name'] . ' ' . $student['last_name']); ?></h2>
@@ -457,13 +484,13 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                                                         <div class="card-img-overlay">
                                                             <div class="badge bg-<?php echo $course['status'] == 'Active' ? 'success' : ($course['status'] == 'Completed' ? 'info' : 'warning'); ?> text-light p-1"><?php echo $course['status']; ?></div>
                                                         </div>
-                                                        
+
                                                         <div class="card-body position-relative">
                                                             <!-- course title-->
                                                             <h5 class="mt-0">
                                                                 <a href="javascript:void(0);" class="text-title"><?php echo htmlspecialchars($course['title']); ?></a>
                                                             </h5>
-                                                            
+
                                                             <!-- course detail-->
                                                             <p class="mb-3">
                                                                 <span class="text-nowrap">
@@ -471,15 +498,15 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                                                                     <b>Enrolled: </b> <?php echo formatDate($course['enrolled_at']); ?>
                                                                 </span>
                                                             </p>
-                                                            
+
                                                             <!-- course progress-->
                                                             <p class="mb-2 fw-bold">Progress <span class="float-end"><?php echo number_format($course['completion_percentage'], 1); ?>%</span></p>
                                                             <div class="progress progress-sm">
-                                                                <div class="progress-bar bg-<?php echo $course['completion_percentage'] < 30 ? 'danger' : ($course['completion_percentage'] < 70 ? 'warning' : 'success'); ?>" role="progressbar" 
-                                                                     aria-valuenow="<?php echo $course['completion_percentage']; ?>" 
-                                                                     aria-valuemin="0" 
-                                                                     aria-valuemax="100" 
-                                                                     style="width: <?php echo $course['completion_percentage']; ?>%;">
+                                                                <div class="progress-bar bg-<?php echo $course['completion_percentage'] < 30 ? 'danger' : ($course['completion_percentage'] < 70 ? 'warning' : 'success'); ?>" role="progressbar"
+                                                                    aria-valuenow="<?php echo $course['completion_percentage']; ?>"
+                                                                    aria-valuemin="0"
+                                                                    aria-valuemax="100"
+                                                                    style="width: <?php echo $course['completion_percentage']; ?>%;">
                                                                 </div><!-- /.progress-bar -->
                                                             </div><!-- /.progress -->
                                                         </div> <!-- end card-body-->
@@ -498,7 +525,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Right Column - Section Completion -->
                         <div class="col-xl-4">
                             <div class="card">
@@ -515,47 +542,47 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <?php if ($has_sections_data): ?>
-                                    <div class="donut-completion my-4" style="height: 280px;">
-                                        <div id="sections-donut-chart" class="apex-charts"></div>
-                                        <div class="completion-center">
-                                            <?php echo $section_completion_percent; ?>%
-                                            <span class="completion-label">Completed</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row text-center mt-2 py-2">
-                                        <div class="col-6">
-                                            <div class="my-2 my-sm-0">
-                                                <i class="mdi mdi-check-circle-outline text-success mt-3 h3"></i>
-                                                <h3 class="fw-normal">
-                                                    <span><?php echo $completed_sections; ?>/<?php echo $total_sections; ?></span>
-                                                </h3>
-                                                <p class="text-muted mb-0">Sections Completed</p>
+                                        <div class="donut-completion my-4" style="height: 280px;">
+                                            <div id="sections-donut-chart" class="apex-charts"></div>
+                                            <div class="completion-center">
+                                                <?php echo $section_completion_percent; ?>%
+                                                <span class="completion-label">Completed</span>
                                             </div>
                                         </div>
-                                        <div class="col-6">
-                                            <div class="my-2 my-sm-0">
-                                                <i class="mdi mdi-book-open-variant text-primary mt-3 h3"></i>
-                                                <h3 class="fw-normal">
-                                                    <span><?php echo count($sections_data); ?></span>
-                                                </h3>
-                                                <p class="text-muted mb-0">Courses With Content</p>
+
+                                        <div class="row text-center mt-2 py-2">
+                                            <div class="col-6">
+                                                <div class="my-2 my-sm-0">
+                                                    <i class="mdi mdi-check-circle-outline text-success mt-3 h3"></i>
+                                                    <h3 class="fw-normal">
+                                                        <span><?php echo $completed_sections; ?>/<?php echo $total_sections; ?></span>
+                                                    </h3>
+                                                    <p class="text-muted mb-0">Sections Completed</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="my-2 my-sm-0">
+                                                    <i class="mdi mdi-book-open-variant text-primary mt-3 h3"></i>
+                                                    <h3 class="fw-normal">
+                                                        <span><?php echo count($sections_data); ?></span>
+                                                    </h3>
+                                                    <p class="text-muted mb-0">Courses With Content</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
                                     <?php else: ?>
-                                    <div class="alert alert-info">
-                                        <i class="mdi mdi-information-outline mr-2"></i>
-                                        No section data available for this student.
-                                    </div>
+                                        <div class="alert alert-info">
+                                            <i class="mdi mdi-information-outline mr-2"></i>
+                                            No section data available for this student.
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Quiz Performance -->
                     <div class="row">
                         <div class="col-12">
@@ -573,68 +600,68 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <?php if ($has_quizzes): ?>
-                                    <div class="table-responsive">
-                                        <table class="table table-centered table-hover mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Quiz</th>
-                                                    <th>Course</th>
-                                                    <th>Attempts</th>
-                                                    <th>Highest Score</th>
-                                                    <th>Average Score</th>
-                                                    <th>Time Spent</th>
-                                                    <th>Last Attempted</th>
-                                                    <th>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($quizzes as $quiz): ?>
-                                                <tr>
-                                                    <td><?php echo htmlspecialchars($quiz['quiz_title']); ?></td>
-                                                    <td><?php echo htmlspecialchars($quiz['course_title']); ?></td>
-                                                    <td><?php echo $quiz['attempts']; ?></td>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="progress" style="width: 100px; height: 4px;">
-                                                                <div class="progress-bar bg-<?php echo $quiz['highest_score'] < 60 ? 'danger' : ($quiz['highest_score'] < 80 ? 'warning' : 'success'); ?>" role="progressbar" 
-                                                                     style="width: <?php echo $quiz['highest_score']; ?>%;" 
-                                                                     aria-valuenow="<?php echo $quiz['highest_score']; ?>" 
-                                                                     aria-valuemin="0" aria-valuemax="100"></div>
-                                                            </div>
-                                                            <span class="ms-2"><?php echo number_format($quiz['highest_score'], 1); ?>%</span>
-                                                        </div>
-                                                    </td>
-                                                    <td><?php echo number_format($quiz['avg_score'], 1); ?>%</td>
-                                                    <td><?php echo formatDuration($quiz['total_time_spent']); ?></td>
-                                                    <td><?php echo formatDate($quiz['last_attempt_date']); ?></td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-sm btn-outline-info view-results" 
-                                                                data-bs-toggle="modal" 
-                                                                data-bs-target="#quiz-results-modal"
-                                                                data-quiz-id="<?php echo $quiz['quiz_id']; ?>"
-                                                                data-quiz-title="<?php echo htmlspecialchars($quiz['quiz_title']); ?>"
-                                                                data-student-id="<?php echo $student_id; ?>">
-                                                            <i class="uil uil-eye"></i> View
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-centered table-hover mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Quiz</th>
+                                                        <th>Course</th>
+                                                        <th>Attempts</th>
+                                                        <th>Highest Score</th>
+                                                        <th>Average Score</th>
+                                                        <th>Time Spent</th>
+                                                        <th>Last Attempted</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($quizzes as $quiz): ?>
+                                                        <tr>
+                                                            <td><?php echo htmlspecialchars($quiz['quiz_title']); ?></td>
+                                                            <td><?php echo htmlspecialchars($quiz['course_title']); ?></td>
+                                                            <td><?php echo $quiz['attempts']; ?></td>
+                                                            <td>
+                                                                <div class="d-flex align-items-center">
+                                                                    <div class="progress" style="width: 100px; height: 4px;">
+                                                                        <div class="progress-bar bg-<?php echo $quiz['highest_score'] < 60 ? 'danger' : ($quiz['highest_score'] < 80 ? 'warning' : 'success'); ?>" role="progressbar"
+                                                                            style="width: <?php echo $quiz['highest_score']; ?>%;"
+                                                                            aria-valuenow="<?php echo $quiz['highest_score']; ?>"
+                                                                            aria-valuemin="0" aria-valuemax="100"></div>
+                                                                    </div>
+                                                                    <span class="ms-2"><?php echo number_format($quiz['highest_score'], 1); ?>%</span>
+                                                                </div>
+                                                            </td>
+                                                            <td><?php echo number_format($quiz['avg_score'], 1); ?>%</td>
+                                                            <td><?php echo formatDuration($quiz['total_time_spent']); ?></td>
+                                                            <td><?php echo formatDate($quiz['last_attempt_date']); ?></td>
+                                                            <td>
+                                                                <button type="button" class="btn btn-sm btn-outline-info view-results"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#quiz-results-modal"
+                                                                    data-quiz-id="<?php echo $quiz['quiz_id']; ?>"
+                                                                    data-quiz-title="<?php echo htmlspecialchars($quiz['quiz_title']); ?>"
+                                                                    data-student-id="<?php echo $student_id; ?>">
+                                                                    <i class="uil uil-eye"></i> View
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     <?php else: ?>
-                                    <div class="alert alert-info">
-                                        <i class="mdi mdi-information-outline mr-2"></i>
-                                        No quiz attempts found for this student.
-                                    </div>
+                                        <div class="alert alert-info">
+                                            <i class="mdi mdi-information-outline mr-2"></i>
+                                            No quiz attempts found for this student.
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                 </div> <!-- container -->
 
             </div> <!-- content -->
@@ -644,7 +671,9 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-md-6">
-                        © Learnix. <script>document.write(new Date().getFullYear())</script> All rights reserved.
+                            © Learnix. <script>
+                                document.write(new Date().getFullYear())
+                            </script> All rights reserved.
                         </div>
                     </div>
                 </div>
@@ -688,7 +717,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div id="quiz-attempt-list" class="mt-3">
                             <h6>Quiz Attempts</h6>
                             <div class="table-responsive">
@@ -708,7 +737,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                                 </table>
                             </div>
                         </div>
-                        
+
                         <div id="question-breakdown" class="mt-4">
                             <h6>Question Performance</h6>
                             <div class="table-responsive">
@@ -744,7 +773,6 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
 
     <!-- Loading overlay -->
     <script>
-        
         // Show Loading Overlay
         function showOverlay(message = null) {
             // Remove any existing overlay
@@ -764,7 +792,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
         `;
 
             document.body.appendChild(overlay);
-            
+
             // Add styles
             overlay.style.position = 'fixed';
             overlay.style.top = '0';
@@ -785,7 +813,7 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                 overlay.remove();
             }
         }
-        
+
         // Show alert notification function
         function showAlert(type, message) {
             const alertDiv = document.createElement('div');
@@ -818,17 +846,17 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
         }
     </script>
 
-    <!-- bundle -->
-    <script src="assets/js/vendor.min.js"></script>
-    <script src="assets/js/app.min.js"></script>
+<!-- bundle -->
+<script src="assets/js/vendor.min.js"></script>
+<script src="assets/js/app.min.js"></script>
 
-    <!-- third party js -->
-    <script src="assets/js/vendor/apexcharts.min.js"></script>
-    <script src="assets/js/vendor/jquery.dataTables.min.js"></script>
-    <script src="assets/js/vendor/dataTables.bootstrap5.js"></script>
-    <script src="assets/js/vendor/jspdf.umd.min.js"></script>
-    <script src="assets/js/vendor/html2canvas.min.js"></script>
-    <!-- third party js ends -->
+<!-- third party js -->
+<script src="assets/js/vendor/apexcharts.min.js"></script>
+<script src="assets/js/vendor/jquery.dataTables.min.js"></script>
+<script src="assets/js/vendor/dataTables.bootstrap5.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- third party js ends -->
 
     <!-- Charts and report generation -->
     <script>
@@ -837,10 +865,10 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
             $('#message-student').click(function() {
                 showAlert('success', 'Messaging functionality will be implemented soon!');
             });
-            
+
             $('#generate-report').click(function() {
                 showOverlay('Generating student progress report...');
-                
+
                 // Generate report using jsPDF
                 setTimeout(function() {
                     try {
@@ -856,95 +884,98 @@ $section_completion_percent = $total_sections > 0 ? round(($completed_sections /
                     }
                 }, 1500);
             });
-            
-            <?php if ($has_sections_data): ?>
-            // Section completion donut chart
-            var sectionsOptions = {
-                chart: {
-                    type: 'donut',
-                    height: 280
-                },
-                plotOptions: {
-                    pie: {
-                        donut: {
-                            size: '75%'
-                        }
-                    }
-                },
-                dataLabels: {
-                    enabled: false
-                },
-                legend: {
-                    show: false
-                },
-                colors: ['#0acf97', '#f3f4f7'],
-                series: [<?php echo $completed_sections; ?>, <?php echo $total_sections - $completed_sections; ?>],
-                labels: ['Completed', 'Remaining'],
-                tooltip: {
-                    theme: 'dark',
-                    y: {
-                        formatter: function (val) {
-                            return val + " sections";
-                        }
-                    }
-                }
-            };
 
-            var sectionsChart = new ApexCharts(document.querySelector("#sections-donut-chart"), sectionsOptions);
-            sectionsChart.render();
-            <?php endif; ?>
-            
-            // View quiz results button click
-           // View quiz results button click
-$('.view-results').on('click', function() {
-    const quizId = $(this).data('quiz-id');
-    const quizTitle = $(this).data('quiz-title');
-    const studentId = $(this).data('student-id');
-    
-    
-    // Reset modal
-    $('#quiz-results-loading').removeClass('d-none');
-    $('#quiz-results-content').addClass('d-none');
-    $('#quiz-results-error').addClass('d-none');
-    
-    // Set quiz title in modal
-    $('#modal-quiz-title').text(quizTitle);
-    
-    // Load real quiz data via AJAX
-    $.ajax({
-        url: '../ajax/instructors/get-quiz-details.php',
-        method: 'GET',
-        data: { quiz_id: quizId, student_id: studentId },
-        dataType: 'json',
-        success: function(data) {
-            if (data.success) {
-                // Fill in real data
-                $('#modal-course-title').text(data.course_title);
-                $('#modal-highest-score').text(data.highest_score + '%');
-                $('#modal-avg-score').text(data.avg_score + '%');
-                $('#modal-attempts').text(data.attempts);
-                
-                // Format time using the same function as PHP side
-                function formatDuration(seconds) {
-                    if (!seconds) return '0 sec';
-                    
-                    if (seconds < 60) {
-                        return seconds + ' sec';
-                    } else if (seconds < 3600) {
-                        const minutes = Math.floor(seconds / 60);
-                        const secs = seconds % 60;
-                        return minutes + 'm ' + secs + 's';
-                    } else {
-                        const hours = Math.floor(seconds / 3600);
-                        const minutes = Math.floor((seconds % 3600) / 60);
-                        return hours + 'h ' + minutes + 'm';
+            <?php if ($has_sections_data): ?>
+                // Section completion donut chart
+                var sectionsOptions = {
+                    chart: {
+                        type: 'donut',
+                        height: 280
+                    },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: '75%'
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    legend: {
+                        show: false
+                    },
+                    colors: ['#0acf97', '#f3f4f7'],
+                    series: [<?php echo $completed_sections; ?>, <?php echo $total_sections - $completed_sections; ?>],
+                    labels: ['Completed', 'Remaining'],
+                    tooltip: {
+                        theme: 'dark',
+                        y: {
+                            formatter: function(val) {
+                                return val + " sections";
+                            }
+                        }
                     }
-                }
-                
-                // Render attempts table
-                let attemptsHtml = '';
-                data.attempts_list.forEach(attempt => {
-                    attemptsHtml += `
+                };
+
+                var sectionsChart = new ApexCharts(document.querySelector("#sections-donut-chart"), sectionsOptions);
+                sectionsChart.render();
+            <?php endif; ?>
+
+            // View quiz results button click
+            // View quiz results button click
+            $('.view-results').on('click', function() {
+                const quizId = $(this).data('quiz-id');
+                const quizTitle = $(this).data('quiz-title');
+                const studentId = $(this).data('student-id');
+
+
+                // Reset modal
+                $('#quiz-results-loading').removeClass('d-none');
+                $('#quiz-results-content').addClass('d-none');
+                $('#quiz-results-error').addClass('d-none');
+
+                // Set quiz title in modal
+                $('#modal-quiz-title').text(quizTitle);
+
+                // Load real quiz data via AJAX
+                $.ajax({
+                    url: '../ajax/instructors/get-quiz-details.php',
+                    method: 'GET',
+                    data: {
+                        quiz_id: quizId,
+                        student_id: studentId
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.success) {
+                            // Fill in real data
+                            $('#modal-course-title').text(data.course_title);
+                            $('#modal-highest-score').text(data.highest_score + '%');
+                            $('#modal-avg-score').text(data.avg_score + '%');
+                            $('#modal-attempts').text(data.attempts);
+
+                            // Format time using the same function as PHP side
+                            function formatDuration(seconds) {
+                                if (!seconds) return '0 sec';
+
+                                if (seconds < 60) {
+                                    return seconds + ' sec';
+                                } else if (seconds < 3600) {
+                                    const minutes = Math.floor(seconds / 60);
+                                    const secs = seconds % 60;
+                                    return minutes + 'm ' + secs + 's';
+                                } else {
+                                    const hours = Math.floor(seconds / 3600);
+                                    const minutes = Math.floor((seconds % 3600) / 60);
+                                    return hours + 'h ' + minutes + 'm';
+                                }
+                            }
+
+                            // Render attempts table
+                            let attemptsHtml = '';
+                            data.attempts_list.forEach(attempt => {
+                                attemptsHtml += `
                         <tr>
                             <td>${attempt.attempt_number}</td>
                             <td>${attempt.formatted_date}</td>
@@ -953,13 +984,13 @@ $('.view-results').on('click', function() {
                             <td><span class="badge bg-${attempt.status === 'Passed' ? 'success' : 'danger'}">${attempt.status}</span></td>
                         </tr>
                     `;
-                });
-                $('#quiz-attempts-tbody').html(attemptsHtml);
-                
-                // Render questions table
-                let questionsHtml = '';
-                data.questions.forEach(question => {
-                    questionsHtml += `
+                            });
+                            $('#quiz-attempts-tbody').html(attemptsHtml);
+
+                            // Render questions table
+                            let questionsHtml = '';
+                            data.questions.forEach(question => {
+                                questionsHtml += `
                         <tr>
                             <td>${question.question_text}</td>
                             <td>${question.question_type}</td>
@@ -978,62 +1009,72 @@ $('.view-results').on('click', function() {
                             </td>
                         </tr>
                     `;
+                            });
+                            $('#questions-tbody').html(questionsHtml);
+
+                            // Show content
+                            $('#quiz-results-loading').addClass('d-none');
+                            $('#quiz-results-content').removeClass('d-none');
+                        } else {
+                            // Show error
+                            $('#quiz-results-loading').addClass('d-none');
+                            $('#quiz-results-error').removeClass('d-none');
+                            $('#quiz-results-error').text('Error: ' + data.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        // Show error
+                        $('#quiz-results-loading').addClass('d-none');
+                        $('#quiz-results-error').removeClass('d-none');
+                        $('#quiz-results-error').text('Error loading quiz data. Please try again.');
+                        console.error('AJAX Error:', status, error);
+                    }
                 });
-                $('#questions-tbody').html(questionsHtml);
-                
-                // Show content
-                $('#quiz-results-loading').addClass('d-none');
-                $('#quiz-results-content').removeClass('d-none');
-            } else {
-                // Show error
-                $('#quiz-results-loading').addClass('d-none');
-                $('#quiz-results-error').removeClass('d-none');
-                $('#quiz-results-error').text('Error: ' + data.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            // Show error
-            $('#quiz-results-loading').addClass('d-none');
-            $('#quiz-results-error').removeClass('d-none');
-            $('#quiz-results-error').text('Error loading quiz data. Please try again.');
-            console.error('AJAX Error:', status, error);
-        }
-    });
-});
+            });
 
             // Export modal results
             $('#export-modal-results').on('click', function() {
                 showAlert('success', 'Quiz results exported successfully!');
                 $('#quiz-results-modal').modal('hide');
             });
-            
+
             // Function to generate PDF report
             function generatePDF() {
-                const { jsPDF } = window.jspdf;
-                
+                const {
+                    jsPDF
+                } = window.jspdf;
+
                 // Create a new PDF document
                 const doc = new jsPDF('p', 'mm', 'a4');
-                
+
                 // Add title
                 doc.setFontSize(22);
                 doc.setTextColor(40, 40, 40);
-                doc.text('Student Progress Report', 105, 20, { align: 'center' });
-                
+                doc.text('Student Progress Report', 105, 20, {
+                    align: 'center'
+                });
+
                 // Add student info
                 doc.setFontSize(14);
                 doc.setTextColor(70, 70, 70);
-                doc.text(`${<?php echo json_encode(htmlspecialchars($student['first_name'] . ' ' . $student['last_name'])); ?>}`, 105, 30, { align: 'center' });
-                
+                doc.text(`${<?php echo json_encode(htmlspecialchars($student['first_name'] . ' ' . $student['last_name'])); ?>}`, 105, 30, {
+                    align: 'center'
+                });
+
                 doc.setFontSize(12);
                 doc.setTextColor(100, 100, 100);
-                doc.text(`Email: ${<?php echo json_encode(htmlspecialchars($student['email'])); ?>}`, 105, 38, { align: 'center' });
-                doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 45, { align: 'center' });
-                
+                doc.text(`Email: ${<?php echo json_encode(htmlspecialchars($student['email'])); ?>}`, 105, 38, {
+                    align: 'center'
+                });
+                doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 45, {
+                    align: 'center'
+                });
+
                 // Add summary info
                 doc.setFontSize(16);
                 doc.setTextColor(50, 50, 50);
                 doc.text('Progress Summary', 20, 60);
-                
+
                 doc.setFontSize(12);
                 doc.setTextColor(80, 80, 80);
                 doc.text(`Courses Enrolled: ${<?php echo $student['enrolled_courses']; ?>}`, 20, 70);
@@ -1041,102 +1082,124 @@ $('.view-results').on('click', function() {
                 doc.text(`Quiz Performance: ${<?php echo $avg_score; ?>}%`, 20, 86);
                 doc.text(`Total Time Spent: ${<?php echo json_encode(formatDuration($total_time_spent)); ?>}`, 20, 94);
                 doc.text(`Section Completion: ${<?php echo $section_completion_percent; ?>}%`, 20, 102);
-                
+
                 // Add course information table
                 doc.setFontSize(16);
                 doc.text('Enrolled Courses', 20, 118);
-                
+
                 doc.setFontSize(10);
                 doc.setTextColor(80, 80, 80);
-                
+
                 // Course table headers
                 const courseHeaders = ['Course', 'Status', 'Progress', 'Enrolled On'];
                 let courseData = [];
-                
+
                 <?php if ($has_courses): ?>
-                // Add course data
-                <?php foreach ($courses as $course): ?>
-                courseData.push([
-                    <?php echo json_encode(htmlspecialchars($course['title'])); ?>, 
-                    <?php echo json_encode($course['status']); ?>,
-                    <?php echo json_encode(number_format($course['completion_percentage'], 1) . '%'); ?>,
-                    <?php echo json_encode(formatDate($course['enrolled_at'])); ?>
-                ]);
-                <?php endforeach; ?>
+                    // Add course data
+                    <?php foreach ($courses as $course): ?>
+                        courseData.push([
+                            <?php echo json_encode(htmlspecialchars($course['title'])); ?>,
+                            <?php echo json_encode($course['status']); ?>,
+                            <?php echo json_encode(number_format($course['completion_percentage'], 1) . '%'); ?>,
+                            <?php echo json_encode(formatDate($course['enrolled_at'])); ?>
+                        ]);
+                    <?php endforeach; ?>
                 <?php endif; ?>
-                
+
                 if (courseData.length > 0) {
                     doc.autoTable({
                         startY: 123,
                         head: [courseHeaders],
                         body: courseData,
                         theme: 'grid',
-                        headStyles: { fillColor: [26, 41, 66] },
+                        headStyles: {
+                            fillColor: [26, 41, 66]
+                        },
                         columnStyles: {
-                            0: { cellWidth: 70 },
-                            1: { cellWidth: 30 },
-                            2: { cellWidth: 30 },
-                            3: { cellWidth: 40 }
+                            0: {
+                                cellWidth: 70
+                            },
+                            1: {
+                                cellWidth: 30
+                            },
+                            2: {
+                                cellWidth: 30
+                            },
+                            3: {
+                                cellWidth: 40
+                            }
                         }
                     });
                 } else {
                     doc.text('No course data available', 20, 123);
                 }
-                
+
                 // Add quiz information
                 let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 170;
-                
+
                 doc.setFontSize(16);
                 doc.setTextColor(50, 50, 50);
                 doc.text('Quiz Performance', 20, finalY);
-                
+
                 // Quiz table headers
                 const quizHeaders = ['Quiz', 'Course', 'Highest Score', 'Attempts'];
                 let quizData = [];
-                
+
                 <?php if ($has_quizzes): ?>
-                // Add quiz data
-                <?php foreach ($quizzes as $quiz): ?>
-                quizData.push([
-                    <?php echo json_encode(htmlspecialchars($quiz['quiz_title'])); ?>, 
-                    <?php echo json_encode(htmlspecialchars($quiz['course_title'])); ?>,
-                    <?php echo json_encode(number_format($quiz['highest_score'], 1) . '%'); ?>,
-                    <?php echo $quiz['attempts']; ?>
-                ]);
-                <?php endforeach; ?>
+                    // Add quiz data
+                    <?php foreach ($quizzes as $quiz): ?>
+                        quizData.push([
+                            <?php echo json_encode(htmlspecialchars($quiz['quiz_title'])); ?>,
+                            <?php echo json_encode(htmlspecialchars($quiz['course_title'])); ?>,
+                            <?php echo json_encode(number_format($quiz['highest_score'], 1) . '%'); ?>,
+                            <?php echo $quiz['attempts']; ?>
+                        ]);
+                    <?php endforeach; ?>
                 <?php endif; ?>
-                
+
                 if (quizData.length > 0) {
                     doc.autoTable({
                         startY: finalY + 5,
                         head: [quizHeaders],
                         body: quizData,
                         theme: 'grid',
-                        headStyles: { fillColor: [26, 41, 66] },
+                        headStyles: {
+                            fillColor: [26, 41, 66]
+                        },
                         columnStyles: {
-                            0: { cellWidth: 60 },
-                            1: { cellWidth: 60 },
-                            2: { cellWidth: 30 },
-                            3: { cellWidth: 20 }
+                            0: {
+                                cellWidth: 60
+                            },
+                            1: {
+                                cellWidth: 60
+                            },
+                            2: {
+                                cellWidth: 30
+                            },
+                            3: {
+                                cellWidth: 20
+                            }
                         }
                     });
                 } else {
                     doc.text('No quiz data available', 20, finalY + 10);
                 }
-                
+
                 // Add footer
                 doc.setFontSize(10);
                 doc.setTextColor(150, 150, 150);
-                doc.text('Generated by Learnix Learning Management System', 105, 285, { align: 'center' });
-                
+                doc.text('Generated by Learnix Learning Management System', 105, 285, {
+                    align: 'center'
+                });
+
                 // Create download link
                 const pdfOutput = doc.output('blob');
                 const pdfUrl = URL.createObjectURL(pdfOutput);
                 $('#download-link').attr('href', pdfUrl);
-                
+
                 return pdfOutput;
             }
-            
+
             // Handle download link click
             $('#download-link').click(function() {
                 // Remove the blob URL after download starts
@@ -1149,4 +1212,5 @@ $('.view-results').on('click', function() {
         });
     </script>
 </body>
+
 </html>

@@ -108,11 +108,11 @@ $activity_based_courses = [];
             <i class="bi-award me-1"></i> Certificates
           </button>
         </li>
-        <li class="nav-item" role="presentation">
+        <!-- <li class="nav-item" role="presentation">
           <button class="nav-link" id="pills-analytics-tab" data-bs-toggle="pill" data-bs-target="#pills-analytics" type="button" role="tab" aria-controls="pills-analytics" aria-selected="false">
             <i class="bi-graph-up me-1"></i> Analytics
           </button>
-        </li>
+        </li> -->
       </ul>
     </div>
     <!-- End Nav -->
@@ -429,7 +429,7 @@ $activity_based_courses = [];
         <?php endforeach; ?>
       <?php else: ?>
         <div class="col-12">
-          <div class="alert alert-info text-center">
+          <div class="alert alert-soft-info text-center">
             <i class="bi-info-circle me-2"></i>
             We couldn't find any courses based on your activity. Try exploring more courses to get personalized recommendations!
           </div>
