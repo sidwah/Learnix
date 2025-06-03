@@ -254,15 +254,15 @@ $user_data = [
       </li>
       <?php endif; ?>
 
-      <li class="nav-item my-2 my-lg-5"></li>
+      <!-- <li class="nav-item my-2 my-lg-5"></li> -->
 
       <!-- Documents & Resources -->
-      <li class="nav-item">
+      <!-- <li class="nav-item">
         <span class="nav-subtitle">Documents & Resources</span>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="documents.php">Documents</a>
-      </li>
+      </li> -->
     
       
 
