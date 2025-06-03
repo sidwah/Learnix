@@ -75,39 +75,6 @@ if ($enrollment_result->num_rows > 0) {
     exit();
 }
 
-// Verify Paystack transaction (in a production environment)
-// Here we would normally verify with Paystack API if the transaction was successful
-// For this example, we'll assume all transactions are successful
-
-// In production, you would do something like:
-/*
-$curl = curl_init();
-curl_setopt_array($curl, array(
-    CURLOPT_URL => "https://api.paystack.co/transaction/verify/" . rawurlencode($transaction_id),
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => [
-        "accept: application/json",
-        "authorization: Bearer " . $SecretKey,
-        "cache-control: no-cache"
-    ],
-));
-$response = curl_exec($curl);
-$err = curl_error($curl);
-curl_close($curl);
-
-if ($err) {
-    $_SESSION['error_message'] = "Error verifying transaction. Please contact support.";
-    header("Location: ../../student/checkout.php?course_id=" . $course_id);
-    exit();
-}
-
-$tranx = json_decode($response);
-if (!$tranx->status || $tranx->data->status !== 'success') {
-    $_SESSION['error_message'] = "Transaction was not successful. Please try again.";
-    header("Location: ../../student/checkout.php?course_id=" . $course_id);
-    exit();
-}
-*/
 
 // Start a transaction
 $conn->begin_transaction();
@@ -147,14 +114,41 @@ try {
         $stmt->execute();
     }
 
-    // Calculate instructor earnings
-    $platform_fee = $course['price'] * 0.20; // 20% platform fee
-    $instructor_share = $course['price'] - $platform_fee;
+    // Fetch the latest approved instructor share from course_financial_history
+    $sql = "SELECT instructor_share 
+        FROM course_financial_history 
+        WHERE course_id = ? 
+        AND instructor_share > 0 
+        ORDER BY change_date DESC 
+        LIMIT 1";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $course_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $instructor_share_percentage = $row['instructor_share']; // e.g., 70.00 for 70%
+    } else {
+        // Fallback to default split from revenue_settings if no course-specific share exists
+        $sql = "SELECT instructor_share FROM revenue_settings ORDER BY updated_at DESC LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $instructor_share_percentage = $row['instructor_share'] ?? 80.00; // Default to 80% if not set
+    }
+    $stmt->close();
+
+    // Calculate instructor earnings based on the fetched share
+    $instructor_share_percentage = $instructor_share_percentage / 100; // Convert to decimal (e.g., 0.70)
+    $instructor_share = $course['price'] * $instructor_share_percentage;
+    $platform_fee = $course['price'] - $instructor_share;
 
     // Record instructor earnings
     $sql = "INSERT INTO instructor_earnings 
-            (instructor_id, course_id, payment_id, amount, instructor_share, platform_fee, status, created_at, available_at) 
-            VALUES (?, ?, ?, ?, ?, ?, 'Pending', NOW(), DATE_ADD(NOW(), INTERVAL 15 DAY))";
+        (instructor_id, course_id, payment_id, amount, instructor_share, platform_fee, status, created_at, available_at) 
+        VALUES (?, ?, ?, ?, ?, ?, 'Pending', NOW(), DATE_ADD(NOW(), INTERVAL 15 DAY))";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("iiiddd", $course['instructor_id'], $course_id, $payment_id, $course['price'], $instructor_share, $platform_fee);
     $stmt->execute();
@@ -191,7 +185,6 @@ VALUES (?, 'payment', ?, ?, ?, 'course', 0, NOW())";
     $_SESSION['success_message'] = "Mobile Money payment successful! You are now enrolled in the course.";
     header("Location: ../../student/payment-success.php?course_id=" . $course_id);
     exit();
-    
 } catch (Exception $e) {
     // Rollback transaction on error
     $conn->rollback();

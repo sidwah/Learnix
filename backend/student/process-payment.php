@@ -173,17 +173,49 @@ try {
                 $stmt->execute();
             }
 
-            // Calculate instructor earnings
-            $platform_fee = $course['price'] * 0.20; // 20% platform fee
-            $instructor_share = $course['price'] - $platform_fee;
+            // Fetch the latest approved instructor share from course_financial_history
+$sql = "SELECT instructor_share 
+        FROM course_financial_history 
+        WHERE course_id = ? 
+        AND instructor_share > 0 
+        ORDER BY change_date DESC 
+        LIMIT 1";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $course_id);
+$stmt->execute();
+$result = $stmt->get_result();
 
-            // Record instructor earnings
-            $sql = "INSERT INTO instructor_earnings 
-                    (instructor_id, course_id, payment_id, amount, instructor_share, platform_fee, status, created_at, available_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, 'Pending', NOW(), DATE_ADD(NOW(), INTERVAL 15 DAY))";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iiiddd", $course['instructor_id'], $course_id, $payment_id, $course['price'], $instructor_share, $platform_fee);
-            $stmt->execute();
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $instructor_share_percentage = $row['instructor_share']; // e.g., 70.00 for 70%
+} else {
+    // Fallback to default split from revenue_settings
+    $sql = "SELECT instructor_share FROM revenue_settings ORDER BY updated_at DESC LIMIT 1";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $instructor_share_percentage = $row['instructor_share'];
+    } else {
+        $instructor_share_percentage = 80.00; // Hardcoded fallback if revenue_settings is empty
+    }
+}
+$stmt->close();
+
+// Calculate instructor earnings
+$instructor_share_percentage = $instructor_share_percentage / 100; // Convert to decimal (e.g., 0.70)
+$instructor_share = $course['price'] * $instructor_share_percentage;
+$platform_fee = $course['price'] - $instructor_share;
+
+// Record instructor earnings
+$sql = "INSERT INTO instructor_earnings 
+        (instructor_id, course_id, payment_id, amount, instructor_share, platform_fee, status, created_at, available_at) 
+        VALUES (?, ?, ?, ?, ?, ?, 'Pending', NOW(), DATE_ADD(NOW(), INTERVAL 15 DAY))";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("iiiddd", $course['instructor_id'], $course_id, $payment_id, $course['price'], $instructor_share, $platform_fee);
+$stmt->execute();
+
 
             // Update course analytics
             $sql = "INSERT INTO course_analytics (course_id, total_students, active_students, revenue_total, revenue_month, views_total, last_updated)
