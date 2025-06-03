@@ -4,15 +4,29 @@ include("../backend/config.php");
 $user_id = $_SESSION['user_id'];
 
 // Get user profile pic, name and verification status
-$query = "SELECT u.profile_pic, u.first_name, u.last_name
-          FROM users u 
-          LEFT JOIN instructors i ON u.user_id = i.user_id 
-          WHERE u.user_id = ?";
+$query = "
+    SELECT u.profile_pic, u.first_name, u.last_name, d.name AS department_name
+    FROM users u 
+    LEFT JOIN instructors i ON u.user_id = i.user_id 
+    LEFT JOIN department_instructors di ON i.instructor_id = di.instructor_id
+    LEFT JOIN departments d ON di.department_id = d.department_id
+    WHERE u.user_id = ?
+";
+
 $stmt = mysqli_prepare($conn, $query);
 mysqli_stmt_bind_param($stmt, "i", $user_id);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
-$userData = mysqli_fetch_assoc($result);
+
+if (mysqli_num_rows($result) > 0) {
+    $userData = mysqli_fetch_assoc($result);
+} else {
+    echo "User not found!";
+    exit;
+}
+
+// Access the department name
+$department_name = $userData['department_name'] ?? 'No department assigned';
 
 // Set profile image path
 $defaultImage = "default.png";
@@ -74,6 +88,9 @@ $userName = $userData['first_name'] . ' ' . $userData['last_name'];
             <div class="dropdown-menu dropdown-menu-end dropdown-menu-animated topbar-dropdown-menu profile-dropdown">
                 <div class="dropdown-header noti-title">
                     <h6 class="text-overflow m-0">Welcome !</h6>
+                </div>
+                <div class="dropdown-header noti-title">
+                    <h6 class="text-overflow m-0"><?php echo $department_name ?></h6>
                 </div>
                 <a href="profile.php" class="dropdown-item notify-item">
                     <i class="mdi mdi-account-circle me-1"></i>

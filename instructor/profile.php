@@ -1,4 +1,3 @@
-
 <?php
 require '../backend/session_start.php'; // Ensure session is started
 
@@ -92,11 +91,13 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
 
                         // Fetch user and instructor data
                         $query = "
-                        SELECT u.*, i.instructor_id, i.bio
-                        FROM users u 
-                        LEFT JOIN instructors i ON u.user_id = i.user_id 
-                        WHERE u.user_id = ?
-                        ";
+    SELECT u.*, i.instructor_id, i.bio, d.name AS department_name
+    FROM users u 
+    LEFT JOIN instructors i ON u.user_id = i.user_id 
+    LEFT JOIN department_instructors di ON i.instructor_id = di.instructor_id
+    LEFT JOIN departments d ON di.department_id = d.department_id
+    WHERE u.user_id = ?
+";
 
                         $stmt = mysqli_prepare($conn, $query);
                         mysqli_stmt_bind_param($stmt, "i", $user_id);
@@ -110,8 +111,9 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                             exit;
                         }
 
-                        // Get instructor_id if exists
+                        // Get instructor_id and department_name if they exist
                         $instructor_id = $userData['instructor_id'];
+                        $department_name = $userData['department_name'];
 
                         // Fetch social links if instructor exists
                         $socialLinks = [];
@@ -183,9 +185,14 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                             <span class="ms-2"><?= htmlspecialchars($userData['email']) ?></span>
                                         </p>
 
-                                        <p class="text-muted mb-1 font-13">
+                                        <p class="text-muted mb-2 font-13">
                                             <strong>Location :</strong>
                                             <span class="ms-2"><?= htmlspecialchars($userData['location'] ?? 'Not provided') ?></span>
+                                        </p>
+
+                                        <p class="text-muted mb-1 font-13">
+                                            <strong>Department :</strong>
+                                            <span class="ms-2"><?= htmlspecialchars($userData['department_name'] ?? 'No Department Assigned') ?></span>
                                         </p>
                                     </div>
 
@@ -778,7 +785,7 @@ ${message}
     <!-- END wrapper -->
 
     <?php include '../includes/instructor-darkmode.php'; ?>
- 
+
     <!-- bundle -->
     <script src="assets/js/vendor.min.js"></script>
     <script src="assets/js/app.min.js"></script>

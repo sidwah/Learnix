@@ -77,9 +77,9 @@
                         <li>
                             <a href="earnings-history.php">Earnings History</a>
                         </li>
-                        <li>
+                        <!-- <li>
                             <a href="payout-settings.php">Payout Settings</a>
-                        </li>
+                        </li> -->
                     </ul>
                 </div>
             </li>
