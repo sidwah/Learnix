@@ -425,3 +425,54 @@ Stack trace:
     [course_id] => 175
 )
 
+[04-Jun-2025 12:37:09 UTC] Step: 1, Input: Array
+(
+    [title] => Web Design
+    [category_id] => 1
+    [subcategory_id] => 1
+    [course_level] => Beginner
+    [estimated_duration] => 6-10 hours
+    [short_description] => the short description
+    [has_thumbnail] => true
+)
+
+[04-Jun-2025 12:37:09 UTC] Thumbnail file data: Array
+(
+    [name] => Unlock Insights with Wise Dashboard_ Halo Lab Insights.jpg
+    [full_path] => Unlock Insights with Wise Dashboard_ Halo Lab Insights.jpg
+    [type] => image/jpeg
+    [tmp_name] => /Applications/MAMP/tmp/php/phpxYBH05
+    [error] => 0
+    [size] => 30088
+)
+
+[04-Jun-2025 12:38:16 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p><span style="color: rgb(30, 32, 34);">the description the description the description the description the description the description the description the description the description the description the description the description the description </span></p>
+    [outcomes] => Array
+        (
+            [0] => Web design
+        )
+
+    [requirements] => Array
+        (
+            [0] => Know HTML
+        )
+
+    [course_id] => 176
+)
+
+[04-Jun-2025 12:38:16 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[04-Jun-2025 12:38:16 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[04-Jun-2025 12:38:58 UTC] Step: 3, Input: Array
+(
+    [price] => 10.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 1
+    [estimated_duration] => 6-10 hours
+    [course_id] => 176
+)
+

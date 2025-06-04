@@ -313,7 +313,7 @@ $revenueChartData = json_encode($monthlyRevenueData);
               </div>
               <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                 <div class="me-2">
-                  <p class="mb-0">Department Admins</p>
+                  <p class="mb-0">Department Heads</p>
                 </div>
                 <div>
                   <h5 class="mb-0"><?php echo number_format($userStats['dept_head_count'] + $userStats['dept_sec_count']); ?></h5>

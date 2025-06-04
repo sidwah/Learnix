@@ -209,7 +209,7 @@ $departmentDistributionData = json_encode($departmentDistribution);
                         </div>
                         <div class="avatar me-1">
                             <span class="avatar-initial rounded bg-label-primary">
-                                <i class="bx bx-chalkboard-teacher bx-md"></i>
+                                <i class="bx bx-user bx-md"></i>
                             </span>
                         </div>
                     </div>

@@ -41,6 +41,6 @@ $certificateManager = new CertificateManager($conn, $certificateGenerator);
 $result = $certificateManager->generateCourseCompletionCertificate($userId, $courseId);
 
 // Return result as JSON
-header('Content-Type: application/json');
+header('Location: student/my-certifications.php');
 echo json_encode($result);
 exit;

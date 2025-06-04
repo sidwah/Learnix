@@ -1240,7 +1240,7 @@ function timeAgo($datetime)
 
                                 <div class="mb-3">
                                     <?php if ($course['price'] > 0): ?>
-                                        <span class="card-title h2">$<?php echo number_format($course['price'], 2); ?></span>
+                                        <span class="card-title h2">₵<?php echo number_format($course['price'], 2); ?></span>
                                     <?php else: ?>
                                         <span class="card-title h2">Free</span>
                                     <?php endif; ?>
@@ -1265,7 +1265,7 @@ function timeAgo($datetime)
                                     <div class="d-grid mb-2">
                                         <?php if ($course['price'] > 0): ?>
                                             <a class="btn btn-primary btn-transition" href="checkout.php?course_id=<?php echo $course_id; ?>">
-                                                <i class="bi-cart me-1"></i> Buy Now
+                                                <i class="bi-cart me-1"></i> Enroll Now 
                                             </a>
                                         <?php else: ?>
                                             <a class="btn btn-primary btn-transition" href="../backend/student/enroll.php?course_id=<?php echo $course_id; ?>">
@@ -1491,8 +1491,8 @@ function timeAgo($datetime)
             <div class="modal-footer">
                 <?php if ($course['price'] > 0): ?>
                     <div class="d-flex align-items-center justify-content-between w-100">
-                        <p class="h5 mb-0">$<?php echo number_format($course['price'], 2); ?></p>
-                        <a href="checkout.php?course_id=<?php echo $course_id; ?>" class="btn btn-primary btn-lg">Buy Now</a>
+                        <p class="h5 mb-0">₵<?php echo number_format($course['price'], 2); ?></p>
+                        <a href="checkout.php?course_id=<?php echo $course_id; ?>" class="btn btn-primary btn-lg">Purchase Now</a>
                     </div>
                 <?php else: ?>
                     <div class="d-flex align-items-center justify-content-between w-100">

@@ -256,14 +256,9 @@ function formatNumber($num)
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="card-title mb-0">Enrollment Trends</h5>
           <div class="dropdown">
-            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+            <button type="button" class="btn btn-sm btn-outline-secondary " data-bs-toggle="dropdown" disabled>
               Last 6 Months
             </button>
-            <div class="dropdown-menu dropdown-menu-end">
-              <a class="dropdown-item" href="javascript:void(0);">Last 3 Months</a>
-              <a class="dropdown-item" href="javascript:void(0);">Last 6 Months</a>
-              <a class="dropdown-item" href="javascript:void(0);">This Year</a>
-            </div>
           </div>
         </div>
         <div class="card-body">
