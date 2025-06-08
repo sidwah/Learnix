@@ -52,12 +52,12 @@
                 </a>
             </li>
 
-            <li class="side-nav-item">
+            <!-- <li class="side-nav-item">
                 <a href="annoucements.php" class="side-nav-link">
                     <i class="mdi mdi-bullhorn-variant-outline"></i>
                     <span> Annoucements </span>
                 </a>
-            </li>
+            </li> -->
 
            
 
@@ -83,7 +83,7 @@
                     </ul>
                 </div>
             </li>
-            <li class="side-nav-item">
+            <!-- <li class="side-nav-item">
                 <a data-bs-toggle="collapse" href="#sidebarPerformance" aria-expanded="false" aria-controls="sidebarPerformance" class="side-nav-link">
                     <i class="uil-graph-bar"></i>
                     <span> Performance </span>
@@ -108,7 +108,7 @@
                         </li>
                     </ul>
                 </div>
-            </li>
+            </li> -->
 
             <li class="side-nav-title side-nav-item">Custom</li>
 

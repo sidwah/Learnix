@@ -473,16 +473,16 @@
                             <a href="settings.php" class="btn btn-light btn-sm">
                                 <i class="bi bi-gear me-2"></i>Settings
                             </a>
-                            <a href="reports.php" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                            <!-- <a href="reports.php" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
                                 <i class="bi bi-file-earmark-bar-graph me-2"></i>Reports
-                            </a>
+                            </a> -->
                         <?php else: ?>
-                            <a href="profile.php" class="btn btn-light btn-sm">
+                            <!-- <a href="profile.php" class="btn btn-light btn-sm">
                                 <i class="bi bi-person me-2"></i>My Profile
                             </a>
                             <a href="support.php" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
                                 <i class="bi bi-headset me-2"></i>Support
-                            </a>
+                            </a> -->
                         <?php endif; ?>
                     </div>
                 </div>
@@ -600,7 +600,7 @@
                             </small>
                         </div>
                         <?php if ($is_head): ?>
-                            <a href="financial-reports.php" class="btn btn-soft" style="background: var(--warning-light); color: var(--warning);">View</a>
+                            <a href="#" class="btn btn-soft" style="background: var(--warning-light); color: var(--warning);">View</a>
                         <?php else: ?>
                             <span class="btn btn-soft disabled" style="background: var(--neutral-100); color: var(--neutral-400);">Restricted</span>
                         <?php endif; ?>
@@ -737,7 +737,7 @@
             <div class="row g-3">
                 <!-- Invite Instructor - Head Only -->
                 <?php if ($is_head): ?>
-                    <div class="col-6 col-md-4 col-lg-2">
+                    <div class="col-6 col-md-4 col-lg-3">
                         <a href="invite-instructor.php" class="quick-action-card text-decoration-none">
                             <div class="quick-action-icon" style="background: var(--primary-soft); color: var(--primary);">
                                 <i class="bi bi-person-plus"></i>
@@ -746,7 +746,7 @@
                         </a>
                     </div>
                 <?php else: ?>
-                    <div class="col-6 col-md-4 col-lg-2">
+                    <div class="col-6 col-md-4 col-lg-3">
                         <div class="quick-action-card disabled">
                             <div class="quick-action-icon" style="background: var(--neutral-200); color: var(--neutral-400);">
                                 <i class="bi bi-person-plus"></i>
@@ -759,49 +759,49 @@
 
                 <!-- Create Course - Head Only -->
                 <?php if ($is_head): ?>
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <a href="create-course.php" class="quick-action-card text-decoration-none">
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a href="initiate-course.php" class="quick-action-card text-decoration-none">
                             <div class="quick-action-icon" style="background: var(--success-soft); color: var(--success);">
                                 <i class="bi bi-plus-circle"></i>
                             </div>
-                            <span class="fw-medium" style="color: var(--neutral-800);">Create Course</span>
+                            <span class="fw-medium" style="color: var(--neutral-800);">Initiate Course</span>
                         </a>
                     </div>
                 <?php else: ?>
-                    <div class="col-6 col-md-4 col-lg-2">
+                    <div class="col-6 col-md-4 col-lg-3">
                         <div class="quick-action-card disabled">
                             <div class="quick-action-icon" style="background: var(--neutral-200); color: var(--neutral-400);">
                                 <i class="bi bi-plus-circle"></i>
                             </div>
-                            <span class="fw-medium" style="color: var(--neutral-400);">Create Course</span>
+                            <span class="fw-medium" style="color: var(--neutral-400);">Initiate Course</span>
                             <small class="text-muted mt-1">Head Only</small>
                         </div>
                     </div>
                 <?php endif; ?>
 
                 <!-- Send Announcement - Both can access -->
-                <div class="col-6 col-md-4 col-lg-2">
+                <!-- <div class="col-6 col-md-4 col-lg-2">
                     <a href="send-announcement.php" class="quick-action-card text-decoration-none">
                         <div class="quick-action-icon" style="background: var(--info-soft); color: var(--info);">
                             <i class="bi bi-megaphone"></i>
                         </div>
                         <span class="fw-medium" style="color: var(--neutral-800);">
-                            <?php echo $is_head ? 'Send Announcement' : 'Draft Announcement'; ?>
+                            <?php //echo $is_head ? 'Send Announcement' : 'Draft Announcement'; ?>
                         </span>
                     </a>
-                </div>
+                </div> -->
 
                 <!-- Generate Report - Head only, Secretary can view -->
-                <div class="col-6 col-md-4 col-lg-2">
+                <div class="col-6 col-md-4 col-lg-3">
                     <?php if ($is_head): ?>
-                        <a href="generate-report.php" class="quick-action-card text-decoration-none">
+                        <a href="analytic-overview.php" class="quick-action-card text-decoration-none">
                             <div class="quick-action-icon" style="background: var(--neutral-100); color: var(--neutral-600);">
                                 <i class="bi bi-file-earmark-bar-graph"></i>
                             </div>
                             <span class="fw-medium" style="color: var(--neutral-800);">Generate Report</span>
                         </a>
                     <?php else: ?>
-                        <a href="view-reports.php" class="quick-action-card text-decoration-none">
+                        <a href="analytic-overview.php" class="quick-action-card text-decoration-none">
                             <div class="quick-action-icon" style="background: var(--neutral-100); color: var(--neutral-600);">
                                 <i class="bi bi-file-earmark-text"></i>
                             </div>
@@ -810,31 +810,10 @@
                     <?php endif; ?>
                 </div>
 
-                <!-- Manage Categories - Head Only -->
-                <?php if ($is_head): ?>
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <a href="manage-categories.php" class="quick-action-card text-decoration-none">
-                            <div class="quick-action-icon" style="background: var(--warning-soft); color: var(--warning);">
-                                <i class="bi bi-tags"></i>
-                            </div>
-                            <span class="fw-medium" style="color: var(--neutral-800);">Categories</span>
-                        </a>
-                    </div>
-                <?php else: ?>
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <a href="view-categories.php" class="quick-action-card text-decoration-none">
-                            <div class="quick-action-icon" style="background: var(--warning-soft); color: var(--warning);">
-                                <i class="bi bi-tags"></i>
-                            </div>
-                            <span class="fw-medium" style="color: var(--neutral-800);">View Categories</span>
-                        </a>
-                    </div>
-                <?php endif; ?>
-
                 <!-- Financial Overview - Head Only -->
                 <?php if ($is_head): ?>
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <a href="financial-overview.php" class="quick-action-card text-decoration-none">
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a href="analytic-overview.php" class="quick-action-card text-decoration-none">
                             <div class="quick-action-icon" style="background: var(--danger-soft); color: var(--danger);">
                                 <i class="bi bi-graph-up"></i>
                             </div>
@@ -842,7 +821,7 @@
                         </a>
                     </div>
                 <?php else: ?>
-                    <div class="col-6 col-md-4 col-lg-2">
+                    <div class="col-6 col-md-4 col-lg-3">
                         <div class="quick-action-card disabled">
                             <div class="quick-action-icon" style="background: var(--neutral-200); color: var(--neutral-400);">
                                 <i class="bi bi-graph-up"></i>
@@ -918,12 +897,12 @@
                                             </td>
                                             <td>
                                                 <div class="d-flex gap-2">
-                                                    <a href="view-course.php?id=<?php echo $course['course_id']; ?>"
+                                                    <a href="courses.php"
                                                         class="btn btn-sm btn-soft" style="background: var(--neutral-100); color: var(--neutral-600);">
                                                         View
                                                     </a>
                                                     <?php if ($is_head && $course['approval_status'] == 'submitted_for_review'): ?>
-                                                        <a href="review-course.php?id=<?php echo $course['course_id']; ?>"
+                                                        <a href="courses.php"
                                                             class="btn btn-sm btn-soft" style="background: var(--primary-light); color: var(--primary);">
                                                             Review
                                                         </a>

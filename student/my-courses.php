@@ -297,7 +297,7 @@
                         <button class="absolute top-2 right-2 text-white bg-gray-800 bg-opacity-50 rounded-full p-1 hover:bg-opacity-75"
                           onclick="toggleFavorite(this)"
                           data-id="<?php echo $course['course_id']; ?>">
-                          <i class="bi bi-heart"></i>
+                          <!-- <i class="bi bi-heart"></i> -->
                         </button>
                       </div>
                       <div class="p-4">
@@ -434,9 +434,7 @@
       courseItem.innerHTML = `
         <div class="relative">
           <img src="${course.thumbnail}" alt="${course.title}" class="w-full h-40 object-cover">
-          <button class="absolute top-2 right-2 text-white bg-gray-800 bg-opacity-50 rounded-full p-1 hover:bg-opacity-75" onclick="toggleFavorite(this)" data-id="${course.id}">
-            <i class="bi bi-heart${course.favorite ? '-fill text-red-500' : ''}"></i>
-          </button>
+
         </div>
         <div class="p-4">
           <h5 class="text-base font-semibold truncate">${course.title}</h5>

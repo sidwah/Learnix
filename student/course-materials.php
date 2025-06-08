@@ -550,11 +550,11 @@ if ($all_requirements_met && !$has_certificate && !isset($_SESSION['certificate_
                                 </a>
                             </li>
                             <li class="list-group-item border-0 py-3">
-                                <a href="discussion.php?course_id=<?php echo $course_id; ?>" class="text-decoration-none text-dark d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-chat-dots me-2 text-primary"></i> Discussion Forums</span>
+                                <!-- <a href="discussion.php?course_id=<?php // echo $course_id; ?>" class="text-decoration-none text-dark d-flex justify-content-between align-items-center"> -->
+                                    <!-- <span><i class="bi bi-chat-dots me-2 text-primary"></i> Discussion Forums</span> -->
                                     <!-- Add a badge for new discussions -->
-                                    <span class="badge bg-danger">3 New</span>
-                                </a>
+                                    <!-- <span class="badge bg-danger">3 New</span> -->
+                                <!-- </a> -->
                             </li>
                         </ul>
                     </div>

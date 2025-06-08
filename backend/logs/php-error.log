@@ -476,3 +476,44 @@ Stack trace:
     [course_id] => 176
 )
 
+[08-Jun-2025 23:25:52 UTC] Step: 1, Input: Array
+(
+    [title] => test 112
+    [category_id] => 38
+    [subcategory_id] => 88
+    [course_level] => Intermediate
+    [estimated_duration] => 
+    [short_description] => the description
+    [has_thumbnail] => 
+    [course_id] => 173
+)
+
+[08-Jun-2025 23:25:52 UTC] Step: 2, Input: Array
+(
+    [full_description] => <p><span style="color: rgb(210, 204, 194); --darkreader-inline-color: #c6bfb4;" data-darkreader-inline-color="">the description the description the description the description the description the description</span></p>
+    [outcomes] => Array
+        (
+            [0] => the 1
+        )
+
+    [requirements] => Array
+        (
+            [0] => the 1
+        )
+
+    [course_id] => 173
+)
+
+[08-Jun-2025 23:25:52 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 355
+[08-Jun-2025 23:25:52 UTC] PHP Notice:  Only variables should be passed by reference in /Applications/MAMP/htdocs/Learnix/backend/courses/initiate_course.php on line 368
+[08-Jun-2025 23:25:53 UTC] Step: 3, Input: Array
+(
+    [price] => 10.00
+    [access_level] => Public
+    [visibility] => Public
+    [enrollment_limit] => 
+    [access_password] => 
+    [certificate_enabled] => 0
+    [course_id] => 173
+)
+

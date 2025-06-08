@@ -122,472 +122,458 @@ $course_rating = 4.8; // In a real implementation, you'd calculate this from the
 $review_count = 124; // Example count
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Checkout - <?php echo $course_title; ?> | Learnix</title>
+<!-- Stripe JS -->
+<script src="https://js.stripe.com/v3/"></script>
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
+<!-- Paystack JS -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
 
-    <!-- Include your existing CSS -->
+<!-- Custom CSS for enhanced checkout -->
+<style>
+    :root {
+        --primary-color: #3a66db;
+        --primary-hover: #2c51b0;
+        --accent-color: #ff6b6b;
+        --light-bg: #f8f9fa;
+        --dark-bg: #343a40;
+        --success-color: #28a745;
+        --momo-color: #f26522;
+        --momo-hover: #d65214;
+    }
 
-    <!-- Stripe JS -->
-    <script src="https://js.stripe.com/v3/"></script>
-    
-    <!-- Paystack JS -->
-    <script src="https://js.paystack.co/v1/inline.js"></script>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
 
-    <!-- Custom CSS for enhanced checkout -->
-    <style>
-        :root {
-            --primary-color: #3a66db;
-            --primary-hover: #2c51b0;
-            --accent-color: #ff6b6b;
-            --light-bg: #f8f9fa;
-            --dark-bg: #343a40;
-            --success-color: #28a745;
-            --momo-color: #f26522;
-            --momo-hover: #d65214;
+    .checkout-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px 15px;
+    }
+
+    .checkout-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+        overflow: hidden;
+    }
+
+    .checkout-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-header {
+        border-bottom: none;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #5f85e5 100%);
+        color: white;
+        font-weight: 600;
+        padding: 20px 25px;
+    }
+
+    .momo-header {
+        background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
+    }
+
+    .summary-card {
+        position: sticky;
+        top: 20px;
+    }
+
+    .course-image-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .course-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        transform: scale(1);
+        transition: transform 0.4s;
+    }
+
+    .course-image:hover {
+        transform: scale(1.05);
+    }
+
+    .secure-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 20px;
+        padding: 12px;
+        background-color: #eef5ff;
+        border-radius: 8px;
+        color: #3a66db;
+        font-size: 14px;
+    }
+
+    .guarantee-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #f0fff4;
+        border-radius: 8px;
+        color: #28a745;
+        font-size: 14px;
+    }
+
+    .checkout-btn {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 12px 20px;
+        border-radius: 6px;
+        transition: all 0.3s;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #5f85e5 100%);
+        border: none;
+        box-shadow: 0 4px 10px rgba(58, 102, 219, 0.25);
+    }
+
+    .checkout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(58, 102, 219, 0.35);
+        background: linear-gradient(135deg, #3a66db 0%, #4372e8 100%);
+    }
+
+    .momo-btn {
+        background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
+        box-shadow: 0 4px 10px rgba(242, 101, 34, 0.25);
+    }
+
+    .momo-btn:hover {
+        box-shadow: 0 6px 15px rgba(242, 101, 34, 0.35);
+        background: linear-gradient(135deg, #e55a1a 0%, #ff7a40 100%);
+    }
+
+    .course-details {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .course-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .course-meta-item {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .course-meta-item i {
+        margin-right: 5px;
+        color: var(--primary-color);
+    }
+
+    .payment-method-selector {
+        display: flex;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #dee2e6;
+    }
+
+    .payment-method-option {
+        flex: 1;
+        text-align: center;
+        padding: 15px;
+        cursor: pointer;
+        background-color: #f8f9fa;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .payment-method-option.active {
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+    }
+
+    .payment-method-option.momo-option.active {
+        color: var(--momo-color);
+        border-bottom: 2px solid var(--momo-color);
+    }
+
+    .payment-method-option:hover:not(.active) {
+        background-color: #f1f3f5;
+    }
+
+    .input-icon-group {
+        position: relative;
+    }
+
+    .input-icon-group i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+    }
+
+    .input-icon-group input {
+        padding-left: 40px;
+    }
+
+    #card-element {
+        padding: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        background-color: white;
+        transition: all 0.2s;
+    }
+
+    #card-element:focus {
+        box-shadow: 0 0 0 3px rgba(58, 102, 219, 0.15);
+        border-color: var(--primary-color);
+        outline: none;
+    }
+
+    .form-floating>label {
+        padding-left: 40px;
+    }
+
+    .discount-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+        z-index: 1;
+    }
+
+    .checkout-progress {
+        display: flex;
+        margin-bottom: 30px;
+        justify-content: space-between;
+    }
+
+    .checkout-step {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        position: relative;
+    }
+
+    .checkout-step::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 60%;
+        right: 0;
+        height: 2px;
+        background-color: #dee2e6;
+        z-index: 0;
+    }
+
+    .checkout-step:last-child::after {
+        display: none;
+    }
+
+    .step-number {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #dee2e6;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .checkout-step.active .step-number {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .checkout-step.completed .step-number {
+        background-color: var(--success-color);
+        color: white;
+    }
+
+    .step-label {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .checkout-step.active .step-label {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .checkout-step.completed .step-label {
+        color: var(--success-color);
+    }
+
+    .promo-banner {
+        background: linear-gradient(135deg, #4a66d9 0%, #5d85f3 100%);
+        border-radius: 10px;
+        color: white;
+        padding: 15px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .promo-banner-icon {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .promo-banner-text {
+        flex: 1;
+        font-size: 14px;
+    }
+
+    .promo-banner-title {
+        font-weight: bold;
+        margin-bottom: 3px;
+    }
+
+    .counter-container {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 5px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px;
+        border-radius: 5px;
+        justify-content: center;
+        width: fit-content;
+    }
+
+    .counter-box {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 3px;
+        padding: 2px 5px;
+        font-size: 12px;
+        font-weight: bold;
+        min-width: 20px;
+        text-align: center;
+    }
+
+    .mobile-money-logos {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .mobile-money-logo {
+        background-color: white;
+        border-radius: 8px;
+        padding: 8px 12px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+        height: 50px;
+    }
+
+    .mobile-money-logo img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    /* Mobile Money Modal */
+    #momoModal .modal-header {
+        background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
+        color: white;
+    }
+
+    #momoModal .modal-footer .btn-primary {
+        background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
+        border: none;
+    }
+
+    #momoModal .network-selector {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+
+    #momoModal .network-option {
+        flex: 1;
+        margin: 0 5px;
+        text-align: center;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    #momoModal .network-option.active {
+        border-color: var(--momo-color);
+        background-color: #fff4f0;
+    }
+
+    #momoModal .network-option img {
+        max-width: 100%;
+        height: 40px;
+        object-fit: contain;
+    }
+
+    /* Animation */
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(58, 102, 219, 0.4);
         }
 
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        70% {
+            box-shadow: 0 0 0 10px rgba(58, 102, 219, 0);
         }
 
-        .checkout-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 30px 15px;
+        100% {
+            box-shadow: 0 0 0 0 rgba(58, 102, 219, 0);
         }
+    }
 
-        .checkout-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-            overflow: hidden;
-        }
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
 
-        .checkout-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-        }
-
-        .card-header {
-            border-bottom: none;
-            background: linear-gradient(135deg, var(--primary-color) 0%, #5f85e5 100%);
-            color: white;
-            font-weight: 600;
-            padding: 20px 25px;
-        }
-
-        .momo-header {
-            background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
-        }
-
-        .summary-card {
-            position: sticky;
-            top: 20px;
-        }
-
-        .course-image-container {
-            position: relative;
-            overflow: hidden;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .course-image {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            transform: scale(1);
-            transition: transform 0.4s;
-        }
-
-        .course-image:hover {
-            transform: scale(1.05);
-        }
-
-        .secure-badge {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 20px;
-            padding: 12px;
-            background-color: #eef5ff;
-            border-radius: 8px;
-            color: #3a66db;
-            font-size: 14px;
-        }
-
-        .guarantee-badge {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #f0fff4;
-            border-radius: 8px;
-            color: #28a745;
-            font-size: 14px;
-        }
-
-        .checkout-btn {
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            padding: 12px 20px;
-            border-radius: 6px;
-            transition: all 0.3s;
-            background: linear-gradient(135deg, var(--primary-color) 0%, #5f85e5 100%);
-            border: none;
-            box-shadow: 0 4px 10px rgba(58, 102, 219, 0.25);
-        }
-
-        .checkout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(58, 102, 219, 0.35);
-            background: linear-gradient(135deg, #3a66db 0%, #4372e8 100%);
-        }
-
-        .momo-btn {
-            background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
-            box-shadow: 0 4px 10px rgba(242, 101, 34, 0.25);
-        }
-
-        .momo-btn:hover {
-            box-shadow: 0 6px 15px rgba(242, 101, 34, 0.35);
-            background: linear-gradient(135deg, #e55a1a 0%, #ff7a40 100%);
-        }
-
-        .course-details {
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .course-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .course-meta-item {
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-            color: #6c757d;
-        }
-
-        .course-meta-item i {
-            margin-right: 5px;
-            color: var(--primary-color);
-        }
-
-        .payment-method-selector {
-            display: flex;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #dee2e6;
-        }
-
-        .payment-method-option {
-            flex: 1;
-            text-align: center;
-            padding: 15px;
-            cursor: pointer;
-            background-color: #f8f9fa;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .payment-method-option.active {
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .payment-method-option.momo-option.active {
-            color: var(--momo-color);
-            border-bottom: 2px solid var(--momo-color);
-        }
-
-        .payment-method-option:hover:not(.active) {
-            background-color: #f1f3f5;
-        }
-
-        .input-icon-group {
-            position: relative;
-        }
-
-        .input-icon-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #adb5bd;
-        }
-
-        .input-icon-group input {
-            padding-left: 40px;
-        }
-
-        #card-element {
-            padding: 15px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            background-color: white;
-            transition: all 0.2s;
-        }
-
-        #card-element:focus {
-            box-shadow: 0 0 0 3px rgba(58, 102, 219, 0.15);
-            border-color: var(--primary-color);
-            outline: none;
-        }
-
-        .form-floating>label {
-            padding-left: 40px;
-        }
-
-        .discount-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-weight: bold;
-            z-index: 1;
-        }
-
+    /* Mobile responsiveness */
+    @media (max-width: 767px) {
         .checkout-progress {
-            display: flex;
-            margin-bottom: 30px;
-            justify-content: space-between;
-        }
-
-        .checkout-step {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            position: relative;
-        }
-
-        .checkout-step::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 60%;
-            right: 0;
-            height: 2px;
-            background-color: #dee2e6;
-            z-index: 0;
-        }
-
-        .checkout-step:last-child::after {
             display: none;
         }
 
-        .step-number {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: #dee2e6;
-            color: #6c757d;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .checkout-step.active .step-number {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .checkout-step.completed .step-number {
-            background-color: var(--success-color);
-            color: white;
-        }
-
-        .step-label {
-            font-size: 14px;
-            color: #6c757d;
-        }
-
-        .checkout-step.active .step-label {
-            color: var(--primary-color);
-            font-weight: 600;
-        }
-
-        .checkout-step.completed .step-label {
-            color: var(--success-color);
-        }
-
-        .promo-banner {
-            background: linear-gradient(135deg, #4a66d9 0%, #5d85f3 100%);
-            border-radius: 10px;
-            color: white;
-            padding: 15px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .promo-banner-icon {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .promo-banner-text {
-            flex: 1;
-            font-size: 14px;
-        }
-
-        .promo-banner-title {
-            font-weight: bold;
-            margin-bottom: 3px;
-        }
-
-        .counter-container {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 5px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 5px;
-            border-radius: 5px;
-            justify-content: center;
-            width: fit-content;
-        }
-
-        .counter-box {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 3px;
-            padding: 2px 5px;
-            font-size: 12px;
-            font-weight: bold;
-            min-width: 20px;
-            text-align: center;
-        }
-
-        .mobile-money-logos {
-            display: flex;
+        .course-meta {
+            flex-direction: column;
             gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
         }
-
-        .mobile-money-logo {
-            background-color: white;
-            border-radius: 8px;
-            padding: 8px 12px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 70px;
-            height: 50px;
-        }
-
-        .mobile-money-logo img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-        
-        /* Mobile Money Modal */
-        #momoModal .modal-header {
-            background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
-            color: white;
-        }
-        
-        #momoModal .modal-footer .btn-primary {
-            background: linear-gradient(135deg, var(--momo-color) 0%, #ff8b59 100%);
-            border: none;
-        }
-        
-        #momoModal .network-selector {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        
-        #momoModal .network-option {
-            flex: 1;
-            margin: 0 5px;
-            text-align: center;
-            padding: 10px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        #momoModal .network-option.active {
-            border-color: var(--momo-color);
-            background-color: #fff4f0;
-        }
-        
-        #momoModal .network-option img {
-            max-width: 100%;
-            height: 40px;
-            object-fit: contain;
-        }
-
-        /* Animation */
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(58, 102, 219, 0.4);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(58, 102, 219, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(58, 102, 219, 0);
-            }
-        }
-
-        .pulse-animation {
-            animation: pulse 2s infinite;
-        }
-
-        /* Mobile responsiveness */
-        @media (max-width: 767px) {
-            .checkout-progress {
-                display: none;
-            }
-
-            .course-meta {
-                flex-direction: column;
-                gap: 10px;
-            }
-        }
-    </style>
-</head>
+    }
+</style>
 
 <body>
     <!-- ========== MAIN CONTENT ========== -->
@@ -831,19 +817,19 @@ $review_count = 124; // Example count
                                     <span>Original price</span>
                                     <span class="text-decoration-line-through">₵<?php echo number_format($course_price * 1.25, 2); ?></span>
                                 </div>
-<div class="d-flex justify-content-between mb-2">
+                                <div class="d-flex justify-content-between mb-2">
                                     <span>Course price</span>
                                     <span>₵<?php echo $formatted_price; ?></span>
                                 </div>
                             </div>
 
                             <!-- Coupon Code Input -->
-                            <div class="mb-4">
+                            <!-- <div class="mb-4">
                                 <div class="input-group">
                                     <input type="text" class="form-control" placeholder="Promo code" aria-label="Promo code">
                                     <button class="btn btn-outline-primary" type="button">Apply</button>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <hr>
 
@@ -907,7 +893,7 @@ $review_count = 124; // Example count
                         <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
                         <input type="hidden" name="amount" value="<?php echo $course_price; ?>">
                         <input type="hidden" name="email" value="<?php echo htmlspecialchars($user['email']); ?>">
-                        
+
                         <!-- Mobile Money Provider Selection -->
                         <div class="mb-4">
                             <label class="form-label">Select your mobile money provider</label>
@@ -927,7 +913,7 @@ $review_count = 124; // Example count
                             </div>
                             <input type="hidden" id="selectedProvider" name="provider" value="mtn">
                         </div>
-                        
+
                         <!-- Phone Number -->
                         <div class="mb-4">
                             <label class="form-label" for="momoPhone">Mobile Money Number</label>
@@ -939,7 +925,7 @@ $review_count = 124; // Example count
                             </div>
                             <div class="form-text">Enter your 10-digit mobile money number (Test: 0551234987)</div>
                         </div>
-                        
+
                         <!-- Name -->
                         <div class="mb-4">
                             <label class="form-label" for="momoName">Full Name</label>
@@ -951,7 +937,7 @@ $review_count = 124; // Example count
                             </div>
                         </div>
                     </form>
-                    
+
                     <div class="alert alert-info">
                         <small>
                             <i class="bi-info-circle me-2"></i>
@@ -1062,10 +1048,10 @@ $review_count = 124; // Example count
                 document.querySelectorAll('.network-option').forEach(function(opt) {
                     opt.classList.remove('active');
                 });
-                
+
                 // Add active class to clicked option
                 this.classList.add('active');
-                
+
                 // Update hidden input with selected provider
                 document.getElementById('selectedProvider').value = this.getAttribute('data-provider');
             });
@@ -1097,33 +1083,32 @@ $review_count = 124; // Example count
         // Paystack Integration
         document.getElementById('payWithPaystack').addEventListener('click', function(e) {
             e.preventDefault();
-            
+
             // Get form data
             var phoneNumber = document.getElementById('momoPhone').value;
             var fullName = document.getElementById('momoName').value;
             var provider = document.getElementById('selectedProvider').value;
-            
+
             // Basic validation
             if (!phoneNumber || phoneNumber.length !== 10 || !/^\d+$/.test(phoneNumber)) {
                 alert('Please enter a valid 10-digit mobile number');
                 return;
             }
-            
+
             if (!fullName) {
                 alert('Please enter your full name');
                 return;
             }
-            
+
             // Initialize Paystack payment
             var handler = PaystackPop.setup({
                 key: '<?php echo $PublicKey; ?>', // Your public key from paystack-config.php
                 email: '<?php echo htmlspecialchars($user['email']); ?>',
                 amount: <?php echo $course_price * 100; ?>, // Amount in kobo
                 currency: 'GHS',
-                ref: 'LRN'+Math.floor((Math.random() * 1000000000) + 1), // Generate a random reference
+                ref: 'LRN' + Math.floor((Math.random() * 1000000000) + 1), // Generate a random reference
                 metadata: {
-                    custom_fields: [
-                        {
+                    custom_fields: [{
                             display_name: "Mobile Number",
                             variable_name: "mobile_number",
                             value: phoneNumber
@@ -1140,7 +1125,7 @@ $review_count = 124; // Example count
                     var form = document.createElement('form');
                     form.method = 'POST';
                     form.action = '../backend/student/process-momo-payment.php';
-                    
+
                     // Add necessary form fields
                     var fields = {
                         'course_id': '<?php echo $course_id; ?>',
@@ -1150,7 +1135,7 @@ $review_count = 124; // Example count
                         'provider': provider,
                         'amount': '<?php echo $course_price; ?>'
                     };
-                    
+
                     for (var key in fields) {
                         var hiddenField = document.createElement('input');
                         hiddenField.setAttribute('type', 'hidden');
@@ -1158,7 +1143,7 @@ $review_count = 124; // Example count
                         hiddenField.setAttribute('value', fields[key]);
                         form.appendChild(hiddenField);
                     }
-                    
+
                     document.body.appendChild(form);
                     form.submit();
                 },
@@ -1167,7 +1152,7 @@ $review_count = 124; // Example count
                     console.log('Payment window closed');
                 }
             });
-            
+
             handler.openIframe();
         });
 
@@ -1234,4 +1219,4 @@ $review_count = 124; // Example count
         });
     </script>
 
-<?php include '../includes/student-footer.php'; ?>
+    <?php include '../includes/student-footer.php'; ?>

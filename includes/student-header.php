@@ -686,9 +686,6 @@ function getTimeAgo($datetime)
                         <li class="nav-item">
                             <a class="nav-link" href="courses.php"><i class="bi-journals me-2"></i> Courses</a>
                         </li>
-
-
-
                         <!-- Spacer between left and right side navigation -->
                         <li class="nav-item flex-grow-1 d-none d-lg-inline-block">
                         </li>
@@ -697,9 +694,9 @@ function getTimeAgo($datetime)
 
                         <!-- 1. Search Icon -->
                         <li class="nav-item d-none d-lg-inline-block">
-                            <a class="nav-link btn-icon" href="#" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbarSearch" aria-controls="offcanvasNavbarSearch">
+                            <!-- <a class="nav-link btn-icon" href="#" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbarSearch" aria-controls="offcanvasNavbarSearch">
                                 <i class="bi-search"></i>
-                            </a>
+                            </a> -->
                         </li>
 
                         <!-- 2. Dark Mode Toggle - This will be filled by JS -->
@@ -1209,7 +1206,7 @@ function getTimeAgo($datetime)
                 </a>
             </li>
             <li class="mb-2">
-                <a class="dropdown-item rounded-3 d-flex align-items-center" href="notes.php">
+                <a class="dropdown-item rounded-3 d-flex align-items-center" href="my-notes.php">
                     <span class="dropdown-item-icon bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center"
                         style="width: 32px; height: 32px;">
                         <i class="bi-journal-text"></i>
@@ -1227,13 +1224,13 @@ function getTimeAgo($datetime)
                 </a>
             </li>
             <li>
-                <a class="dropdown-item rounded-3 d-flex align-items-center" href="calendar.php">
+                <!-- <a class="dropdown-item rounded-3 d-flex align-items-center" href="calendar.php">
                     <span class="dropdown-item-icon bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center"
                         style="width: 32px; height: 32px;">
                         <i class="bi-calendar-event"></i>
                     </span>
                     <span class="ms-2">My Schedule</span>
-                </a>
+                </a> -->
             </li>
         </ul>
     </div>

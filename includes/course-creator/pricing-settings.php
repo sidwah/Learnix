@@ -35,7 +35,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                     <div class="input-group">
                         <!-- <span class="input-group-text">&#8373;</span> -->
                         <input type="number" step="0.01" min="0" class="form-control" id="coursePrice" name="price" 
-                               value="<?php echo htmlspecialchars($price); ?>" required>
+                               value="<?php echo htmlspecialchars($price); ?>" disabled>
                     </div>
                     <small class="form-text text-muted">
                         Set to 0 for a free course. Minimum price is ₵0.99 for paid courses.
@@ -44,7 +44,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                 
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" id="certificateEnabled" name="certificate_enabled" 
-                           <?php echo $certificate_enabled ? 'checked' : ''; ?>>
+                           <?php echo $certificate_enabled ? 'checked' : ''; ?> disabled>
                     <label class="form-check-label" for="certificateEnabled">
                         Enable Course Completion Certificate
                     </label>
@@ -53,21 +53,21 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                     </div>
                 </div>
                 
-                <div class="mb-3">
+                <!-- <div class="mb-3">
                     <label for="estimatedDuration" class="form-label">Estimated Course Duration</label>
                     <select class="form-select" id="estimatedDuration" name="estimated_duration">
-                        <option value="" <?php echo empty($estimated_duration) ? 'selected' : ''; ?>>Select Duration</option>
-                        <option value="< 1 hour" <?php echo $estimated_duration === '< 1 hour' ? 'selected' : ''; ?>>Less than 1 hour</option>
-                        <option value="1-3 hours" <?php echo $estimated_duration === '1-3 hours' ? 'selected' : ''; ?>>1-3 hours</option>
-                        <option value="3-6 hours" <?php echo $estimated_duration === '3-6 hours' ? 'selected' : ''; ?>>3-6 hours</option>
-                        <option value="6-12 hours" <?php echo $estimated_duration === '6-12 hours' ? 'selected' : ''; ?>>6-12 hours</option>
-                        <option value="12-24 hours" <?php echo $estimated_duration === '12-24 hours' ? 'selected' : ''; ?>>12-24 hours</option>
-                        <option value="> 24 hours" <?php echo $estimated_duration === '> 24 hours' ? 'selected' : ''; ?>>More than 24 hours</option>
+                        <option value="" <?php //echo empty($estimated_duration) ? 'selected' : ''; ?>>Select Duration</option>
+                        <option value="< 1 hour" <?php // echo $estimated_duration === '< 1 hour' ? 'selected' : ''; ?>>Less than 1 hour</option>
+                        <option value="1-3 hours" <?php //echo $estimated_duration === '1-3 hours' ? 'selected' : ''; ?>>1-3 hours</option>
+                        <option value="3-6 hours" <?php //echo $estimated_duration === '3-6 hours' ? 'selected' : ''; ?>>3-6 hours</option>
+                        <option value="6-12 hours" <?php //echo $estimated_duration === '6-12 hours' ? 'selected' : ''; ?>>6-12 hours</option>
+                        <option value="12-24 hours" <?php //echo $estimated_duration === '12-24 hours' ? 'selected' : ''; ?>>12-24 hours</option>
+                        <option value="> 24 hours" <?php //echo $estimated_duration === '> 24 hours' ? 'selected' : ''; ?>>More than 24 hours</option>
                     </select>
                     <div class="form-text">
                         Help students understand the time commitment required.
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
         
@@ -79,7 +79,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                 <div class="mb-3">
                     <label for="enrollmentLimit" class="form-label">Enrollment Limit</label>
                     <input type="number" min="0" class="form-control" id="enrollmentLimit" name="enrollment_limit" 
-                           value="<?php echo htmlspecialchars($enrollment_limit ?? ''); ?>" placeholder="Unlimited">
+                           value="<?php echo htmlspecialchars($enrollment_limit ?? ''); ?>" placeholder="Unlimited" disabled>
                     <div class="form-text">
                         Leave empty for unlimited enrollments. Set a number to limit the total students.
                     </div>
@@ -87,7 +87,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                 
                 <div class="form-check form-switch mb-3" id="limitEnrollmentPeriodSwitch">
                     <input class="form-check-input" type="checkbox" id="limitEnrollmentPeriod" 
-                           <?php echo (!empty($enrollment_start) || !empty($enrollment_end)) ? 'checked' : ''; ?>>
+                           <?php echo (!empty($enrollment_start) || !empty($enrollment_end)) ? 'checked' : ''; ?> disabled>
                     <label class="form-check-label" for="limitEnrollmentPeriod">
                         Limit Enrollment Period
                     </label>
@@ -98,12 +98,12 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                         <div class="col-md-6 mb-3">
                             <label for="enrollmentStart" class="form-label">Start Date</label>
                             <input type="date" class="form-control" id="enrollmentStart" name="enrollment_start" 
-                                   value="<?php echo htmlspecialchars($enrollment_start ? date('Y-m-d', strtotime($enrollment_start)) : ''); ?>">
+                                   value="<?php echo htmlspecialchars($enrollment_start ? date('Y-m-d', strtotime($enrollment_start)) : ''); ?>" disabled>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="enrollmentEnd" class="form-label">End Date</label>
                             <input type="date" class="form-control" id="enrollmentEnd" name="enrollment_end" 
-                                   value="<?php echo htmlspecialchars($enrollment_end ? date('Y-m-d', strtotime($enrollment_end)) : ''); ?>">
+                                   value="<?php echo htmlspecialchars($enrollment_end ? date('Y-m-d', strtotime($enrollment_end)) : ''); ?>" disabled>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
             <div class="card-body">
                 <div class="mb-3">
                     <label for="accessLevel" class="form-label">Access Level <span class="text-danger">*</span></label>
-                    <select class="form-select" id="accessLevel" name="access_level" required>
+                    <select class="form-select" id="accessLevel" name="access_level" disabled>
                         <option value="Public" <?php echo $access_level === 'Public' ? 'selected' : ''; ?>>Public</option>
                         <option value="Restricted" <?php echo $access_level === 'Restricted' ? 'selected' : ''; ?>>Restricted</option>
                     </select>
@@ -131,7 +131,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                 
                 <div class="mb-3">
                     <label for="visibility" class="form-label">Visibility Status</label>
-                    <select class="form-select" id="visibility" name="visibility">
+                    <select class="form-select" id="visibility" name="visibility" disabled>
                         <option value="Public" <?php echo $visibility === 'Public' ? 'selected' : ''; ?>>Public - Visible in search and catalog</option>
                         <option value="Private" <?php echo $visibility === 'Private' ? 'selected' : ''; ?>>Private - Only visible to specific students</option>
                         <option value="Password Protected" <?php echo $visibility === 'Password Protected' ? 'selected' : ''; ?>>Password Protected</option>
@@ -142,7 +142,7 @@ $access_password = isset($course_settings['access_password']) ? $course_settings
                 <div id="passwordContainer" class="mb-3 <?php echo $visibility !== 'Password Protected' ? 'd-none' : ''; ?>">
                     <label for="accessPassword" class="form-label">Access Password</label>
                     <input type="text" class="form-control" id="accessPassword" name="access_password" 
-                           value="<?php echo htmlspecialchars($access_password ?? ''); ?>">
+                           value="<?php echo htmlspecialchars($access_password ?? ''); ?>" disabled>
                     <div class="form-text">
                         Students will need this password to enroll in your course.
                     </div>

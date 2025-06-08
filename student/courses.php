@@ -163,7 +163,7 @@
         <div class="mb-5">
             <div class="row align-items-center">
                 <div class="col-sm mb-3 mb-sm-0">
-                    <span class="d-block">1,200+ courses</span>
+                    <!-- <span class="d-block">1,200+ courses</span> -->
                     <h1 class="h2 mb-0">Explore our course catalog</h1>
                 </div>
                 <!-- End Col -->

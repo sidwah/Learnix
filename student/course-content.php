@@ -1708,9 +1708,9 @@ function getLinkDisplay($topic)
                                         </li>
                                     <?php endif; ?>
 
-                                    <li class="nav-item" role="presentation">
+                                    <!-- <li class="nav-item" role="presentation">
                                         <a class="nav-link" href="#discussion" id="discussion-tab" data-bs-toggle="tab" data-bs-target="#discussion" role="tab" aria-controls="discussion" aria-selected="false" style="min-width: 7rem;">Discussion</a>
-                                    </li>
+                                    </li> -->
                                 </ul>
                                 <!-- End Nav -->
                             </div>

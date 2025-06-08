@@ -258,20 +258,20 @@ WHERE user_id = ?";
 
 
           <!-- Card -->
-          <div id="editAddressCard" class="card">
-            <div class="card-header border-bottom">
+          <!-- <div id="editAddressCard" class="card"> -->
+            <!-- <div class="card-header border-bottom">
               <h4 class="card-header-title">My Learnings</h4>
-            </div>
+            </div> -->
 
 
 
             <!-- Body -->
-            <div class="card-body">
-              <p class="center">No Courses yet</p>
+            <!-- <div class="card-body"> -->
+              <!-- <p class="center">No Courses yet</p> -->
               <!-- Add your course content here -->
-            </div>
+            <!-- </div> -->
             <!-- End Body -->
-          </div>
+          <!-- </div> -->
           <!-- End Card -->
         </div>
       </div>

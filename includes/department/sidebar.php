@@ -6,9 +6,9 @@
 
 // Check if user is logged in
 if (!isset($_SESSION["user_id"]) || !isset($_SESSION["role"])) {
-    // Redirect to login page if not logged in
-    header("Location: ../auth/sign-in.php");
-    exit;
+  // Redirect to login page if not logged in
+  header("Location: ../auth/sign-in.php");
+  exit;
 }
 
 $user_id = $_SESSION["user_id"];
@@ -23,9 +23,9 @@ $profile_pic = $_SESSION["profile_pic"] ?? 'default.png';
 
 // Create user data array from session variables
 $user_data = [
-    'first_name' => $first_name,
-    'last_name' => $last_name,
-    'profile_pic' => $profile_pic
+  'first_name' => $first_name,
+  'last_name' => $last_name,
+  'profile_pic' => $profile_pic
 ];
 
 // No database query needed since we're using session variables
@@ -41,7 +41,7 @@ $user_data = [
       </a>
     </div>
     <!-- End Default Logo -->
-    
+
     <!-- User Info - Compact Layout -->
     <div class="d-flex align-items-center mb-1 px-2  mt-3">
       <div class="avatar avatar-sm avatar-circle">
@@ -68,71 +68,43 @@ $user_data = [
 
       <li class="nav-item my-2 my-lg-5"></li>
 
-      <!-- Secretary Quick Actions -->
-      <?php if ($user_role === 'department_secretary'): ?>
-      <li class="nav-item">
-        <span class="nav-subtitle">Quick Actions</span>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="daily-tasks.php">
-          <span class="nav-indicator">🎯</span> Daily Tasks
-        </a>
-      </li>
-      <!-- <li class="nav-item">
-        <a class="nav-link" href="pending-requests.php">
-          <span class="nav-indicator">📝</span> Pending Requests
-        </a>
-      </li> -->
-      <li class="nav-item">
-        <a class="nav-link" href="urgent-actions.php">
-          <span class="nav-indicator">⚡</span> Urgent Actions
-        </a>
-      </li>
-      <li class="nav-item my-2 my-lg-5"></li>
-      <?php endif; ?>
+
 
       <!-- Department Management -->
       <?php if ($user_role === 'department_head'): ?>
-      <li class="nav-item">
-        <span class="nav-subtitle">Department Management</span>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="settings.php">Settings</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="secretary.php">Secretary</a>
-      </li>
-      <!-- <li class="nav-item">
+        <li class="nav-item">
+          <span class="nav-subtitle">Department Management</span>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="settings.php">Settings</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="secretary.php">Secretary</a>
+        </li>
+        <!-- <li class="nav-item">
         <a class="nav-link" href="manage-secretary.php">Manage Secretary Permissions</a>
       </li> -->
-      <li class="nav-item my-2 my-lg-5"></li>
+        <li class="nav-item my-2 my-lg-5"></li>
       <?php endif; ?>
 
       <!-- Staff Management -->
       <li class="nav-item">
         <span class="nav-subtitle">Instructor Management</span>
       </li>
-      
+
       <?php if ($user_role === 'department_head'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="invite-instructor.php">Add New Instructor</a>
-      </li>
+        <li class="nav-item">
+          <a class="nav-link" href="invite-instructor.php">Add New Instructor</a>
+        </li>
       <?php endif; ?>
-      
+
       <li class="nav-item">
         <a class="nav-link" href="instructors.php">
           <?php echo $user_role === 'department_head' ? 'Manage Instructors' : 'View Instructors'; ?>
         </a>
       </li>
-      
-      <?php if ($user_role === 'department_secretary'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="instructor-requests.php">Process Instructor Requests</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="instructor-documentation.php">Instructor Documentation</a>
-      </li>
-      <?php endif; ?>
+
+     
 
       <li class="nav-item my-2 my-lg-5"></li>
 
@@ -140,50 +112,27 @@ $user_data = [
       <li class="nav-item">
         <span class="nav-subtitle">Course Management</span>
       </li>
-      
+
       <?php if ($user_role === 'department_head'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="initiate-course.php">Initiate New Course</a>
-      </li>
-      <li class="nav-item">
-        <!-- <a class="nav-link" href="assign-instructors.php">Assign Instructors</a> -->
-      </li>
+        <li class="nav-item">
+          <a class="nav-link" href="initiate-course.php">Initiate New Course</a>
+        </li>
+        <li class="nav-item">
+          <!-- <a class="nav-link" href="assign-instructors.php">Assign Instructors</a> -->
+        </li>
       <?php endif; ?>
-      
+
       <li class="nav-item">
         <a class="nav-link" href="courses.php">Courses</a>
       </li>
-      
-      <?php if ($user_role === 'department_secretary'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="course-metadata.php">Course Information</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="course-scheduling.php">Course Scheduling</a>
-      </li>
-      <?php endif; ?>
-      
-      
-      
+
+
+
       <li class="nav-item">
         <a class="nav-link" href="enrollments.php">Course Enrollments</a>
       </li>
 
-      
-      <!-- Student Management -->
-      
-      <?php if ($user_role === 'department_secretary'): ?>
-        <li class="nav-item my-2 my-lg-5"></li>
-        <li class="nav-item">
-          <span class="nav-subtitle">Student Management</span>
-        </li>
-      <li class="nav-item">
-        <a class="nav-link" href="student-records.php">Student Records</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="enrollment-support.php">Enrollment Support</a>
-      </li>
-      <?php endif; ?>
+
 
       <li class="nav-item my-2 my-lg-5"></li>
 
@@ -191,31 +140,16 @@ $user_data = [
       <li class="nav-item">
         <span class="nav-subtitle">Communication</span>
       </li>
-      
-      
-      <li class="nav-item">
-        <a class="nav-link" href="announcements.php">
-          <?php echo $user_role === 'department_head' ? 'Manage Announcements' : 'View Announcements'; ?>
-        </a>
-      </li>
-      
+
+
+
       <li class="nav-item">
         <a class="nav-link" href="notifications.php">
           <?php echo $user_role === 'department_head' ? 'Manage Notifications' : 'View Notifications'; ?>
         </a>
       </li>
-      
-      <?php if ($user_role === 'department_secretary'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="draft-communications.php">Draft Communications</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="email-management.php">Email Management</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="meeting-coordination.php">Meeting Coordination</a>
-      </li>
-      <?php endif; ?>
+
+
 
       <li class="nav-item my-2 my-lg-5"></li>
 
@@ -223,65 +157,26 @@ $user_data = [
       <li class="nav-item">
         <span class="nav-subtitle">Analytics & Reports</span>
       </li>
-      
+
       <li class="nav-item">
         <a class="nav-link" href="analytic-overview.php">
           <?php echo $user_role === 'department_head' ? 'Analytics' : 'Standard Reports'; ?>
         </a>
       </li>
-      
-      <?php if ($user_role === 'department_head'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="instructor-performance.php">Instructor Performance</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="course-effectiveness.php">Course Effectiveness</a>
-      </li>
-      <?php endif; ?>
-      
-      <li class="nav-item">
-        <a class="nav-link" href="activity-tracking.php">
-          <?php echo $user_role === 'department_head' ? 'Activity Monitoring' : 'Activity Tracking'; ?>
-        </a>
-      </li>
-      
-      <?php if ($user_role === 'department_secretary'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="generate-reports.php">Generate Reports</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="data-compilation.php">Data Compilation</a>
-      </li>
-      <?php endif; ?>
 
-      <!-- <li class="nav-item my-2 my-lg-5"></li> -->
 
-      <!-- Documents & Resources -->
-      <!-- <li class="nav-item">
-        <span class="nav-subtitle">Documents & Resources</span>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="documents.php">Documents</a>
-      </li> -->
-    
-      
 
       <li class="nav-item my-2 my-lg-5"></li>
 
-      <!-- Profile & Support -->
+      <!-- Profile & Support
       <li class="nav-item">
         <span class="nav-subtitle">Profile & Support</span>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="profile.php">My Profile</a>
       </li>
-      
-      <?php if ($user_role === 'department_secretary'): ?>
-      <li class="nav-item">
-        <a class="nav-link" href="preferences.php">My Preferences</a>
-      </li>
-      <?php endif; ?>
-      
+
+
       <li class="nav-item">
         <a class="nav-link" href="help-center.php">Help Center</a>
       </li>
@@ -289,7 +184,7 @@ $user_data = [
         <a class="nav-link" href="report.php">Report</a>
       </li>
 
-      <li class="nav-item my-2 my-lg-5"></li>
+      <li class="nav-item my-2 my-lg-5"></li> -->
 
       <!-- Sign Out -->
       <li class="nav-item">
@@ -297,13 +192,14 @@ $user_data = [
       </li>
     </ul>
   </div>
-  
+
   <!-- Session Management Indicator -->
   <div class="navbar-footer border-top p-3">
     <div class="d-flex justify-content-between align-items-center">
       <!-- <small class="text-muted">
         <i class="bi bi-clock-fill me-1"></i>
-        Session: <?php // echo date('H:i'); ?>
+        Session: <?php // echo date('H:i'); 
+                  ?>
       </small> -->
       <small class="text-muted">
         <i class="bi bi-building me-1"></i>
@@ -311,12 +207,12 @@ $user_data = [
       </small>
     </div>
     <?php if ($user_role === 'department_secretary'): ?>
-    <div class="mt-2">
-      <small class="badge bg-soft-info text-info w-100">
-        <i class="bi bi-shield-check me-1"></i>
-        Limited Access Mode
-      </small>
-    </div>
+      <div class="mt-2">
+        <small class="badge bg-soft-info text-info w-100">
+          <i class="bi bi-shield-check me-1"></i>
+          Limited Access Mode
+        </small>
+      </div>
     <?php endif; ?>
   </div>
 </div>
