@@ -122,7 +122,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $response["message"] = "Invalid subcategory selected.";
         echo json_encode($response);
         exit;
-    }
+    } 
 
     $conn->begin_transaction();
 

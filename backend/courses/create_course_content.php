@@ -57,7 +57,7 @@ $stmtInstructor = $conn->prepare("SELECT instructor_id FROM instructors WHERE us
 $stmtInstructor->bind_param("i", $userId);
 $stmtInstructor->execute();
 $stmtInstructor->bind_result($instructorId);
-$stmtInstructor->fetch();
+$stmtInstructor->fetch(); 
 $stmtInstructor->close();
 
 if (!$instructorId) {

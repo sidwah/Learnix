@@ -237,7 +237,7 @@ if (!isset($_SESSION['signin']) || $_SESSION['signin'] !== true || $_SESSION['ro
                                             <i class="mdi mdi-information-outline text-info h1 mb-3"></i>
                                             <h4 class="text-muted">No Courses Available</h4>
                                             <p class="text-muted">You haven't created any courses yet. Start by creating your first course!</p>
-                                            <a href="create-course.php" class="btn btn-primary mt-2">Create New Course</a>
+                                            <!-- <a href="create-course.php" class="btn btn-primary mt-2">Create New Course</a> -->
                                         </div>
                                     </div>
 
